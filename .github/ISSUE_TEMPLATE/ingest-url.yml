@@ -1,0 +1,69 @@
+name: Ingest POC from GitHub URL
+description: Paste a GitHub repository URL and let Copilot build the archive entry.
+title: "[Ingest] "
+labels: ["poc-ingest", "copilot"]
+assignees:
+  - copilot
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Paste the GitHub repository URL below. The Copilot coding agent will:
+        - Fetch the repo metadata and README
+        - Shallow-clone the repo and collect exploit files
+        - Fill in the POC template (category, severity, CVE, root cause, detection, remediation)
+        - Open a PR for your review — **nothing is merged until you approve it**
+
+  - type: input
+    id: repo_url
+    attributes:
+      label: GitHub Repository URL
+      description: Full URL of the PoC / exploit repository
+      placeholder: "https://github.com/owner/repo"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category hint (optional)
+      description: If you already know the category, pick it. Otherwise leave as Auto-detect.
+      options:
+        - Auto-detect
+        - web
+        - network
+        - binary
+        - crypto
+        - cloud
+        - hardware
+        - social-engineering
+        - misc
+    validations:
+      required: false
+
+  - type: input
+    id: cve
+    attributes:
+      label: CVE / Advisory ID (optional)
+      description: If you know the CVE, add it here. Otherwise Copilot will try to extract it from the repo.
+      placeholder: "CVE-2024-12345 or N/A"
+    validations:
+      required: false
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional context (optional)
+      description: Anything Copilot should know — environment details, a specific file to focus on, severity override, etc.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      options:
+        - label: This research was conducted on systems I own or had explicit written authorization to test
+          required: true
+        - label: The source repository does not contain live credentials, PII, or victim data
+          required: true
