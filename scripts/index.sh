@@ -47,7 +47,7 @@ while IFS= read -r -d '' readme; do
 
   # Extract fields from markdown metadata table
   extract_field() {
-    grep -i "^\| \*\*${1}\*\*" "$readme" 2>/dev/null \
+    grep -i "^[|] \*\*${1}\*\*" "$readme" 2>/dev/null \
       | head -1 \
       | sed 's/.*| \*\*[^*]*\*\* | //' \
       | sed 's/ |.*//' \
