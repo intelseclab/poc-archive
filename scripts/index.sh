@@ -43,9 +43,13 @@ while IFS= read -r -d '' readme; do
 
   row="| ${date_added:-—} | [${display_name}](./${rel_dir}/) | \`${category}\` | ${cve:-N/A} | ${severity:-—} | ${tags:-—} | ${status:-—} |"
 
-  year=$(echo "$date_added" | cut -d'-' -f1)
-  if [[ -z "$year" || ! "$year" =~ ^[0-9]{4}$ ]]; then
-    year="unknown"
+  # Group by CVE year; fall back to Date Added year if no CVE
+  cve_year=$(echo "$cve" | grep -oP 'CVE-\K[0-9]{4}' | head -1)
+  if [[ -n "$cve_year" && "$cve_year" =~ ^[0-9]{4}$ ]]; then
+    year="$cve_year"
+  else
+    year=$(echo "$date_added" | cut -d'-' -f1)
+    [[ -z "$year" || ! "$year" =~ ^[0-9]{4}$ ]] && year="unknown"
   fi
 
   echo "$row" >> "$TMPDIR_ROWS/${year}.rows"
