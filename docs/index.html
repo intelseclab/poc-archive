@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>poc-archive — intelseclab</title>
+  <style>
+    /* ── Reset & Base ───────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-0:        #0a0a0a;
+      --bg-1:        #111111;
+      --bg-2:        #1a1a1a;
+      --bg-3:        #242424;
+      --bg-4:        #2e2e2e;
+
+      --fg-0:        #e8e8e8;
+      --fg-1:        #b0b0b0;
+      --fg-2:        #787878;
+      --fg-3:        #505050;
+
+      --green:       #22c55e;
+      --green-dim:   #16a34a;
+      --amber:       #f59e0b;
+      --amber-dim:   #b45309;
+
+      --red:         #ef4444;
+      --red-bg:      rgba(239, 68, 68, 0.12);
+      --orange:      #f97316;
+      --orange-bg:   rgba(249, 115, 22, 0.12);
+      --yellow:      #eab308;
+      --yellow-bg:   rgba(234, 179, 8, 0.12);
+      --blue:        #3b82f6;
+      --blue-bg:     rgba(59, 130, 246, 0.12);
+      --grey:        #6b7280;
+      --grey-bg:     rgba(107, 114, 128, 0.12);
+
+      --border:      #2a2a2a;
+      --border-hi:   #3a3a3a;
+
+      --accent:      var(--green);
+      --accent-dim:  var(--green-dim);
+      --prompt:      var(--amber);
+
+      --radius-sm:   3px;
+      --radius-md:   6px;
+
+      --font-mono:   'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace;
+      --font-size:   13px;
+      --line-height: 1.6;
+    }
+
+    html {
+      background: var(--bg-0);
+      color: var(--fg-0);
+      font-family: var(--font-mono);
+      font-size: var(--font-size);
+      line-height: var(--line-height);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Layout ─────────────────────────────────────────────────────────── */
+    .wrap {
+      width: 100%;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* ── Header ─────────────────────────────────────────────────────────── */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 2rem 0 1.5rem;
+    }
+
+    .header-inner {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .ascii-block {
+      white-space: pre;
+      font-size: 11px;
+      line-height: 1.15;
+      color: var(--accent);
+      letter-spacing: 0;
+      overflow-x: auto;
+      padding-bottom: 0.25rem;
+    }
+
+    .header-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .header-subtitle {
+      color: var(--fg-1);
+      font-size: 12px;
+    }
+
+    .header-subtitle .org {
+      color: var(--amber);
+    }
+
+    .header-updated {
+      font-size: 11px;
+      color: var(--fg-2);
+    }
+
+    .header-updated .val {
+      color: var(--fg-1);
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      margin-right: 0.4rem;
+      vertical-align: middle;
+      position: relative;
+      top: -1px;
+    }
+
+    /* ── Stats Bar ───────────────────────────────────────────────────────── */
+    .stats-bar {
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stats-inner {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .stats-label {
+      color: var(--fg-2);
+      font-size: 11px;
+      margin-right: 0.25rem;
+      white-space: nowrap;
+    }
+
+    .stat-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-family: var(--font-mono);
+      border: 1px solid transparent;
+      white-space: nowrap;
+      cursor: default;
+    }
+
+    .stat-pill .pill-count {
+      font-weight: bold;
+    }
+
+    .stat-pill.total    { background: var(--bg-3); border-color: var(--border-hi); color: var(--fg-0); }
+    .stat-pill.critical { background: var(--red-bg);    border-color: rgba(239,68,68,0.35);    color: var(--red);    }
+    .stat-pill.high     { background: var(--orange-bg); border-color: rgba(249,115,22,0.35);   color: var(--orange); }
+    .stat-pill.medium   { background: var(--yellow-bg); border-color: rgba(234,179,8,0.35);    color: var(--yellow); }
+    .stat-pill.low      { background: var(--blue-bg);   border-color: rgba(59,130,246,0.35);   color: var(--blue);   }
+    .stat-pill.info     { background: var(--grey-bg);   border-color: rgba(107,114,128,0.35);  color: var(--grey);   }
+
+    .stat-pill.weaponized { background: var(--red-bg);    border-color: rgba(239,68,68,0.35);    color: var(--red);    }
+    .stat-pill.researched { background: var(--yellow-bg); border-color: rgba(234,179,8,0.35);    color: var(--yellow); }
+    .stat-pill.patched    { background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.35); color: var(--green);  }
+    .stat-pill.unpatched  { background: var(--orange-bg); border-color: rgba(249,115,22,0.35);   color: var(--orange); }
+    .stat-pill.unknown    { background: var(--grey-bg);   border-color: rgba(107,114,128,0.35);  color: var(--grey);   }
+
+    .stats-sep {
+      color: var(--fg-3);
+      font-size: 11px;
+      margin: 0 0.15rem;
+    }
+
+    /* ── Filters ─────────────────────────────────────────────────────────── */
+    .filters-section {
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .filters-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      align-items: center;
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1 1 260px;
+      min-width: 200px;
+    }
+
+    .search-prompt {
+      position: absolute;
+      left: 0.65rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--prompt);
+      font-size: 13px;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.45rem 0.65rem 0.45rem 1.7rem;
+      background: var(--bg-2);
+      border: 1px solid var(--border-hi);
+      border-radius: var(--radius-md);
+      color: var(--fg-0);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .search-input::placeholder {
+      color: var(--fg-3);
+    }
+
+    .search-input:focus {
+      border-color: var(--accent-dim);
+      box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.12);
+    }
+
+    .filter-select {
+      padding: 0.45rem 1.8rem 0.45rem 0.65rem;
+      background: var(--bg-2);
+      border: 1px solid var(--border-hi);
+      border-radius: var(--radius-md);
+      color: var(--fg-1);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      transition: border-color 0.15s;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23505050'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.55rem center;
+      white-space: nowrap;
+    }
+
+    .filter-select:focus {
+      border-color: var(--accent-dim);
+    }
+
+    .filter-select option {
+      background: var(--bg-2);
+      color: var(--fg-0);
+    }
+
+    .filter-clear-btn {
+      padding: 0.45rem 0.75rem;
+      background: transparent;
+      border: 1px solid var(--border-hi);
+      border-radius: var(--radius-md);
+      color: var(--fg-2);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .filter-clear-btn:hover {
+      border-color: var(--fg-3);
+      color: var(--fg-1);
+    }
+
+    .filter-clear-btn.hidden { display: none; }
+
+    /* ── Results line ────────────────────────────────────────────────────── */
+    .results-bar {
+      padding: 0.6rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 11px;
+      color: var(--fg-2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .results-count { color: var(--accent); font-weight: bold; }
+
+    /* ── Table ───────────────────────────────────────────────────────────── */
+    .table-wrap {
+      overflow-x: auto;
+      flex: 1;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: auto;
+    }
+
+    thead th {
+      padding: 0.65rem 0.75rem;
+      text-align: left;
+      font-size: 10px;
+      font-weight: normal;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--fg-2);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      user-select: none;
+      cursor: pointer;
+      transition: color 0.12s;
+    }
+
+    thead th:hover { color: var(--fg-0); }
+
+    thead th .sort-indicator {
+      display: inline-block;
+      margin-left: 0.3rem;
+      opacity: 0.35;
+      font-size: 9px;
+    }
+
+    thead th.sort-asc .sort-indicator,
+    thead th.sort-desc .sort-indicator {
+      opacity: 1;
+      color: var(--accent);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.1s;
+      cursor: pointer;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+
+    tbody tr:hover { background: var(--bg-2); }
+
+    tbody td {
+      padding: 0.7rem 0.75rem;
+      font-size: 12px;
+      vertical-align: middle;
+    }
+
+    /* date col */
+    .col-date {
+      color: var(--fg-2);
+      white-space: nowrap;
+      font-size: 11px;
+    }
+
+    /* name col */
+    .col-name a {
+      color: var(--fg-0);
+      font-weight: 500;
+    }
+
+    .col-name a:hover {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    /* category col */
+    .col-cat {
+      white-space: nowrap;
+    }
+
+    .cat-badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: var(--radius-sm);
+      font-size: 10px;
+      background: var(--bg-3);
+      border: 1px solid var(--border-hi);
+      color: var(--fg-1);
+      text-transform: lowercase;
+    }
+
+    /* cve col */
+    .col-cve {
+      white-space: nowrap;
+      font-size: 11px;
+      color: var(--fg-1);
+    }
+
+    /* severity col */
+    .badge {
+      display: inline-block;
+      padding: 0.15rem 0.55rem;
+      border-radius: var(--radius-sm);
+      font-size: 10px;
+      font-weight: bold;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      border: 1px solid transparent;
+    }
+
+    .badge-critical { background: var(--red-bg);    border-color: rgba(239,68,68,0.4);   color: var(--red);    }
+    .badge-high     { background: var(--orange-bg); border-color: rgba(249,115,22,0.4);  color: var(--orange); }
+    .badge-medium   { background: var(--yellow-bg); border-color: rgba(234,179,8,0.4);   color: var(--yellow); }
+    .badge-low      { background: var(--blue-bg);   border-color: rgba(59,130,246,0.4);  color: var(--blue);   }
+    .badge-informational { background: var(--grey-bg); border-color: rgba(107,114,128,0.4); color: var(--grey); }
+
+    .badge-weaponized { background: var(--red-bg);    border-color: rgba(239,68,68,0.4);    color: var(--red);    }
+    .badge-researched { background: var(--yellow-bg); border-color: rgba(234,179,8,0.4);    color: var(--yellow); }
+    .badge-patched    { background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.4); color: var(--green);  }
+    .badge-unpatched  { background: var(--orange-bg); border-color: rgba(249,115,22,0.4);   color: var(--orange); }
+    .badge-unknown    { background: var(--grey-bg);   border-color: rgba(107,114,128,0.4);  color: var(--grey);   }
+
+    /* tags col */
+    .col-tags {
+      font-size: 11px;
+      color: var(--fg-2);
+      max-width: 280px;
+    }
+
+    .tag-chip {
+      display: inline-block;
+      padding: 0.1rem 0.4rem;
+      margin: 0.1rem 0.15rem 0.1rem 0;
+      border-radius: var(--radius-sm);
+      font-size: 10px;
+      background: var(--bg-3);
+      border: 1px solid var(--border);
+      color: var(--fg-2);
+      white-space: nowrap;
+    }
+
+    /* empty state */
+    .empty-row td {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--fg-3);
+      font-size: 12px;
+      cursor: default;
+    }
+
+    .empty-row:hover { background: transparent !important; }
+
+    /* ── Footer ─────────────────────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 1.25rem 0;
+      margin-top: auto;
+    }
+
+    .footer-inner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      font-size: 11px;
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--fg-2);
+    }
+
+    .footer-left a {
+      color: var(--accent);
+    }
+
+    .footer-right {
+      color: var(--fg-3);
+      font-style: italic;
+    }
+
+    /* ── Cursor animation ────────────────────────────────────────────────── */
+    @keyframes blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 7px;
+      height: 13px;
+      background: var(--accent);
+      vertical-align: text-bottom;
+      animation: blink 1.1s step-start infinite;
+      margin-left: 2px;
+    }
+
+    /* ── Responsive ──────────────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .col-tags { display: none; }
+    }
+
+    @media (max-width: 680px) {
+      .ascii-block { font-size: 9px; }
+      .col-cve { display: none; }
+      thead th, tbody td { padding-left: 0.5rem; padding-right: 0.5rem; }
+    }
+
+    @media (max-width: 480px) {
+      .col-cat { display: none; }
+      .ascii-block { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Header ──────────────────────────────────────────────────────────── -->
+  <header>
+    <div class="wrap">
+      <div class="header-inner">
+        <pre class="ascii-block">
+ ____   ___   ____        ____  ____   ____  _   _ _____     _______
+|  _ \ / _ \ / ___|      / _  ||  _ \ / ___|| | | |_ _\ \   / / ____|
+| |_) | | | | |   _____ / /_| || |_) | |    | |_| || | \ \ / /|  _|
+|  __/| |_| | |__|_____| __  ||  _ <| |___ |  _  || |  \ V / | |___
+|_|    \___/ \____|     |_| |_||_| \_\\____||_| |_|___|  \_/  |_____|
+</pre>
+        <div class="header-meta">
+          <span class="header-subtitle">
+            <span class="status-dot"></span>
+            <span class="org">intelseclab</span> &middot; security research proof-of-concepts
+          </span>
+          <span class="header-updated">
+            last updated: <span class="val" id="js-updated">—</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Stats Bar ────────────────────────────────────────────────────────── -->
+  <div class="stats-bar">
+    <div class="wrap">
+      <div class="stats-inner" id="js-stats">
+        <!-- populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Filters ──────────────────────────────────────────────────────────── -->
+  <div class="filters-section">
+    <div class="wrap">
+      <div class="filters-row">
+        <div class="search-wrap">
+          <span class="search-prompt">&gt;</span>
+          <input
+            id="js-search"
+            class="search-input"
+            type="text"
+            placeholder="search name, CVE, tags..."
+            autocomplete="off"
+            spellcheck="false"
+          >
+        </div>
+
+        <select id="js-filter-severity" class="filter-select">
+          <option value="">severity: all</option>
+          <option value="Critical">Critical</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+          <option value="Informational">Informational</option>
+        </select>
+
+        <select id="js-filter-category" class="filter-select">
+          <option value="">category: all</option>
+        </select>
+
+        <select id="js-filter-status" class="filter-select">
+          <option value="">status: all</option>
+        </select>
+
+        <select id="js-filter-year" class="filter-select">
+          <option value="">year: all</option>
+        </select>
+
+        <button id="js-clear" class="filter-clear-btn hidden">clear filters</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Results count ────────────────────────────────────────────────────── -->
+  <div class="results-bar">
+    <div class="wrap">
+      <span>$ ls -1 ./pocs/</span>
+      <span class="stats-sep">|</span>
+      <span>showing <span class="results-count" id="js-count">0</span> entries</span>
+      <span class="cursor"></span>
+    </div>
+  </div>
+
+  <!-- ── Table ────────────────────────────────────────────────────────────── -->
+  <div class="wrap">
+    <div class="table-wrap">
+      <table id="js-table">
+        <thead>
+          <tr>
+            <th data-col="date">Date <span class="sort-indicator">&#9660;</span></th>
+            <th data-col="name">Name <span class="sort-indicator">&#9660;</span></th>
+            <th data-col="category">Category <span class="sort-indicator">&#9660;</span></th>
+            <th data-col="cve">CVE <span class="sort-indicator">&#9660;</span></th>
+            <th data-col="severity">Severity <span class="sort-indicator">&#9660;</span></th>
+            <th data-col="tags">Tags <span class="sort-indicator">&#9660;</span></th>
+            <th data-col="status">Status <span class="sort-indicator">&#9660;</span></th>
+          </tr>
+        </thead>
+        <tbody id="js-tbody">
+          <!-- populated by JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Footer ───────────────────────────────────────────────────────────── -->
+  <footer>
+    <div class="wrap">
+      <div class="footer-inner">
+        <div class="footer-left">
+          <span>&gt;</span>
+          <a
+            href="https://github.com/intelseclab/poc-archive"
+            target="_blank"
+            rel="noopener noreferrer"
+          >github.com/intelseclab/poc-archive</a>
+        </div>
+        <div class="footer-right">
+          For authorized security research and educational purposes only.
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      'use strict';
+
+      /* ── Constants ──────────────────────────────────────────────────────── */
+      const GITHUB_BASE =
+        'https://github.com/intelseclab/poc-archive/blob/master/';
+
+      const SEVERITY_ORDER = {
+        critical: 0, high: 1, medium: 2, low: 3, informational: 4, '': 5
+      };
+
+      /* ── State ──────────────────────────────────────────────────────────── */
+      let allPocs      = [];
+      let filtered     = [];
+      let sortCol      = 'date';
+      let sortDir      = 'desc';   /* newest first by default */
+
+      /* ── DOM refs ───────────────────────────────────────────────────────── */
+      const $tbody    = document.getElementById('js-tbody');
+      const $count    = document.getElementById('js-count');
+      const $stats    = document.getElementById('js-stats');
+      const $updated  = document.getElementById('js-updated');
+      const $search   = document.getElementById('js-search');
+      const $fSev     = document.getElementById('js-filter-severity');
+      const $fCat     = document.getElementById('js-filter-category');
+      const $fStat    = document.getElementById('js-filter-status');
+      const $fYear    = document.getElementById('js-filter-year');
+      const $clear    = document.getElementById('js-clear');
+      const $thead    = document.querySelector('thead tr');
+
+      /* ── Helpers ────────────────────────────────────────────────────────── */
+      function esc(str) {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function severityClass(s) {
+        return 'badge-' + (s || 'unknown').toLowerCase().replace(/\s+/g, '-');
+      }
+
+      function statusClass(s) {
+        return 'badge-' + (s || 'unknown').toLowerCase().replace(/\s+/g, '-');
+      }
+
+      function urlForPoc(url) {
+        if (!url) return '#';
+        /* strip leading ../ and attach GitHub base */
+        const rel = url.replace(/^\.\.\//, '');
+        return GITHUB_BASE + rel;
+      }
+
+      function buildTagChips(tagStr) {
+        if (!tagStr) return '';
+        return tagStr.split(',').map(t => {
+          const tag = t.trim();
+          return tag ? `<span class="tag-chip">${esc(tag)}</span>` : '';
+        }).join('');
+      }
+
+      /* ── Stats ──────────────────────────────────────────────────────────── */
+      function renderStats(pocs) {
+        const counts = { total: pocs.length };
+        const sevKeys  = ['Critical','High','Medium','Low','Informational'];
+        const statKeys = ['Weaponized','Researched','Patched','Unpatched','Unknown'];
+
+        sevKeys.forEach(k => { counts['sev_' + k] = 0; });
+        statKeys.forEach(k => { counts['stat_' + k] = 0; });
+
+        pocs.forEach(p => {
+          const sk = 'sev_' + p.severity;
+          if (sk in counts) counts[sk]++;
+          const stk = 'stat_' + p.status;
+          if (stk in counts) counts[stk]++;
+        });
+
+        let html = `<span class="stats-label">stats:</span>`;
+        html += `<span class="stat-pill total"><span class="pill-count">${counts.total}</span> total</span>`;
+        html += `<span class="stats-sep">//</span>`;
+        html += `<span class="stats-label">severity:</span>`;
+        sevKeys.forEach(k => {
+          const c = counts['sev_' + k];
+          if (c > 0) {
+            html += `<span class="stat-pill ${k.toLowerCase()}">
+              <span class="pill-count">${c}</span> ${k}
+            </span>`;
+          }
+        });
+        html += `<span class="stats-sep">//</span>`;
+        html += `<span class="stats-label">status:</span>`;
+        statKeys.forEach(k => {
+          const c = counts['stat_' + k];
+          if (c > 0) {
+            html += `<span class="stat-pill ${k.toLowerCase()}">
+              <span class="pill-count">${c}</span> ${k}
+            </span>`;
+          }
+        });
+
+        $stats.innerHTML = html;
+      }
+
+      /* ── Filtering ──────────────────────────────────────────────────────── */
+      function applyFilters() {
+        const q    = $search.value.trim().toLowerCase();
+        const sev  = $fSev.value;
+        const cat  = $fCat.value;
+        const stat = $fStat.value;
+        const yr   = $fYear.value;
+
+        filtered = allPocs.filter(p => {
+          if (sev  && p.severity !== sev)   return false;
+          if (cat  && p.category !== cat)   return false;
+          if (stat && p.status   !== stat)  return false;
+          if (yr   && p.cve_year !== yr)    return false;
+          if (q) {
+            const haystack = [p.name, p.cve, p.tags].join(' ').toLowerCase();
+            if (!haystack.includes(q)) return false;
+          }
+          return true;
+        });
+
+        sortFiltered();
+        renderTable();
+        updateClearBtn();
+      }
+
+      function updateClearBtn() {
+        const active =
+          $search.value || $fSev.value || $fCat.value ||
+          $fStat.value  || $fYear.value;
+        $clear.classList.toggle('hidden', !active);
+      }
+
+      /* ── Sorting ────────────────────────────────────────────────────────── */
+      function sortFiltered() {
+        filtered.sort((a, b) => {
+          let av = (a[sortCol] || '').toLowerCase();
+          let bv = (b[sortCol] || '').toLowerCase();
+
+          if (sortCol === 'severity') {
+            av = SEVERITY_ORDER[av] ?? 99;
+            bv = SEVERITY_ORDER[bv] ?? 99;
+            return sortDir === 'asc' ? av - bv : bv - av;
+          }
+
+          if (sortCol === 'date') {
+            av = a.date || '';
+            bv = b.date || '';
+          }
+
+          if (av < bv) return sortDir === 'asc' ? -1 :  1;
+          if (av > bv) return sortDir === 'asc' ?  1 : -1;
+          return 0;
+        });
+      }
+
+      /* ── Table render ───────────────────────────────────────────────────── */
+      function renderTable() {
+        $count.textContent = filtered.length;
+
+        if (filtered.length === 0) {
+          $tbody.innerHTML =
+            `<tr class="empty-row"><td colspan="7">
+              no entries match the current filters
+            </td></tr>`;
+          return;
+        }
+
+        const rows = filtered.map(p => {
+          const link = urlForPoc(p.url);
+          const tags = buildTagChips(p.tags);
+          return `<tr data-href="${esc(link)}">
+            <td class="col-date">${esc(p.date)}</td>
+            <td class="col-name">
+              <a href="${esc(link)}" target="_blank" rel="noopener noreferrer"
+                 onclick="event.stopPropagation()">${esc(p.name)}</a>
+            </td>
+            <td class="col-cat"><span class="cat-badge">${esc(p.category)}</span></td>
+            <td class="col-cve">${esc(p.cve)}</td>
+            <td><span class="badge ${severityClass(p.severity)}">${esc(p.severity)}</span></td>
+            <td class="col-tags">${tags}</td>
+            <td><span class="badge ${statusClass(p.status)}">${esc(p.status)}</span></td>
+          </tr>`;
+        });
+
+        $tbody.innerHTML = rows.join('');
+
+        /* row click navigation */
+        $tbody.querySelectorAll('tr[data-href]').forEach(row => {
+          row.addEventListener('click', () => {
+            const href = row.getAttribute('data-href');
+            if (href && href !== '#') window.open(href, '_blank', 'noopener,noreferrer');
+          });
+        });
+      }
+
+      /* ── Populate filter dropdowns ──────────────────────────────────────── */
+      function populateDropdowns(pocs) {
+        const cats  = [...new Set(pocs.map(p => p.category).filter(Boolean))].sort();
+        const stats = [...new Set(pocs.map(p => p.status).filter(Boolean))].sort();
+        const years = [...new Set(pocs.map(p => p.cve_year).filter(Boolean))].sort().reverse();
+
+        cats.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c; opt.textContent = 'category: ' + c;
+          $fCat.appendChild(opt);
+        });
+
+        stats.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s; opt.textContent = 'status: ' + s;
+          $fStat.appendChild(opt);
+        });
+
+        years.forEach(y => {
+          const opt = document.createElement('option');
+          opt.value = y; opt.textContent = 'year: ' + y;
+          $fYear.appendChild(opt);
+        });
+      }
+
+      /* ── Sort header click ──────────────────────────────────────────────── */
+      $thead.addEventListener('click', e => {
+        const th = e.target.closest('th[data-col]');
+        if (!th) return;
+        const col = th.getAttribute('data-col');
+        if (sortCol === col) {
+          sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          sortCol = col;
+          sortDir = 'asc';
+        }
+        updateSortUI();
+        sortFiltered();
+        renderTable();
+      });
+
+      function updateSortUI() {
+        $thead.querySelectorAll('th').forEach(th => {
+          th.classList.remove('sort-asc', 'sort-desc');
+          const ind = th.querySelector('.sort-indicator');
+          if (ind) ind.textContent = '▼';  /* ▼ */
+        });
+        const active = $thead.querySelector(`th[data-col="${sortCol}"]`);
+        if (active) {
+          active.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+          const ind = active.querySelector('.sort-indicator');
+          if (ind) ind.textContent = sortDir === 'asc' ? '▲' : '▼';
+        }
+      }
+
+      /* ── Event listeners ────────────────────────────────────────────────── */
+      $search.addEventListener('input',  applyFilters);
+      $fSev.addEventListener('change',   applyFilters);
+      $fCat.addEventListener('change',   applyFilters);
+      $fStat.addEventListener('change',  applyFilters);
+      $fYear.addEventListener('change',  applyFilters);
+
+      $clear.addEventListener('click', () => {
+        $search.value = '';
+        $fSev.value   = '';
+        $fCat.value   = '';
+        $fStat.value  = '';
+        $fYear.value  = '';
+        applyFilters();
+      });
+
+      /* ── Bootstrap: fetch data ──────────────────────────────────────────── */
+      fetch('data.json')
+        .then(r => {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
+        .then(data => {
+          allPocs  = data.pocs || [];
+          filtered = [...allPocs];
+
+          /* header timestamp */
+          $updated.textContent = data.generated || '—';
+
+          /* stats use full dataset */
+          renderStats(allPocs);
+
+          /* dropdowns */
+          populateDropdowns(allPocs);
+
+          /* initial sort + render */
+          updateSortUI();
+          sortFiltered();
+          renderTable();
+        })
+        .catch(err => {
+          $tbody.innerHTML =
+            `<tr class="empty-row"><td colspan="7">
+              error loading data.json — ${esc(String(err))}
+            </td></tr>`;
+          $count.textContent = '0';
+          console.error('poc-archive: failed to load data.json', err);
+        });
+
+    })();
+  </script>
+</body>
+</html>

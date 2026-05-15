@@ -8,11 +8,13 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 INDEX_FILE="$REPO_ROOT/INDEX.md"
 POCS_DIR="$REPO_ROOT/pocs"
 ARCHIVE_DIR="$REPO_ROOT/archive"
+DOCS_DIR="$REPO_ROOT/docs"
 CURRENT_YEAR=$(date +%Y)
 TMPDIR_ROWS=$(mktemp -d)
-trap 'rm -rf "$TMPDIR_ROWS"' EXIT
+TMPDIR_JSON=$(mktemp -d)
+trap 'rm -rf "$TMPDIR_ROWS" "$TMPDIR_JSON"' EXIT
 
-mkdir -p "$ARCHIVE_DIR"
+mkdir -p "$ARCHIVE_DIR" "$DOCS_DIR"
 
 extract_field() {
   grep -i "^[|] \*\*${2}\*\*" "$1" 2>/dev/null \
@@ -53,6 +55,25 @@ while IFS= read -r -d '' readme; do
   fi
 
   echo "$row" >> "$TMPDIR_ROWS/${year}.rows"
+
+  # Escape strings for JSON
+  json_escape() { printf '%s' "$1" | sed 's/\\/\\\\/g;s/"/\\"/g'; }
+  rel_dir_from_root="${readme#$REPO_ROOT/}"
+  poc_url="../$(dirname "$rel_dir_from_root")/"
+
+  printf '  {\n    "date": "%s",\n    "name": "%s",\n    "category": "%s",\n    "cve": "%s",\n    "severity": "%s",\n    "tags": "%s",\n    "status": "%s",\n    "cve_year": "%s",\n    "url": "%s"\n  }' \
+    "$(json_escape "${date_added:-}")" \
+    "$(json_escape "${display_name}")" \
+    "$(json_escape "${category}")" \
+    "$(json_escape "${cve:-N/A}")" \
+    "$(json_escape "${severity:-}")" \
+    "$(json_escape "${tags:-}")" \
+    "$(json_escape "${status:-}")" \
+    "$(json_escape "${year}")" \
+    "$(json_escape "${poc_url}")" \
+    >> "$TMPDIR_JSON/entries.json"
+  echo "," >> "$TMPDIR_JSON/entries.json"
+
   total=$((total + 1))
 done < <(find "$POCS_DIR" -name "README.md" -not -path "*/node_modules/*" -print0 | sort -z)
 
@@ -130,4 +151,18 @@ fi
   echo ""
 } > "$INDEX_FILE"
 
-echo "INDEX.md updated — ${total} POC(s) indexed."
+# Write docs/data.json
+{
+  echo "{"
+  printf '  "generated": "%s",\n' "$(date "+%Y-%m-%d %H:%M:%S")"
+  printf '  "total": %d,\n' "$total"
+  echo '  "pocs": ['
+  if [[ -f "$TMPDIR_JSON/entries.json" ]]; then
+    # Remove trailing comma from last entry
+    sed '$ s/,$//' "$TMPDIR_JSON/entries.json"
+  fi
+  echo '  ]'
+  echo '}'
+} > "$DOCS_DIR/data.json"
+
+echo "INDEX.md + data.json updated — ${total} POC(s) indexed."
