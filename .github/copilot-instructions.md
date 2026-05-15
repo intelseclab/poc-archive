@@ -112,7 +112,7 @@ This regenerates `INDEX.md` and `archive/YYYY.md` files, grouped by **CVE year**
 Stage and commit:
 
 ```bash
-git add pocs/ INDEX.md archive/
+git add pocs/ INDEX.md archive/ docs/data.json
 git commit -m "feat: ingest <vuln-name> from <owner>/<repo>"
 ```
 
