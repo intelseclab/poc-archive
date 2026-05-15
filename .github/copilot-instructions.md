@@ -16,10 +16,10 @@ pocs/
       screenshots/
       references/
 archive/
-  YYYY.md                ← auto-generated past-year indexes (do not edit manually)
+  YYYY.md                ← auto-generated, one file per CVE year (do not edit manually)
 templates/POC_TEMPLATE.md
 scripts/index.sh         ← regenerates INDEX.md and archive/YYYY.md
-INDEX.md                 ← current year only, auto-generated, do not edit manually
+INDEX.md                 ← current CVE year only, auto-generated, do not edit manually
 ```
 
 ---
@@ -102,7 +102,10 @@ Run the index script:
 bash scripts/index.sh
 ```
 
-This regenerates `INDEX.md` (current year) and `archive/YYYY.md` for any past years.
+This regenerates `INDEX.md` and `archive/YYYY.md` files, grouped by **CVE year** (not Date Added).
+- Entries with a CVE ID go into the file matching that CVE's year (e.g. `CVE-2024-21338` → `archive/2024.md`)
+- Entries with no CVE fall back to the Date Added year
+- `INDEX.md` contains only the current calendar year's CVEs; all older CVE years live in `archive/`
 
 ### 8 — Commit
 
