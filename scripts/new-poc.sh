@@ -45,6 +45,9 @@ done
 
 read -rp "$(echo -e "${YELLOW}One-line description${NC}: ")" description
 
+read -rp "$(echo -e "${YELLOW}Related entry${NC} (path if resurface, e.g. pocs/web/2021-12-10_log4shell/ or leave blank for N/A): ")" related
+related="${related:-N/A}"
+
 # --- Build paths ---
 
 today=$(date +%Y-%m-%d)
@@ -77,6 +80,7 @@ sed_inplace "s/YYYY-MM-DD/${today}/g" "$poc_readme"
 sed_inplace "s|<!-- CVE-YYYY-XXXXX or N/A -->|${cve_id}|g" "$poc_readme"
 sed_inplace "s|<!-- Critical \/ High \/ Medium \/ Low \/ Informational -->|${severity}|g" "$poc_readme"
 sed_inplace "s|<!-- web \/ network \/ binary \/ crypto \/ cloud \/ hardware \/ social-engineering \/ misc -->|${category}|g" "$poc_readme"
+sed_inplace "s|<!-- path to original entry if this is a resurface, e.g. pocs\/web\/2021-12-10_log4shell\/ or N\/A -->|${related}|g" "$poc_readme"
 
 # --- Create stub exploit file ---
 
@@ -119,5 +123,5 @@ echo ""
 echo -e "${YELLOW}Next steps:${NC}"
 echo "  1. Edit $poc_dir/README.md"
 echo "  2. Implement exploit.py (or add your own exploit files)"
-echo "  3. Run ./scripts/index.sh to update INDEX.md"
+echo "  3. Run ./scripts/index.sh to update INDEX.md and archive/"
 echo ""

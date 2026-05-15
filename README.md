@@ -24,15 +24,18 @@ pocs/
 templates/
   POC_TEMPLATE.md      Template for new entries
 
+archive/
+  YYYY.md              Auto-generated index per CVE year (do not edit manually)
+
 scripts/
   new-poc.sh           Scaffold a new POC entry interactively
-  index.sh             Regenerate INDEX.md
+  index.sh             Regenerate INDEX.md and archive/YYYY.md
 
 .github/
   ISSUE_TEMPLATE/      Issue forms including URL ingestion form
   copilot-instructions.md
 
-INDEX.md               Searchable index of all archived POCs
+INDEX.md               Current CVE year — auto-generated, do not edit manually
 ```
 
 ---
@@ -54,7 +57,7 @@ Or manually:
 1. Copy `templates/POC_TEMPLATE.md` into `pocs/<category>/YYYY-MM-DD_vuln-name/README.md`
 2. Fill in all fields
 3. Add exploit code, screenshots, and references in the same folder
-4. Run `./scripts/index.sh` to update `INDEX.md`
+4. Run `./scripts/index.sh` to update `INDEX.md` and `archive/`
 
 ---
 
