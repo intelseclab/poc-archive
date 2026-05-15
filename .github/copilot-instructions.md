@@ -15,9 +15,11 @@ pocs/
       exploit.*          ← copied exploit files from the source repo
       screenshots/
       references/
+archive/
+  YYYY.md                ← auto-generated past-year indexes (do not edit manually)
 templates/POC_TEMPLATE.md
-scripts/index.sh         ← regenerates INDEX.md from all README.md metadata tables
-INDEX.md                 ← auto-generated, do not edit manually
+scripts/index.sh         ← regenerates INDEX.md and archive/YYYY.md
+INDEX.md                 ← current year only, auto-generated, do not edit manually
 ```
 
 ---
@@ -67,6 +69,7 @@ From the README, description, topics, and file content, determine:
 | **cve** | Extract CVE-YYYY-XXXXX from README/topics. Use "N/A" if none |
 | **status** | Weaponized if working exploit code exists; Researched if write-up only; Patched/Unpatched based on advisory; Unknown otherwise |
 | **tags** | Comma-separated: exploit technique + affected tech + auth level (e.g. `RCE, unauthenticated, nginx, path-traversal`) |
+| **related** | If this is a resurface of a known CVE, set to the path of the original entry (e.g. `pocs/web/2021-12-10_log4shell/`). Otherwise `N/A`. |
 
 ### 4 — Create the folder
 
@@ -91,7 +94,7 @@ In the Notes section, add: `Auto-ingested from https://github.com/OWNER/REPO on 
 Copy the exploit-relevant files from the cloned repo into the POC folder.
 Keep original filenames. Do not copy binaries, lock files, or `.git/` contents.
 
-### 7 — Update INDEX.md
+### 7 — Update INDEX.md and archives
 
 Run the index script:
 
@@ -99,14 +102,14 @@ Run the index script:
 bash scripts/index.sh
 ```
 
-This regenerates `INDEX.md` from all `README.md` metadata tables.
+This regenerates `INDEX.md` (current year) and `archive/YYYY.md` for any past years.
 
 ### 8 — Commit
 
 Stage and commit:
 
 ```bash
-git add pocs/ INDEX.md
+git add pocs/ INDEX.md archive/
 git commit -m "feat: ingest <vuln-name> from <owner>/<repo>"
 ```
 

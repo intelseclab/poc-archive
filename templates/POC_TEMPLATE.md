@@ -19,6 +19,7 @@
 | **CVSS Score** | <!-- e.g. 9.8 (CVSSv3) or N/A --> |
 | **Status** | <!-- Researched / Weaponized / Patched / Unpatched / Unknown --> |
 | **Tags** | <!-- e.g. RCE, SQLi, Apache, Windows, unauthenticated --> |
+| **Related** | <!-- path to original entry if this is a resurface, e.g. pocs/web/2021-12-10_log4shell/ or N/A --> |
 
 ---
 
