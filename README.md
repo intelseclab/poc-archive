@@ -1,5 +1,9 @@
 # poc-archive
 
+<p align="center">
+  <img src="project.png" alt="poc-archive — intelseclab" width="600">
+</p>
+
 A structured archive of security research proof-of-concepts, organized by category with metadata, reproduction steps, and references.
 
 ---
