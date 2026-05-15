@@ -46,6 +46,8 @@ INDEX.md               Current CVE year — auto-generated, do not edit manually
 
 Open a new issue using the **Ingest POC from GitHub URL** template. Paste the repository URL and submit. The Copilot coding agent will fetch metadata, analyze the repository, fill in the template, and open a PR for review.
 
+![Contributing demo](contribution.gif)
+
 ### Manual
 
 ```bash
