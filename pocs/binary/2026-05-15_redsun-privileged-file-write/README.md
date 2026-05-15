@@ -1,0 +1,162 @@
+# RedSun Privileged File Write (CVE-2026-33825)
+
+<!-- 
+  File: 2026-05-15_redsun-privileged-file-write.md
+  Location: pocs/binary/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-15 |
+| **Author / Researcher** | Nightmare-Eclipse |
+| **CVE / Advisory** | CVE-2026-33825 |
+| **Category** | binary |
+| **Severity** | High |
+| **CVSS Score** | 7.8 (estimated, CVSSv3) |
+| **Status** | Weaponized |
+| **Tags** | LPE, privileged-file-write, Windows Defender, Cloud Files API, TOCTOU, file-reparse-point |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Microsoft Defender Antivirus (real-time protection) on Windows with Cloud Files APIs |
+| **Versions Affected** | N/A (version scope not specified in public PoC repository) |
+| **Language / Platform** | C++ / Windows |
+| **Authentication Required** | Yes (local user execution) |
+| **Network Access Required** | Local only |
+
+---
+
+## Summary
+
+RedSun documents a local privilege-escalation technique where Defender's handling of a cloud-tagged malicious file can be abused as a privileged file write primitive. The PoC orchestrates file operations so the antimalware rewrite path lands on a high-value target under `C:\Windows\System32`. By chaining this write with service/COM execution flow, a local attacker can escalate to elevated privileges.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+The PoC indicates a logic flaw in how Defender handles a detected cloud-tagged malicious file: instead of only quarantining/deleting, it rewrites file content back to the original location. By racing file handles, oplocks, rename/delete operations, and directory reparse manipulation, the attacker redirects where the rewritten content is applied, converting Defender's privileged behavior into an arbitrary privileged file overwrite.
+
+### Attack Vector
+
+A local attacker runs the RedSun PoC binary. It stages an EICAR-like payload, triggers Defender scanning, sets up Cloud Files placeholder behavior, and pivots filesystem paths (including a mount-point reparse to `C:\Windows\System32`) during the vulnerable rewrite window. The PoC then targets `TieringEngineService.exe` and triggers execution paths to run attacker-controlled code with elevated rights.
+
+### Impact
+
+Privilege escalation from a local user context to administrative/SYSTEM-level execution through privileged file replacement in protected system paths.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Windows (Defender real-time protection enabled)
+Target:      Defender-enabled host where the rewrite behavior is present
+Attacker:    Local non-admin user with code execution
+Tools:       Visual Studio (C++ build), Windows APIs (Cloud Files, NT Native APIs)
+```
+
+### Setup Steps
+
+```bash
+# 1. Clone source repository
+git clone --depth=1 https://github.com/Nightmare-Eclipse/RedSun /tmp/poc-source-redsun
+
+# 2. Build RedSun.cpp as a Windows C++ executable (x64)
+#    (build step performed on a Windows development host)
+
+# 3. Run the resulting executable on an authorized test machine
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Build and launch PoC** — compile `RedSun.cpp` and run it as a local user on a Defender-enabled test host.
+   ```bash
+   RedSun.exe
+   ```
+
+2. **Trigger Defender rewrite workflow** — the PoC writes/reverses an EICAR string and opens the file to trigger antimalware handling while orchestrating oplocks and renames.
+
+3. **Redirect privileged write and trigger execution** — the PoC creates a reparse-point-based path redirection toward `C:\Windows\System32`, supersedes `TieringEngineService.exe`, copies attacker code, and invokes tier-management execution flow.
+
+### Exploit Code
+
+> See `RedSun.cpp` in this folder.
+
+```cpp
+// Minimal concept snippet — full exploit in RedSun.cpp
+char eicar[] = "*H+H$!ELIF-TSET-SURIVITNA-DRADNATS-RACIE$}7)CC7)^P(45XZP\\4[PA@%P!O5X";
+rev(eicar);
+WriteFile(hfile, eicar, sizeof(eicar) - 1, &nwf, NULL);
+
+// Trigger AV response on the staged file
+CreateFile(foo, GENERIC_READ | FILE_EXECUTE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+```
+
+### Expected Output
+
+```
+The sun is shinning...
+The red sun shall prevail.
+```
+
+---
+
+## Screenshots / Evidence
+
+- `screenshots/` — add authorized lab evidence of successful privilege escalation
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+# Potential host indicators
+# - Unexpected creation/replacement attempts for C:\Windows\System32\TieringEngineService.exe
+# - Suspicious use of Cloud Files API calls (CfRegisterSyncRoot / CfCreatePlaceholders)
+# - Rapid rename/delete/reparse-point operations in temporary directories
+# - Defender detections shortly followed by privileged file rewrite side effects
+```
+
+**SIEM / IDS Rule (example):**
+```
+Detect sequence: non-admin process -> Defender detection event ->
+filesystem reparse-point manipulation -> write/supersede activity under C:\Windows\System32
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Apply Microsoft security updates addressing CVE-2026-33825 once available for your platform |
+| **Workaround** | Restrict untrusted local code execution and monitor/block suspicious reparse-point abuse in user-writable paths |
+| **Config Hardening** | Enforce application allowlisting, EDR telemetry for Cloud Files API abuse, and tamper protection policies |
+
+---
+
+## References
+
+- [CVE-2026-33825](https://nvd.nist.gov/vuln/detail/CVE-2026-33825)
+- [Source Repository — Nightmare-Eclipse/RedSun](https://github.com/Nightmare-Eclipse/RedSun)
+- [MIT License — Source repository](https://github.com/Nightmare-Eclipse/RedSun/blob/main/LICENSE)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/Nightmare-Eclipse/RedSun on 2026-05-15.
