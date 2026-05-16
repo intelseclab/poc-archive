@@ -1,0 +1,160 @@
+# Adobe Acrobat/Reader Prototype Pollution Sandbox Escape (CVE-2026-34621)
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-16 |
+| **Author / Researcher** | NULL200OK |
+| **CVE / Advisory** | CVE-2026-34621 |
+| **Category** | binary |
+| **Severity** | Critical |
+| **CVSS Score** | 9.8 (estimated, CVSSv3) |
+| **Status** | Weaponized |
+| **Tags** | prototype-pollution, sandbox-escape, Adobe-Acrobat, Adobe-Reader, PDF, RCE, Windows, macOS, user-interaction |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Adobe Acrobat DC / Adobe Acrobat Reader DC / Adobe Acrobat 2024 JavaScript engine sandbox boundary |
+| **Versions Affected** | Acrobat/Reader DC Continuous ≤ 26.001.21367; Acrobat 2024 Classic ≤ 24.001.30356 |
+| **Language / Platform** | Python PoC generator targeting Adobe PDF JavaScript on Windows and macOS |
+| **Authentication Required** | Partial (victim must open crafted PDF) |
+| **Network Access Required** | No (optional staging URL supported by PoC) |
+
+---
+
+## Summary
+
+This repository contains a Python-based exploit generator for CVE-2026-34621, described as a prototype pollution vulnerability in Adobe Acrobat and Reader that can break JavaScript trust boundaries. The generated PDF embeds JavaScript intended to escalate from untrusted document context to privileged API access, then execute OS commands on vulnerable hosts. The PoC supports multiple trigger vectors, obfuscation levels, and payload staging for authorized lab validation on Windows and macOS.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+The upstream write-up states that attacker-controlled JavaScript can pollute `Object.prototype` and inject trusted-like properties into Adobe's JavaScript runtime object graph. This weakens separation between untrusted document script and privileged execution context.
+
+### Attack Vector
+
+An attacker sends a crafted PDF to a target user. When the file is opened in a vulnerable Adobe Acrobat/Reader build with JavaScript enabled, the embedded script executes, attempts context escalation through polluted prototype state, and invokes privileged APIs to launch attacker-specified commands.
+
+### Impact
+
+Successful exploitation can produce sandbox escape and arbitrary code execution in the victim environment, with practical impact ranging from local command execution to staged payload download and persistence.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Windows and/or macOS test hosts
+Target:      Adobe Acrobat/Reader vulnerable versions listed above
+Attacker:    Authorized security tester
+Tools:       Python 3.7+, optional PyPDF2 for lure-PDF merging
+```
+
+### Setup Steps
+
+```bash
+# 1. Run in an isolated, authorized lab only
+python3 cve_2026_34621_advanced.py -o test.pdf
+
+# 2. Transfer test.pdf to a vulnerable Adobe test VM
+# 3. Open with Adobe Reader/Acrobat and observe behavior
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Generate crafted PDF** with default benign demo commands.
+   ```bash
+   python3 cve_2026_34621_advanced.py -o invoice.pdf
+   ```
+
+2. **Optionally tune payload and trigger** for platform-specific testing.
+   ```bash
+   python3 cve_2026_34621_advanced.py -o targeted.pdf --win calc.exe --trigger openaction
+   ```
+
+3. **Open the PDF in vulnerable Adobe build** inside an authorized sandboxed test VM.
+
+### Exploit Code
+
+> See `cve_2026_34621_advanced.py` in this folder.
+
+```python
+# Minimal usage example (full implementation in cve_2026_34621_advanced.py)
+import subprocess
+
+subprocess.run([
+    "python3", "cve_2026_34621_advanced.py",
+    "-o", "test.pdf",
+    "--win", "calc.exe",
+])
+```
+
+### Expected Output
+
+```
+[+] Output PDF: test.pdf
+[+] Generated report files: test_report.html / test_report.txt / test_config.json
+```
+
+---
+
+## Screenshots / Evidence
+
+- `screenshots/` — add authorized lab screenshots of Adobe version, PDF open event, and observed command execution behavior.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+- Unexpected Adobe Reader/Acrobat child process creation (cmd.exe, powershell.exe, osascript)
+- Suspicious Acrobat JavaScript API usage patterns in opened PDFs
+- Unknown PDF files triggering process execution shortly after user open
+```
+
+**SIEM / IDS Rule (example):**
+```
+Detect process chain: AcroRd32.exe or Acrobat.exe -> command interpreter / script host
+with command-line anomalies and preceding untrusted PDF open events.
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Update Adobe Acrobat/Reader to patched builds (DC 26.001.21411+; Acrobat 2024 24.001.30362+ on Windows / 24.001.30360+ on macOS per upstream write-up) |
+| **Workaround** | Disable Acrobat JavaScript where business impact allows; block untrusted PDF execution paths |
+| **Config Hardening** | Enforce EDR child-process restrictions for PDF readers and isolate document-handling workflows |
+
+---
+
+## References
+
+- [CVE-2026-34621](https://nvd.nist.gov/vuln/detail/CVE-2026-34621)
+- [Source Repository — NULL200OK/cve_2026_34621_advanced](https://github.com/NULL200OK/cve_2026_34621_advanced)
+- [Upstream README (affected versions, usage, mitigation)](https://github.com/NULL200OK/cve_2026_34621_advanced/blob/main/README.md)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/NULL200OK/cve_2026_34621_advanced on 2026-05-16.
+
+Upstream repository states the tool is for authorized testing only; validate only in isolated lab environments.
