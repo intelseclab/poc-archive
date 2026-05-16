@@ -28,7 +28,7 @@
 | Field | Value |
 |---|---|
 | **Software / System** | Apache Parquet Java (`parquet-avro`) schema parsing consumers |
-| **Versions Affected** | Vulnerable `parquet-avro` releases impacted by CVE-2025-30065 (PoC demonstrates 1.8.1) |
+| **Versions Affected** | Vulnerable `parquet-avro` releases impacted by CVE-2025-30065 (source PoC demonstrates 1.8.1) |
 | **Language / Platform** | Java 17+, JVM-based data processing pipelines |
 | **Authentication Required** | No (if attacker can feed crafted Parquet data into ingestion path) |
 | **Network Access Required** | Yes |
@@ -61,7 +61,7 @@ Successful exploitation can trigger SSRF and, with suitable classpath gadgets or
 
 ```
 OS:          Linux/macOS attacker and victim lab hosts
-Target:      Java application using parquet-avro (PoC uses 1.8.1)
+Target:      Java application using vulnerable parquet-avro builds (source PoC demonstrates 1.8.1)
 Attacker:    Any host that can provide malicious Parquet input
 Tools:       Java 17, Maven, Python (for HTTP callback listener)
 ```
@@ -185,3 +185,4 @@ alert http $DATA_PLATFORM any -> any any (
 ## Notes
 
 Auto-ingested from https://github.com/mouadk/parquet-rce-poc-CVE-2025-30065 on 2026-05-16.
+For repository safety, the archived `pom.xml` pins patched dependency versions (parquet-avro 1.15.2, avro 1.11.4).
