@@ -542,6 +542,93 @@
       margin-left: 2px;
     }
 
+    /* name col wrapping */
+    .col-name {
+      max-width: 240px;
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+
+    /* ── Pagination ──────────────────────────────────────────────────────── */
+    .pagination-bar {
+      border-top: 1px solid var(--border);
+      padding: 0.65rem 0;
+    }
+
+    .pagination-inner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 11px;
+    }
+
+    .page-info {
+      color: var(--fg-2);
+      white-space: nowrap;
+      margin-right: auto;
+    }
+
+    .page-info .page-range { color: var(--fg-1); }
+
+    .page-btns {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .page-btn {
+      padding: 0.3rem 0.6rem;
+      background: var(--bg-2);
+      border: 1px solid var(--border-hi);
+      border-radius: var(--radius-sm);
+      color: var(--fg-1);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.12s;
+      white-space: nowrap;
+    }
+
+    .page-btn:hover:not(:disabled) {
+      border-color: var(--fg-3);
+      color: var(--fg-0);
+    }
+
+    .page-btn:disabled {
+      opacity: 0.3;
+      cursor: default;
+    }
+
+    .page-num {
+      padding: 0.3rem 0.55rem;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      color: var(--fg-2);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.12s;
+      min-width: 28px;
+      text-align: center;
+    }
+
+    .page-num:hover { color: var(--fg-0); background: var(--bg-3); }
+
+    .page-num.active {
+      background: var(--bg-3);
+      border-color: var(--accent-dim);
+      color: var(--accent);
+      cursor: default;
+    }
+
+    .page-ellipsis {
+      color: var(--fg-3);
+      padding: 0 0.2rem;
+      font-size: 11px;
+    }
+
     /* ── Responsive ──────────────────────────────────────────────────────── */
 
     /* Tablet — hide tags */
@@ -611,6 +698,11 @@
 
       .badge { font-size: 9px; padding: 0.1rem 0.4rem; }
       .cat-badge { font-size: 9px; }
+
+      .pagination-inner { gap: 0.4rem; }
+      .page-info { width: 100%; margin-right: 0; }
+      .page-btn  { font-size: 10px; padding: 0.3rem 0.5rem; }
+      .page-num  { font-size: 10px; min-width: 24px; padding: 0.3rem 0.4rem; }
     }
   </style>
 </head>
@@ -707,12 +799,12 @@
       <table id="js-table">
         <thead>
           <tr>
-            <th data-col="date">Date <span class="sort-indicator">&#9660;</span></th>
-            <th data-col="name">Name <span class="sort-indicator">&#9660;</span></th>
-            <th data-col="category">Category <span class="sort-indicator">&#9660;</span></th>
-            <th data-col="cve">CVE <span class="sort-indicator">&#9660;</span></th>
+            <th data-col="date"     class="col-date">Date <span class="sort-indicator">&#9660;</span></th>
+            <th data-col="name"     class="col-name">Name <span class="sort-indicator">&#9660;</span></th>
+            <th data-col="category" class="col-cat">Category <span class="sort-indicator">&#9660;</span></th>
+            <th data-col="cve"      class="col-cve">CVE <span class="sort-indicator">&#9660;</span></th>
             <th data-col="severity">Severity <span class="sort-indicator">&#9660;</span></th>
-            <th data-col="tags">Tags <span class="sort-indicator">&#9660;</span></th>
+            <th data-col="tags"     class="col-tags">Tags <span class="sort-indicator">&#9660;</span></th>
             <th data-col="status">Status <span class="sort-indicator">&#9660;</span></th>
           </tr>
         </thead>
@@ -720,6 +812,21 @@
           <!-- populated by JS -->
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- ── Pagination ──────────────────────────────────────────────────────── -->
+  <div class="pagination-bar">
+    <div class="wrap">
+      <div class="pagination-inner">
+        <span class="page-info" id="js-page-info"></span>
+        <div class="page-btns" id="js-page-btns"></div>
+        <select id="js-page-size" class="filter-select">
+          <option value="25">25 / page</option>
+          <option value="50">50 / page</option>
+          <option value="100">100 / page</option>
+        </select>
+      </div>
     </div>
   </div>
 
@@ -759,19 +866,24 @@
       let filtered     = [];
       let sortCol      = 'date';
       let sortDir      = 'desc';   /* newest first by default */
+      let currentPage  = 1;
+      let pageSize     = 25;
 
       /* ── DOM refs ───────────────────────────────────────────────────────── */
-      const $tbody    = document.getElementById('js-tbody');
-      const $count    = document.getElementById('js-count');
-      const $stats    = document.getElementById('js-stats');
-      const $updated  = document.getElementById('js-updated');
-      const $search   = document.getElementById('js-search');
-      const $fSev     = document.getElementById('js-filter-severity');
-      const $fCat     = document.getElementById('js-filter-category');
-      const $fStat    = document.getElementById('js-filter-status');
-      const $fYear    = document.getElementById('js-filter-year');
-      const $clear    = document.getElementById('js-clear');
-      const $thead    = document.querySelector('thead tr');
+      const $tbody     = document.getElementById('js-tbody');
+      const $count     = document.getElementById('js-count');
+      const $stats     = document.getElementById('js-stats');
+      const $updated   = document.getElementById('js-updated');
+      const $search    = document.getElementById('js-search');
+      const $fSev      = document.getElementById('js-filter-severity');
+      const $fCat      = document.getElementById('js-filter-category');
+      const $fStat     = document.getElementById('js-filter-status');
+      const $fYear     = document.getElementById('js-filter-year');
+      const $clear     = document.getElementById('js-clear');
+      const $thead     = document.querySelector('thead tr');
+      const $pageInfo  = document.getElementById('js-page-info');
+      const $pageBtns  = document.getElementById('js-page-btns');
+      const $pageSizeEl = document.getElementById('js-page-size');
 
       /* ── Helpers ────────────────────────────────────────────────────────── */
       function esc(str) {
@@ -867,6 +979,7 @@
           return true;
         });
 
+        currentPage = 1;
         sortFiltered();
         renderTable();
         updateClearBtn();
@@ -904,17 +1017,26 @@
 
       /* ── Table render ───────────────────────────────────────────────────── */
       function renderTable() {
-        $count.textContent = filtered.length;
+        const total    = filtered.length;
+        const pages    = Math.max(1, Math.ceil(total / pageSize));
+        if (currentPage > pages) currentPage = pages;
 
-        if (filtered.length === 0) {
+        const start    = (currentPage - 1) * pageSize;
+        const end      = Math.min(start + pageSize, total);
+        const pagePocs = filtered.slice(start, end);
+
+        $count.textContent = total;
+
+        if (total === 0) {
           $tbody.innerHTML =
             `<tr class="empty-row"><td colspan="7">
               no entries match the current filters
             </td></tr>`;
+          renderPagination(0, 1, 0, 0);
           return;
         }
 
-        const rows = filtered.map(p => {
+        const rows = pagePocs.map(p => {
           const link = urlForPoc(p.url);
           const tags = buildTagChips(p.tags);
           return `<tr data-href="${esc(link)}">
@@ -940,6 +1062,52 @@
             if (href && href !== '#') window.open(href, '_blank', 'noopener,noreferrer');
           });
         });
+
+        renderPagination(total, pages, start, end);
+      }
+
+      /* ── Pagination render ──────────────────────────────────────────────── */
+      function renderPagination(total, pages, start, end) {
+        if (total === 0) {
+          $pageInfo.innerHTML = '';
+          $pageBtns.innerHTML = '';
+          return;
+        }
+
+        $pageInfo.innerHTML =
+          `<span class="page-range">${start + 1}–${end}</span> of ${total} entries`;
+
+        /* build page number list: always show first, last, current ±1 */
+        const nums = new Set([1, pages, currentPage - 1, currentPage, currentPage + 1]
+          .filter(n => n >= 1 && n <= pages));
+        const sorted = [...nums].sort((a, b) => a - b);
+
+        let html = `<button class="page-btn" id="js-prev">← prev</button>`;
+
+        let prev = 0;
+        for (const n of sorted) {
+          if (n - prev > 1) html += `<span class="page-ellipsis">…</span>`;
+          html += `<button class="page-num${n === currentPage ? ' active' : ''}" data-page="${n}">${n}</button>`;
+          prev = n;
+        }
+
+        html += `<button class="page-btn" id="js-next">next →</button>`;
+        $pageBtns.innerHTML = html;
+
+        document.getElementById('js-prev').disabled = currentPage === 1;
+        document.getElementById('js-next').disabled = currentPage === pages;
+
+        document.getElementById('js-prev').addEventListener('click', () => goPage(currentPage - 1));
+        document.getElementById('js-next').addEventListener('click', () => goPage(currentPage + 1));
+        $pageBtns.querySelectorAll('.page-num:not(.active)').forEach(btn => {
+          btn.addEventListener('click', () => goPage(Number(btn.dataset.page)));
+        });
+      }
+
+      function goPage(n) {
+        currentPage = n;
+        renderTable();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
 
       /* ── Populate filter dropdowns ──────────────────────────────────────── */
@@ -978,6 +1146,7 @@
           sortCol = col;
           sortDir = 'asc';
         }
+        currentPage = 1;
         updateSortUI();
         sortFiltered();
         renderTable();
@@ -1011,6 +1180,12 @@
         $fStat.value  = '';
         $fYear.value  = '';
         applyFilters();
+      });
+
+      $pageSizeEl.addEventListener('change', () => {
+        pageSize    = Number($pageSizeEl.value);
+        currentPage = 1;
+        renderTable();
       });
 
       /* ── Bootstrap: fetch data ──────────────────────────────────────────── */
