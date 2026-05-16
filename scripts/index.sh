@@ -46,7 +46,7 @@ while IFS= read -r -d '' readme; do
   row="| ${date_added:-—} | [${display_name}](./${rel_dir}/) | \`${category}\` | ${cve:-N/A} | ${severity:-—} | ${tags:-—} | ${status:-—} |"
 
   # Group by CVE year; fall back to Date Added year if no CVE
-  cve_year=$(echo "$cve" | grep -oP 'CVE-\K[0-9]{4}' | head -1)
+  cve_year=$(echo "$cve" | grep -oP 'CVE-\K[0-9]{4}' | head -1 || true)
   if [[ -n "$cve_year" && "$cve_year" =~ ^[0-9]{4}$ ]]; then
     year="$cve_year"
   else
