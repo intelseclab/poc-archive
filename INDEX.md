@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-05-16 20:40:39
+> Last updated: 2026-05-16 20:47:23
 
 ---
 
@@ -21,7 +21,7 @@
 
 ---
 
-*Total POCs: 20*
+*Total POCs: 21*
 
 ## By Category
 
@@ -32,11 +32,11 @@
 - **`misc`** — 1 entries
 - **`network`** — 5 entries
 - **`social-engineering`** — 0 entries
-- **`web`** — 6 entries
+- **`web`** — 7 entries
 
 ## Archives
 
-- [2025](./archive/2025.md) — 3 entries
+- [2025](./archive/2025.md) — 4 entries
 - [2024](./archive/2024.md) — 4 entries
 - [2023](./archive/2023.md) — 1 entries
 - [2021](./archive/2021.md) — 1 entries
