@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-05-16 15:21:56
+> Last updated: 2026-05-16 15:36:56
 
 ---
 
@@ -15,11 +15,12 @@
 | 2026-05-16 | [adobe-acrobat-prototype-pollution-sandbox-escape](./pocs/binary/2026-05-16_adobe-acrobat-prototype-pollution-sandbox-escape/) | `binary` | CVE-2026-34621 | Critical | prototype-pollution, sandbox-escape, Adobe-Acrobat, Adobe-Reader, PDF, RCE, Windows, macOS, user-interaction | Weaponized |
 | 2026-05-14 | [nginx-rift-cve-2026-42945](./pocs/web/2026-05-14_nginx-rift-cve-2026-42945/) | `web` | CVE-2026-42945 | Critical | RCE, unauthenticated, nginx, heap-overflow, buffer-overflow, rewrite | Weaponized |
 | 2026-05-15 | [exchange-health-checker-outbound-rule-blind-spot](./pocs/web/2026-05-15_exchange-health-checker-outbound-rule-blind-spot/) | `web` | CVE-2026-42897 | Medium | Exchange, HealthChecker, IIS, URL-Rewrite, outbound-rules, EOMT, CSP, detection-gap | Researched |
+| 2026-05-16 | [chrome-cssfontfeaturevaluesmap-use-after-free](./pocs/web/2026-05-16_chrome-cssfontfeaturevaluesmap-use-after-free/) | `web` | CVE-2026-2441 | High | use-after-free, Chrome, Blink, CSSOM, renderer-rce, unauthenticated, drive-by | Weaponized |
 | 2026-05-16 | [cpanel-whm-auth-bypass-crlf-session-injection](./pocs/web/2026-05-16_cpanel-whm-auth-bypass-crlf-session-injection/) | `web` | CVE-2026-41940 | Critical | auth-bypass, CRLF-injection, session-poisoning, cPanel, WHM, unauthenticated | Weaponized |
 
 ---
 
-*Total POCs: 15*
+*Total POCs: 16*
 
 ## By Category
 
@@ -30,7 +31,7 @@
 - **`misc`** — 1 entries
 - **`network`** — 3 entries
 - **`social-engineering`** — 0 entries
-- **`web`** — 4 entries
+- **`web`** — 5 entries
 
 ## Archives
 
