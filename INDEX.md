@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-05-16 20:55:35
+> Last updated: 2026-05-16 21:25:51
 
 ---
 
@@ -21,7 +21,7 @@
 
 ---
 
-*Total POCs: 22*
+*Total POCs: 23*
 
 ## By Category
 
@@ -30,14 +30,14 @@
 - **`crypto`** — 0 entries
 - **`hardware`** — 0 entries
 - **`misc`** — 2 entries
-- **`network`** — 5 entries
+- **`network`** — 6 entries
 - **`social-engineering`** — 0 entries
 - **`web`** — 7 entries
 
 ## Archives
 
 - [2025](./archive/2025.md) — 5 entries
-- [2024](./archive/2024.md) — 4 entries
+- [2024](./archive/2024.md) — 5 entries
 - [2023](./archive/2023.md) — 1 entries
 - [2021](./archive/2021.md) — 1 entries
 - [2020](./archive/2020.md) — 1 entries
