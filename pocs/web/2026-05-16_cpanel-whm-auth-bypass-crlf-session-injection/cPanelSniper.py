@@ -465,7 +465,7 @@ def action_list_accounts(ctx):
 
 def action_change_passwd(ctx, new_password):
     """Change root password"""
-    log("API", f"Changing root password → {new_password}")
+    log("API", "Changing root password")
     s, data = whm_api(*ctx[:6], "passwd",
                       {"user": "root", "password": new_password}, ctx[6], ctx[-1])
     safe_print(json.dumps(data, indent=2)[:800] if isinstance(data, dict)
