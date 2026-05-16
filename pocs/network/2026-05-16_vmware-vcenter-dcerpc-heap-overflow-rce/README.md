@@ -1,0 +1,153 @@
+# VMware vCenter Server DCE/RPC Heap Overflow RCE (CVE-2024-37079)
+
+<!-- 
+  File: 2026-05-16_vmware-vcenter-dcerpc-heap-overflow-rce.md
+  Location: pocs/network/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-16 |
+| **Author / Researcher** | Vulnmachines (source repository); VMware/CISA advisory ecosystem |
+| **CVE / Advisory** | CVE-2024-37079 |
+| **Category** | network |
+| **Severity** | Critical |
+| **CVSS Score** | 9.8 (CVSSv3) |
+| **Status** | Weaponized |
+| **Tags** | RCE, heap-overflow, DCE/RPC, vCenter, unauthenticated, KEV |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | VMware vCenter Server |
+| **Versions Affected** | vCenter Server versions impacted by CVE-2024-37079 prior to VMware June 2024 security updates |
+| **Language / Platform** | VMware vCenter Server Appliance / enterprise virtualization management plane |
+| **Authentication Required** | No |
+| **Network Access Required** | Yes |
+
+---
+
+## Summary
+
+CVE-2024-37079 is a critical heap overflow condition in a vCenter Server DCE/RPC network-handling path. A crafted network packet can trigger memory corruption pre-authentication and potentially lead to remote code execution. Public reporting indicates patch availability in June 2024 and subsequent inclusion in CISA KEV in January 2026, indicating observed exploitation activity.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+The issue is a heap memory corruption flaw in DCE/RPC request processing where malformed packet data can corrupt heap state, enabling control-flow abuse under favorable conditions.
+
+### Attack Vector
+
+An unauthenticated attacker with network reachability to exposed vCenter services sends crafted DCE/RPC traffic that exercises the vulnerable parser/handler path.
+
+### Impact
+
+- Unauthenticated remote code execution risk on vCenter Server.
+- Potential compromise of central virtualization management infrastructure.
+- High-value lateral movement opportunity due to vCenter control-plane position.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Isolated lab with vulnerable VMware vCenter Server build
+Target:      vCenter Server instance susceptible to CVE-2024-37079
+Attacker:    Authorized security testing host with network reachability
+Tools:       Packet crafting/fuzzing utilities, network capture, vCenter logs
+```
+
+### Setup Steps
+
+```bash
+# High-level authorized-lab workflow
+# 1) Deploy an isolated vulnerable vCenter snapshot/build for validation.
+# 2) Restrict traffic to test hosts only and enable logging/packet capture.
+# 3) Replay crafted DCE/RPC traffic against exposed target service paths.
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Prepare authorized test environment** with vulnerable vCenter and monitoring enabled.
+2. **Deliver crafted DCE/RPC packet sequence** to the reachable vulnerable service endpoint.
+3. **Observe crash/memory-corruption indicators** and validate potential code execution behavior in controlled conditions.
+
+### Exploit Code
+
+> No public, reproducible weaponized exploit script for CVE-2024-37079 is archived in the referenced upstream repository.
+
+```python
+# See exploit.py in this folder.
+# This repository intentionally keeps a non-weaponized placeholder for authorized lab use.
+```
+
+### Expected Output
+
+```
+- Target service instability/crash signatures in vCenter logs
+- Memory-corruption indicators during packet processing
+- Potential code-execution conditions in controlled exploit-development scenarios
+```
+
+---
+
+## Screenshots / Evidence
+
+- `screenshots/` — add authorized lab captures (packet traces, crash artifacts, debugger evidence)
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+- Unexpected DCE/RPC traffic patterns to vCenter-facing services from untrusted hosts
+- vCenter service crashes/restarts tied to malformed RPC requests
+- Correlated network + process telemetry suggesting exploit-attempt sequencing
+```
+
+**SIEM / IDS Rule (example):**
+```
+Alert on anomalous or malformed DCE/RPC packet bursts targeting vCenter services,
+especially from non-admin network segments.
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Apply VMware June 2024 security updates that remediate CVE-2024-37079 |
+| **Workaround** | Minimize exposed management interfaces; restrict DCE/RPC-reachable paths to trusted admin networks |
+| **Config Hardening** | Enforce management-plane segmentation, strict ACLs, and continuous monitoring for malformed RPC traffic |
+
+---
+
+## References
+
+- [CVE-2024-37079 — NVD](https://nvd.nist.gov/vuln/detail/CVE-2024-37079)
+- [CISA Known Exploited Vulnerabilities Catalog](https://www.cisa.gov/known-exploited-vulnerabilities-catalog)
+- [VMware Security Advisories](https://www.vmware.com/security/advisories.html)
+- [Source Repository — Vulnmachines/VmWare-vCenter-vulnerability](https://github.com/Vulnmachines/VmWare-vCenter-vulnerability)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/Vulnmachines/VmWare-vCenter-vulnerability on 2026-05-16.
+Source repository content appears focused on older vCenter CVEs; this entry uses the issue-provided CVE-2024-37079 context for classification.
