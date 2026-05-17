@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-05-17 19:56:21
+> Last updated: 2026-05-17 20:03:49
 
 ---
 
@@ -19,6 +19,7 @@
 | 2026-05-15 | — | [exchange-health-checker-outbound-rule-blind-spot](./pocs/web/2026-05-15_exchange-health-checker-outbound-rule-blind-spot/) | `web` | CVE-2026-42897 | Medium | Exchange, HealthChecker, IIS, URL-Rewrite, outbound-rules, EOMT, CSP, detection-gap | Researched |
 | 2026-05-16 | — | [chrome-cssfontfeaturevaluesmap-use-after-free](./pocs/web/2026-05-16_chrome-cssfontfeaturevaluesmap-use-after-free/) | `web` | CVE-2026-2441 | High | use-after-free, Chrome, Blink, CSSOM, renderer-rce, unauthenticated, drive-by | Weaponized |
 | 2026-05-16 | — | [cpanel-whm-auth-bypass-crlf-session-injection](./pocs/web/2026-05-16_cpanel-whm-auth-bypass-crlf-session-injection/) | `web` | CVE-2026-41940 | Critical | auth-bypass, CRLF-injection, session-poisoning, cPanel, WHM, unauthenticated | Weaponized |
+| 2026-05-17 | 2026-05-11 | [apache-httpd-mod-http2-double-free](./pocs/web/2026-05-17_apache-httpd-mod-http2-double-free/) | `web` | CVE-2026-23918 | Critical | RCE, pre-auth, unauthenticated, double-free, heap-corruption, Apache, httpd, mod_http2, HTTP/2, TLS | Weaponized |
 | 2026-05-17 | — | [nextjs-beforeinteractive-script-xss](./pocs/web/2026-05-17_nextjs-beforeinteractive-script-xss/) | `web` | CVE-2026-44580 | Medium | XSS, next/script, beforeInteractive, Next.js, App-Router, unauthenticated | Weaponized |
 | 2026-05-17 | — | [nextjs-cache-components-connection-exhaustion-dos](./pocs/web/2026-05-17_nextjs-cache-components-connection-exhaustion-dos/) | `web` | CVE-2026-44579 | High | DoS, connection-exhaustion, next-resume, Next.js, cache-components, unauthenticated | Weaponized |
 | 2026-05-17 | — | [nextjs-csp-nonce-cache-poisoned-xss](./pocs/web/2026-05-17_nextjs-csp-nonce-cache-poisoned-xss/) | `web` | CVE-2026-44581 | Medium | XSS, cache-poisoning, CSP-nonce, Next.js, App-Router, unauthenticated | Weaponized |
@@ -34,7 +35,7 @@
 
 ---
 
-*Total POCs: 56*
+*Total POCs: 57*
 
 ## By Category
 
@@ -45,7 +46,7 @@
 - **`misc`** — 2 entries
 - **`network`** — 10 entries
 - **`social-engineering`** — 0 entries
-- **`web`** — 27 entries
+- **`web`** — 28 entries
 
 ## Archives
 
