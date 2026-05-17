@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-05-16 21:52:28
+> Last updated: 2026-05-16 21:59:00
 
 ---
 
@@ -21,11 +21,11 @@
 
 ---
 
-*Total POCs: 25*
+*Total POCs: 26*
 
 ## By Category
 
-- **`binary`** — 8 entries
+- **`binary`** — 9 entries
 - **`cloud`** — 0 entries
 - **`crypto`** — 0 entries
 - **`hardware`** — 0 entries
@@ -36,7 +36,7 @@
 
 ## Archives
 
-- [2025](./archive/2025.md) — 5 entries
+- [2025](./archive/2025.md) — 6 entries
 - [2024](./archive/2024.md) — 7 entries
 - [2023](./archive/2023.md) — 1 entries
 - [2021](./archive/2021.md) — 1 entries
