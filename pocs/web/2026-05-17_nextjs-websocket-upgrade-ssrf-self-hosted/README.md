@@ -16,7 +16,7 @@
 | **CVE / Advisory** | CVE-2026-44578 |
 | **Category** | web |
 | **Severity** | High |
-| **CVSS Score** | 8.6 (CVSSv3.1) |
+| **CVSS Score** | 8.6 (CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:L/A:N) |
 | **Status** | Weaponized |
 | **Tags** | SSRF, WebSocket, upgrade-request, Next.js, self-hosted, unauthenticated, metadata-service |
 | **Related** | N/A |
@@ -28,7 +28,7 @@
 | Field | Value |
 |---|---|
 | **Software / System** | Next.js standalone router server (`next start`) |
-| **Versions Affected** | >=13.0.0 and <16.2.5 in self-hosted mode (fixed in 15.5.16 / 16.2.5) |
+| **Versions Affected** | >=13.0.0, <15.5.16 and >=16.0.0, <16.2.5 in self-hosted mode |
 | **Language / Platform** | JavaScript / Node.js |
 | **Authentication Required** | No |
 | **Network Access Required** | Yes |
