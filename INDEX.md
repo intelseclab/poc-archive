@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-05-17 09:11:33
+> Last updated: 2026-05-17 09:25:55
 
 ---
 
@@ -18,12 +18,13 @@
 | 2026-05-15 | [exchange-health-checker-outbound-rule-blind-spot](./pocs/web/2026-05-15_exchange-health-checker-outbound-rule-blind-spot/) | `web` | CVE-2026-42897 | Medium | Exchange, HealthChecker, IIS, URL-Rewrite, outbound-rules, EOMT, CSP, detection-gap | Researched |
 | 2026-05-16 | [chrome-cssfontfeaturevaluesmap-use-after-free](./pocs/web/2026-05-16_chrome-cssfontfeaturevaluesmap-use-after-free/) | `web` | CVE-2026-2441 | High | use-after-free, Chrome, Blink, CSSOM, renderer-rce, unauthenticated, drive-by | Weaponized |
 | 2026-05-16 | [cpanel-whm-auth-bypass-crlf-session-injection](./pocs/web/2026-05-16_cpanel-whm-auth-bypass-crlf-session-injection/) | `web` | CVE-2026-41940 | Critical | auth-bypass, CRLF-injection, session-poisoning, cPanel, WHM, unauthenticated | Weaponized |
+| 2026-05-17 | [nextjs-beforeinteractive-script-xss](./pocs/web/2026-05-17_nextjs-beforeinteractive-script-xss/) | `web` | CVE-2026-44580 | Medium | XSS, next/script, beforeInteractive, Next.js, App-Router, unauthenticated | Weaponized |
 | 2026-05-17 | [nextjs-csp-nonce-cache-poisoned-xss](./pocs/web/2026-05-17_nextjs-csp-nonce-cache-poisoned-xss/) | `web` | CVE-2026-44581 | Medium | XSS, cache-poisoning, CSP-nonce, Next.js, App-Router, unauthenticated | Weaponized |
 | 2026-05-17 | [nextjs-rsc-cache-busting-weak-hash-collision](./pocs/web/2026-05-17_nextjs-rsc-cache-busting-weak-hash-collision/) | `web` | CVE-2026-44582 | Low | cache-poisoning, RSC, weak-hash, Next.js, unauthenticated | Weaponized |
 
 ---
 
-*Total POCs: 31*
+*Total POCs: 32*
 
 ## By Category
 
@@ -34,7 +35,7 @@
 - **`misc`** — 2 entries
 - **`network`** — 7 entries
 - **`social-engineering`** — 0 entries
-- **`web`** — 13 entries
+- **`web`** — 14 entries
 
 ## Archives
 
