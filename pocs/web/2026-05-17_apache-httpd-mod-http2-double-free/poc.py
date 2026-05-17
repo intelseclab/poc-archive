@@ -93,6 +93,7 @@ class Spray:
         s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         s.connect((self.host, self.port))
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        ctx.minimum_version = ssl.TLSVersion.TLSv1_2
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
         s = ctx.wrap_socket(s, server_hostname=self.host)
@@ -235,6 +236,7 @@ class Trigger:
         sock.settimeout(5)
         sock.connect((self.host, self.port))
         context = ssl.create_default_context()
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
         context.set_alpn_protocols(['h2'])
