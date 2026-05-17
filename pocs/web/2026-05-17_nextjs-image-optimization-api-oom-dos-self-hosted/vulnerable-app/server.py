@@ -74,9 +74,15 @@ class H(BaseHTTPRequestHandler):
             params = urllib.parse.parse_qs(qs)
             url = params.get("url", [""])[0]
 
+            # Harness safety: only permit local-path sources used by this PoC.
+            if not url.startswith("/"):
+                self.send_response(400)
+                self.send_header("Content-Type", "text/plain")
+                self.end_headers()
+                self.wfile.write(b"only local-path url values are supported")
+                return
             # Resolve relative URL against ourselves
-            if url.startswith("/"):
-                url = f"http://127.0.0.1:{self.server.server_port}{url}"
+            url = f"http://127.0.0.1:{self.server.server_port}{url}"
 
             try:
                 import urllib.request as ur
