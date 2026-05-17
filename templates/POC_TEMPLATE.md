@@ -12,6 +12,7 @@
 | Field | Value |
 |---|---|
 | **Date Added** | YYYY-MM-DD |
+| **Last Updated** | <!-- YYYY-MM-DD when upstream researcher last changed the PoC, or N/A --> |
 | **Author / Researcher** | <!-- your handle or name --> |
 | **CVE / Advisory** | <!-- CVE-YYYY-XXXXX or N/A --> |
 | **Category** | <!-- web / network / binary / crypto / cloud / hardware / social-engineering / misc --> |

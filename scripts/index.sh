@@ -32,6 +32,7 @@ while IFS= read -r -d '' readme; do
   category=$(echo "$rel" | cut -d'/' -f1)
 
   date_added=$(extract_field "$readme" "Date Added")
+  last_updated=$(extract_field "$readme" "Last Updated" || true)
   cve=$(extract_field "$readme" "CVE / Advisory")
   severity=$(extract_field "$readme" "Severity")
   tags=$(extract_field "$readme" "Tags")
@@ -43,7 +44,7 @@ while IFS= read -r -d '' readme; do
   rel_path="${readme#$REPO_ROOT/}"
   rel_dir=$(dirname "$rel_path")
 
-  row="| ${date_added:-—} | [${display_name}](./${rel_dir}/) | \`${category}\` | ${cve:-N/A} | ${severity:-—} | ${tags:-—} | ${status:-—} |"
+  row="| ${date_added:-—} | ${last_updated:-—} | [${display_name}](./${rel_dir}/) | \`${category}\` | ${cve:-N/A} | ${severity:-—} | ${tags:-—} | ${status:-—} |"
 
   # Group by CVE year; fall back to Date Added year if no CVE
   cve_year=$(echo "$cve" | grep -oP 'CVE-\K[0-9]{4}' | head -1 || true)
@@ -61,8 +62,9 @@ while IFS= read -r -d '' readme; do
   rel_dir_from_root="${readme#$REPO_ROOT/}"
   poc_url="../$(dirname "$rel_dir_from_root")/"
 
-  printf '  {\n    "date": "%s",\n    "name": "%s",\n    "category": "%s",\n    "cve": "%s",\n    "severity": "%s",\n    "tags": "%s",\n    "status": "%s",\n    "cve_year": "%s",\n    "url": "%s"\n  }' \
+  printf '  {\n    "date": "%s",\n    "updated": "%s",\n    "name": "%s",\n    "category": "%s",\n    "cve": "%s",\n    "severity": "%s",\n    "tags": "%s",\n    "status": "%s",\n    "cve_year": "%s",\n    "url": "%s"\n  }' \
     "$(json_escape "${date_added:-}")" \
+    "$(json_escape "${last_updated:-}")" \
     "$(json_escape "${display_name}")" \
     "$(json_escape "${category}")" \
     "$(json_escape "${cve:-N/A}")" \
@@ -92,8 +94,8 @@ if compgen -G "$TMPDIR_ROWS/*.rows" > /dev/null 2>&1; then
       echo ""
       echo "---"
       echo ""
-      echo "| Date | Name | Category | CVE | Severity | Tags | Status |"
-      echo "|---|---|---|---|---|---|---|"
+      echo "| Date Added | Last Updated | Name | Category | CVE | Severity | Tags | Status |"
+      echo "|---|---|---|---|---|---|---|---|"
       cat "$rows_file"
       echo ""
       echo "---"

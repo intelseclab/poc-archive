@@ -371,11 +371,20 @@
       vertical-align: middle;
     }
 
-    /* date col */
-    .col-date {
-      color: var(--fg-2);
+    /* updated col */
+    .col-updated {
       white-space: nowrap;
       font-size: 11px;
+    }
+
+    .updated-badge {
+      display: inline-block;
+      padding: 0.1rem 0.45rem;
+      border-radius: var(--radius-sm);
+      font-size: 10px;
+      background: rgba(34,197,94,0.1);
+      border: 1px solid rgba(34,197,94,0.3);
+      color: var(--green);
     }
 
     /* name col */
@@ -656,7 +665,7 @@
     /* Small tablet — hide CVE */
     @media (max-width: 680px) {
       .ascii-block { font-size: 8px; }
-      .col-cve  { display: none; }
+      .col-cve     { display: none; }
       thead th, tbody td { padding-left: 0.5rem; padding-right: 0.5rem; }
 
       .stats-inner { gap: 0.35rem; }
@@ -668,8 +677,8 @@
     /* Mobile — hide date + category, single-column filters */
     @media (max-width: 480px) {
       .ascii-block { display: none; }
-      .col-cat  { display: none; }
-      .col-date { display: none; }
+      .col-cat     { display: none; }
+      .col-updated { display: none; }
 
       header { padding: 1.25rem 0 1rem; }
 
@@ -797,7 +806,7 @@
       <table id="js-table">
         <thead>
           <tr>
-            <th data-col="date"     class="col-date">Date <span class="sort-indicator">&#9660;</span></th>
+            <th data-col="updated"  class="col-updated">Updated <span class="sort-indicator">&#9660;</span></th>
             <th data-col="name"     class="col-name">Name <span class="sort-indicator">&#9660;</span></th>
             <th data-col="category" class="col-cat">Category <span class="sort-indicator">&#9660;</span></th>
             <th data-col="cve"      class="col-cve">CVE <span class="sort-indicator">&#9660;</span></th>
@@ -862,7 +871,7 @@
       /* ── State ──────────────────────────────────────────────────────────── */
       let allPocs      = [];
       let filtered     = [];
-      let sortCol      = 'date';
+      let sortCol      = 'updated';
       let sortDir      = 'desc';   /* newest first by default */
       let currentPage  = 1;
       let pageSize     = 25;
@@ -1037,8 +1046,11 @@
         const rows = pagePocs.map(p => {
           const link = urlForPoc(p.url);
           const tags = buildTagChips(p.tags);
+          const updatedHtml = p.updated && p.updated !== 'N/A' && p.updated !== p.date
+            ? `<span class="updated-badge">${esc(p.updated)}</span>`
+            : `<span style="color:var(--fg-3)">—</span>`;
           return `<tr data-href="${esc(link)}">
-            <td class="col-date">${esc(p.date)}</td>
+            <td class="col-updated">${updatedHtml}</td>
             <td class="col-name">
               <a href="${esc(link)}" target="_blank" rel="noopener noreferrer"
                  onclick="event.stopPropagation()">${esc(p.name)}</a>

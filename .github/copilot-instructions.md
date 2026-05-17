@@ -70,6 +70,7 @@ From the README, description, topics, and file content, determine:
 | **status** | Weaponized if working exploit code exists; Researched if write-up only; Patched/Unpatched based on advisory; Unknown otherwise |
 | **tags** | Comma-separated: exploit technique + affected tech + auth level (e.g. `RCE, unauthenticated, nginx, path-traversal`) |
 | **related** | If this is a resurface of a known CVE, set to the path of the original entry (e.g. `pocs/web/2021-12-10_log4shell/`). Otherwise `N/A`. |
+| **last_updated** | Date of the most recent commit to the upstream repo that changed exploit code (not just README edits). Use `git log --format="%ad" --date=short -- <exploit-files> \| head -1` on the cloned repo. Use `N/A` if indeterminate. |
 
 ### 4 — Create the folder
 
@@ -119,6 +120,72 @@ git commit -m "feat: ingest <vuln-name> from <owner>/<repo>"
 Then open a PR targeting `main` with:
 - **Title:** `[POC] <Display Name> — <CVE or N/A>`
 - **Body:** summary table (category, severity, CVE, tags, source URL) + note that human review is needed before merging
+
+---
+
+## How to update an existing PoC from a GitHub URL
+
+When an issue uses the **Update Existing PoC** template, follow these steps instead of the ingest flow.
+
+### 1 — Find the existing entry
+
+Search all README files in `pocs/` for the source repo URL in the Notes section:
+
+```bash
+grep -rl "https://github.com/OWNER/REPO" pocs/
+```
+
+If no match is found, fall back to searching for the repo name or CVE mentioned in the issue. If still no match, comment on the issue asking for clarification — do not create a new entry.
+
+### 2 — Fetch the upstream repo
+
+Shallow-clone the repo and get the latest commit date for exploit-relevant files:
+
+```bash
+git clone --depth=1 https://github.com/OWNER/REPO /tmp/poc-update
+git -C /tmp/poc-update log --format="%ad" --date=short -- $(git -C /tmp/poc-update ls-files | grep -E '\.(py|sh|go|rb|c|cpp|js|ts|rs|cs|ps1)$') | head -1
+```
+
+This gives you the `Last Updated` date — the most recent commit that touched exploit code (not just README edits).
+
+### 3 — Update exploit files
+
+Compare files in the existing POC folder against the cloned repo. Replace any exploit-relevant files (`.py`, `.sh`, `.go`, `.rb`, `.c`, `.cpp`, `.js`, `.ts`, `.rs`, `.cs`, `.ps1`, `.sln`, `.csproj`) that have changed. Keep original filenames. Do not copy binaries, lock files, or `.git/` contents.
+
+### 4 — Update README.md
+
+In the existing entry's README.md, update these fields only:
+
+| Field | What to update |
+|---|---|
+| `Last Updated` | Set to the date from Step 2 |
+| `Status` | Re-evaluate based on new content (e.g. if a working shell was added, upgrade to Weaponized) |
+| `Tags` | Add any new techniques introduced in the update |
+| `Author / Researcher` | Add any new contributors mentioned in the repo |
+
+Do not change `Date Added`, `CVE`, `Category`, or the folder path.
+
+In the **Notes** section, append a line:
+```
+Updated YYYY-MM-DD: <brief description of what changed, from the issue body or inferred from commit messages>.
+```
+
+### 5 — Run index script
+
+```bash
+bash scripts/index.sh
+```
+
+### 6 — Commit and open PR
+
+```bash
+git add pocs/ INDEX.md archive/ docs/data.json
+git commit -m "update: <vuln-name> — <one-line summary of change>"
+```
+
+Open a PR with:
+- **Title:** `Update: <Display Name>`
+- **Body:** what changed, last updated date, source URL, note that human review is needed
 
 ---
 
