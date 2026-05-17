@@ -16,7 +16,7 @@
 | **CVE / Advisory** | CVE-2026-44577 |
 | **Category** | web |
 | **Severity** | Medium |
-| **CVSS Score** | 5.9 (CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H) |
+| **CVSS Score** | 5.9 (CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:H) |
 | **Status** | Weaponized |
 | **Tags** | DoS, OOM, image-optimizer, Next.js, self-hosted, unauthenticated |
 | **Related** | N/A |
