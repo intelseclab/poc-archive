@@ -1,0 +1,184 @@
+# Linux vsock Use-After-Free VM Escape (CVE-2025-21756)
+
+<!-- 
+  File: 2026-05-17_linux-vsock-vm-escape.md
+  Location: pocs/binary/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-17 |
+| **Last Updated** | 2025-04-18 |
+| **Author / Researcher** | hoefler02 |
+| **CVE / Advisory** | CVE-2025-21756 |
+| **Category** | binary |
+| **Severity** | High |
+| **CVSS Score** | 7.8 (CVSSv3) |
+| **Status** | Weaponized |
+| **Tags** | UAF, Linux kernel, vsock, VM escape, container escape, virtualization, LPE, x64 |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Linux kernel (vsock / virtual socket subsystem) |
+| **Versions Affected** | Linux kernel 6.6.75 (and related; specific to vsock subsystem) |
+| **Language / Platform** | C, Linux x64 |
+| **Authentication Required** | No (code execution inside a VM/container) |
+| **Network Access Required** | No (local — requires foothold inside VM) |
+
+---
+
+## Summary
+
+CVE-2025-21756 is a use-after-free vulnerability in the Linux kernel's vsock (virtual socket) subsystem. An attacker with code execution inside a virtual machine can exploit this bug to escape the VM boundary and gain root-level code execution on the hypervisor host. The vulnerability was researched and published by hoefler02 as their first Linux kernel exploit, accompanied by a full technical write-up. It targets Linux kernel 6.6.75 specifically and demonstrates the attacker-controlled UAF-to-privilege-escalation primitive that enables a complete VM breakout.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+A use-after-free bug exists in the vsock subsystem of the Linux kernel. The vsock transport layer improperly handles socket lifecycle management: a vsock object can be freed while still referenced by transport-layer data structures. An attacker can trigger this condition from within a VM by manipulating vsock socket operations in a specific sequence, causing the freed object to be reclaimed with attacker-controlled contents.
+
+### Attack Vector
+
+An attacker with unprivileged or low-privileged code execution inside a virtual machine crafts a sequence of vsock socket operations targeting kernel 6.6.75. By exploiting the UAF condition, the attacker achieves an arbitrary kernel write primitive. This is leveraged through standard kernel exploitation techniques (heap spray, cross-cache exploit primitives) to overwrite kernel data structures and escalate privileges.
+
+### Impact
+
+Full VM escape to the hypervisor host with root (uid=0) privileges. An attacker who has compromised a guest VM can break out of the VM isolation boundary, compromising the host system and potentially all other VMs running on the same hypervisor. This is a complete compromise of the virtualization boundary.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS (Guest):   Linux with kernel 6.6.75
+OS (Host):    Linux hypervisor (KVM/QEMU)
+Architecture: x64
+Attacker:     Shell inside guest VM
+Tools:        gcc, make, QEMU/KVM, provided run.sh / compress.sh scripts
+```
+
+### Setup Steps
+
+```bash
+# Use the provided scripts to set up the test environment
+chmod +x run.sh compress.sh extract-image.sh
+
+# Extract kernel image (if needed)
+./extract-image.sh
+
+# Compile the exploit
+gcc -o exploit x.c -static
+
+# Pack into initramfs and run
+./compress.sh
+./run.sh
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Prepare the environment** — Set up QEMU with kernel 6.6.75 using provided config
+   ```bash
+   ./extract-image.sh
+   ./compress.sh
+   ```
+
+2. **Build the exploit** — Compile the C exploit statically
+   ```bash
+   gcc -o exploit x.c -static
+   ```
+
+3. **Run the exploit inside the VM** — Execute from within the guest
+   ```bash
+   ./run.sh
+   # exploit runs inside the VM and escapes to host
+   ```
+
+### Exploit Code
+
+> See `x.c` in this folder (main exploit source).
+
+```c
+// See x.c for full exploit
+// Triggers UAF in vsock subsystem on kernel 6.6.75
+// Achieves VM escape and root on host
+```
+
+### Expected Output
+
+```
+# From inside the VM:
+[*] Triggering UAF in vsock...
+[*] Heap spray in progress...
+[*] Overwriting kernel structures...
+[+] Got root on host!
+uid=0(root) gid=0(root)
+```
+
+---
+
+## Screenshots / Evidence
+
+<!-- See pwned.gif in the upstream repository for live demo -->
+- Upstream demo: https://github.com/hoefler02/CVE-2025-21756/blob/main/pwned.gif
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+# Kernel log indicators (dmesg on host):
+KASAN: use-after-free in vsock_*
+BUG: unable to handle kernel NULL pointer dereference (vsock path)
+
+# Suspicious vsock activity from guest:
+# Monitor for abnormal vsock socket churn / rapid open-close sequences
+# Audit vsock transport bind/connect sequences from guest VMs
+```
+
+**SIEM / IDS Rule (example):**
+```
+# Monitor for unexpected privilege escalation from VM guest processes
+alert any any -> any any (msg:"CVE-2025-21756 vsock UAF VM escape"; \
+  content:"vsock"; content:"use-after-free"; sid:9002175;)
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Upgrade to a patched kernel version beyond 6.6.75 with vsock UAF fix applied |
+| **Workaround** | Disable vsock support (`modprobe -r vmw_vsock_virtio_transport`) if not required by workloads |
+| **Config Hardening** | Enable KASAN in testing environments to detect UAF early; restrict vsock access from untrusted guests |
+
+---
+
+## References
+
+- [CVE-2025-21756 NVD Entry](https://nvd.nist.gov/vuln/detail/CVE-2025-21756)
+- [GitHub Repository - hoefler02/CVE-2025-21756](https://github.com/hoefler02/CVE-2025-21756)
+- [Full Write-up by hoefler02](https://hoefler.dev/articles/vsock.html)
+
+---
+
+## Notes
+
+This is the author's (hoefler02) first Linux kernel exploit, published with a full technical write-up detailing the exploitation process. The exploit targets kernel 6.6.75 specifically, though the underlying vsock UAF may affect adjacent versions. The `lts-6.6.75.config` kernel config file is included in the repository to facilitate reproducible test environments.
+
+Auto-ingested from https://github.com/hoefler02/CVE-2025-21756 on 2026-05-17.

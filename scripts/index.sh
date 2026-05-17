@@ -115,8 +115,8 @@ fi
   echo ""
   echo "## ${CURRENT_YEAR}"
   echo ""
-  echo "| Date | Name | Category | CVE | Severity | Tags | Status |"
-  echo "|---|---|---|---|---|---|---|"
+  echo "| Date Added | Last Updated | Name | Category | CVE | Severity | Tags | Status |"
+  echo "|---|---|---|---|---|---|---|---|"
 
   if [[ -f "$TMPDIR_ROWS/${CURRENT_YEAR}.rows" ]]; then
     cat "$TMPDIR_ROWS/${CURRENT_YEAR}.rows"
