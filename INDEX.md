@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-05-17 11:58:02
+> Last updated: 2026-05-17 12:08:18
 
 ---
 
@@ -23,11 +23,12 @@
 | 2026-05-17 | [nextjs-csp-nonce-cache-poisoned-xss](./pocs/web/2026-05-17_nextjs-csp-nonce-cache-poisoned-xss/) | `web` | CVE-2026-44581 | Medium | XSS, cache-poisoning, CSP-nonce, Next.js, App-Router, unauthenticated | Weaponized |
 | 2026-05-17 | [nextjs-image-optimization-api-oom-dos-self-hosted](./pocs/web/2026-05-17_nextjs-image-optimization-api-oom-dos-self-hosted/) | `web` | CVE-2026-44577 | Medium | DoS, OOM, image-optimizer, Next.js, self-hosted, unauthenticated | Weaponized |
 | 2026-05-17 | [nextjs-rsc-cache-busting-weak-hash-collision](./pocs/web/2026-05-17_nextjs-rsc-cache-busting-weak-hash-collision/) | `web` | CVE-2026-44582 | Low | cache-poisoning, RSC, weak-hash, Next.js, unauthenticated | Weaponized |
+| 2026-05-17 | [nextjs-rsc-response-cache-poisoning](./pocs/web/2026-05-17_nextjs-rsc-response-cache-poisoning/) | `web` | CVE-2026-44576 | Medium | cache-poisoning, RSC, response-confusion, Next.js, shared-cache, unauthenticated | Weaponized |
 | 2026-05-17 | [nextjs-websocket-upgrade-ssrf-self-hosted](./pocs/web/2026-05-17_nextjs-websocket-upgrade-ssrf-self-hosted/) | `web` | CVE-2026-44578 | High | SSRF, WebSocket, upgrade-request, Next.js, self-hosted, unauthenticated, metadata-service | Weaponized |
 
 ---
 
-*Total POCs: 35*
+*Total POCs: 36*
 
 ## By Category
 
@@ -38,7 +39,7 @@
 - **`misc`** — 2 entries
 - **`network`** — 7 entries
 - **`social-engineering`** — 0 entries
-- **`web`** — 17 entries
+- **`web`** — 18 entries
 
 ## Archives
 
