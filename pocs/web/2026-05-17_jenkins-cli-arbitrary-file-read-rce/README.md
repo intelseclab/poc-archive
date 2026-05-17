@@ -1,7 +1,7 @@
 # Jenkins CLI Arbitrary File Read to RCE (CVE-2024-23897)
 
 <!-- 
-  File: 2026-05-17_jenkins-cli-arbitrary-file-read-rce.md
+  File: README.md
   Location: pocs/web/
 -->
 
