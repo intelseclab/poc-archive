@@ -123,6 +123,53 @@ Then open a PR targeting `main` with:
 
 ---
 
+## How to ingest a resurface PoC (same CVE, new researcher)
+
+A **resurface** is when a new GitHub repository implements a PoC for a CVE that already exists in the archive — written by a different researcher or using a different technique. Treat it as a **new ingest**, not an update.
+
+### 1 — Detect the overlap
+
+Before ingesting, search the archive for the CVE:
+
+```bash
+grep -rl "CVE-YYYY-XXXXX" pocs/
+```
+
+If one or more existing entries share the same CVE, this is a resurface.
+
+### 2 — Follow the normal ingest flow (Steps 1–7 above)
+
+Proceed exactly as a normal ingest. The only differences are:
+
+- **Folder name** — append a distinguishing suffix to avoid collision, e.g.:
+  ```
+  pocs/binary/YYYY-MM-DD_<vuln-name>-v2/
+  pocs/binary/YYYY-MM-DD_<vuln-name>-<researcher-handle>/
+  ```
+- **`Related` field** — set to the path of every existing entry for this CVE, comma-separated:
+  ```
+  pocs/binary/2026-05-15_miniplasma-cve-2020-17103/
+  ```
+- **`Tags` field** — note any new technique or approach if it differs from the original (e.g. `new-chain`, `different-trigger`, `kernel-6.x-only`).
+- **Notes section** — add a line explaining how this differs from the original entry, e.g.:
+  ```
+  Resurface of CVE-2020-17103. New implementation by <researcher> using <different technique>.
+  Original entry: pocs/binary/2026-05-15_miniplasma-cve-2020-17103/
+  ```
+
+Do **not** modify the original entry.
+
+### 3 — Commit and PR
+
+```bash
+git add pocs/ INDEX.md archive/ docs/data.json
+git commit -m "feat: ingest <vuln-name>-v2 from <owner>/<repo> (resurface of CVE-YYYY-XXXXX)"
+```
+
+PR title: `[POC] <Display Name> (resurface) - <CVE>`
+
+---
+
 ## How to update an existing PoC from a GitHub URL
 
 When an issue uses the **Update Existing PoC** template, follow these steps instead of the ingest flow.
