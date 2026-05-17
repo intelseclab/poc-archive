@@ -159,7 +159,6 @@ alert http any any -> $HTTP_SERVERS any (
 
 ## References
 
-- [CVE-2026-44578 — NVD](https://nvd.nist.gov/vuln/detail/CVE-2026-44578)
 - [Next.js Security Advisory — GHSA-c4j6-fc7j-m34r](https://github.com/vercel/next.js/security/advisories/GHSA-c4j6-fc7j-m34r)
 - [Next.js Patch Commit 5b194ee2d4](https://github.com/vercel/next.js/commit/5b194ee2d4)
 - [Next.js v16.2.5 Release](https://github.com/vercel/next.js/releases/tag/v16.2.5)
