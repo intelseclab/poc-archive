@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-05-17 19:16:22
+> Last updated: 2026-05-17 19:20:12
 
 ---
 
@@ -57,6 +57,7 @@
 | 2026-05-17 | — | [nextjs-rsc-cache-busting-weak-hash-collision](./pocs/web/2026-05-17_nextjs-rsc-cache-busting-weak-hash-collision/) | `web` | CVE-2026-44582 | Low | cache-poisoning, RSC, weak-hash, Next.js, unauthenticated | Weaponized |
 | 2026-05-17 | 2026-05-08 | [nextjs-rsc-dos-flight-deserialization](./pocs/web/2026-05-17_nextjs-rsc-dos-flight-deserialization/) | `web` | CVE-2026-23870 | High | DoS, RSC, React-Flight, deserialization, cyclic-payload, Next.js, App-Router, unauthenticated, pre-auth | Weaponized |
 | 2026-05-17 | — | [nextjs-rsc-response-cache-poisoning](./pocs/web/2026-05-17_nextjs-rsc-response-cache-poisoning/) | `web` | CVE-2026-44576 | Medium | cache-poisoning, RSC, response-confusion, Next.js, shared-cache, unauthenticated | Weaponized |
+| 2026-05-17 | 2026-05-09 | [nextjs-segment-prefetch-middleware-bypass](./pocs/web/2026-05-17_nextjs-segment-prefetch-middleware-bypass/) | `web` | CVE-2026-44575 | High | authorization-bypass, middleware-bypass, App-Router, segment-prefetch, RSC, Next.js, unauthenticated | Weaponized |
 | 2026-05-17 | — | [nextjs-websocket-upgrade-ssrf-self-hosted](./pocs/web/2026-05-17_nextjs-websocket-upgrade-ssrf-self-hosted/) | `web` | CVE-2026-44578 | High | SSRF, WebSocket, upgrade-request, Next.js, self-hosted, unauthenticated, metadata-service | Weaponized |
 | 2026-05-17 | 2026-05-08 | [nextjs-x-nextjs-data-cache-poisoning](./pocs/web/2026-05-17_nextjs-x-nextjs-data-cache-poisoning/) | `web` | CVE-2026-44572 | Low | cache-poisoning, x-nextjs-data, redirect, CDN, header-smuggling, Next.js, Pages-Router, unauthenticated | Researched |
 | 2026-05-17 | — | [pan-os-globalprotect-unauth-rce](./pocs/web/2026-05-17_pan-os-globalprotect-unauth-rce/) | `web` | CVE-2024-3400 | Critical | RCE, command-injection, path-traversal, PAN-OS, GlobalProtect, unauthenticated, zero-day | Weaponized |
@@ -65,7 +66,7 @@
 
 ---
 
-*Total POCs: 54*
+*Total POCs: 55*
 
 ## By Category
 
@@ -76,7 +77,7 @@
 - **`misc`** — 2 entries
 - **`network`** — 10 entries
 - **`social-engineering`** — 0 entries
-- **`web`** — 26 entries
+- **`web`** — 27 entries
 
 ## Archives
 
