@@ -156,7 +156,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("X-CSP-Nonce-Reflected", nonce or "<none>")
+        self.send_header("X-CSP-Nonce-Reflected", "present" if nonce else "none")
         self.send_header("X-Server-Mode", "patched" if self.patched_mode else "vulnerable")
         self.end_headers()
         self.wfile.write(body)
