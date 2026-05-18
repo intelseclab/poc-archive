@@ -1,4 +1,6 @@
 # DISCLAIMER: For authorized security research and defensive testing only.
+# WARNING: This lab utility runs Chromium with --disable-gpu-sandbox, which
+# removes key process-isolation protections. Use only in isolated, authorized labs.
 import asyncio
 import argparse
 import json
@@ -71,7 +73,7 @@ async def test_cve_2026_5281_headless(url: str, timeout_seconds: int, browser_pa
         executablePath=browser_path,
         args=[
             '--enable-unsafe-webgpu',
-            '--disable-gpu-sandbox',   # Lab-only: never use this flag in production environments.
+            '--disable-gpu-sandbox',   # Dangerous: disables GPU sandbox isolation (lab-only).
             '--enable-features=Vulkan',
             '--use-angle=vulkan'       # Depending on platform, you could also configure to 'd3d11' or 'default'
         ]
