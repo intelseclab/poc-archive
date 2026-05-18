@@ -16,8 +16,12 @@ import platform
 import re
 import subprocess
 import sys
-import winreg
 from pathlib import Path
+
+try:
+    import winreg
+except ImportError:  # Non-Windows platforms
+    winreg = None
 
 PATCHED_VERSION = "146.0.7680.178"
 
@@ -73,7 +77,7 @@ def is_vulnerable(version: str):
 
 def get_registry_versions():
     records = []
-    if platform.system() != "Windows":
+    if platform.system() != "Windows" or winreg is None:
         return records
     
     paths = [
