@@ -70,7 +70,7 @@ async def test_cve_2026_5281_headless(url: str, timeout_seconds: int, browser_pa
         executablePath=browser_path,
         args=[
             '--enable-unsafe-webgpu',
-            '--disable-gpu-sandbox',   # Disabling sandbox to ensure direct hardware testing
+            '--disable-gpu-sandbox',   # Lab-only: never use this flag in production environments.
             '--enable-features=Vulkan',
             '--use-angle=vulkan'       # Depending on platform, you could also configure to 'd3d11' or 'default'
         ]
