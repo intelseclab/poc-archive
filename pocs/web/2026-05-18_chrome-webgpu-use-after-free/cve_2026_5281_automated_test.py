@@ -37,6 +37,7 @@ def classify_console_line(text: str):
 
 async def test_cve_2026_5281_headless(url: str, timeout_seconds: int, browser_path: str):
     logging.info("Starting Headless Automated Testing for CVE-2026-5281 UAF...")
+    logging.warning("Lab-only configuration: this script launches Chromium with --disable-gpu-sandbox; do not use in production.")
     run_data = {
         "started_at": datetime.utcnow().isoformat() + "Z",
         "url": url,
