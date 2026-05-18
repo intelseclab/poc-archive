@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-05-17 20:03:49
+> Last updated: 2026-05-18 07:37:05
 
 ---
 
@@ -32,10 +32,11 @@
 | 2026-05-17 | 2026-05-09 | [nextjs-segment-prefetch-middleware-bypass](./pocs/web/2026-05-17_nextjs-segment-prefetch-middleware-bypass/) | `web` | CVE-2026-44575 | High | authorization-bypass, middleware-bypass, App-Router, segment-prefetch, RSC, Next.js, unauthenticated | Weaponized |
 | 2026-05-17 | — | [nextjs-websocket-upgrade-ssrf-self-hosted](./pocs/web/2026-05-17_nextjs-websocket-upgrade-ssrf-self-hosted/) | `web` | CVE-2026-44578 | High | SSRF, WebSocket, upgrade-request, Next.js, self-hosted, unauthenticated, metadata-service | Weaponized |
 | 2026-05-17 | 2026-05-08 | [nextjs-x-nextjs-data-cache-poisoning](./pocs/web/2026-05-17_nextjs-x-nextjs-data-cache-poisoning/) | `web` | CVE-2026-44572 | Low | cache-poisoning, x-nextjs-data, redirect, CDN, header-smuggling, Next.js, Pages-Router, unauthenticated | Researched |
+| 2026-05-18 | 2026-04-02 | [chrome-webgpu-use-after-free](./pocs/web/2026-05-18_chrome-webgpu-use-after-free/) | `web` | CVE-2026-5281 | High | use-after-free, WebGPU, Chrome, Dawn, GPU, browser, unauthenticated | Weaponized |
 
 ---
 
-*Total POCs: 57*
+*Total POCs: 58*
 
 ## By Category
 
@@ -46,7 +47,7 @@
 - **`misc`** — 2 entries
 - **`network`** — 10 entries
 - **`social-engineering`** — 0 entries
-- **`web`** — 28 entries
+- **`web`** — 29 entries
 
 ## Archives
 
