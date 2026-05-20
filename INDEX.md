@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-05-18 17:05:01
+> Last updated: 2026-05-20 06:26:11
 
 ---
 
@@ -16,6 +16,7 @@
 | 2026-05-16 | — | [qemutiny-memory-corruption](./pocs/binary/2026-05-16_qemutiny-memory-corruption/) | `binary` | N/A | Critical | QEMU, CXL, memory-corruption, OOB-read, OOB-write, guest-to-host-escape, local, root-in-guest | Weaponized |
 | 2026-05-17 | 2026-04-29 | [copy-fail-cve-2026-31431](./pocs/binary/2026-05-17_copy-fail-cve-2026-31431/) | `binary` | CVE-2026-31431 | High | LPE, Linux kernel, AF_ALG, authenc, splice, local, Python | Weaponized |
 | 2026-05-18 | N/A | [dirtydecrypt](./pocs/binary/2026-05-18_dirtydecrypt/) | `binary` | N/A (reported as duplicate by kernel maintainers; patched on mainline) | High | LPE, Linux kernel, page-cache, rxgk, RxRPC, COW, write-primitive, unprivileged, Dirty-Pipe-variant, splice, MSG_SPLICE_PAGES | Weaponized |
+| 2026-05-20 | 2026-05-19 | [pintheft-rds-double-free](./pocs/binary/2026-05-20_pintheft-rds-double-free/) | `binary` | N/A | High | LPE, double-free, use-after-free, Linux kernel, RDS, io_uring, page-cache-overwrite, x86_64, local | Weaponized |
 | 2026-05-18 | N/A | [tossup-terramaster-redis-rce](./pocs/network/2026-05-18_tossup-terramaster-redis-rce/) | `network` | N/A (vendor confirmed TOS4 is EOL; no fix planned) | Critical | RCE, unauthenticated, Redis, TerraMaster, NAS, AArch64, root, module-loading, replication-abuse, NFS, no_root_squash, LPE, network | Weaponized |
 | 2026-05-14 | — | [nginx-rift-cve-2026-42945](./pocs/web/2026-05-14_nginx-rift-cve-2026-42945/) | `web` | CVE-2026-42945 | Critical | RCE, unauthenticated, nginx, heap-overflow, buffer-overflow, rewrite | Weaponized |
 | 2026-05-15 | — | [exchange-health-checker-outbound-rule-blind-spot](./pocs/web/2026-05-15_exchange-health-checker-outbound-rule-blind-spot/) | `web` | CVE-2026-42897 | Medium | Exchange, HealthChecker, IIS, URL-Rewrite, outbound-rules, EOMT, CSP, detection-gap | Researched |
@@ -38,11 +39,11 @@
 
 ---
 
-*Total POCs: 60*
+*Total POCs: 61*
 
 ## By Category
 
-- **`binary`** — 16 entries
+- **`binary`** — 17 entries
 - **`cloud`** — 2 entries
 - **`crypto`** — 0 entries
 - **`hardware`** — 0 entries
