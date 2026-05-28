@@ -1,0 +1,160 @@
+# Notepad++ <= 8.9.6 Multiple Vulnerabilities (CVE-2026-48770, CVE-2026-48778, CVE-2026-48800)
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-28 |
+| **Last Updated** | N/A |
+| **Author / Researcher** | atiilla |
+| **CVE / Advisory** | CVE-2026-48770, CVE-2026-48778, CVE-2026-48800 |
+| **Category** | binary |
+| **Severity** | High |
+| **CVSS Score** | 5.0 / 7.8 / 7.8 |
+| **Status** | Patched |
+| **Tags** | Notepad++, Windows, OOB-read, DoS, command-injection, config.xml, shortcuts.xml, local |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Notepad++ |
+| **Versions Affected** | Notepad++ <= 8.9.6 |
+| **Language / Platform** | Python, PowerShell, XML payloads on Windows 10/11 |
+| **Authentication Required** | Partial (local user/session interaction) |
+| **Network Access Required** | Local only |
+
+---
+
+## Summary
+
+This PoC set covers three Notepad++ vulnerabilities affecting versions up to 8.9.6. CVE-2026-48770 demonstrates an out-of-bounds read crash by sending malformed `WM_COPYDATA` data to a running Notepad++ process. CVE-2026-48778 and CVE-2026-48800 demonstrate command execution by controlling values loaded from `config.xml` and `shortcuts.xml`, then triggering Notepad++ UI actions that pass attacker-controlled values to process launch functionality.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+- **CVE-2026-48770:** unsafe message handling for `WM_COPYDATA` (`dwData=3`) allows reading beyond expected bounds when input is not properly terminated.
+- **CVE-2026-48778:** `commandLineInterpreter` from `%APPDATA%\\Notepad++\\config.xml` is trusted and later invoked through UI flow without sufficient validation.
+- **CVE-2026-48800:** `<UserDefinedCommands>` entries from `%APPDATA%\\Notepad++\\shortcuts.xml` are loaded and passed to command execution paths without sanitization.
+
+### Attack Vector
+
+1. **CVE-2026-48770:** attacker process in the same interactive Windows session sends crafted `WM_COPYDATA` to a running Notepad++ instance.
+2. **CVE-2026-48778:** attacker-controlled `config.xml` (direct overwrite or `-settingsDir`) is loaded; user triggers **File -> Open Containing Folder -> cmd**.
+3. **CVE-2026-48800:** attacker-controlled `shortcuts.xml` (direct overwrite or `-settingsDir`) is loaded; user clicks injected command in the **Run** menu.
+
+### Impact
+
+- **CVE-2026-48770:** application crash / denial of service.
+- **CVE-2026-48778:** arbitrary command execution in user context.
+- **CVE-2026-48800:** arbitrary command execution in user context.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Windows 10/11
+Target:      Notepad++ <= 8.9.6
+Attacker:    Authorized local tester in same session
+Tools:       Python 3.x, PowerShell, Notepad++
+```
+
+### Setup Steps
+
+```bash
+# Run from this directory on a Windows lab host
+python poc_CVE-2026-48770.py
+python poc_CVE-2026-48778.py --mode direct --payload calc.exe
+python poc_CVE-2026-48800.py --mode direct --payload calc.exe --name "System Update Check"
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **CVE-2026-48770 (crash)**
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File payloads\poc_CVE-2026-48770.ps1
+   # or:
+   python poc_CVE-2026-48770.py
+   ```
+
+2. **CVE-2026-48778 (config.xml command execution)**
+   ```bash
+   python poc_CVE-2026-48778.py --mode direct --payload calc.exe
+   # Trigger in Notepad++: File -> Open Containing Folder -> cmd
+   python poc_CVE-2026-48778.py --mode direct --restore
+   ```
+
+3. **CVE-2026-48800 (shortcuts.xml command execution)**
+   ```bash
+   python poc_CVE-2026-48800.py --mode direct --payload calc.exe --name "System Update Check"
+   # Restart Notepad++, then click Run -> System Update Check
+   python poc_CVE-2026-48800.py --mode direct --restore
+   ```
+
+### Exploit Code
+
+> See `poc_CVE-2026-48770.py`, `poc_CVE-2026-48778.py`, and `poc_CVE-2026-48800.py` in this folder.
+
+### Expected Output
+
+```
+[+] Found Notepad++ HWND: 0x000A08B4
+[*] Sending malformed WM_COPYDATA (dwData=3, cbData=8192, no NUL terminator)...
+[+] SendMessageTimeout returned 0 - Notepad++ likely crashed (OOB read -> 0xc0000005)
+```
+
+---
+
+## Screenshots / Evidence
+
+- Upstream repository includes a demo animation (`demo.gif`) showing CVE-2026-48778 trigger flow.
+- Add local lab screenshots under `screenshots/` if additional evidence is needed.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+- Unexpected changes to %APPDATA%\Notepad++\config.xml or shortcuts.xml
+- Unexpected process execution (for example calc.exe) spawned from Notepad++ UI actions
+- Crash events for notepad++.exe with access violation signatures around WM_COPYDATA handling
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Update Notepad++ to 8.9.6.1 or later |
+| **Workaround** | Restrict write access to `%APPDATA%\\Notepad++` files; avoid loading untrusted settings directories |
+| **Config Hardening** | Monitor/alert on suspicious changes to `config.xml` and `shortcuts.xml`; enforce application allowlisting |
+
+---
+
+## References
+
+- [Source Repository — atiilla/Notepad-8.9.6-PoC](https://github.com/atiilla/Notepad-8.9.6-PoC)
+- [Notepad++ Downloads / Release Channel](https://notepad-plus-plus.org/downloads/)
+- [GHSA-r39g-3mcw-xcg2](https://github.com/advisories/GHSA-r39g-3mcw-xcg2)
+- [GHSA-7hm3-wp5q-ccv9](https://github.com/advisories/GHSA-7hm3-wp5q-ccv9)
+- [GHSA-3x3f-3j39-pj3v](https://github.com/advisories/GHSA-3x3f-3j39-pj3v)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/atiilla/Notepad-8.9.6-PoC on 2026-05-28.
