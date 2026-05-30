@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-05-30 08:49:40
+> Last updated: 2026-05-30 11:46:03
 
 ---
 
@@ -37,11 +37,12 @@
 | 2026-05-17 | — | [nextjs-websocket-upgrade-ssrf-self-hosted](./pocs/web/2026-05-17_nextjs-websocket-upgrade-ssrf-self-hosted/) | `web` | CVE-2026-44578 | High | SSRF, WebSocket, upgrade-request, Next.js, self-hosted, unauthenticated, metadata-service | Weaponized |
 | 2026-05-17 | 2026-05-08 | [nextjs-x-nextjs-data-cache-poisoning](./pocs/web/2026-05-17_nextjs-x-nextjs-data-cache-poisoning/) | `web` | CVE-2026-44572 | Low | cache-poisoning, x-nextjs-data, redirect, CDN, header-smuggling, Next.js, Pages-Router, unauthenticated | Researched |
 | 2026-05-18 | 2026-04-02 | [chrome-webgpu-use-after-free](./pocs/web/2026-05-18_chrome-webgpu-use-after-free/) | `web` | CVE-2026-5281 | High | use-after-free, WebGPU, Chrome, Dawn, GPU, browser, unauthenticated | Weaponized |
+| 2026-05-30 | 2026-05-21 | [drupal-core-postgresql-sql-injection](./pocs/web/2026-05-30_drupal-core-postgresql-sql-injection/) | `web` | CVE-2026-9082 / SA-CORE-2026-004 | Critical | SQLi, Drupal, PostgreSQL, JSON:API, unauthenticated, data-exfiltration | Patched |
 | 2026-05-30 | 2026-04-30 | [litespeed-user-end-cpanel-plugin-privesc](./pocs/web/2026-05-30_litespeed-user-end-cpanel-plugin-privesc/) | `web` | CVE-2026-48172 | High | local-privilege-escalation, cPanel, LiteSpeed, symlink, archive-extraction | Patched |
 
 ---
 
-*Total POCs: 63*
+*Total POCs: 64*
 
 ## By Category
 
@@ -52,7 +53,7 @@
 - **`misc`** — 2 entries
 - **`network`** — 11 entries
 - **`social-engineering`** — 0 entries
-- **`web`** — 30 entries
+- **`web`** — 31 entries
 
 ## Archives
 
