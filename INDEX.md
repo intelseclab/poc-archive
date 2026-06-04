@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-05-30 11:46:03
+> Last updated: 2026-06-04 06:46:46
 
 ---
 
@@ -19,6 +19,7 @@
 | 2026-05-20 | 2026-05-19 | [pintheft-rds-double-free](./pocs/binary/2026-05-20_pintheft-rds-double-free/) | `binary` | N/A | High | LPE, double-free, use-after-free, Linux kernel, RDS, io_uring, page-cache-overwrite, x86_64, local | Weaponized |
 | 2026-05-28 | N/A | [notepad-plus-plus-8-9-6-multi-cve](./pocs/binary/2026-05-28_notepad-plus-plus-8-9-6-multi-cve/) | `binary` | CVE-2026-48770, CVE-2026-48778, CVE-2026-48800 | High | Notepad++, Windows, OOB-read, DoS, command-injection, config.xml, shortcuts.xml, local | Patched |
 | 2026-05-18 | N/A | [tossup-terramaster-redis-rce](./pocs/network/2026-05-18_tossup-terramaster-redis-rce/) | `network` | N/A (vendor confirmed TOS4 is EOL; no fix planned) | Critical | RCE, unauthenticated, Redis, TerraMaster, NAS, AArch64, root, module-loading, replication-abuse, NFS, no_root_squash, LPE, network | Weaponized |
+| 2026-06-04 | 2026-06-04 | [netlogon-cldap-stack-buffer-overflow](./pocs/network/2026-06-04_netlogon-cldap-stack-buffer-overflow/) | `network` | CVE-2026-41089 | Critical | Netlogon, CLDAP, Windows Server, stack-overflow, unauthenticated, DoS, potential-RCE | Weaponized |
 | 2026-05-14 | — | [nginx-rift-cve-2026-42945](./pocs/web/2026-05-14_nginx-rift-cve-2026-42945/) | `web` | CVE-2026-42945 | Critical | RCE, unauthenticated, nginx, heap-overflow, buffer-overflow, rewrite | Weaponized |
 | 2026-05-15 | — | [exchange-health-checker-outbound-rule-blind-spot](./pocs/web/2026-05-15_exchange-health-checker-outbound-rule-blind-spot/) | `web` | CVE-2026-42897 | Medium | Exchange, HealthChecker, IIS, URL-Rewrite, outbound-rules, EOMT, CSP, detection-gap | Researched |
 | 2026-05-16 | — | [chrome-cssfontfeaturevaluesmap-use-after-free](./pocs/web/2026-05-16_chrome-cssfontfeaturevaluesmap-use-after-free/) | `web` | CVE-2026-2441 | High | use-after-free, Chrome, Blink, CSSOM, renderer-rce, unauthenticated, drive-by | Weaponized |
@@ -42,7 +43,7 @@
 
 ---
 
-*Total POCs: 64*
+*Total POCs: 65*
 
 ## By Category
 
@@ -51,7 +52,7 @@
 - **`crypto`** — 0 entries
 - **`hardware`** — 0 entries
 - **`misc`** — 2 entries
-- **`network`** — 11 entries
+- **`network`** — 12 entries
 - **`social-engineering`** — 0 entries
 - **`web`** — 31 entries
 
