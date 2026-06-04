@@ -1,0 +1,159 @@
+# Netlogon CLDAP Stack Buffer Overflow (CVE-2026-41089)
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-06-04 |
+| **Last Updated** | 2026-06-04 |
+| **Author / Researcher** | 0xABCD01 |
+| **CVE / Advisory** | CVE-2026-41089 |
+| **Category** | network |
+| **Severity** | Critical |
+| **CVSS Score** | 9.8 (CVSSv3.1) |
+| **Status** | Weaponized |
+| **Tags** | Netlogon, CLDAP, Windows Server, stack-overflow, unauthenticated, DoS, potential-RCE |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Microsoft Windows Netlogon (Domain Controller CLDAP path) |
+| **Versions Affected** | Windows Server 2012/2012 R2, 2016, 2019, 2022, 2022 23H2, 2025 (pre-patch) |
+| **Language / Platform** | Python PoC against Windows Domain Controllers |
+| **Authentication Required** | No |
+| **Network Access Required** | Yes |
+
+---
+
+## Summary
+
+This PoC targets CVE-2026-41089, a stack-based buffer overflow in the Windows Netlogon CLDAP handling path. A crafted UDP/389 CLDAP ping containing an oversized `User` value can overrun a stack buffer in the LSASS/Netlogon flow and crash the domain controller. The public PoC demonstrates unauthenticated network-triggered denial-of-service and notes potential remote code execution risk from stack corruption.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+`NlGetLocalPingResponse` uses a fixed-size 528-byte stack buffer and passes it through `BuildSamLogonResponse` to `NetpLogonPutUnicodeString`. Length handling in this path allows attacker-influenced string data (notably the CLDAP `User` field) to exceed expected bounds, causing stack overflow.
+
+### Attack Vector
+
+An unauthenticated attacker sends a crafted CLDAP search request to UDP port 389 on a domain controller. The packet uses an oversized username (for example 130+ characters) in the Netlogon locator flow to trigger the vulnerable serialization path.
+
+### Impact
+
+- LSASS crash / domain controller reboot (denial-of-service).
+- Potential remote code execution due to stack corruption.
+- Pre-auth network reachable attack surface on exposed DC services.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Linux/macOS/Windows attacker with Python 3.8+
+Target:      Vulnerable Windows Server Domain Controller (authorized lab)
+Attacker:    Host with UDP reachability to target port 389
+Tools:       python3 only (no third-party package required)
+```
+
+### Setup Steps
+
+```bash
+cd pocs/network/2026-06-04_netlogon-cldap-stack-buffer-overflow
+python3 exploit.py <target_ip> <domain_name>
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Confirm target availability**
+   ```bash
+   python3 exploit.py 10.0.50.21 corp.local -l 20
+   ```
+
+2. **Send overflow attempt**
+   ```bash
+   python3 exploit.py 10.0.50.21 corp.local -l 130
+   ```
+
+3. **Observe liveness check / crash signal**
+   ```bash
+   python3 exploit.py 10.0.50.21 corp.local -l 130 -d 3
+   ```
+
+### Exploit Code
+
+> See `exploit.py` in this folder (adapted from the public source repository).
+
+```python
+# Overflow attempt (authorized testing only)
+python3 exploit.py <target_ip> <domain_name> -l 130
+```
+
+### Expected Output
+
+```
+[1/3] Sending normal CLDAP ping (short username)...
+[+] DC responded (... bytes). Target is alive.
+[2/3] Sending overflow payload (username=130 chars)...
+[!] No response. LSASS may have crashed.
+[3/3] Liveness check...
+[!] DC is not responding. LSASS likely crashed.
+```
+
+---
+
+## Screenshots / Evidence
+
+- `screenshots/` — add authorized packet captures and target behavior evidence.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+- Unusual CLDAP requests with long User field values to UDP/389
+- Netlogon/LSASS crash events near inbound CLDAP locator traffic
+- Unexpected DC reboot shortly after malformed CLDAP requests
+```
+
+**SIEM / IDS Rule (example):**
+```
+Alert when CLDAP search requests to domain controllers include unusually long
+"User" attribute values in Netlogon/DC locator filter content.
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Apply Microsoft security updates for CVE-2026-41089 |
+| **Workaround** | Restrict UDP/389 exposure to trusted management segments only |
+| **Config Hardening** | Monitor Netlogon/LSASS crash telemetry and CLDAP anomalies |
+
+---
+
+## References
+
+- [CVE-2026-41089 (NVD)](https://nvd.nist.gov/vuln/detail/CVE-2026-41089)
+- [Microsoft Security Update Guide](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2026-41089)
+- [Source Repository — 0xABCD01/CVE-2026-41089](https://github.com/0xABCD01/CVE-2026-41089)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/0xABCD01/CVE-2026-41089 on 2026-06-04.
