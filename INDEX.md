@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-06-04 06:46:46
+> Last updated: 2026-06-05 20:54:40
 
 ---
 
@@ -18,6 +18,7 @@
 | 2026-05-18 | N/A | [dirtydecrypt](./pocs/binary/2026-05-18_dirtydecrypt/) | `binary` | N/A (reported as duplicate by kernel maintainers; patched on mainline) | High | LPE, Linux kernel, page-cache, rxgk, RxRPC, COW, write-primitive, unprivileged, Dirty-Pipe-variant, splice, MSG_SPLICE_PAGES | Weaponized |
 | 2026-05-20 | 2026-05-19 | [pintheft-rds-double-free](./pocs/binary/2026-05-20_pintheft-rds-double-free/) | `binary` | N/A | High | LPE, double-free, use-after-free, Linux kernel, RDS, io_uring, page-cache-overwrite, x86_64, local | Weaponized |
 | 2026-05-28 | N/A | [notepad-plus-plus-8-9-6-multi-cve](./pocs/binary/2026-05-28_notepad-plus-plus-8-9-6-multi-cve/) | `binary` | CVE-2026-48770, CVE-2026-48778, CVE-2026-48800 | High | Notepad++, Windows, OOB-read, DoS, command-injection, config.xml, shortcuts.xml, local | Patched |
+| 2026-06-05 | N/A | [ssh-keysign-pwn](./pocs/binary/2026-06-05_ssh-keysign-pwn/) | `binary` | CVE-2026-46333 | High | LPE, Linux kernel, pidfd_getfd, ptrace, ssh-keysign, chage, fd-theft | Patched |
 | 2026-05-18 | N/A | [tossup-terramaster-redis-rce](./pocs/network/2026-05-18_tossup-terramaster-redis-rce/) | `network` | N/A (vendor confirmed TOS4 is EOL; no fix planned) | Critical | RCE, unauthenticated, Redis, TerraMaster, NAS, AArch64, root, module-loading, replication-abuse, NFS, no_root_squash, LPE, network | Weaponized |
 | 2026-06-04 | 2026-06-04 | [netlogon-cldap-stack-buffer-overflow](./pocs/network/2026-06-04_netlogon-cldap-stack-buffer-overflow/) | `network` | CVE-2026-41089 | Critical | Netlogon, CLDAP, Windows Server, stack-overflow, unauthenticated, DoS, potential-RCE | Weaponized |
 | 2026-05-14 | — | [nginx-rift-cve-2026-42945](./pocs/web/2026-05-14_nginx-rift-cve-2026-42945/) | `web` | CVE-2026-42945 | Critical | RCE, unauthenticated, nginx, heap-overflow, buffer-overflow, rewrite | Weaponized |
@@ -43,11 +44,11 @@
 
 ---
 
-*Total POCs: 65*
+*Total POCs: 66*
 
 ## By Category
 
-- **`binary`** — 18 entries
+- **`binary`** — 19 entries
 - **`cloud`** — 2 entries
 - **`crypto`** — 0 entries
 - **`hardware`** — 0 entries
