@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-06-21 09:13:51
+> Last updated: 2026-06-21 09:16:46
 
 ---
 
@@ -19,6 +19,7 @@
 | 2026-05-20 | 2026-05-19 | [pintheft-rds-double-free](./pocs/binary/2026-05-20_pintheft-rds-double-free/) | `binary` | N/A | High | LPE, double-free, use-after-free, Linux kernel, RDS, io_uring, page-cache-overwrite, x86_64, local | Weaponized |
 | 2026-05-28 | N/A | [notepad-plus-plus-8-9-6-multi-cve](./pocs/binary/2026-05-28_notepad-plus-plus-8-9-6-multi-cve/) | `binary` | CVE-2026-48770, CVE-2026-48778, CVE-2026-48800 | High | Notepad++, Windows, OOB-read, DoS, command-injection, config.xml, shortcuts.xml, local | Patched |
 | 2026-06-05 | N/A | [ssh-keysign-pwn](./pocs/binary/2026-06-05_ssh-keysign-pwn/) | `binary` | CVE-2026-46333 | High | LPE, Linux kernel, pidfd_getfd, ptrace, ssh-keysign, chage, fd-theft | Patched |
+| 2026-06-10 | 2026-06-09 | [rogueplanet-defender-lpe](./pocs/binary/2026-06-10_rogueplanet-defender-lpe/) | `binary` | N/A | High | LPE, Windows Defender, race-condition, TOCTOU, ISO-mount, VirtualDisk, Task-Scheduler, WER, EICAR, SYSTEM-shell, Windows-10, Windows-11, local | Weaponized |
 | 2026-05-18 | N/A | [tossup-terramaster-redis-rce](./pocs/network/2026-05-18_tossup-terramaster-redis-rce/) | `network` | N/A (vendor confirmed TOS4 is EOL; no fix planned) | Critical | RCE, unauthenticated, Redis, TerraMaster, NAS, AArch64, root, module-loading, replication-abuse, NFS, no_root_squash, LPE, network | Weaponized |
 | 2026-06-04 | 2026-06-04 | [netlogon-cldap-stack-buffer-overflow](./pocs/network/2026-06-04_netlogon-cldap-stack-buffer-overflow/) | `network` | CVE-2026-41089 | Critical | Netlogon, CLDAP, Windows Server, stack-overflow, unauthenticated, DoS, potential-RCE | Weaponized |
 | 2026-05-14 | — | [nginx-rift-cve-2026-42945](./pocs/web/2026-05-14_nginx-rift-cve-2026-42945/) | `web` | CVE-2026-42945 | Critical | RCE, unauthenticated, nginx, heap-overflow, buffer-overflow, rewrite | Weaponized |
@@ -41,21 +42,22 @@
 | 2026-05-18 | 2026-04-02 | [chrome-webgpu-use-after-free](./pocs/web/2026-05-18_chrome-webgpu-use-after-free/) | `web` | CVE-2026-5281 | High | use-after-free, WebGPU, Chrome, Dawn, GPU, browser, unauthenticated | Weaponized |
 | 2026-05-30 | 2026-05-21 | [drupal-core-postgresql-sql-injection](./pocs/web/2026-05-30_drupal-core-postgresql-sql-injection/) | `web` | CVE-2026-9082 / SA-CORE-2026-004 | Critical | SQLi, Drupal, PostgreSQL, JSON:API, unauthenticated, data-exfiltration | Patched |
 | 2026-05-30 | 2026-04-30 | [litespeed-user-end-cpanel-plugin-privesc](./pocs/web/2026-05-30_litespeed-user-end-cpanel-plugin-privesc/) | `web` | CVE-2026-48172 | High | local-privilege-escalation, cPanel, LiteSpeed, symlink, archive-extraction | Patched |
+| 2026-06-08 | 2026-06-08 | [firefox-focus-ios-uxss-redirect-scheme-race-condition](./pocs/web/2026-06-08_firefox-focus-ios-uxss-redirect-scheme-race-condition/) | `web` | N/A | Critical | UXSS, XSS, race-condition, TOCTOU, redirect-validation, javascript-scheme, iOS, Firefox Focus | Unpatched |
 
 ---
 
-*Total POCs: 66*
+*Total POCs: 68*
 
 ## By Category
 
-- **`binary`** — 19 entries
+- **`binary`** — 20 entries
 - **`cloud`** — 2 entries
 - **`crypto`** — 0 entries
 - **`hardware`** — 0 entries
 - **`misc`** — 2 entries
 - **`network`** — 12 entries
 - **`social-engineering`** — 0 entries
-- **`web`** — 31 entries
+- **`web`** — 32 entries
 
 ## Archives
 
