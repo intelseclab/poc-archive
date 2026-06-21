@@ -42,6 +42,7 @@
 | 2026-05-18 | 2026-04-02 | [chrome-webgpu-use-after-free](./pocs/web/2026-05-18_chrome-webgpu-use-after-free/) | `web` | CVE-2026-5281 | High | use-after-free, WebGPU, Chrome, Dawn, GPU, browser, unauthenticated | Weaponized |
 | 2026-05-30 | 2026-05-21 | [drupal-core-postgresql-sql-injection](./pocs/web/2026-05-30_drupal-core-postgresql-sql-injection/) | `web` | CVE-2026-9082 / SA-CORE-2026-004 | Critical | SQLi, Drupal, PostgreSQL, JSON:API, unauthenticated, data-exfiltration | Patched |
 | 2026-05-30 | 2026-04-30 | [litespeed-user-end-cpanel-plugin-privesc](./pocs/web/2026-05-30_litespeed-user-end-cpanel-plugin-privesc/) | `web` | CVE-2026-48172 | High | local-privilege-escalation, cPanel, LiteSpeed, symlink, archive-extraction | Patched |
+| 2026-06-08 | 2026-06-08 | [firefox-focus-ios-uxss-redirect-scheme-race-condition](./pocs/web/2026-06-08_firefox-focus-ios-uxss-redirect-scheme-race-condition/) | `web` | N/A | Critical | UXSS, XSS, race-condition, TOCTOU, redirect-validation, javascript-scheme, iOS, Firefox Focus | Unpatched |
 
 ---
 
@@ -56,7 +57,7 @@
 - **`misc`** — 2 entries
 - **`network`** — 12 entries
 - **`social-engineering`** — 0 entries
-- **`web`** — 31 entries
+- **`web`** — 32 entries
 
 ## Archives
 
