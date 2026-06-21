@@ -25,6 +25,36 @@ extract_field() {
     | xargs
 }
 
+extract_summary() {
+  python3 - "$1" <<'PYEOF'
+import sys, re
+try:
+    content = open(sys.argv[1], encoding='utf-8', errors='replace').read()
+    if '## Summary' not in content:
+        print('')
+        sys.exit(0)
+    section = content.split('## Summary', 1)[1].split('\n## ', 1)[0]
+    section = re.sub(r'<!--.*?-->', '', section, flags=re.DOTALL)
+    for line in section.split('\n'):
+        line = line.strip()
+        if line and not line.startswith('#') and not line.startswith('|') and not line.startswith('-'):
+            out = line[:280].replace('\\', '\\\\').replace('"', '\\"')
+            print(out)
+            break
+except Exception:
+    print('')
+PYEOF
+}
+
+tags_to_json_array() {
+  python3 -c "
+import sys, json
+t = sys.stdin.read().strip()
+arr = [x.strip() for x in t.split(',') if x.strip()]
+print(json.dumps(arr, ensure_ascii=False))
+" <<< "$1"
+}
+
 total=0
 
 while IFS= read -r -d '' readme; do
@@ -35,8 +65,10 @@ while IFS= read -r -d '' readme; do
   last_updated=$(extract_field "$readme" "Last Updated" || true)
   cve=$(extract_field "$readme" "CVE / Advisory")
   severity=$(extract_field "$readme" "Severity")
+  cvss=$(extract_field "$readme" "CVSS Score")
   tags=$(extract_field "$readme" "Tags")
   status=$(extract_field "$readme" "Status")
+  summary=$(extract_summary "$readme")
 
   folder=$(dirname "$readme")
   name=$(basename "$folder")
@@ -60,16 +92,19 @@ while IFS= read -r -d '' readme; do
   # Escape strings for JSON
   json_escape() { printf '%s' "$1" | sed 's/\\/\\\\/g;s/"/\\"/g'; }
   rel_dir_from_root="${readme#$REPO_ROOT/}"
-  poc_url="../$(dirname "$rel_dir_from_root")/"
+  poc_url="$(dirname "$rel_dir_from_root")/"
+  tags_json=$(tags_to_json_array "${tags:-}")
 
-  printf '  {\n    "date": "%s",\n    "updated": "%s",\n    "name": "%s",\n    "category": "%s",\n    "cve": "%s",\n    "severity": "%s",\n    "tags": "%s",\n    "status": "%s",\n    "cve_year": "%s",\n    "url": "%s"\n  }' \
+  printf '  {\n    "date": "%s",\n    "updated": "%s",\n    "name": "%s",\n    "category": "%s",\n    "cve": "%s",\n    "cvss": "%s",\n    "severity": "%s",\n    "tags": %s,\n    "summary": "%s",\n    "status": "%s",\n    "cve_year": "%s",\n    "url": "%s"\n  }' \
     "$(json_escape "${date_added:-}")" \
     "$(json_escape "${last_updated:-}")" \
     "$(json_escape "${display_name}")" \
     "$(json_escape "${category}")" \
     "$(json_escape "${cve:-N/A}")" \
+    "$(json_escape "${cvss:-}")" \
     "$(json_escape "${severity:-}")" \
-    "$(json_escape "${tags:-}")" \
+    "${tags_json}" \
+    "$(json_escape "${summary:-}")" \
     "$(json_escape "${status:-}")" \
     "$(json_escape "${year}")" \
     "$(json_escape "${poc_url}")" \

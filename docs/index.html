@@ -379,20 +379,32 @@
       vertical-align: middle;
     }
 
-    /* updated col */
-    .col-updated {
+    /* date col */
+    .col-date {
       white-space: nowrap;
       font-size: 11px;
     }
 
-    .updated-badge {
-      display: inline-block;
-      padding: 0.1rem 0.45rem;
-      border-radius: var(--radius-sm);
+    .date-added {
+      color: var(--fg-1);
+    }
+
+    .date-updated {
+      display: block;
       font-size: 10px;
-      background: rgba(34,197,94,0.1);
-      border: 1px solid rgba(34,197,94,0.3);
       color: var(--green);
+      margin-top: 2px;
+      opacity: 0.85;
+    }
+
+    /* cvss score under severity badge */
+    .cvss-score {
+      display: block;
+      font-size: 10px;
+      color: var(--fg-3);
+      margin-top: 3px;
+      text-align: center;
+      font-family: var(--font-mono);
     }
 
     /* name col */
@@ -470,6 +482,48 @@
       border: 1px solid var(--border);
       color: var(--fg-2);
       white-space: nowrap;
+      cursor: pointer;
+      transition: background 0.1s, color 0.1s, border-color 0.1s;
+    }
+
+    .tag-chip:hover {
+      background: var(--bg-4);
+      border-color: var(--accent-dim);
+      color: var(--accent);
+    }
+
+    .tag-chip.tag-more {
+      cursor: default;
+      color: var(--fg-3);
+      font-style: italic;
+    }
+
+    .tag-chip.tag-more:hover {
+      background: var(--bg-3);
+      border-color: var(--border);
+      color: var(--fg-3);
+    }
+
+    /* clickable stat pills */
+    .stat-pill[data-filter-key] {
+      cursor: pointer;
+      transition: opacity 0.12s;
+    }
+
+    .stat-pill[data-filter-key]:hover {
+      opacity: 0.8;
+    }
+
+    /* cve link */
+    .cve-link {
+      color: var(--fg-1);
+      font-size: 11px;
+      text-decoration: none;
+    }
+
+    .cve-link:hover {
+      color: var(--accent);
+      text-decoration: underline;
     }
 
     /* empty state */
@@ -686,7 +740,7 @@
     @media (max-width: 480px) {
       .ascii-block { display: none; }
       .col-cat     { display: none; }
-      .col-updated { display: none; }
+      .col-date { display: none; }
 
       header { padding: 1.25rem 0 1rem; }
 
@@ -814,7 +868,7 @@
       <table id="js-table">
         <thead>
           <tr>
-            <th data-col="updated"  class="col-updated">Updated <span class="sort-indicator">&#9660;</span></th>
+            <th data-col="date"     class="col-date">Date <span class="sort-indicator">&#9660;</span></th>
             <th data-col="name"     class="col-name">Name <span class="sort-indicator">&#9660;</span></th>
             <th data-col="category" class="col-cat">Category <span class="sort-indicator">&#9660;</span></th>
             <th data-col="cve"      class="col-cve">CVE <span class="sort-indicator">&#9660;</span></th>
@@ -869,17 +923,18 @@
       'use strict';
 
       /* ── Constants ──────────────────────────────────────────────────────── */
-      const GITHUB_BASE =
-        'https://github.com/intelseclab/poc-archive/blob/master/';
+      const GITHUB_BLOB = 'https://github.com/intelseclab/poc-archive/blob/master/';
 
       const SEVERITY_ORDER = {
         critical: 0, high: 1, medium: 2, low: 3, informational: 4, '': 5
       };
 
+      const MAX_TAGS_SHOWN = 5;
+
       /* ── State ──────────────────────────────────────────────────────────── */
       let allPocs      = [];
       let filtered     = [];
-      let sortCol      = 'updated';
+      let sortCol      = 'date';
       let sortDir      = 'desc';   /* newest first by default */
       let currentPage  = 1;
       let pageSize     = 25;
@@ -919,17 +974,53 @@
 
       function urlForPoc(url) {
         if (!url) return '#';
-        /* strip leading ../ and attach GitHub base */
-        const rel = url.replace(/^\.\.\//, '');
-        return GITHUB_BASE + rel;
+        const clean = url.replace(/^\.\.\//, '').replace(/\/$/, '');
+        return GITHUB_BLOB + clean + '/README.md';
       }
 
-      function buildTagChips(tagStr) {
-        if (!tagStr) return '';
-        return tagStr.split(',').map(t => {
-          const tag = t.trim();
-          return tag ? `<span class="tag-chip">${esc(tag)}</span>` : '';
-        }).join('');
+      function tagsArray(tags) {
+        if (Array.isArray(tags)) return tags.filter(Boolean);
+        if (!tags) return [];
+        return tags.split(',').map(t => t.trim()).filter(Boolean);
+      }
+
+      function buildTagChips(tags) {
+        const arr = tagsArray(tags);
+        if (!arr.length) return '';
+        const shown = arr.slice(0, MAX_TAGS_SHOWN);
+        const rest  = arr.slice(MAX_TAGS_SHOWN);
+        let html = shown.map(tag =>
+          `<span class="tag-chip" data-tag="${esc(tag)}">${esc(tag)}</span>`
+        ).join('');
+        if (rest.length) {
+          html += `<span class="tag-chip tag-more" title="${esc(rest.join(', '))}">+${rest.length} more</span>`;
+        }
+        return html;
+      }
+
+      function renderCve(cve) {
+        if (!cve || cve === 'N/A') return '<span style="color:var(--fg-3)">—</span>';
+        const match = cve.match(/CVE-\d{4}-\d+/i);
+        if (match) {
+          const id = match[0].toUpperCase();
+          return `<a class="cve-link" href="https://nvd.nist.gov/vuln/detail/${id}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">${esc(id)}</a>`;
+        }
+        /* N/A with explanation — show truncated with full text on hover */
+        return `<span style="color:var(--fg-3)" title="${esc(cve)}">N/A</span>`;
+      }
+
+      function renderCvss(cvss) {
+        if (!cvss || cvss === 'N/A') return '';
+        const num = cvss.match(/[\d.]+/);
+        return num ? `<span class="cvss-score">${esc(num[0])}</span>` : '';
+      }
+
+      function renderDate(date, updated) {
+        let html = `<span class="date-added">${esc(date || '—')}</span>`;
+        if (updated && updated !== 'N/A' && updated !== date) {
+          html += `<span class="date-updated" title="Last upstream update">↑ ${esc(updated)}</span>`;
+        }
+        return html;
       }
 
       /* ── Stats ──────────────────────────────────────────────────────────── */
@@ -949,13 +1040,13 @@
         });
 
         let html = `<span class="stats-label">stats:</span>`;
-        html += `<span class="stat-pill total"><span class="pill-count">${counts.total}</span> total</span>`;
+        html += `<span class="stat-pill total" data-filter-key="total" title="Clear all filters"><span class="pill-count">${counts.total}</span> total</span>`;
         html += `<span class="stats-sep">//</span>`;
         html += `<span class="stats-label">severity:</span>`;
         sevKeys.forEach(k => {
           const c = counts['sev_' + k];
           if (c > 0) {
-            html += `<span class="stat-pill ${k.toLowerCase()}">
+            html += `<span class="stat-pill ${k.toLowerCase()}" data-filter-key="severity" data-filter-val="${k}" title="Filter: ${k}">
               <span class="pill-count">${c}</span> ${k}
             </span>`;
           }
@@ -965,7 +1056,7 @@
         statKeys.forEach(k => {
           const c = counts['stat_' + k];
           if (c > 0) {
-            html += `<span class="stat-pill ${k.toLowerCase()}">
+            html += `<span class="stat-pill ${k.toLowerCase()}" data-filter-key="status" data-filter-val="${k}" title="Filter: ${k}">
               <span class="pill-count">${c}</span> ${k}
             </span>`;
           }
@@ -988,7 +1079,8 @@
           if (stat && p.status   !== stat)  return false;
           if (yr   && p.cve_year !== yr)    return false;
           if (q) {
-            const haystack = [p.name, p.cve, p.tags].join(' ').toLowerCase();
+            const tagStr = Array.isArray(p.tags) ? p.tags.join(' ') : (p.tags || '');
+            const haystack = [p.name, p.cve, tagStr, p.summary || ''].join(' ').toLowerCase();
             if (!haystack.includes(q)) return false;
           }
           return true;
@@ -1054,32 +1146,24 @@
         const rows = pagePocs.map(p => {
           const link = urlForPoc(p.url);
           const tags = buildTagChips(p.tags);
-          const updatedHtml = p.updated && p.updated !== 'N/A' && p.updated !== p.date
-            ? `<span class="updated-badge">${esc(p.updated)}</span>`
-            : `<span style="color:var(--fg-3)">—</span>`;
-          return `<tr data-href="${esc(link)}">
-            <td class="col-updated">${updatedHtml}</td>
+          return `<tr data-href="${esc(link)}" title="${esc(p.summary || '')}">
+            <td class="col-date">${renderDate(p.date, p.updated)}</td>
             <td class="col-name">
               <a href="${esc(link)}" target="_blank" rel="noopener noreferrer"
                  onclick="event.stopPropagation()">${esc(p.name)}</a>
             </td>
             <td class="col-cat"><span class="cat-badge">${esc(p.category)}</span></td>
-            <td class="col-cve">${esc(p.cve)}</td>
-            <td><span class="badge ${severityClass(p.severity)}">${esc(p.severity)}</span></td>
+            <td class="col-cve">${renderCve(p.cve)}</td>
+            <td>
+              <span class="badge ${severityClass(p.severity)}">${esc(p.severity)}</span>
+              ${renderCvss(p.cvss)}
+            </td>
             <td class="col-tags">${tags}</td>
             <td><span class="badge ${statusClass(p.status)}">${esc(p.status)}</span></td>
           </tr>`;
         });
 
         $tbody.innerHTML = rows.join('');
-
-        /* row click navigation */
-        $tbody.querySelectorAll('tr[data-href]').forEach(row => {
-          row.addEventListener('click', () => {
-            const href = row.getAttribute('data-href');
-            if (href && href !== '#') window.open(href, '_blank', 'noopener,noreferrer');
-          });
-        });
 
         renderPagination(total, pages, start, end);
       }
@@ -1198,6 +1282,40 @@
         $fStat.value  = '';
         $fYear.value  = '';
         applyFilters();
+      });
+
+      /* stat pill → set filter */
+      $stats.addEventListener('click', e => {
+        const pill = e.target.closest('[data-filter-key]');
+        if (!pill) return;
+        const key = pill.dataset.filterKey;
+        const val = pill.dataset.filterVal;
+        if (key === 'total') {
+          $search.value = ''; $fSev.value = ''; $fCat.value = ''; $fStat.value = ''; $fYear.value = '';
+        } else if (key === 'severity') {
+          $fSev.value = ($fSev.value === val) ? '' : val;
+        } else if (key === 'status') {
+          $fStat.value = ($fStat.value === val) ? '' : val;
+        }
+        applyFilters();
+      });
+
+      /* tag chip → search by tag; row click → open README */
+      $tbody.addEventListener('click', e => {
+        const chip = e.target.closest('.tag-chip[data-tag]');
+        if (chip) {
+          e.stopPropagation();
+          const tag = chip.dataset.tag;
+          $search.value = ($search.value === tag) ? '' : tag;
+          applyFilters();
+          return;
+        }
+        if (e.target.closest('a')) return;
+        const row = e.target.closest('tr[data-href]');
+        if (row) {
+          const href = row.getAttribute('data-href');
+          if (href && href !== '#') window.open(href, '_blank', 'noopener,noreferrer');
+        }
       });
 
       $pageSizeEl.addEventListener('change', () => {
