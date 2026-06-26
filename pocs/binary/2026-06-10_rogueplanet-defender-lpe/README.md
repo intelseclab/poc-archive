@@ -9,10 +9,10 @@
 | **Date Added** | 2026-06-10 |
 | **Last Updated** | 2026-06-09 |
 | **Author / Researcher** | MSNightmare (Nightmare-Eclipse) |
-| **CVE / Advisory** | N/A |
+| **CVE / Advisory** | CVE-2026-50656 |
 | **Category** | binary |
 | **Severity** | High |
-| **CVSS Score** | N/A |
+| **CVSS Score** | 7.8 (CVSSv3) |
 | **Status** | Weaponized |
 | **Tags** | LPE, Windows Defender, race-condition, TOCTOU, ISO-mount, VirtualDisk, Task-Scheduler, WER, EICAR, SYSTEM-shell, Windows-10, Windows-11, local |
 | **Related** | N/A |
