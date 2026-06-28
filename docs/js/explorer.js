@@ -17,19 +17,25 @@
   var clearEl = document.getElementById("filter-clear");
 
   var ACTIVE = ["border-emerald-400", "bg-emerald-400/10", "text-emerald-600", "dark:text-emerald-400"];
+  var SEV_ORDER = { Critical: 5, High: 4, Medium: 3, Low: 2, Info: 1 };
+  var SEV_COLORS = {
+    Critical: "border-red-400/40 text-red-600 dark:text-red-400",
+    High:     "border-orange-400/40 text-orange-600 dark:text-orange-400",
+    Medium:   "border-yellow-400/40 text-yellow-600 dark:text-yellow-400",
+    Low:      "border-blue-400/40 text-blue-600 dark:text-blue-400",
+    Info:     "border-zinc-400/40 text-zinc-500 dark:text-zinc-400",
+  };
 
   var state = {
-    q: "",
-    categories: [],
-    severities: [],
-    patched: "all",
-    from: "",
-    to: "",
+    q: "", categories: [], severities: [], patched: "all",
+    from: "", to: "",
+    sort: "date", dir: "desc",
+    page: 1, perPage: 25,
   };
 
   var fuse = null;
-  var indexData = null;     // raw array from /index.json
-  var searchMatches = null; // Set of permalinks, or null when no query
+  var indexData = null;
+  var searchMatches = null;
 
   function setPillActive(btn, active) {
     if (active) ACTIVE.forEach(function (c) { btn.classList.add(c); });
@@ -39,12 +45,17 @@
   // ---- URL state ----
   function readURL() {
     var p = new URLSearchParams(window.location.search);
-    state.q = p.get("q") || "";
+    state.q          = p.get("q") || "";
     state.categories = (p.get("category") || "").split(",").filter(Boolean);
     state.severities = (p.get("severity") || "").split(",").filter(Boolean);
-    state.patched = p.get("patched") || "all";
-    state.from = p.get("from") || "";
-    state.to = p.get("to") || "";
+    state.patched    = p.get("patched") || "all";
+    state.from       = p.get("from") || "";
+    state.to         = p.get("to") || "";
+    state.sort       = p.get("sort") || "date";
+    state.dir        = p.get("dir") || "desc";
+    state.page       = Math.max(1, parseInt(p.get("page") || "1") || 1);
+    state.perPage    = parseInt(p.get("per") || "25") || 25;
+    if ([25, 50, 100].indexOf(state.perPage) === -1) state.perPage = 25;
     if (fixedCategory) state.categories = [];
   }
 
@@ -56,16 +67,197 @@
     if (state.patched !== "all") p.set("patched", state.patched);
     if (state.from) p.set("from", state.from);
     if (state.to) p.set("to", state.to);
+    if (state.sort !== "date") p.set("sort", state.sort);
+    if (state.dir !== "desc") p.set("dir", state.dir);
+    if (state.page !== 1) p.set("page", String(state.page));
+    if (state.perPage !== 25) p.set("per", String(state.perPage));
     var qs = p.toString();
-    var url = window.location.pathname + (qs ? "?" + qs : "");
-    window.history.replaceState(null, "", url);
+    window.history.replaceState(null, "", window.location.pathname + (qs ? "?" + qs : ""));
   }
 
-  // ---- Apply state to controls ----
+  // ---- Sort ----
+  function sortComparator(a, b) {
+    var mul = state.dir === "asc" ? 1 : -1;
+    var av, bv;
+    if (state.sort === "cvss") {
+      av = parseFloat(a.getAttribute("data-cvss")) || 0;
+      bv = parseFloat(b.getAttribute("data-cvss")) || 0;
+      return (av - bv) * mul;
+    }
+    if (state.sort === "severity") {
+      av = SEV_ORDER[a.getAttribute("data-severity")] || 0;
+      bv = SEV_ORDER[b.getAttribute("data-severity")] || 0;
+      return (av - bv) * mul;
+    }
+    // date
+    av = a.getAttribute("data-date") || "";
+    bv = b.getAttribute("data-date") || "";
+    return (av < bv ? -1 : av > bv ? 1 : 0) * mul;
+  }
+
+  // ---- Stats bar ----
+  function updateStats(visible) {
+    var el = document.getElementById("poc-stats");
+    if (!el) return;
+    var counts = { Critical: 0, High: 0, Medium: 0, Low: 0, Info: 0 };
+    visible.forEach(function (row) {
+      var s = row.getAttribute("data-severity");
+      if (s in counts) counts[s]++;
+    });
+    el.innerHTML = ["Critical", "High", "Medium", "Low", "Info"].map(function (s) {
+      if (!counts[s]) return "";
+      return '<span class="inline-flex items-center gap-1 rounded border px-2 py-0.5 font-mono text-[10px] ' + SEV_COLORS[s] + '">' +
+             '<span class="font-semibold">' + counts[s] + '</span> ' + s + '</span>';
+    }).join("");
+  }
+
+  // ---- Pagination ----
+  function renderPagination(total, totalPages) {
+    var el = document.getElementById("poc-pagination");
+    if (!el) return;
+    if (totalPages <= 1) { el.innerHTML = ""; return; }
+
+    var btnCls = "rounded border border-zinc-300 px-2 py-0.5 font-mono text-xs text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400";
+    var activeCls = "rounded border border-emerald-400 bg-emerald-400/10 px-2 py-0.5 font-mono text-xs text-emerald-600 dark:text-emerald-400";
+
+    // Build page list with ellipsis
+    var pages = [];
+    var prevPg = 0;
+    for (var i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || Math.abs(i - state.page) <= 1) {
+        if (prevPg && i - prevPg > 1) pages.push("…");
+        pages.push(i);
+        prevPg = i;
+      }
+    }
+
+    var html = '<div class="flex items-center gap-1">';
+    if (state.page > 1) {
+      html += '<button type="button" class="pag-btn ' + btnCls + '" data-page="' + (state.page - 1) + '">←</button>';
+    }
+    pages.forEach(function (pg) {
+      if (typeof pg === "string") {
+        html += '<span class="px-1 text-xs text-zinc-400">' + pg + '</span>';
+      } else if (pg === state.page) {
+        html += '<span class="' + activeCls + '">' + pg + '</span>';
+      } else {
+        html += '<button type="button" class="pag-btn ' + btnCls + '" data-page="' + pg + '">' + pg + '</button>';
+      }
+    });
+    if (state.page < totalPages) {
+      html += '<button type="button" class="pag-btn ' + btnCls + '" data-page="' + (state.page + 1) + '">→</button>';
+    }
+    html += '</div>';
+
+    html += '<div class="flex items-center gap-1.5 font-mono text-xs text-zinc-500 dark:text-zinc-400">';
+    [25, 50, 100].forEach(function (n) {
+      if (n === state.perPage) {
+        html += '<span class="font-semibold text-emerald-600 dark:text-emerald-400">' + n + '</span>';
+      } else {
+        html += '<button type="button" class="perpage-btn underline-offset-2 hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline" data-n="' + n + '">' + n + '</button>';
+      }
+    });
+    html += '<span>/ page</span></div>';
+
+    el.innerHTML = html;
+
+    el.querySelectorAll(".pag-btn[data-page]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        state.page = parseInt(btn.getAttribute("data-page"));
+        writeURL();
+        applyFilters();
+      });
+    });
+    el.querySelectorAll(".perpage-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        state.perPage = parseInt(btn.getAttribute("data-n"));
+        state.page = 1;
+        writeURL();
+        applyFilters();
+      });
+    });
+  }
+
+  // ---- Filtering + sorting + pagination ----
+  function applyFilters() {
+    // Determine which rows pass the current filters
+    var matchSet = new Set();
+    rows.forEach(function (row) {
+      var cat     = row.getAttribute("data-category");
+      var sev     = row.getAttribute("data-severity");
+      var patched = row.getAttribute("data-patched");
+      var date    = row.getAttribute("data-date");
+      var link    = row.getAttribute("data-permalink");
+      var ok = true;
+      if (state.categories.length && state.categories.indexOf(cat) === -1) ok = false;
+      if (ok && state.severities.length && state.severities.indexOf(sev) === -1) ok = false;
+      if (ok && state.patched !== "all" && patched !== state.patched) ok = false;
+      if (ok && state.from && date < state.from) ok = false;
+      if (ok && state.to && date > state.to) ok = false;
+      if (ok && searchMatches && !searchMatches.has(link)) ok = false;
+      if (ok) matchSet.add(row);
+    });
+
+    // Sort all rows; reorder DOM so visible rows appear in sort order
+    var sorted = rows.slice().sort(sortComparator);
+    var visible = sorted.filter(function (r) { return matchSet.has(r); });
+
+    updateStats(visible);
+
+    var total = visible.length;
+    var totalPages = Math.max(1, Math.ceil(total / state.perPage));
+    if (state.page > totalPages) state.page = totalPages;
+
+    var start = (state.page - 1) * state.perPage;
+    var pageSet = new Set(visible.slice(start, start + state.perPage));
+
+    sorted.forEach(function (row) {
+      rowsEl.appendChild(row);
+      row.classList.toggle("hidden", !pageSet.has(row));
+    });
+
+    if (countEl) countEl.textContent = String(total);
+    if (emptyEl) emptyEl.classList.toggle("hidden", total !== 0);
+    if (rowsEl)  rowsEl.classList.toggle("hidden", total === 0);
+    renderPagination(total, totalPages);
+  }
+
+  // ---- Search ----
+  function runSearch() {
+    if (!state.q) { searchMatches = null; applyFilters(); return; }
+    if (!indexData) { applyFilters(); return; }
+
+    // CVE-pattern queries: exact substring match — fuzzy produces false positives
+    if (/^cve[-\s]?\d{4}[-\s]?\d+/i.test(state.q.trim())) {
+      var norm = state.q.trim().toLowerCase().replace(/\s+/g, "-");
+      searchMatches = new Set(
+        indexData
+          .filter(function (item) {
+            return (item.cve || "").toLowerCase().indexOf(norm) !== -1;
+          })
+          .map(function (item) { return item.permalink; })
+      );
+      applyFilters();
+      return;
+    }
+
+    var results = fuse.search(state.q);
+    searchMatches = new Set(results.map(function (r) { return r.item.permalink; }));
+    applyFilters();
+  }
+
+  // update() is called for every filter/sort/search change; always resets to page 1
+  function update() {
+    state.page = 1;
+    writeURL();
+    runSearch();
+  }
+
+  // ---- Sync controls to state ----
   function syncControls() {
     if (searchEl) searchEl.value = state.q;
     if (fromEl) fromEl.value = state.from;
-    if (toEl) toEl.value = state.to;
+    if (toEl)   toEl.value   = state.to;
 
     document.querySelectorAll("#filter-category .filter-pill").forEach(function (btn) {
       setPillActive(btn, state.categories.indexOf(btn.getAttribute("data-value")) !== -1);
@@ -76,63 +268,11 @@
     document.querySelectorAll("#filter-patched .filter-radio").forEach(function (btn) {
       setPillActive(btn, btn.getAttribute("data-value") === state.patched);
     });
-  }
-
-  // ---- Filtering ----
-  function applyFilters() {
-    var visible = 0;
-    rows.forEach(function (row) {
-      var cat = row.getAttribute("data-category");
-      var sev = row.getAttribute("data-severity");
-      var patched = row.getAttribute("data-patched");
-      var date = row.getAttribute("data-date");
-      var link = row.getAttribute("data-permalink");
-
-      var ok = true;
-      if (state.categories.length && state.categories.indexOf(cat) === -1) ok = false;
-      if (ok && state.severities.length && state.severities.indexOf(sev) === -1) ok = false;
-      if (ok && state.patched !== "all" && patched !== state.patched) ok = false;
-      if (ok && state.from && date < state.from) ok = false;
-      if (ok && state.to && date > state.to) ok = false;
-      if (ok && searchMatches && !searchMatches.has(link)) ok = false;
-
-      row.classList.toggle("hidden", !ok);
-      if (ok) visible++;
+    document.querySelectorAll("#sort-controls .sort-btn").forEach(function (btn) {
+      setPillActive(btn, btn.getAttribute("data-sort") === state.sort);
     });
-
-    if (countEl) countEl.textContent = String(visible);
-    if (emptyEl) emptyEl.classList.toggle("hidden", visible !== 0);
-    if (rowsEl) rowsEl.classList.toggle("hidden", visible === 0);
-  }
-
-  function runSearch() {
-    if (!state.q) { searchMatches = null; applyFilters(); return; }
-    if (!indexData) { applyFilters(); return; } // index not ready yet
-
-    // CVE-pattern queries use exact substring match — fuzzy matching produces
-    // false positives because CVE IDs are structurally too similar to each other.
-    if (/^cve[-\s]?\d{4}[-\s]?\d+/i.test(state.q.trim())) {
-      var norm = state.q.trim().toLowerCase().replace(/\s+/g, '-');
-      searchMatches = new Set(
-        indexData
-          .filter(function (item) {
-            return (item.cve || '').toLowerCase().indexOf(norm) !== -1;
-          })
-          .map(function (item) { return item.permalink; })
-      );
-      applyFilters();
-      return;
-    }
-
-    // Everything else: Fuse.js fuzzy search across title / tags / product
-    var results = fuse.search(state.q);
-    searchMatches = new Set(results.map(function (r) { return r.item.permalink; }));
-    applyFilters();
-  }
-
-  function update() {
-    writeURL();
-    runSearch();
+    var dirBtn = document.getElementById("sort-dir");
+    if (dirBtn) dirBtn.textContent = state.dir === "asc" ? "↑" : "↓";
   }
 
   // ---- Events ----
@@ -166,6 +306,30 @@
     });
   });
 
+  // Sort field buttons — clicking active field toggles direction
+  document.querySelectorAll("#sort-controls .sort-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var s = btn.getAttribute("data-sort");
+      if (state.sort === s) {
+        state.dir = state.dir === "asc" ? "desc" : "asc";
+      } else {
+        state.sort = s;
+        state.dir = "desc";
+      }
+      syncControls();
+      update();
+    });
+  });
+
+  var dirBtn = document.getElementById("sort-dir");
+  if (dirBtn) {
+    dirBtn.addEventListener("click", function () {
+      state.dir = state.dir === "asc" ? "desc" : "asc";
+      syncControls();
+      update();
+    });
+  }
+
   if (searchEl) {
     searchEl.addEventListener("input", function () {
       state.q = searchEl.value.trim();
@@ -173,16 +337,23 @@
     });
   }
   if (fromEl) fromEl.addEventListener("change", function () { state.from = fromEl.value; update(); });
-  if (toEl) toEl.addEventListener("change", function () { state.to = toEl.value; update(); });
+  if (toEl)   toEl.addEventListener("change",   function () { state.to   = toEl.value;   update(); });
+
+  // "/" focuses search from anywhere on the page
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "/" && document.activeElement !== searchEl &&
+        ["INPUT", "TEXTAREA", "SELECT"].indexOf(document.activeElement.tagName) === -1) {
+      e.preventDefault();
+      if (searchEl) { searchEl.focus(); searchEl.select(); }
+    }
+  });
 
   if (clearEl) {
     clearEl.addEventListener("click", function () {
-      state.q = "";
-      state.categories = [];
-      state.severities = [];
-      state.patched = "all";
-      state.from = "";
-      state.to = "";
+      state.q = ""; state.categories = []; state.severities = [];
+      state.patched = "all"; state.from = ""; state.to = "";
+      state.sort = "date"; state.dir = "desc";
+      state.page = 1; state.perPage = 25;
       searchMatches = null;
       syncControls();
       update();
@@ -194,7 +365,6 @@
   syncControls();
   applyFilters();
 
-  // Load Fuse index lazily
   if (typeof Fuse !== "undefined" && indexURL) {
     fetch(indexURL)
       .then(function (r) { return r.json(); })
@@ -206,14 +376,14 @@
           ignoreLocation: true,
           minMatchCharLength: 3,
           keys: [
-            { name: "title", weight: 0.4 },
-            { name: "tags", weight: 0.3 },
+            { name: "title",            weight: 0.4 },
+            { name: "tags",             weight: 0.3 },
             { name: "affected_product", weight: 0.2 },
-            { name: "summary", weight: 0.1 },
+            { name: "summary",          weight: 0.1 },
           ],
         });
         if (state.q) runSearch();
       })
-      .catch(function () { /* search index unavailable; filters still work */ });
+      .catch(function () {});
   }
 })();

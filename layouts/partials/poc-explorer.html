@@ -63,12 +63,26 @@
     </div>
   </div>
 
-  <!-- Result bar -->
-  <div class="mt-4 flex items-center justify-between">
-    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">
-      <span id="poc-count">{{ len $pages }}</span> result(s)
-    </p>
-    <button type="button" id="filter-clear" class="font-mono text-xs text-zinc-500 underline-offset-2 transition hover:text-emerald-600 hover:underline dark:text-zinc-400 dark:hover:text-emerald-400">clear filters</button>
+  <!-- Sort controls -->
+  <div class="mt-3 flex flex-wrap items-center gap-2">
+    <span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500">Sort</span>
+    <div class="flex gap-1" id="sort-controls">
+      <button type="button" data-sort="date"     class="sort-btn rounded-md border border-zinc-300 px-2.5 py-1 font-mono text-xs text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">Date</button>
+      <button type="button" data-sort="cvss"     class="sort-btn rounded-md border border-zinc-300 px-2.5 py-1 font-mono text-xs text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">CVSS</button>
+      <button type="button" data-sort="severity" class="sort-btn rounded-md border border-zinc-300 px-2.5 py-1 font-mono text-xs text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">Severity</button>
+    </div>
+    <button type="button" id="sort-dir" class="rounded-md border border-zinc-300 px-2 py-1 font-mono text-xs text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">↓</button>
+  </div>
+
+  <!-- Result bar + stats -->
+  <div class="mt-4">
+    <div class="flex items-center justify-between">
+      <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">
+        <span id="poc-count">{{ len $pages }}</span> result(s)
+      </p>
+      <button type="button" id="filter-clear" class="font-mono text-xs text-zinc-500 underline-offset-2 transition hover:text-emerald-600 hover:underline dark:text-zinc-400 dark:hover:text-emerald-400">clear filters</button>
+    </div>
+    <div id="poc-stats" class="mt-2 flex flex-wrap gap-1.5"></div>
   </div>
 
   <!-- Table header (desktop) -->
@@ -90,6 +104,9 @@
   <div id="poc-empty" class="hidden rounded-lg border border-dashed border-zinc-300 p-10 text-center font-mono text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
     No PoCs match the current filters.
   </div>
+
+  <!-- Pagination -->
+  <div id="poc-pagination" class="mt-4 flex flex-wrap items-center justify-between gap-3"></div>
 </section>
 
 <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
