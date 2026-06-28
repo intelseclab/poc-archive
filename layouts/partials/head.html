@@ -5,17 +5,103 @@
 {{- if .IsHome }}{{ $title = .Site.Title }}{{ else }}{{ $title = printf "%s · %s" .Title .Site.Title }}{{ end -}}
 <title>{{ $title }}</title>
 
+{{- /* ── Description ── */ -}}
 {{- $desc := .Site.Params.description -}}
 {{- with .Description }}{{ $desc = . }}{{ end -}}
 {{- with .Params.summary }}{{ $desc = . }}{{ end -}}
+{{- /* For individual POC pages build a keyword-rich description */ -}}
+{{- if and .IsPage .Params.cve -}}
+  {{- $d := printf "%s: proof-of-concept exploit" .Params.cve -}}
+  {{- with .Params.affected_product }}{{ $d = printf "%s targeting %s" $d . }}{{ end -}}
+  {{- with .Params.severity }}{{ $d = printf "%s — %s severity" $d . }}{{ end -}}
+  {{- with .Params.cvss_score }}{{ $d = printf "%s (CVSS %.1f)" $d . }}{{ end -}}
+  {{- with .Params.status }}{{ $d = printf "%s. Status: %s." $d . }}{{ end -}}
+  {{- $desc = $d -}}
+{{- end -}}
+
 <meta name="description" content="{{ $desc }}" />
 <meta name="author" content="{{ .Site.Params.author }}" />
 <meta name="theme-color" content="#09090b" />
 
-<meta property="og:title" content="{{ $title }}" />
-<meta property="og:description" content="{{ $desc }}" />
-<meta property="og:type" content="website" />
+{{- /* ── Keywords ── */ -}}
+{{- if .IsPage -}}
+  {{- $kw := slice "CVE" "PoC" "exploit" "proof of concept" "security research" -}}
+  {{- with .Params.cve }}{{ $kw = $kw | append . }}{{ end -}}
+  {{- with .Params.affected_product }}{{ $kw = $kw | append . }}{{ end -}}
+  {{- with .Params.tags }}{{ $kw = $kw | append . }}{{ end -}}
+<meta name="keywords" content="{{ delimit $kw ", " }}" />
+{{- end -}}
+
+{{- /* ── Canonical ── */ -}}
 {{ with .OutputFormats.Get "html" }}<link rel="canonical" href="{{ .Permalink }}" />{{ end }}
+
+{{- /* ── Open Graph ── */ -}}
+<meta property="og:title"       content="{{ $title }}" />
+<meta property="og:description" content="{{ $desc }}" />
+<meta property="og:type"        content="{{ if .IsHome }}website{{ else }}article{{ end }}" />
+<meta property="og:url"         content="{{ .Permalink }}" />
+<meta property="og:site_name"   content="PoC Archive" />
+<meta property="og:locale"      content="en_US" />
+{{ if .IsPage }}
+<meta property="article:published_time" content="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}" />
+<meta property="article:modified_time"  content="{{ .Lastmod.Format "2006-01-02T15:04:05Z07:00" }}" />
+{{ with .Params.tags }}{{ range . }}
+<meta property="article:tag" content="{{ . }}" />
+{{ end }}{{ end }}
+{{ end }}
+
+{{- /* ── Twitter / X Card ── */ -}}
+<meta name="twitter:card"        content="summary" />
+<meta name="twitter:title"       content="{{ $title }}" />
+<meta name="twitter:description" content="{{ $desc }}" />
+<meta name="twitter:site"        content="@intelseclab" />
+
+{{- /* ── Geo targeting ── */ -}}
+<meta name="geo.region"    content="US" />
+<meta name="geo.placename" content="United States" />
+<meta name="language"      content="en" />
+<meta name="revisit-after" content="3 days" />
+<meta name="robots"        content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+
+{{- /* ── JSON-LD structured data ──
+     Build the entire <script> element as a string outside JS template context,
+     then emit as safeHTML — avoids Go html/template double-encoding strings
+     inside <script> tags. */ -}}
+{{- $publisher := dict "@type" "Organization" "name" "intelseclab" "url" "https://github.com/intelseclab" -}}
+{{- $jsonld := "" -}}
+{{- if .IsHome -}}
+  {{- $jsonld = dict
+    "@context" "https://schema.org"
+    "@type"    "WebSite"
+    "name"     "PoC Archive"
+    "url"      .Site.BaseURL
+    "description" .Site.Params.description
+    "publisher"   $publisher
+    "potentialAction" (dict
+      "@type"       "SearchAction"
+      "target"      (dict "@type" "EntryPoint" "urlTemplate" (printf "%s?q={search_term_string}" .Site.BaseURL))
+      "query-input" "required name=search_term_string"
+    )
+  -}}
+{{- else if and .IsPage .Params.cve -}}
+  {{- $jsonld = dict
+    "@context"     "https://schema.org"
+    "@type"        "TechArticle"
+    "headline"     $title
+    "description"  $desc
+    "url"          .Permalink
+    "datePublished" (.Date.Format "2006-01-02")
+    "dateModified"  (.Lastmod.Format "2006-01-02")
+    "author"       (dict "@type" "Person" "name" (.Params.author | default "intelseclab"))
+    "keywords"     (.Params.tags | default slice)
+    "publisher"    $publisher
+    "isPartOf"     (dict "@type" "WebSite" "name" "PoC Archive" "url" .Site.BaseURL)
+    "about"        (dict "@type" "Thing" "name" .Params.cve "sameAs" (printf "https://nvd.nist.gov/vuln/detail/%s" .Params.cve))
+  -}}
+{{- end -}}
+{{- if $jsonld -}}
+  {{- printf "<script type=\"application/ld+json\">%s</script>" ($jsonld | jsonify) | safeHTML -}}
+{{- end -}}
 
 <!-- Prevent theme flash: apply stored theme before paint -->
 <script>
