@@ -28,6 +28,7 @@
   };
 
   var fuse = null;
+  var indexData = null;     // raw array from /index.json
   var searchMatches = null; // Set of permalinks, or null when no query
 
   function setPillActive(btn, active) {
@@ -106,7 +107,24 @@
 
   function runSearch() {
     if (!state.q) { searchMatches = null; applyFilters(); return; }
-    if (!fuse) { applyFilters(); return; } // index not ready yet
+    if (!indexData) { applyFilters(); return; } // index not ready yet
+
+    // CVE-pattern queries use exact substring match — fuzzy matching produces
+    // false positives because CVE IDs are structurally too similar to each other.
+    if (/^cve[-\s]?\d{4}[-\s]?\d+/i.test(state.q.trim())) {
+      var norm = state.q.trim().toLowerCase().replace(/\s+/g, '-');
+      searchMatches = new Set(
+        indexData
+          .filter(function (item) {
+            return (item.cve || '').toLowerCase().indexOf(norm) !== -1;
+          })
+          .map(function (item) { return item.permalink; })
+      );
+      applyFilters();
+      return;
+    }
+
+    // Everything else: Fuse.js fuzzy search across title / tags / product
     var results = fuse.search(state.q);
     searchMatches = new Set(results.map(function (r) { return r.item.permalink; }));
     applyFilters();
@@ -181,15 +199,17 @@
     fetch(indexURL)
       .then(function (r) { return r.json(); })
       .then(function (data) {
+        indexData = data;
         fuse = new Fuse(data, {
           includeScore: false,
-          threshold: 0.35,
+          threshold: 0.2,
           ignoreLocation: true,
+          minMatchCharLength: 3,
           keys: [
             { name: "title", weight: 0.4 },
-            { name: "cve", weight: 0.3 },
-            { name: "tags", weight: 0.15 },
-            { name: "affected_product", weight: 0.15 },
+            { name: "tags", weight: 0.3 },
+            { name: "affected_product", weight: 0.2 },
+            { name: "summary", weight: 0.1 },
           ],
         });
         if (state.q) runSearch();
