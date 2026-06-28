@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-06-28 04:15:41
+> Last updated: 2026-06-28 04:57:53
 
 ---
 
@@ -21,9 +21,14 @@
 | 2026-06-05 | N/A | [ssh-keysign-pwn](./pocs/binary/2026-06-05_ssh-keysign-pwn/) | `binary` | CVE-2026-46333 | High | LPE, Linux kernel, pidfd_getfd, ptrace, ssh-keysign, chage, fd-theft | Patched |
 | 2026-06-10 | 2026-06-09 | [rogueplanet-defender-lpe](./pocs/binary/2026-06-10_rogueplanet-defender-lpe/) | `binary` | CVE-2026-50656 | High | LPE, Windows Defender, race-condition, TOCTOU, ISO-mount, VirtualDisk, Task-Scheduler, WER, EICAR, SYSTEM-shell, Windows-10, Windows-11, local | Weaponized |
 | 2026-06-26 | 2026-06-18 | [cve-2026-50656-rogueplanet-checker](./pocs/binary/2026-06-26_cve-2026-50656-rogueplanet-checker/) | `binary` | CVE-2026-50656 | High | LPE, Windows Defender, TOCTOU, symlink, reparse-point, junction, CWE-59, checker, detection, non-destructive, MsMpEng | Researched |
+| 2026-06-28 | 2026-05-12 | [cve-2026-45586-ctfmon-greenplasma-lpe](./pocs/binary/2026-06-28_cve-2026-45586-ctfmon-greenplasma-lpe/) | `binary` | CVE-2026-45586 | High | LPE, EoP, Windows, CTFMON, section-object, object-directory, link-following, zero-day, CTF-challenge, Windows-11, Windows-2022, Windows-2026, incomplete-poc | PoC |
 | 2026-06-26 | 2026-05-31 | [yellowkey-bitlocker-bypass](./pocs/misc/2026-06-26_yellowkey-bitlocker-bypass/) | `misc` | CVE-2026-45585 | Medium | BitLocker, bypass, physical-access, WinRE, TPM, autofstx, NTFS-transactions, FsTx, Windows-11, Windows-Server-2022, zero-day, full-disk-access | Researched |
 | 2026-05-18 | N/A | [tossup-terramaster-redis-rce](./pocs/network/2026-05-18_tossup-terramaster-redis-rce/) | `network` | N/A (vendor confirmed TOS4 is EOL; no fix planned) | Critical | RCE, unauthenticated, Redis, TerraMaster, NAS, AArch64, root, module-loading, replication-abuse, NFS, no_root_squash, LPE, network | Weaponized |
 | 2026-06-04 | 2026-06-04 | [netlogon-cldap-stack-buffer-overflow](./pocs/network/2026-06-04_netlogon-cldap-stack-buffer-overflow/) | `network` | CVE-2026-41089 | Critical | Netlogon, CLDAP, Windows Server, stack-overflow, unauthenticated, DoS, potential-RCE | Weaponized |
+| 2026-06-28 | 2026-06-09 | [cve-2026-10520-ivanti-sentry-rce](./pocs/network/2026-06-28_cve-2026-10520-ivanti-sentry-rce/) | `network` | CVE-2026-10520, CVE-2026-10523 | Critical | pre-auth, RCE, OS-command-injection, Ivanti, Sentry, MICS-API, auth-bypass, admin-creation, CISA-KEV | PoC |
+| 2026-06-28 | 2026-06-14 | [cve-2026-20245-cisco-sdwan-priv-esc](./pocs/network/2026-06-28_cve-2026-20245-cisco-sdwan-priv-esc/) | `network` | CVE-2026-20245 | High | privilege-escalation, Cisco, SD-WAN, vManage, file-upload, command-injection, root, CISA-KEV, no-patch, Mandiant, nation-state | PoC |
+| 2026-06-28 | 2026-06-05 | [cve-2026-34908-unifi-os-rce-chain](./pocs/network/2026-06-28_cve-2026-34908-unifi-os-rce-chain/) | `network` | CVE-2026-34908, CVE-2026-34909, CVE-2026-34910 | Critical | unauth-rce, nginx-bypass, path-traversal, command-injection, CISA-KEV, Mirai, Gaafgyt, chain, UniFi, Ubiquiti, network | PoC |
+| 2026-06-28 | 2026-06-10 | [cve-2026-50751-checkpoint-ikev1-bypass](./pocs/network/2026-06-28_cve-2026-50751-checkpoint-ikev1-bypass/) | `network` | CVE-2026-50751 | Critical | auth-bypass, VPN, IKEv1, Check-Point, Remote-Access, certificate-bypass, Qilin, ransomware, CISA-KEV, unauthenticated | PoC |
 | 2026-05-14 | — | [nginx-rift-cve-2026-42945](./pocs/web/2026-05-14_nginx-rift-cve-2026-42945/) | `web` | CVE-2026-42945 | Critical | RCE, unauthenticated, nginx, heap-overflow, buffer-overflow, rewrite | Weaponized |
 | 2026-05-15 | — | [exchange-health-checker-outbound-rule-blind-spot](./pocs/web/2026-05-15_exchange-health-checker-outbound-rule-blind-spot/) | `web` | CVE-2026-42897 | Medium | Exchange, HealthChecker, IIS, URL-Rewrite, outbound-rules, EOMT, CSP, detection-gap | Researched |
 | 2026-05-16 | — | [chrome-cssfontfeaturevaluesmap-use-after-free](./pocs/web/2026-05-16_chrome-cssfontfeaturevaluesmap-use-after-free/) | `web` | CVE-2026-2441 | High | use-after-free, Chrome, Blink, CSSOM, renderer-rce, unauthenticated, drive-by | Weaponized |
@@ -45,21 +50,22 @@
 | 2026-05-30 | 2026-05-21 | [drupal-core-postgresql-sql-injection](./pocs/web/2026-05-30_drupal-core-postgresql-sql-injection/) | `web` | CVE-2026-9082 / SA-CORE-2026-004 | Critical | SQLi, Drupal, PostgreSQL, JSON:API, unauthenticated, data-exfiltration | Patched |
 | 2026-05-30 | 2026-04-30 | [litespeed-user-end-cpanel-plugin-privesc](./pocs/web/2026-05-30_litespeed-user-end-cpanel-plugin-privesc/) | `web` | CVE-2026-48172 | High | local-privilege-escalation, cPanel, LiteSpeed, symlink, archive-extraction | Patched |
 | 2026-06-08 | 2026-06-08 | [firefox-focus-ios-uxss-redirect-scheme-race-condition](./pocs/web/2026-06-08_firefox-focus-ios-uxss-redirect-scheme-race-condition/) | `web` | N/A | Critical | UXSS, XSS, race-condition, TOCTOU, redirect-validation, javascript-scheme, iOS, Firefox Focus | Unpatched |
+| 2026-06-28 | 2026-06-12 | [cve-2026-20253-splunk-preauth-rce](./pocs/web/2026-06-28_cve-2026-20253-splunk-preauth-rce/) | `web` | CVE-2026-20253 | Critical | pre-auth, RCE, PostgreSQL, Splunk, CISA-KEV, lo-export, sidecar, unauthenticated, file-write | PoC |
 
 ---
 
-*Total POCs: 70*
+*Total POCs: 76*
 
 ## By Category
 
-- **`binary`** — 21 entries
+- **`binary`** — 22 entries
 - **`cloud`** — 2 entries
 - **`crypto`** — 0 entries
 - **`hardware`** — 0 entries
 - **`misc`** — 3 entries
-- **`network`** — 12 entries
+- **`network`** — 16 entries
 - **`social-engineering`** — 0 entries
-- **`web`** — 32 entries
+- **`web`** — 33 entries
 
 ## Archives
 
