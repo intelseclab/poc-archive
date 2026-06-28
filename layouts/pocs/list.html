@@ -1,0 +1,23 @@
+{{ define "main" }}
+{{- /* Determine if this is the root /pocs/ section or a /pocs/<category>/ subsection */ -}}
+{{- $rel := strings.TrimPrefix "/pocs" .Path -}}
+{{- $fixedCategory := strings.TrimPrefix "/" $rel -}}
+{{- $pages := .RegularPagesRecursive.ByDate.Reverse -}}
+
+<header class="border-b border-zinc-200 pb-6 dark:border-zinc-800">
+  <nav class="mb-3 font-mono text-xs text-zinc-500 dark:text-zinc-400">
+    <a href="{{ "/pocs/" | relURL }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">pocs</a>
+    {{ if $fixedCategory }}<span class="text-zinc-300 dark:text-zinc-700"> / </span><span class="text-zinc-700 dark:text-zinc-300">{{ $fixedCategory }}</span>{{ end }}
+  </nav>
+  <h1 class="font-mono text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+    {{ if $fixedCategory }}{{ $fixedCategory }} PoCs{{ else }}All PoCs{{ end }}
+  </h1>
+  <p class="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+    {{ if .Content }}{{ .Content }}{{ else if $fixedCategory }}Proof-of-concept research filed under the <span class="font-mono text-emerald-600 dark:text-emerald-400">{{ $fixedCategory }}</span> category.{{ else }}Every proof-of-concept in the archive. Filter by category, severity, patch status and date, or search across titles, CVEs, tags and affected products.{{ end }}
+  </p>
+</header>
+
+<div class="mt-6">
+  {{ partial "poc-explorer.html" (dict "pages" $pages "fixedCategory" $fixedCategory) }}
+</div>
+{{ end }}

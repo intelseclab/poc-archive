@@ -1,0 +1,79 @@
+{{- /* Structured metadata block. Context (.) is the page. */ -}}
+<div class="space-y-5 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+  {{ with .Params.cvss_score }}{{ partial "cvss-gauge.html" . }}{{ end }}
+
+  <dl class="space-y-3 font-mono text-xs">
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Severity</dt>
+      <dd class="mt-1">{{ partial "severity-chip.html" .Params.severity }}</dd>
+    </div>
+    {{ with .Params.cve }}
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">CVE</dt>
+      <dd class="mt-1 text-emerald-600 dark:text-emerald-400">{{ . }}</dd>
+    </div>
+    {{ end }}
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Category</dt>
+      <dd class="mt-1">
+        <a href="{{ printf "/pocs/%s/" .Params.category | relURL }}" class="text-zinc-700 hover:text-emerald-600 dark:text-zinc-300 dark:hover:text-emerald-400">{{ .Params.category }}</a>
+      </dd>
+    </div>
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Affected product</dt>
+      <dd class="mt-1 text-zinc-700 dark:text-zinc-300">{{ .Params.affected_product }}</dd>
+    </div>
+    {{ with .Params.affected_versions }}
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Affected versions</dt>
+      <dd class="mt-1 text-zinc-700 dark:text-zinc-300">{{ . }}</dd>
+    </div>
+    {{ end }}
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Disclosed</dt>
+      <dd class="mt-1 text-zinc-700 dark:text-zinc-300">{{ .Date.Format "2006-01-02" }}</dd>
+    </div>
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Patch status</dt>
+      <dd class="mt-1">
+        {{ if .Params.patched }}<span class="text-emerald-600 dark:text-emerald-400">patched</span>{{ else }}<span class="text-amber-600 dark:text-amber-400">unpatched</span>{{ end }}
+      </dd>
+    </div>
+  </dl>
+
+  {{ with .Params.tags }}
+  <div>
+    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Tags</p>
+    <div class="mt-2 flex flex-wrap gap-1.5">
+      {{ range . }}
+      <a href="{{ "/tags/" | relURL }}{{ . | urlize }}/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#{{ . }}</a>
+      {{ end }}
+    </div>
+  </div>
+  {{ end }}
+
+  {{ with .Params.references }}
+  <div>
+    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">References</p>
+    <ul class="mt-2 space-y-1.5">
+      {{ range . }}
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="{{ . }}" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">{{ . }}</a>
+      </li>
+      {{ end }}
+    </ul>
+  </div>
+  {{ end }}
+
+  {{- $pocPath := .File.Dir | strings.TrimPrefix "pocs/" -}}
+  {{- $archiveURL := printf "%s/tree/master/pocs/%s" .Site.Params.repoURL $pocPath -}}
+  <div class="border-t border-zinc-200 pt-4 dark:border-zinc-800">
+    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Archive entry</p>
+    <a href="{{ $archiveURL }}" target="_blank" rel="noopener noreferrer"
+       class="mt-2 flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">
+      <svg class="h-3.5 w-3.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      intelseclab/poc-archive
+    </a>
+  </div>
+</div>

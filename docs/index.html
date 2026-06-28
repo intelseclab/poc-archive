@@ -1,1363 +1,658 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark scroll-smooth">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>poc-archive — intelseclab</title>
-  <meta name="description" content="A curated collection of Proof-of-Concepts for security researchers. Open source, well-structured, and easy-to-use.">
-  <meta property="og:title" content="poc-archive — intelseclab">
-  <meta property="og:description" content="A curated collection of Proof-of-Concepts for security researchers.">
-  <meta property="og:image" content="https://poc.intelseclab.com/project.png">
-  <meta property="og:url" content="https://poc.intelseclab.com">
-  <meta property="og:type" content="website">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="https://poc.intelseclab.com/project.png">
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-H7DJF8MKEN"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-H7DJF8MKEN');
-  </script>
-  <style>
-    /* ── Reset & Base ───────────────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+	<meta name="generator" content="Hugo 0.147.9"><script src="/poc-archive/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=poc-archive/livereload" data-no-instant defer></script>
+  <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>PoC Archive</title><meta name="description" content="A curated archive of security research proof-of-concept exploits. Reproducible writeups across web, network, binary, crypto, cloud, hardware, and social-engineering categories." />
+<meta name="author" content="intelseclab" />
+<meta name="theme-color" content="#09090b" />
+
+<meta property="og:title" content="PoC Archive" />
+<meta property="og:description" content="A curated archive of security research proof-of-concept exploits. Reproducible writeups across web, network, binary, crypto, cloud, hardware, and social-engineering categories." />
+<meta property="og:type" content="website" />
+<link rel="canonical" href="http://localhost:1313/poc-archive/" />
+
+
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('theme');
+      if (t === 'light') { document.documentElement.classList.remove('dark'); }
+      else { document.documentElement.classList.add('dark'); }
+    } catch (e) {}
+  })();
+</script>
+
+
+<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        },
+      },
+    },
+  };
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+  rel="stylesheet"
+/>
+
+<style>
+  html.dark body { background-color: #09090b; }
+   
+  body, body * { transition: background-color .15s ease, border-color .15s ease, color .15s ease; }
+   
+  .prose pre { background-color: #18181b !important; border: 1px solid rgba(255,255,255,0.08); }
+</style>
+
+
+<link rel="alternate" type="application/json" href="http://localhost:1313/poc-archive/index.json" title="Search index" />
+
+
+<link rel="icon" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2334d399' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'&gt;&lt;path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10'/&gt;&lt;/svg&gt;" />
 
-    :root {
-      --bg-0:        #0a0a0a;
-      --bg-1:        #111111;
-      --bg-2:        #1a1a1a;
-      --bg-3:        #242424;
-      --bg-4:        #2e2e2e;
-
-      --fg-0:        #e8e8e8;
-      --fg-1:        #b0b0b0;
-      --fg-2:        #787878;
-      --fg-3:        #505050;
-
-      --green:       #22c55e;
-      --green-dim:   #16a34a;
-      --amber:       #f59e0b;
-      --amber-dim:   #b45309;
-
-      --red:         #ef4444;
-      --red-bg:      rgba(239, 68, 68, 0.12);
-      --orange:      #f97316;
-      --orange-bg:   rgba(249, 115, 22, 0.12);
-      --yellow:      #eab308;
-      --yellow-bg:   rgba(234, 179, 8, 0.12);
-      --blue:        #3b82f6;
-      --blue-bg:     rgba(59, 130, 246, 0.12);
-      --grey:        #6b7280;
-      --grey-bg:     rgba(107, 114, 128, 0.12);
-
-      --border:      #2a2a2a;
-      --border-hi:   #3a3a3a;
-
-      --accent:      var(--green);
-      --accent-dim:  var(--green-dim);
-      --prompt:      var(--amber);
-
-      --radius-sm:   3px;
-      --radius-md:   6px;
-
-      --font-mono:   'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace;
-      --font-size:   13px;
-      --line-height: 1.6;
-    }
-
-    html {
-      background: var(--bg-0);
-      color: var(--fg-0);
-      font-family: var(--font-mono);
-      font-size: var(--font-size);
-      line-height: var(--line-height);
-      -webkit-font-smoothing: antialiased;
-    }
-
-    body {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-
-    /* ── Layout ─────────────────────────────────────────────────────────── */
-    .wrap {
-      width: 100%;
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 0 1.5rem;
-    }
-
-    /* ── Header ─────────────────────────────────────────────────────────── */
-    header {
-      border-bottom: 1px solid var(--border);
-      padding: 2rem 0 1.5rem;
-    }
-
-    .header-inner {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    .ascii-block {
-      white-space: pre;
-      font-size: 11px;
-      line-height: 1.15;
-      color: var(--accent);
-      letter-spacing: 0;
-      overflow-x: auto;
-      padding-bottom: 0.25rem;
-    }
-
-    .header-meta {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 1.25rem;
-    }
-
-    .header-subtitle {
-      color: var(--fg-1);
-      font-size: 12px;
-    }
-
-    .header-subtitle .org {
-      color: var(--amber);
-    }
-
-    .header-updated {
-      font-size: 11px;
-      color: var(--fg-2);
-    }
-
-    .header-updated .val {
-      color: var(--fg-1);
-    }
-
-    .status-dot {
-      display: inline-block;
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--green);
-      margin-right: 0.4rem;
-      vertical-align: middle;
-      position: relative;
-      top: -1px;
-    }
-
-    /* ── Stats Bar ───────────────────────────────────────────────────────── */
-    .stats-bar {
-      padding: 1rem 0;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .stats-inner {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      align-items: center;
-    }
-
-    .stats-label {
-      color: var(--fg-2);
-      font-size: 11px;
-      margin-right: 0.25rem;
-      white-space: nowrap;
-    }
-
-    .stat-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      padding: 0.2rem 0.6rem;
-      border-radius: var(--radius-sm);
-      font-size: 11px;
-      font-family: var(--font-mono);
-      border: 1px solid transparent;
-      white-space: nowrap;
-      cursor: default;
-    }
-
-    .stat-pill .pill-count {
-      font-weight: bold;
-    }
-
-    .stat-pill.total    { background: var(--bg-3); border-color: var(--border-hi); color: var(--fg-0); }
-    .stat-pill.critical { background: var(--red-bg);    border-color: rgba(239,68,68,0.35);    color: var(--red);    }
-    .stat-pill.high     { background: var(--orange-bg); border-color: rgba(249,115,22,0.35);   color: var(--orange); }
-    .stat-pill.medium   { background: var(--yellow-bg); border-color: rgba(234,179,8,0.35);    color: var(--yellow); }
-    .stat-pill.low      { background: var(--blue-bg);   border-color: rgba(59,130,246,0.35);   color: var(--blue);   }
-    .stat-pill.info     { background: var(--grey-bg);   border-color: rgba(107,114,128,0.35);  color: var(--grey);   }
-
-    .stat-pill.weaponized { background: var(--red-bg);    border-color: rgba(239,68,68,0.35);    color: var(--red);    }
-    .stat-pill.researched { background: var(--yellow-bg); border-color: rgba(234,179,8,0.35);    color: var(--yellow); }
-    .stat-pill.patched    { background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.35); color: var(--green);  }
-    .stat-pill.unpatched  { background: var(--orange-bg); border-color: rgba(249,115,22,0.35);   color: var(--orange); }
-    .stat-pill.unknown    { background: var(--grey-bg);   border-color: rgba(107,114,128,0.35);  color: var(--grey);   }
-
-    .stats-sep {
-      color: var(--fg-3);
-      font-size: 11px;
-      margin: 0 0.15rem;
-    }
-
-    /* ── Filters ─────────────────────────────────────────────────────────── */
-    .filters-section {
-      padding: 1rem 0;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .filters-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.6rem;
-      align-items: center;
-    }
-
-    .search-wrap {
-      position: relative;
-      flex: 1 1 260px;
-      min-width: 200px;
-    }
-
-    .search-prompt {
-      position: absolute;
-      left: 0.65rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--prompt);
-      font-size: 13px;
-      pointer-events: none;
-      user-select: none;
-    }
-
-    .search-input {
-      width: 100%;
-      padding: 0.45rem 0.65rem 0.45rem 1.7rem;
-      background: var(--bg-2);
-      border: 1px solid var(--border-hi);
-      border-radius: var(--radius-md);
-      color: var(--fg-0);
-      font-family: var(--font-mono);
-      font-size: 12px;
-      outline: none;
-      transition: border-color 0.15s, box-shadow 0.15s;
-    }
-
-    .search-input::placeholder {
-      color: var(--fg-3);
-    }
-
-    .search-input:focus {
-      border-color: var(--accent-dim);
-      box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.12);
-    }
-
-    .filter-select {
-      padding: 0.45rem 1.8rem 0.45rem 0.65rem;
-      background: var(--bg-2);
-      border: 1px solid var(--border-hi);
-      border-radius: var(--radius-md);
-      color: var(--fg-1);
-      font-family: var(--font-mono);
-      font-size: 11px;
-      outline: none;
-      appearance: none;
-      -webkit-appearance: none;
-      cursor: pointer;
-      transition: border-color 0.15s;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23505050'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 0.55rem center;
-      white-space: nowrap;
-    }
-
-    .filter-select:focus {
-      border-color: var(--accent-dim);
-    }
-
-    .filter-select option {
-      background: var(--bg-2);
-      color: var(--fg-0);
-    }
-
-    .filter-clear-btn {
-      padding: 0.45rem 0.75rem;
-      background: transparent;
-      border: 1px solid var(--border-hi);
-      border-radius: var(--radius-md);
-      color: var(--fg-2);
-      font-family: var(--font-mono);
-      font-size: 11px;
-      cursor: pointer;
-      transition: all 0.15s;
-      white-space: nowrap;
-    }
-
-    .filter-clear-btn:hover {
-      border-color: var(--fg-3);
-      color: var(--fg-1);
-    }
-
-    .filter-clear-btn.hidden { display: none; }
-
-    /* ── Results line ────────────────────────────────────────────────────── */
-    .results-bar {
-      padding: 0.6rem 0;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 11px;
-      color: var(--fg-2);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .results-count { color: var(--accent); font-weight: bold; }
-
-    /* ── Table ───────────────────────────────────────────────────────────── */
-    .table-wrap {
-      overflow-x: auto;
-      flex: 1;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: auto;
-    }
-
-    thead th {
-      padding: 0.65rem 0.75rem;
-      text-align: left;
-      font-size: 10px;
-      font-weight: normal;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--fg-2);
-      border-bottom: 1px solid var(--border);
-      white-space: nowrap;
-      user-select: none;
-      cursor: pointer;
-      transition: color 0.12s;
-    }
-
-    thead th:hover { color: var(--fg-0); }
-
-    thead th .sort-indicator {
-      display: inline-block;
-      margin-left: 0.3rem;
-      opacity: 0.35;
-      font-size: 9px;
-    }
-
-    thead th.sort-asc .sort-indicator,
-    thead th.sort-desc .sort-indicator {
-      opacity: 1;
-      color: var(--accent);
-    }
-
-    tbody tr {
-      border-bottom: 1px solid var(--border);
-      transition: background 0.1s;
-      cursor: pointer;
-    }
-
-    tbody tr:last-child { border-bottom: none; }
-
-    tbody tr:hover { background: var(--bg-2); }
-
-    tbody td {
-      padding: 0.7rem 0.75rem;
-      font-size: 12px;
-      vertical-align: middle;
-    }
-
-    /* date col */
-    .col-date {
-      white-space: nowrap;
-      font-size: 11px;
-    }
-
-    .date-added {
-      color: var(--fg-1);
-    }
-
-    .date-updated {
-      display: block;
-      font-size: 10px;
-      color: var(--green);
-      margin-top: 2px;
-      opacity: 0.85;
-    }
-
-    /* cvss score under severity badge */
-    .cvss-score {
-      display: block;
-      font-size: 10px;
-      color: var(--fg-3);
-      margin-top: 3px;
-      text-align: center;
-      font-family: var(--font-mono);
-    }
-
-    /* name col */
-    .col-name a {
-      color: var(--fg-0);
-      font-weight: 500;
-    }
-
-    .col-name a:hover {
-      color: var(--accent);
-      text-decoration: none;
-    }
-
-    /* category col */
-    .col-cat {
-      white-space: nowrap;
-    }
-
-    .cat-badge {
-      display: inline-block;
-      padding: 0.15rem 0.5rem;
-      border-radius: var(--radius-sm);
-      font-size: 10px;
-      background: var(--bg-3);
-      border: 1px solid var(--border-hi);
-      color: var(--fg-1);
-      text-transform: lowercase;
-    }
-
-    /* cve col */
-    .col-cve {
-      white-space: nowrap;
-      font-size: 11px;
-      color: var(--fg-1);
-    }
-
-    /* severity col */
-    .badge {
-      display: inline-block;
-      padding: 0.15rem 0.55rem;
-      border-radius: var(--radius-sm);
-      font-size: 10px;
-      font-weight: bold;
-      letter-spacing: 0.04em;
-      white-space: nowrap;
-      border: 1px solid transparent;
-    }
-
-    .badge-critical { background: var(--red-bg);    border-color: rgba(239,68,68,0.4);   color: var(--red);    }
-    .badge-high     { background: var(--orange-bg); border-color: rgba(249,115,22,0.4);  color: var(--orange); }
-    .badge-medium   { background: var(--yellow-bg); border-color: rgba(234,179,8,0.4);   color: var(--yellow); }
-    .badge-low      { background: var(--blue-bg);   border-color: rgba(59,130,246,0.4);  color: var(--blue);   }
-    .badge-informational { background: var(--grey-bg); border-color: rgba(107,114,128,0.4); color: var(--grey); }
-
-    .badge-weaponized { background: var(--red-bg);    border-color: rgba(239,68,68,0.4);    color: var(--red);    }
-    .badge-researched { background: var(--yellow-bg); border-color: rgba(234,179,8,0.4);    color: var(--yellow); }
-    .badge-patched    { background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.4); color: var(--green);  }
-    .badge-unpatched  { background: var(--orange-bg); border-color: rgba(249,115,22,0.4);   color: var(--orange); }
-    .badge-unknown    { background: var(--grey-bg);   border-color: rgba(107,114,128,0.4);  color: var(--grey);   }
-
-    /* tags col */
-    .col-tags {
-      font-size: 11px;
-      color: var(--fg-2);
-      max-width: 280px;
-    }
-
-    .tag-chip {
-      display: inline-block;
-      padding: 0.1rem 0.4rem;
-      margin: 0.1rem 0.15rem 0.1rem 0;
-      border-radius: var(--radius-sm);
-      font-size: 10px;
-      background: var(--bg-3);
-      border: 1px solid var(--border);
-      color: var(--fg-2);
-      white-space: nowrap;
-      cursor: pointer;
-      transition: background 0.1s, color 0.1s, border-color 0.1s;
-    }
-
-    .tag-chip:hover {
-      background: var(--bg-4);
-      border-color: var(--accent-dim);
-      color: var(--accent);
-    }
-
-    .tag-chip.tag-more {
-      cursor: default;
-      color: var(--fg-3);
-      font-style: italic;
-    }
-
-    .tag-chip.tag-more:hover {
-      background: var(--bg-3);
-      border-color: var(--border);
-      color: var(--fg-3);
-    }
-
-    /* clickable stat pills */
-    .stat-pill[data-filter-key] {
-      cursor: pointer;
-      transition: opacity 0.12s;
-    }
-
-    .stat-pill[data-filter-key]:hover {
-      opacity: 0.8;
-    }
-
-    /* cve link */
-    .cve-link {
-      color: var(--fg-1);
-      font-size: 11px;
-      text-decoration: none;
-    }
-
-    .cve-link:hover {
-      color: var(--accent);
-      text-decoration: underline;
-    }
-
-    /* empty state */
-    .empty-row td {
-      text-align: center;
-      padding: 3rem 1rem;
-      color: var(--fg-3);
-      font-size: 12px;
-      cursor: default;
-    }
-
-    .empty-row:hover { background: transparent !important; }
-
-    /* ── Footer ─────────────────────────────────────────────────────────── */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 1.25rem 0;
-      margin-top: auto;
-    }
-
-    .footer-inner {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
-      font-size: 11px;
-    }
-
-    .footer-left {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      color: var(--fg-2);
-    }
-
-    .footer-left a {
-      color: var(--accent);
-    }
-
-    .footer-right {
-      color: var(--fg-3);
-      font-style: italic;
-    }
-
-    /* ── Scrollbars ─────────────────────────────────────────────────────── */
-    * {
-      scrollbar-width: thin;
-      scrollbar-color: var(--bg-4) var(--bg-1);
-    }
-
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: var(--bg-1);
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: var(--bg-4);
-      border-radius: 3px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: var(--fg-3);
-    }
-
-    ::-webkit-scrollbar-corner {
-      background: var(--bg-1);
-    }
-
-    /* ── Cursor animation ────────────────────────────────────────────────── */
-    @keyframes blink {
-      0%, 49% { opacity: 1; }
-      50%, 100% { opacity: 0; }
-    }
-
-    .cursor {
-      display: inline-block;
-      width: 7px;
-      height: 13px;
-      background: var(--accent);
-      vertical-align: text-bottom;
-      animation: blink 1.1s step-start infinite;
-      margin-left: 2px;
-    }
-
-    /* name col wrapping */
-    .col-name {
-      max-width: 240px;
-      word-break: break-word;
-      overflow-wrap: break-word;
-    }
-
-    /* ── Pagination ──────────────────────────────────────────────────────── */
-    .pagination-bar {
-      border-top: 1px solid var(--border);
-      padding: 0.65rem 0;
-    }
-
-    .pagination-inner {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 0.6rem;
-      font-size: 11px;
-    }
-
-    .page-info {
-      color: var(--fg-2);
-      white-space: nowrap;
-      margin-right: auto;
-    }
-
-    .page-info .page-range { color: var(--fg-1); }
-
-    .page-btns {
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-    }
-
-    .page-btn {
-      padding: 0.3rem 0.6rem;
-      background: var(--bg-2);
-      border: 1px solid var(--border-hi);
-      border-radius: var(--radius-sm);
-      color: var(--fg-1);
-      font-family: var(--font-mono);
-      font-size: 11px;
-      cursor: pointer;
-      transition: all 0.12s;
-      white-space: nowrap;
-    }
-
-    .page-btn:hover:not(:disabled) {
-      border-color: var(--fg-3);
-      color: var(--fg-0);
-    }
-
-    .page-btn:disabled {
-      opacity: 0.3;
-      cursor: default;
-    }
-
-    .page-num {
-      padding: 0.3rem 0.55rem;
-      background: transparent;
-      border: 1px solid transparent;
-      border-radius: var(--radius-sm);
-      color: var(--fg-2);
-      font-family: var(--font-mono);
-      font-size: 11px;
-      cursor: pointer;
-      transition: all 0.12s;
-      min-width: 28px;
-      text-align: center;
-    }
-
-    .page-num:hover { color: var(--fg-0); background: var(--bg-3); }
-
-    .page-num.active {
-      background: var(--bg-3);
-      border-color: var(--accent-dim);
-      color: var(--accent);
-      cursor: default;
-    }
-
-    .page-ellipsis {
-      color: var(--fg-3);
-      padding: 0 0.2rem;
-      font-size: 11px;
-    }
-
-    /* ── Responsive ──────────────────────────────────────────────────────── */
-
-    /* Tablet — hide tags */
-    @media (max-width: 900px) {
-      .col-tags { display: none; }
-
-      .filters-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.5rem;
-      }
-
-      .search-wrap {
-        grid-column: 1 / -1;
-        flex: unset;
-        min-width: unset;
-      }
-
-      #js-clear {
-        grid-column: 1 / -1;
-        width: 100%;
-      }
-    }
-
-    /* Small tablet — hide CVE */
-    @media (max-width: 680px) {
-      .ascii-block { font-size: 8px; }
-      .col-cve     { display: none; }
-      thead th, tbody td { padding-left: 0.5rem; padding-right: 0.5rem; }
-
-      .stats-inner { gap: 0.35rem; }
-      .stat-pill   { font-size: 10px; padding: 0.15rem 0.45rem; }
-      .stats-sep   { display: none; }
-      .stats-label { display: none; }
-    }
-
-    /* Mobile — hide date + category, single-column filters */
-    @media (max-width: 480px) {
-      .ascii-block { display: none; }
-      .col-cat     { display: none; }
-      .col-date { display: none; }
-
-      header { padding: 1.25rem 0 1rem; }
-
-      .wrap { padding: 0 1rem; }
-
-      .filters-row {
-        grid-template-columns: 1fr;
-      }
-
-      #js-clear { width: 100%; }
-
-      .filter-select { width: 100%; }
-
-      .footer-inner {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.4rem;
-      }
-
-      .results-bar .wrap {
-        font-size: 10px;
-      }
-
-      thead th { font-size: 9px; }
-      tbody td { font-size: 11px; }
-
-      .badge { font-size: 9px; padding: 0.1rem 0.4rem; }
-      .cat-badge { font-size: 9px; }
-
-      .pagination-inner { gap: 0.4rem; }
-      .page-info { width: 100%; margin-right: 0; }
-      .page-btn  { font-size: 10px; padding: 0.3rem 0.5rem; }
-      .page-num  { font-size: 10px; min-width: 24px; padding: 0.3rem 0.4rem; }
-    }
-  </style>
 </head>
-<body>
+<body class="min-h-screen bg-white text-zinc-900 font-sans antialiased selection:bg-emerald-400/20 selection:text-emerald-900 dark:bg-zinc-950 dark:text-zinc-100 dark:selection:text-emerald-200">
+  <header class="sticky top-0 z-40 border-b border-zinc-200/80 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
+  <div class="mx-auto flex w-full max-w-6xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
+    <a href="/" class="flex items-center gap-2 font-mono text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-500 dark:text-emerald-400"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+      <span>poc-archive</span>
+    </a>
 
-  <!-- ── Header ──────────────────────────────────────────────────────────── -->
-  <header>
-    <div class="wrap">
-      <div class="header-inner">
-        <pre class="ascii-block">
-╭─╮╭─╮╭─╴   ╭─╮╭─╮╭─╴╷ ╷╷╷ ╷╭─╴
-├─╯│ ││     ├─┤├┬╯│  ├─┤││╭╯├╴ 
-╵  ╰─╯╰─╴   ╵ ╵╵╰╴╰─╴╵ ╵╵╰╯ ╰─╴
-</pre>
-        <div class="header-meta">
-          <span class="header-subtitle">
-            <span class="status-dot"></span>
-            <span class="org">intelseclab</span> &middot; security research proof-of-concepts
-          </span>
-          <span class="header-updated">
-            last updated: <span class="val" id="js-updated">—</span>
-          </span>
-        </div>
-      </div>
-    </div>
-  </header>
+    <nav class="ml-2 hidden items-center gap-1 text-sm sm:flex">
+      
+      <a href="/" class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100">home</a>
+      <a href="/pocs/" class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100">pocs</a>
+      <a href="/archive/" class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100">archive</a>
+    </nav>
 
-  <!-- ── Stats Bar ────────────────────────────────────────────────────────── -->
-  <div class="stats-bar">
-    <div class="wrap">
-      <div class="stats-inner" id="js-stats">
-        <!-- populated by JS -->
-      </div>
+    <div class="ml-auto flex items-center gap-2">
+      <a href="https://github.com/intelseclab/poc-archive" target="_blank" rel="noopener noreferrer" class="hidden rounded-md border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 sm:inline-flex dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900">
+        GitHub
+      </a>
+      <button
+        type="button"
+        id="theme-toggle"
+        aria-label="Toggle color theme"
+        class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
+      >
+        <svg class="hidden h-4 w-4 dark:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="block h-4 w-4 dark:hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
     </div>
   </div>
 
-  <!-- ── Filters ──────────────────────────────────────────────────────────── -->
-  <div class="filters-section">
-    <div class="wrap">
-      <div class="filters-row">
-        <div class="search-wrap">
-          <span class="search-prompt">&gt;</span>
-          <input
-            id="js-search"
-            class="search-input"
-            type="text"
-            placeholder="search name, CVE, tags..."
-            autocomplete="off"
-            spellcheck="false"
-          >
-        </div>
-
-        <select id="js-filter-severity" class="filter-select">
-          <option value="">severity: all</option>
-          <option value="Critical">Critical</option>
-          <option value="High">High</option>
-          <option value="Medium">Medium</option>
-          <option value="Low">Low</option>
-          <option value="Informational">Informational</option>
-        </select>
-
-        <select id="js-filter-category" class="filter-select">
-          <option value="">category: all</option>
-        </select>
-
-        <select id="js-filter-status" class="filter-select">
-          <option value="">status: all</option>
-        </select>
-
-        <select id="js-filter-year" class="filter-select">
-          <option value="">year: all</option>
-        </select>
-
-        <button id="js-clear" class="filter-clear-btn hidden">clear filters</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── Results count ────────────────────────────────────────────────────── -->
-  <div class="results-bar">
-    <div class="wrap">
-      <span>$ ls -1 ./pocs/</span>
-      <span class="stats-sep">|</span>
-      <span>showing <span class="results-count" id="js-count">0</span> entries</span>
-      <span class="cursor"></span>
-    </div>
-  </div>
-
-  <!-- ── Table ────────────────────────────────────────────────────────────── -->
-  <div class="wrap">
-    <div class="table-wrap">
-      <table id="js-table">
-        <thead>
-          <tr>
-            <th data-col="date"     class="col-date">Date <span class="sort-indicator">&#9660;</span></th>
-            <th data-col="name"     class="col-name">Name <span class="sort-indicator">&#9660;</span></th>
-            <th data-col="category" class="col-cat">Category <span class="sort-indicator">&#9660;</span></th>
-            <th data-col="cve"      class="col-cve">CVE <span class="sort-indicator">&#9660;</span></th>
-            <th data-col="severity">Severity <span class="sort-indicator">&#9660;</span></th>
-            <th data-col="tags"     class="col-tags">Tags <span class="sort-indicator">&#9660;</span></th>
-            <th data-col="status">Status <span class="sort-indicator">&#9660;</span></th>
-          </tr>
-        </thead>
-        <tbody id="js-tbody">
-          <!-- populated by JS -->
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- ── Pagination ──────────────────────────────────────────────────────── -->
-  <div class="pagination-bar">
-    <div class="wrap">
-      <div class="pagination-inner">
-        <span class="page-info" id="js-page-info"></span>
-        <div class="page-btns" id="js-page-btns"></div>
-        <select id="js-page-size" class="filter-select">
-          <option value="25">25 / page</option>
-          <option value="50">50 / page</option>
-          <option value="100">100 / page</option>
-        </select>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── Footer ───────────────────────────────────────────────────────────── -->
-  <footer>
-    <div class="wrap">
-      <div class="footer-inner">
-        <div class="footer-left">
-          <span>&gt;</span>
-          <a
-            href="https://github.com/intelseclab/poc-archive"
-            target="_blank"
-            rel="noopener noreferrer"
-          >github.com/intelseclab/poc-archive</a>
-        </div>
-        <div class="footer-right">
-          For authorized security research and educational purposes only.
-        </div>
-      </div>
-    </div>
-  </footer>
+  
+  <nav class="flex items-center gap-1 border-t border-zinc-200 px-4 py-2 text-sm sm:hidden dark:border-zinc-800">
+    <a href="/" class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">home</a>
+    <a href="/pocs/" class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">pocs</a>
+    <a href="/archive/" class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">archive</a>
+  </nav>
 
   <script>
     (function () {
-      'use strict';
-
-      /* ── Constants ──────────────────────────────────────────────────────── */
-      const GITHUB_BLOB = 'https://github.com/intelseclab/poc-archive/blob/master/';
-
-      const SEVERITY_ORDER = {
-        critical: 0, high: 1, medium: 2, low: 3, informational: 4, '': 5
-      };
-
-      const MAX_TAGS_SHOWN = 5;
-
-      /* ── State ──────────────────────────────────────────────────────────── */
-      let allPocs      = [];
-      let filtered     = [];
-      let sortCol      = 'date';
-      let sortDir      = 'desc';   /* newest first by default */
-      let currentPage  = 1;
-      let pageSize     = 25;
-
-      /* ── DOM refs ───────────────────────────────────────────────────────── */
-      const $tbody     = document.getElementById('js-tbody');
-      const $count     = document.getElementById('js-count');
-      const $stats     = document.getElementById('js-stats');
-      const $updated   = document.getElementById('js-updated');
-      const $search    = document.getElementById('js-search');
-      const $fSev      = document.getElementById('js-filter-severity');
-      const $fCat      = document.getElementById('js-filter-category');
-      const $fStat     = document.getElementById('js-filter-status');
-      const $fYear     = document.getElementById('js-filter-year');
-      const $clear     = document.getElementById('js-clear');
-      const $thead     = document.querySelector('thead tr');
-      const $pageInfo  = document.getElementById('js-page-info');
-      const $pageBtns  = document.getElementById('js-page-btns');
-      const $pageSizeEl = document.getElementById('js-page-size');
-
-      /* ── Helpers ────────────────────────────────────────────────────────── */
-      function esc(str) {
-        return String(str)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;');
-      }
-
-      function severityClass(s) {
-        return 'badge-' + (s || 'unknown').toLowerCase().replace(/\s+/g, '-');
-      }
-
-      function statusClass(s) {
-        return 'badge-' + (s || 'unknown').toLowerCase().replace(/\s+/g, '-');
-      }
-
-      function urlForPoc(url) {
-        if (!url) return '#';
-        const clean = url.replace(/^\.\.\//, '').replace(/\/$/, '');
-        return GITHUB_BLOB + clean + '/README.md';
-      }
-
-      function tagsArray(tags) {
-        if (Array.isArray(tags)) return tags.filter(Boolean);
-        if (!tags) return [];
-        return tags.split(',').map(t => t.trim()).filter(Boolean);
-      }
-
-      function buildTagChips(tags) {
-        const arr = tagsArray(tags);
-        if (!arr.length) return '';
-        const shown = arr.slice(0, MAX_TAGS_SHOWN);
-        const rest  = arr.slice(MAX_TAGS_SHOWN);
-        let html = shown.map(tag =>
-          `<span class="tag-chip" data-tag="${esc(tag)}">${esc(tag)}</span>`
-        ).join('');
-        if (rest.length) {
-          html += `<span class="tag-chip tag-more" title="${esc(rest.join(', '))}">+${rest.length} more</span>`;
-        }
-        return html;
-      }
-
-      function renderCve(cve) {
-        if (!cve || cve === 'N/A') return '<span style="color:var(--fg-3)">—</span>';
-        const match = cve.match(/CVE-\d{4}-\d+/i);
-        if (match) {
-          const id = match[0].toUpperCase();
-          return `<a class="cve-link" href="https://nvd.nist.gov/vuln/detail/${id}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">${esc(id)}</a>`;
-        }
-        /* N/A with explanation — show truncated with full text on hover */
-        return `<span style="color:var(--fg-3)" title="${esc(cve)}">N/A</span>`;
-      }
-
-      function renderCvss(cvss) {
-        if (!cvss || cvss === 'N/A') return '';
-        const num = cvss.match(/[\d.]+/);
-        return num ? `<span class="cvss-score">${esc(num[0])}</span>` : '';
-      }
-
-      function renderDate(date, updated) {
-        let html = `<span class="date-added">${esc(date || '—')}</span>`;
-        if (updated && updated !== 'N/A' && updated !== date) {
-          html += `<span class="date-updated" title="Last upstream update">↑ ${esc(updated)}</span>`;
-        }
-        return html;
-      }
-
-      /* ── Stats ──────────────────────────────────────────────────────────── */
-      function renderStats(pocs) {
-        const counts = { total: pocs.length };
-        const sevKeys  = ['Critical','High','Medium','Low','Informational'];
-        const statKeys = ['Weaponized','Researched','Patched','Unpatched','Unknown'];
-
-        sevKeys.forEach(k => { counts['sev_' + k] = 0; });
-        statKeys.forEach(k => { counts['stat_' + k] = 0; });
-
-        pocs.forEach(p => {
-          const sk = 'sev_' + p.severity;
-          if (sk in counts) counts[sk]++;
-          const stk = 'stat_' + p.status;
-          if (stk in counts) counts[stk]++;
-        });
-
-        let html = `<span class="stats-label">stats:</span>`;
-        html += `<span class="stat-pill total" data-filter-key="total" title="Clear all filters"><span class="pill-count">${counts.total}</span> total</span>`;
-        html += `<span class="stats-sep">//</span>`;
-        html += `<span class="stats-label">severity:</span>`;
-        sevKeys.forEach(k => {
-          const c = counts['sev_' + k];
-          if (c > 0) {
-            html += `<span class="stat-pill ${k.toLowerCase()}" data-filter-key="severity" data-filter-val="${k}" title="Filter: ${k}">
-              <span class="pill-count">${c}</span> ${k}
-            </span>`;
-          }
-        });
-        html += `<span class="stats-sep">//</span>`;
-        html += `<span class="stats-label">status:</span>`;
-        statKeys.forEach(k => {
-          const c = counts['stat_' + k];
-          if (c > 0) {
-            html += `<span class="stat-pill ${k.toLowerCase()}" data-filter-key="status" data-filter-val="${k}" title="Filter: ${k}">
-              <span class="pill-count">${c}</span> ${k}
-            </span>`;
-          }
-        });
-
-        $stats.innerHTML = html;
-      }
-
-      /* ── Filtering ──────────────────────────────────────────────────────── */
-      function applyFilters() {
-        const q    = $search.value.trim().toLowerCase();
-        const sev  = $fSev.value;
-        const cat  = $fCat.value;
-        const stat = $fStat.value;
-        const yr   = $fYear.value;
-
-        filtered = allPocs.filter(p => {
-          if (sev  && p.severity !== sev)   return false;
-          if (cat  && p.category !== cat)   return false;
-          if (stat && p.status   !== stat)  return false;
-          if (yr   && p.cve_year !== yr)    return false;
-          if (q) {
-            const tagStr = Array.isArray(p.tags) ? p.tags.join(' ') : (p.tags || '');
-            const haystack = [p.name, p.cve, tagStr, p.summary || ''].join(' ').toLowerCase();
-            if (!haystack.includes(q)) return false;
-          }
-          return true;
-        });
-
-        currentPage = 1;
-        sortFiltered();
-        renderTable();
-        updateClearBtn();
-      }
-
-      function updateClearBtn() {
-        const active =
-          $search.value || $fSev.value || $fCat.value ||
-          $fStat.value  || $fYear.value;
-        $clear.classList.toggle('hidden', !active);
-      }
-
-      /* ── Sorting ────────────────────────────────────────────────────────── */
-      function sortFiltered() {
-        filtered.sort((a, b) => {
-          let av = (a[sortCol] || '').toLowerCase();
-          let bv = (b[sortCol] || '').toLowerCase();
-
-          if (sortCol === 'severity') {
-            av = SEVERITY_ORDER[av] ?? 99;
-            bv = SEVERITY_ORDER[bv] ?? 99;
-            return sortDir === 'asc' ? av - bv : bv - av;
-          }
-
-          if (sortCol === 'date') {
-            av = a.date || '';
-            bv = b.date || '';
-          }
-
-          if (av < bv) return sortDir === 'asc' ? -1 :  1;
-          if (av > bv) return sortDir === 'asc' ?  1 : -1;
-          return 0;
-        });
-      }
-
-      /* ── Table render ───────────────────────────────────────────────────── */
-      function renderTable() {
-        const total    = filtered.length;
-        const pages    = Math.max(1, Math.ceil(total / pageSize));
-        if (currentPage > pages) currentPage = pages;
-
-        const start    = (currentPage - 1) * pageSize;
-        const end      = Math.min(start + pageSize, total);
-        const pagePocs = filtered.slice(start, end);
-
-        $count.textContent = total;
-
-        if (total === 0) {
-          $tbody.innerHTML =
-            `<tr class="empty-row"><td colspan="7">
-              no entries match the current filters
-            </td></tr>`;
-          renderPagination(0, 1, 0, 0);
-          return;
-        }
-
-        const rows = pagePocs.map(p => {
-          const link = urlForPoc(p.url);
-          const tags = buildTagChips(p.tags);
-          return `<tr data-href="${esc(link)}" title="${esc(p.summary || '')}">
-            <td class="col-date">${renderDate(p.date, p.updated)}</td>
-            <td class="col-name">
-              <a href="${esc(link)}" target="_blank" rel="noopener noreferrer"
-                 onclick="event.stopPropagation()">${esc(p.name)}</a>
-            </td>
-            <td class="col-cat"><span class="cat-badge">${esc(p.category)}</span></td>
-            <td class="col-cve">${renderCve(p.cve)}</td>
-            <td>
-              <span class="badge ${severityClass(p.severity)}">${esc(p.severity)}</span>
-              ${renderCvss(p.cvss)}
-            </td>
-            <td class="col-tags">${tags}</td>
-            <td><span class="badge ${statusClass(p.status)}">${esc(p.status)}</span></td>
-          </tr>`;
-        });
-
-        $tbody.innerHTML = rows.join('');
-
-        renderPagination(total, pages, start, end);
-      }
-
-      /* ── Pagination render ──────────────────────────────────────────────── */
-      function renderPagination(total, pages, start, end) {
-        if (total === 0) {
-          $pageInfo.innerHTML = '';
-          $pageBtns.innerHTML = '';
-          return;
-        }
-
-        $pageInfo.innerHTML =
-          `<span class="page-range">${start + 1}–${end}</span> of ${total} entries`;
-
-        /* build page number list: always show first, last, current ±1 */
-        const nums = new Set([1, pages, currentPage - 1, currentPage, currentPage + 1]
-          .filter(n => n >= 1 && n <= pages));
-        const sorted = [...nums].sort((a, b) => a - b);
-
-        let html = `<button class="page-btn" id="js-prev">← prev</button>`;
-
-        let prev = 0;
-        for (const n of sorted) {
-          if (n - prev > 1) html += `<span class="page-ellipsis">…</span>`;
-          html += `<button class="page-num${n === currentPage ? ' active' : ''}" data-page="${n}">${n}</button>`;
-          prev = n;
-        }
-
-        html += `<button class="page-btn" id="js-next">next →</button>`;
-        $pageBtns.innerHTML = html;
-
-        document.getElementById('js-prev').disabled = currentPage === 1;
-        document.getElementById('js-next').disabled = currentPage === pages;
-
-        document.getElementById('js-prev').addEventListener('click', () => goPage(currentPage - 1));
-        document.getElementById('js-next').addEventListener('click', () => goPage(currentPage + 1));
-        $pageBtns.querySelectorAll('.page-num:not(.active)').forEach(btn => {
-          btn.addEventListener('click', () => goPage(Number(btn.dataset.page)));
-        });
-      }
-
-      function goPage(n) {
-        currentPage = n;
-        renderTable();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-
-      /* ── Populate filter dropdowns ──────────────────────────────────────── */
-      function populateDropdowns(pocs) {
-        const cats  = [...new Set(pocs.map(p => p.category).filter(Boolean))].sort();
-        const stats = [...new Set(pocs.map(p => p.status).filter(Boolean))].sort();
-        const years = [...new Set(pocs.map(p => p.cve_year).filter(Boolean))].sort().reverse();
-
-        cats.forEach(c => {
-          const opt = document.createElement('option');
-          opt.value = c; opt.textContent = 'category: ' + c;
-          $fCat.appendChild(opt);
-        });
-
-        stats.forEach(s => {
-          const opt = document.createElement('option');
-          opt.value = s; opt.textContent = 'status: ' + s;
-          $fStat.appendChild(opt);
-        });
-
-        years.forEach(y => {
-          const opt = document.createElement('option');
-          opt.value = y; opt.textContent = 'year: ' + y;
-          $fYear.appendChild(opt);
-        });
-      }
-
-      /* ── Sort header click ──────────────────────────────────────────────── */
-      $thead.addEventListener('click', e => {
-        const th = e.target.closest('th[data-col]');
-        if (!th) return;
-        const col = th.getAttribute('data-col');
-        if (sortCol === col) {
-          sortDir = sortDir === 'asc' ? 'desc' : 'asc';
-        } else {
-          sortCol = col;
-          sortDir = 'asc';
-        }
-        currentPage = 1;
-        updateSortUI();
-        sortFiltered();
-        renderTable();
+      var btn = document.getElementById('theme-toggle');
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        var root = document.documentElement;
+        var isDark = root.classList.toggle('dark');
+        try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (e) {}
       });
-
-      function updateSortUI() {
-        $thead.querySelectorAll('th').forEach(th => {
-          th.classList.remove('sort-asc', 'sort-desc');
-          const ind = th.querySelector('.sort-indicator');
-          if (ind) ind.textContent = '▼';  /* ▼ */
-        });
-        const active = $thead.querySelector(`th[data-col="${sortCol}"]`);
-        if (active) {
-          active.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
-          const ind = active.querySelector('.sort-indicator');
-          if (ind) ind.textContent = sortDir === 'asc' ? '▲' : '▼';
-        }
-      }
-
-      /* ── Event listeners ────────────────────────────────────────────────── */
-      $search.addEventListener('input',  applyFilters);
-      $fSev.addEventListener('change',   applyFilters);
-      $fCat.addEventListener('change',   applyFilters);
-      $fStat.addEventListener('change',  applyFilters);
-      $fYear.addEventListener('change',  applyFilters);
-
-      $clear.addEventListener('click', () => {
-        $search.value = '';
-        $fSev.value   = '';
-        $fCat.value   = '';
-        $fStat.value  = '';
-        $fYear.value  = '';
-        applyFilters();
-      });
-
-      /* stat pill → set filter */
-      $stats.addEventListener('click', e => {
-        const pill = e.target.closest('[data-filter-key]');
-        if (!pill) return;
-        const key = pill.dataset.filterKey;
-        const val = pill.dataset.filterVal;
-        if (key === 'total') {
-          $search.value = ''; $fSev.value = ''; $fCat.value = ''; $fStat.value = ''; $fYear.value = '';
-        } else if (key === 'severity') {
-          $fSev.value = ($fSev.value === val) ? '' : val;
-        } else if (key === 'status') {
-          $fStat.value = ($fStat.value === val) ? '' : val;
-        }
-        applyFilters();
-      });
-
-      /* tag chip → search by tag; row click → open README */
-      $tbody.addEventListener('click', e => {
-        const chip = e.target.closest('.tag-chip[data-tag]');
-        if (chip) {
-          e.stopPropagation();
-          const tag = chip.dataset.tag;
-          $search.value = ($search.value === tag) ? '' : tag;
-          applyFilters();
-          return;
-        }
-        if (e.target.closest('a')) return;
-        const row = e.target.closest('tr[data-href]');
-        if (row) {
-          const href = row.getAttribute('data-href');
-          if (href && href !== '#') window.open(href, '_blank', 'noopener,noreferrer');
-        }
-      });
-
-      $pageSizeEl.addEventListener('change', () => {
-        pageSize    = Number($pageSizeEl.value);
-        currentPage = 1;
-        renderTable();
-      });
-
-      /* ── Bootstrap: fetch data ──────────────────────────────────────────── */
-      fetch('data.json')
-        .then(r => {
-          if (!r.ok) throw new Error('HTTP ' + r.status);
-          return r.json();
-        })
-        .then(data => {
-          allPocs  = data.pocs || [];
-          filtered = [...allPocs];
-
-          /* header timestamp */
-          $updated.textContent = data.generated || '—';
-
-          /* stats use full dataset */
-          renderStats(allPocs);
-
-          /* dropdowns */
-          populateDropdowns(allPocs);
-
-          /* initial sort + render */
-          updateSortUI();
-          sortFiltered();
-          renderTable();
-        })
-        .catch(err => {
-          $tbody.innerHTML =
-            `<tr class="empty-row"><td colspan="7">
-              error loading data.json — ${esc(String(err))}
-            </td></tr>`;
-          $count.textContent = '0';
-          console.error('poc-archive: failed to load data.json', err);
-        });
-
     })();
   </script>
+</header>
+
+  <main class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    
+<section class="border-b border-zinc-200 pb-10 dark:border-zinc-800">
+  <div class="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 font-mono text-xs text-emerald-600 dark:text-emerald-400">
+    <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"></span>
+    security research · proof-of-concept archive
+  </div>
+  <h1 class="mt-5 max-w-3xl text-balance font-mono text-3xl font-semibold tracking-tight text-zinc-900 sm:text-4xl dark:text-zinc-100">
+    A reproducible archive of security research PoCs.
+  </h1>
+  <p class="mt-4 max-w-2xl text-pretty leading-relaxed text-zinc-600 dark:text-zinc-400">
+    A curated archive of security research proof-of-concept exploits. Reproducible writeups across web, network, binary, crypto, cloud, hardware, and social-engineering categories.
+  </p>
+  <div class="mt-6 flex flex-wrap gap-3">
+    <a href="/pocs/" class="inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2 font-mono text-sm font-semibold text-zinc-950 transition hover:bg-emerald-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+      Browse all PoCs
+    </a>
+    <a href="/archive/" class="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2 font-mono text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900">
+      View by year
+    </a>
+  </div>
+</section>
+
+
+<section class="grid grid-cols-1 gap-6 py-10 lg:grid-cols-3">
+  
+  <div class="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900/40">
+    <p class="font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Total PoCs</p>
+    <p class="mt-2 font-mono text-4xl font-semibold text-emerald-600 dark:text-emerald-400">76</p>
+    <div class="mt-4 grid grid-cols-2 gap-3 font-mono text-xs">
+      <div class="rounded-md border border-zinc-200 p-2 dark:border-zinc-800">
+        <span class="block text-zinc-500 dark:text-zinc-400">patched</span>
+        <span class="text-emerald-600 dark:text-emerald-400">43</span>
+      </div>
+      <div class="rounded-md border border-zinc-200 p-2 dark:border-zinc-800">
+        <span class="block text-zinc-500 dark:text-zinc-400">unpatched</span>
+        <span class="text-amber-600 dark:text-amber-400">33</span>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900/40">
+    <p class="font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">By severity</p>
+    <div class="mt-3 space-y-2">
+      
+        
+        
+        
+        <a href="/pocs/?severity=Critical" class="block">
+          <div class="flex items-center justify-between font-mono text-xs">
+            <span class="text-zinc-600 dark:text-zinc-300">Critical</span>
+            <span class="text-zinc-500 dark:text-zinc-400">35</span>
+          </div>
+          <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+            <div class="h-full rounded-full
+              bg-red-500"
+              style="width: 46%"></div>
+          </div>
+        </a>
+      
+        
+        
+        
+        <a href="/pocs/?severity=High" class="block">
+          <div class="flex items-center justify-between font-mono text-xs">
+            <span class="text-zinc-600 dark:text-zinc-300">High</span>
+            <span class="text-zinc-500 dark:text-zinc-400">31</span>
+          </div>
+          <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+            <div class="h-full rounded-full
+              bg-orange-500"
+              style="width: 41%"></div>
+          </div>
+        </a>
+      
+        
+        
+        
+        <a href="/pocs/?severity=Medium" class="block">
+          <div class="flex items-center justify-between font-mono text-xs">
+            <span class="text-zinc-600 dark:text-zinc-300">Medium</span>
+            <span class="text-zinc-500 dark:text-zinc-400">8</span>
+          </div>
+          <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+            <div class="h-full rounded-full
+              bg-yellow-500"
+              style="width: 11%"></div>
+          </div>
+        </a>
+      
+        
+        
+        
+        <a href="/pocs/?severity=Low" class="block">
+          <div class="flex items-center justify-between font-mono text-xs">
+            <span class="text-zinc-600 dark:text-zinc-300">Low</span>
+            <span class="text-zinc-500 dark:text-zinc-400">2</span>
+          </div>
+          <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+            <div class="h-full rounded-full
+              bg-blue-400"
+              style="width: 3%"></div>
+          </div>
+        </a>
+      
+        
+        
+        
+        <a href="/pocs/?severity=Info" class="block">
+          <div class="flex items-center justify-between font-mono text-xs">
+            <span class="text-zinc-600 dark:text-zinc-300">Info</span>
+            <span class="text-zinc-500 dark:text-zinc-400">0</span>
+          </div>
+          <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+            <div class="h-full rounded-full
+              bg-zinc-400"
+              style="width: 0%"></div>
+          </div>
+        </a>
+      
+    </div>
+  </div>
+
+  
+  <div class="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900/40">
+    <p class="font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">By category</p>
+    <div class="mt-3 grid grid-cols-2 gap-2">
+      
+        
+        
+        <a href="/pocs/web/" class="flex items-center justify-between rounded-md border border-zinc-200 px-2.5 py-1.5 font-mono text-xs text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">
+          <span class="truncate">web</span>
+          <span class="ml-2 rounded bg-zinc-100 px-1.5 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">33</span>
+        </a>
+      
+        
+        
+        <a href="/pocs/network/" class="flex items-center justify-between rounded-md border border-zinc-200 px-2.5 py-1.5 font-mono text-xs text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">
+          <span class="truncate">network</span>
+          <span class="ml-2 rounded bg-zinc-100 px-1.5 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">16</span>
+        </a>
+      
+        
+        
+        <a href="/pocs/binary/" class="flex items-center justify-between rounded-md border border-zinc-200 px-2.5 py-1.5 font-mono text-xs text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">
+          <span class="truncate">binary</span>
+          <span class="ml-2 rounded bg-zinc-100 px-1.5 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">22</span>
+        </a>
+      
+        
+        
+        <a href="/pocs/crypto/" class="flex items-center justify-between rounded-md border border-zinc-200 px-2.5 py-1.5 font-mono text-xs text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">
+          <span class="truncate">crypto</span>
+          <span class="ml-2 rounded bg-zinc-100 px-1.5 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">0</span>
+        </a>
+      
+        
+        
+        <a href="/pocs/cloud/" class="flex items-center justify-between rounded-md border border-zinc-200 px-2.5 py-1.5 font-mono text-xs text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">
+          <span class="truncate">cloud</span>
+          <span class="ml-2 rounded bg-zinc-100 px-1.5 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">2</span>
+        </a>
+      
+        
+        
+        <a href="/pocs/hardware/" class="flex items-center justify-between rounded-md border border-zinc-200 px-2.5 py-1.5 font-mono text-xs text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">
+          <span class="truncate">hardware</span>
+          <span class="ml-2 rounded bg-zinc-100 px-1.5 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">0</span>
+        </a>
+      
+        
+        
+        <a href="/pocs/social-engineering/" class="flex items-center justify-between rounded-md border border-zinc-200 px-2.5 py-1.5 font-mono text-xs text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">
+          <span class="truncate">social-engineering</span>
+          <span class="ml-2 rounded bg-zinc-100 px-1.5 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">0</span>
+        </a>
+      
+        
+        
+        <a href="/pocs/misc/" class="flex items-center justify-between rounded-md border border-zinc-200 px-2.5 py-1.5 font-mono text-xs text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">
+          <span class="truncate">misc</span>
+          <span class="ml-2 rounded bg-zinc-100 px-1.5 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">3</span>
+        </a>
+      
+    </div>
+  </div>
+</section>
+
+
+<section class="pb-4">
+  <div class="flex items-center justify-between">
+    <h2 class="font-mono text-lg font-semibold text-zinc-900 dark:text-zinc-100">Recent additions</h2>
+    <a href="/pocs/" class="font-mono text-xs text-emerald-600 hover:underline dark:text-emerald-400">view all →</a>
+  </div>
+  <div class="mt-4 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
+    
+      <a
+  href="/poc-archive/pocs/network/2026-06-28_cve-2026-50751-checkpoint-ikev1-bypass/"
+  class="poc-row group grid grid-cols-1 gap-2 border-b border-zinc-200 px-3 py-3 transition hover:bg-zinc-50 sm:grid-cols-[7rem_1fr_8rem_6rem] sm:items-center sm:gap-4 dark:border-zinc-800 dark:hover:bg-zinc-900/60"
+  data-category="network"
+  data-severity="Critical"
+  data-patched="true"
+  data-date="2026-06-28"
+  data-permalink="/poc-archive/pocs/network/2026-06-28_cve-2026-50751-checkpoint-ikev1-bypass/"
+>
+  <div class="order-2 sm:order-1"><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-red-500/40 bg-red-500/10 text-red-500 dark:text-red-400">
+  <span class="h-1.5 w-1.5 rounded-full bg-current"></span>Critical
+</span>
+</div>
+
+  <div class="order-1 min-w-0 sm:order-2">
+    <div class="truncate text-sm font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-zinc-100 dark:group-hover:text-emerald-400">
+      Check Point Remote Access VPN IKEv1 Auth Bypass (CVE-2026-50751)
+    </div>
+    <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-zinc-500 dark:text-zinc-400">
+      <span class="text-emerald-600 dark:text-emerald-400">CVE-2026-50751</span><span class="text-zinc-300 dark:text-zinc-700">·</span>
+      <span class="truncate">Check Point Remote Access VPN / Mobile Access / Spark Firewall</span>
+      
+        <span class="inline-flex items-center gap-1 rounded border border-emerald-500/30 px-1.5 text-[10px] uppercase text-emerald-600 dark:text-emerald-400">patched</span>
+      
+    </div>
+  </div>
+
+  <div class="order-3 hidden font-mono text-xs text-zinc-500 sm:block dark:text-zinc-400">network</div>
+
+  <div class="order-4 hidden text-right font-mono text-xs text-zinc-500 sm:block dark:text-zinc-400">2026-06-28</div>
+</a>
+
+    
+      <a
+  href="/poc-archive/pocs/network/2026-06-28_cve-2026-20245-cisco-sdwan-priv-esc/"
+  class="poc-row group grid grid-cols-1 gap-2 border-b border-zinc-200 px-3 py-3 transition hover:bg-zinc-50 sm:grid-cols-[7rem_1fr_8rem_6rem] sm:items-center sm:gap-4 dark:border-zinc-800 dark:hover:bg-zinc-900/60"
+  data-category="network"
+  data-severity="High"
+  data-patched="false"
+  data-date="2026-06-28"
+  data-permalink="/poc-archive/pocs/network/2026-06-28_cve-2026-20245-cisco-sdwan-priv-esc/"
+>
+  <div class="order-2 sm:order-1"><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-orange-500/40 bg-orange-500/10 text-orange-500 dark:text-orange-400">
+  <span class="h-1.5 w-1.5 rounded-full bg-current"></span>High
+</span>
+</div>
+
+  <div class="order-1 min-w-0 sm:order-2">
+    <div class="truncate text-sm font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-zinc-100 dark:group-hover:text-emerald-400">
+      Cisco Catalyst SD-WAN Manager Privilege Escalation (CVE-2026-20245)
+    </div>
+    <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-zinc-500 dark:text-zinc-400">
+      <span class="text-emerald-600 dark:text-emerald-400">CVE-2026-20245</span><span class="text-zinc-300 dark:text-zinc-700">·</span>
+      <span class="truncate">Cisco Catalyst SD-WAN Manager (vManage), SD-WAN Controller (vSmart), SD-WAN Validator (vBond)</span>
+      
+        <span class="inline-flex items-center gap-1 rounded border border-amber-400/40 px-1.5 text-[10px] uppercase text-amber-600 dark:text-amber-400">unpatched</span>
+      
+    </div>
+  </div>
+
+  <div class="order-3 hidden font-mono text-xs text-zinc-500 sm:block dark:text-zinc-400">network</div>
+
+  <div class="order-4 hidden text-right font-mono text-xs text-zinc-500 sm:block dark:text-zinc-400">2026-06-28</div>
+</a>
+
+    
+      <a
+  href="/poc-archive/pocs/network/2026-06-28_cve-2026-10520-ivanti-sentry-rce/"
+  class="poc-row group grid grid-cols-1 gap-2 border-b border-zinc-200 px-3 py-3 transition hover:bg-zinc-50 sm:grid-cols-[7rem_1fr_8rem_6rem] sm:items-center sm:gap-4 dark:border-zinc-800 dark:hover:bg-zinc-900/60"
+  data-category="network"
+  data-severity="Critical"
+  data-patched="true"
+  data-date="2026-06-28"
+  data-permalink="/poc-archive/pocs/network/2026-06-28_cve-2026-10520-ivanti-sentry-rce/"
+>
+  <div class="order-2 sm:order-1"><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-red-500/40 bg-red-500/10 text-red-500 dark:text-red-400">
+  <span class="h-1.5 w-1.5 rounded-full bg-current"></span>Critical
+</span>
+</div>
+
+  <div class="order-1 min-w-0 sm:order-2">
+    <div class="truncate text-sm font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-zinc-100 dark:group-hover:text-emerald-400">
+      Ivanti Sentry Pre-Auth RCE &#43; Auth Bypass (CVE-2026-10520 / CVE-2026-10523)
+    </div>
+    <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-zinc-500 dark:text-zinc-400">
+      <span class="text-emerald-600 dark:text-emerald-400">CVE-2026-10520, CVE-2026-10523</span><span class="text-zinc-300 dark:text-zinc-700">·</span>
+      <span class="truncate">Ivanti Sentry (formerly MobileIron Sentry)</span>
+      
+        <span class="inline-flex items-center gap-1 rounded border border-emerald-500/30 px-1.5 text-[10px] uppercase text-emerald-600 dark:text-emerald-400">patched</span>
+      
+    </div>
+  </div>
+
+  <div class="order-3 hidden font-mono text-xs text-zinc-500 sm:block dark:text-zinc-400">network</div>
+
+  <div class="order-4 hidden text-right font-mono text-xs text-zinc-500 sm:block dark:text-zinc-400">2026-06-28</div>
+</a>
+
+    
+      <a
+  href="/poc-archive/pocs/web/2026-06-28_cve-2026-20253-splunk-preauth-rce/"
+  class="poc-row group grid grid-cols-1 gap-2 border-b border-zinc-200 px-3 py-3 transition hover:bg-zinc-50 sm:grid-cols-[7rem_1fr_8rem_6rem] sm:items-center sm:gap-4 dark:border-zinc-800 dark:hover:bg-zinc-900/60"
+  data-category="web"
+  data-severity="Critical"
+  data-patched="true"
+  data-date="2026-06-28"
+  data-permalink="/poc-archive/pocs/web/2026-06-28_cve-2026-20253-splunk-preauth-rce/"
+>
+  <div class="order-2 sm:order-1"><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-red-500/40 bg-red-500/10 text-red-500 dark:text-red-400">
+  <span class="h-1.5 w-1.5 rounded-full bg-current"></span>Critical
+</span>
+</div>
+
+  <div class="order-1 min-w-0 sm:order-2">
+    <div class="truncate text-sm font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-zinc-100 dark:group-hover:text-emerald-400">
+      Splunk Enterprise Pre-Auth RCE via PostgreSQL Sidecar (CVE-2026-20253)
+    </div>
+    <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-zinc-500 dark:text-zinc-400">
+      <span class="text-emerald-600 dark:text-emerald-400">CVE-2026-20253</span><span class="text-zinc-300 dark:text-zinc-700">·</span>
+      <span class="truncate">Splunk Enterprise</span>
+      
+        <span class="inline-flex items-center gap-1 rounded border border-emerald-500/30 px-1.5 text-[10px] uppercase text-emerald-600 dark:text-emerald-400">patched</span>
+      
+    </div>
+  </div>
+
+  <div class="order-3 hidden font-mono text-xs text-zinc-500 sm:block dark:text-zinc-400">web</div>
+
+  <div class="order-4 hidden text-right font-mono text-xs text-zinc-500 sm:block dark:text-zinc-400">2026-06-28</div>
+</a>
+
+    
+      <a
+  href="/poc-archive/pocs/network/2026-06-28_cve-2026-34908-unifi-os-rce-chain/"
+  class="poc-row group grid grid-cols-1 gap-2 border-b border-zinc-200 px-3 py-3 transition hover:bg-zinc-50 sm:grid-cols-[7rem_1fr_8rem_6rem] sm:items-center sm:gap-4 dark:border-zinc-800 dark:hover:bg-zinc-900/60"
+  data-category="network"
+  data-severity="Critical"
+  data-patched="true"
+  data-date="2026-06-28"
+  data-permalink="/poc-archive/pocs/network/2026-06-28_cve-2026-34908-unifi-os-rce-chain/"
+>
+  <div class="order-2 sm:order-1"><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-red-500/40 bg-red-500/10 text-red-500 dark:text-red-400">
+  <span class="h-1.5 w-1.5 rounded-full bg-current"></span>Critical
+</span>
+</div>
+
+  <div class="order-1 min-w-0 sm:order-2">
+    <div class="truncate text-sm font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-zinc-100 dark:group-hover:text-emerald-400">
+      Ubiquiti UniFi OS Unauthenticated RCE Chain (CVE-2026-34908 / CVE-2026-34909 / CVE-2026-34910)
+    </div>
+    <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-zinc-500 dark:text-zinc-400">
+      <span class="text-emerald-600 dark:text-emerald-400">CVE-2026-34908, CVE-2026-34909, CVE-2026-34910</span><span class="text-zinc-300 dark:text-zinc-700">·</span>
+      <span class="truncate">Ubiquiti UniFi OS Server</span>
+      
+        <span class="inline-flex items-center gap-1 rounded border border-emerald-500/30 px-1.5 text-[10px] uppercase text-emerald-600 dark:text-emerald-400">patched</span>
+      
+    </div>
+  </div>
+
+  <div class="order-3 hidden font-mono text-xs text-zinc-500 sm:block dark:text-zinc-400">network</div>
+
+  <div class="order-4 hidden text-right font-mono text-xs text-zinc-500 sm:block dark:text-zinc-400">2026-06-28</div>
+</a>
+
+    
+      <a
+  href="/poc-archive/pocs/binary/2026-06-28_cve-2026-45586-ctfmon-greenplasma-lpe/"
+  class="poc-row group grid grid-cols-1 gap-2 border-b border-zinc-200 px-3 py-3 transition hover:bg-zinc-50 sm:grid-cols-[7rem_1fr_8rem_6rem] sm:items-center sm:gap-4 dark:border-zinc-800 dark:hover:bg-zinc-900/60"
+  data-category="binary"
+  data-severity="High"
+  data-patched="true"
+  data-date="2026-06-28"
+  data-permalink="/poc-archive/pocs/binary/2026-06-28_cve-2026-45586-ctfmon-greenplasma-lpe/"
+>
+  <div class="order-2 sm:order-1"><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-orange-500/40 bg-orange-500/10 text-orange-500 dark:text-orange-400">
+  <span class="h-1.5 w-1.5 rounded-full bg-current"></span>High
+</span>
+</div>
+
+  <div class="order-1 min-w-0 sm:order-2">
+    <div class="truncate text-sm font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-zinc-100 dark:group-hover:text-emerald-400">
+      Windows CTFMON Arbitrary Section Object EoP — GreenPlasma (CVE-2026-45586)
+    </div>
+    <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-zinc-500 dark:text-zinc-400">
+      <span class="text-emerald-600 dark:text-emerald-400">CVE-2026-45586</span><span class="text-zinc-300 dark:text-zinc-700">·</span>
+      <span class="truncate">Windows Collaborative Translation Framework (CTFMON service)</span>
+      
+        <span class="inline-flex items-center gap-1 rounded border border-emerald-500/30 px-1.5 text-[10px] uppercase text-emerald-600 dark:text-emerald-400">patched</span>
+      
+    </div>
+  </div>
+
+  <div class="order-3 hidden font-mono text-xs text-zinc-500 sm:block dark:text-zinc-400">binary</div>
+
+  <div class="order-4 hidden text-right font-mono text-xs text-zinc-500 sm:block dark:text-zinc-400">2026-06-28</div>
+</a>
+
+    
+      <a
+  href="/poc-archive/pocs/binary/2026-06-26_cve-2026-50656-rogueplanet-checker/"
+  class="poc-row group grid grid-cols-1 gap-2 border-b border-zinc-200 px-3 py-3 transition hover:bg-zinc-50 sm:grid-cols-[7rem_1fr_8rem_6rem] sm:items-center sm:gap-4 dark:border-zinc-800 dark:hover:bg-zinc-900/60"
+  data-category="binary"
+  data-severity="High"
+  data-patched="true"
+  data-date="2026-06-26"
+  data-permalink="/poc-archive/pocs/binary/2026-06-26_cve-2026-50656-rogueplanet-checker/"
+>
+  <div class="order-2 sm:order-1"><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-orange-500/40 bg-orange-500/10 text-orange-500 dark:text-orange-400">
+  <span class="h-1.5 w-1.5 rounded-full bg-current"></span>High
+</span>
+</div>
+
+  <div class="order-1 min-w-0 sm:order-2">
+    <div class="truncate text-sm font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-zinc-100 dark:group-hover:text-emerald-400">
+      CVE-2026-50656 RoguePlanet — Safe Vulnerability Checker (Resurface)
+    </div>
+    <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-zinc-500 dark:text-zinc-400">
+      <span class="text-emerald-600 dark:text-emerald-400">CVE-2026-50656</span><span class="text-zinc-300 dark:text-zinc-700">·</span>
+      <span class="truncate">Microsoft Malware Protection Engine (mpengine.dll, MsMpEng.exe)</span>
+      
+        <span class="inline-flex items-center gap-1 rounded border border-emerald-500/30 px-1.5 text-[10px] uppercase text-emerald-600 dark:text-emerald-400">patched</span>
+      
+    </div>
+  </div>
+
+  <div class="order-3 hidden font-mono text-xs text-zinc-500 sm:block dark:text-zinc-400">binary</div>
+
+  <div class="order-4 hidden text-right font-mono text-xs text-zinc-500 sm:block dark:text-zinc-400">2026-06-26</div>
+</a>
+
+    
+      <a
+  href="/poc-archive/pocs/misc/2026-06-26_yellowkey-bitlocker-bypass/"
+  class="poc-row group grid grid-cols-1 gap-2 border-b border-zinc-200 px-3 py-3 transition hover:bg-zinc-50 sm:grid-cols-[7rem_1fr_8rem_6rem] sm:items-center sm:gap-4 dark:border-zinc-800 dark:hover:bg-zinc-900/60"
+  data-category="misc"
+  data-severity="Medium"
+  data-patched="true"
+  data-date="2026-06-26"
+  data-permalink="/poc-archive/pocs/misc/2026-06-26_yellowkey-bitlocker-bypass/"
+>
+  <div class="order-2 sm:order-1"><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-yellow-500/40 bg-yellow-500/10 text-yellow-600 dark:text-yellow-500">
+  <span class="h-1.5 w-1.5 rounded-full bg-current"></span>Medium
+</span>
+</div>
+
+  <div class="order-1 min-w-0 sm:order-2">
+    <div class="truncate text-sm font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-zinc-100 dark:group-hover:text-emerald-400">
+      YellowKey — BitLocker Bypass via WinRE autofstx.exe (CVE-2026-45585)
+    </div>
+    <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-zinc-500 dark:text-zinc-400">
+      <span class="text-emerald-600 dark:text-emerald-400">CVE-2026-45585</span><span class="text-zinc-300 dark:text-zinc-700">·</span>
+      <span class="truncate">Windows BitLocker / WinRE (autofstx.exe)</span>
+      
+        <span class="inline-flex items-center gap-1 rounded border border-emerald-500/30 px-1.5 text-[10px] uppercase text-emerald-600 dark:text-emerald-400">patched</span>
+      
+    </div>
+  </div>
+
+  <div class="order-3 hidden font-mono text-xs text-zinc-500 sm:block dark:text-zinc-400">misc</div>
+
+  <div class="order-4 hidden text-right font-mono text-xs text-zinc-500 sm:block dark:text-zinc-400">2026-06-26</div>
+</a>
+
+    
+      <a
+  href="/poc-archive/pocs/binary/2026-06-10_rogueplanet-defender-lpe/"
+  class="poc-row group grid grid-cols-1 gap-2 border-b border-zinc-200 px-3 py-3 transition hover:bg-zinc-50 sm:grid-cols-[7rem_1fr_8rem_6rem] sm:items-center sm:gap-4 dark:border-zinc-800 dark:hover:bg-zinc-900/60"
+  data-category="binary"
+  data-severity="High"
+  data-patched="false"
+  data-date="2026-06-10"
+  data-permalink="/poc-archive/pocs/binary/2026-06-10_rogueplanet-defender-lpe/"
+>
+  <div class="order-2 sm:order-1"><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-orange-500/40 bg-orange-500/10 text-orange-500 dark:text-orange-400">
+  <span class="h-1.5 w-1.5 rounded-full bg-current"></span>High
+</span>
+</div>
+
+  <div class="order-1 min-w-0 sm:order-2">
+    <div class="truncate text-sm font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-zinc-100 dark:group-hover:text-emerald-400">
+      RoguePlanet — Windows Defender LPE via ISO Mount &#43; Task Scheduler Race Condition
+    </div>
+    <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-zinc-500 dark:text-zinc-400">
+      <span class="text-emerald-600 dark:text-emerald-400">CVE-2026-50656</span><span class="text-zinc-300 dark:text-zinc-700">·</span>
+      <span class="truncate">Microsoft Windows Defender / Windows Error Reporting Task Scheduler</span>
+      
+        <span class="inline-flex items-center gap-1 rounded border border-amber-400/40 px-1.5 text-[10px] uppercase text-amber-600 dark:text-amber-400">unpatched</span>
+      
+    </div>
+  </div>
+
+  <div class="order-3 hidden font-mono text-xs text-zinc-500 sm:block dark:text-zinc-400">binary</div>
+
+  <div class="order-4 hidden text-right font-mono text-xs text-zinc-500 sm:block dark:text-zinc-400">2026-06-10</div>
+</a>
+
+    
+      <a
+  href="/poc-archive/pocs/web/2026-06-08_firefox-focus-ios-uxss-redirect-scheme-race-condition/"
+  class="poc-row group grid grid-cols-1 gap-2 border-b border-zinc-200 px-3 py-3 transition hover:bg-zinc-50 sm:grid-cols-[7rem_1fr_8rem_6rem] sm:items-center sm:gap-4 dark:border-zinc-800 dark:hover:bg-zinc-900/60"
+  data-category="web"
+  data-severity="Critical"
+  data-patched="false"
+  data-date="2026-06-08"
+  data-permalink="/poc-archive/pocs/web/2026-06-08_firefox-focus-ios-uxss-redirect-scheme-race-condition/"
+>
+  <div class="order-2 sm:order-1"><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-red-500/40 bg-red-500/10 text-red-500 dark:text-red-400">
+  <span class="h-1.5 w-1.5 rounded-full bg-current"></span>Critical
+</span>
+</div>
+
+  <div class="order-1 min-w-0 sm:order-2">
+    <div class="truncate text-sm font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-zinc-100 dark:group-hover:text-emerald-400">
+      FirefUXSS: Universal XSS in Firefox Focus for iOS via Redirect-Scheme Validation Race Condition
+    </div>
+    <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-zinc-500 dark:text-zinc-400">
+      
+      <span class="truncate">Firefox Focus for iOS</span>
+      
+        <span class="inline-flex items-center gap-1 rounded border border-amber-400/40 px-1.5 text-[10px] uppercase text-amber-600 dark:text-amber-400">unpatched</span>
+      
+    </div>
+  </div>
+
+  <div class="order-3 hidden font-mono text-xs text-zinc-500 sm:block dark:text-zinc-400">web</div>
+
+  <div class="order-4 hidden text-right font-mono text-xs text-zinc-500 sm:block dark:text-zinc-400">2026-06-08</div>
+</a>
+
+    
+  </div>
+</section>
+
+  </main>
+  <footer class="mt-16 border-t border-zinc-200 dark:border-zinc-800">
+  <div class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-8 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8 dark:text-zinc-500">
+    <p class="font-mono">
+      PoC Archive — research artifacts for defensive and educational use only.
+    </p>
+    <p class="font-mono">
+      built with <a href="https://gohugo.io" class="text-emerald-600 hover:underline dark:text-emerald-400">hugo</a> · deployed on github pages
+    </p>
+  </div>
+</footer>
+
 </body>
 </html>

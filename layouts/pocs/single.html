@@ -1,0 +1,63 @@
+{{ define "main" }}
+{{- $cat := .Params.category -}}
+<article class="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_18rem]">
+  <!-- Body column -->
+  <div class="min-w-0 lg:order-1">
+    <nav class="mb-4 font-mono text-xs text-zinc-500 dark:text-zinc-400">
+      <a href="{{ "/pocs/" | relURL }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">pocs</a>
+      <span class="text-zinc-300 dark:text-zinc-700"> / </span>
+      <a href="{{ printf "/pocs/%s/" $cat | relURL }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">{{ $cat }}</a>
+    </nav>
+
+    <div class="flex flex-wrap items-center gap-2">
+      {{ partial "severity-chip.html" .Params.severity }}
+      {{ with .Params.cve }}<span class="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400">{{ . }}</span>{{ end }}
+      {{ if .Params.patched }}
+        <span class="rounded-md border border-emerald-500/30 px-2 py-0.5 font-mono text-xs uppercase text-emerald-600 dark:text-emerald-400">patched</span>
+      {{ else }}
+        <span class="rounded-md border border-amber-400/40 px-2 py-0.5 font-mono text-xs uppercase text-amber-600 dark:text-amber-400">unpatched</span>
+      {{ end }}
+    </div>
+
+    <h1 class="mt-4 text-balance font-mono text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-100">
+      {{ .Title }}
+    </h1>
+    <p class="mt-2 font-mono text-xs text-zinc-500 dark:text-zinc-400">
+      {{ with .Params.author }}by {{ . }} · {{ end }}{{ .Date.Format "2006-01-02" }}
+    </p>
+
+    <!-- Mobile metadata (sidebar collapses here) -->
+    <div class="mt-6 lg:hidden">{{ partial "poc-meta.html" . }}</div>
+
+    <div class="prose prose-zinc mt-8 max-w-none dark:prose-invert
+                prose-headings:font-mono prose-headings:tracking-tight
+                prose-a:text-emerald-600 dark:prose-a:text-emerald-400
+                prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
+                prose-code:before:content-[''] prose-code:after:content-['']
+                prose-pre:bg-zinc-900 prose-pre:text-zinc-100">
+      {{ .Content }}
+    </div>
+
+    <!-- Prev / next within category -->
+    <nav class="mt-12 grid grid-cols-1 gap-3 border-t border-zinc-200 pt-6 sm:grid-cols-2 dark:border-zinc-800">
+      {{ with .PrevInSection }}
+        <a href="{{ .RelPermalink }}" class="group rounded-lg border border-zinc-200 p-3 transition hover:border-emerald-400 dark:border-zinc-800">
+          <span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400">← previous in {{ $cat }}</span>
+          <span class="mt-1 block truncate text-sm text-zinc-700 group-hover:text-emerald-600 dark:text-zinc-300 dark:group-hover:text-emerald-400">{{ .Title }}</span>
+        </a>
+      {{ else }}<span></span>{{ end }}
+      {{ with .NextInSection }}
+        <a href="{{ .RelPermalink }}" class="group rounded-lg border border-zinc-200 p-3 text-right transition hover:border-emerald-400 dark:border-zinc-800">
+          <span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400">next in {{ $cat }} →</span>
+          <span class="mt-1 block truncate text-sm text-zinc-700 group-hover:text-emerald-600 dark:text-zinc-300 dark:group-hover:text-emerald-400">{{ .Title }}</span>
+        </a>
+      {{ end }}
+    </nav>
+  </div>
+
+  <!-- Sidebar (desktop) -->
+  <aside class="hidden lg:order-2 lg:block">
+    <div class="sticky top-20">{{ partial "poc-meta.html" . }}</div>
+  </aside>
+</article>
+{{ end }}

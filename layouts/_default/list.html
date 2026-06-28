@@ -1,0 +1,25 @@
+{{ define "main" }}
+<header class="border-b border-zinc-200 pb-6 dark:border-zinc-800">
+  <p class="font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+    {{ if eq .Kind "term" }}{{ .Data.Singular }}{{ else if eq .Kind "taxonomy" }}taxonomy{{ else }}section{{ end }}
+  </p>
+  <h1 class="mt-1 font-mono text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">{{ .Title }}</h1>
+  {{ with .Content }}<div class="prose prose-zinc mt-2 max-w-none text-sm dark:prose-invert">{{ . }}</div>{{ end }}
+</header>
+
+{{ if eq .Kind "taxonomy" }}
+  <div class="mt-6 flex flex-wrap gap-2">
+    {{ range .Pages }}
+      <a href="{{ .RelPermalink }}" class="inline-flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-1.5 font-mono text-sm text-zinc-700 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-300 dark:hover:border-emerald-400 dark:hover:text-emerald-400">
+        {{ .Title }}<span class="rounded bg-zinc-100 px-1.5 text-xs text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">{{ len .Pages }}</span>
+      </a>
+    {{ end }}
+  </div>
+{{ else }}
+  <div class="mt-6 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
+    {{ range .Pages.ByDate.Reverse }}
+      {{ if eq .Section "pocs" }}{{ partial "poc-row.html" . }}{{ end }}
+    {{ end }}
+  </div>
+{{ end }}
+{{ end }}
