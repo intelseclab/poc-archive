@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-06-26 14:03:11
+> Last updated: 2026-06-28 04:15:41
 
 ---
 
@@ -21,6 +21,7 @@
 | 2026-06-05 | N/A | [ssh-keysign-pwn](./pocs/binary/2026-06-05_ssh-keysign-pwn/) | `binary` | CVE-2026-46333 | High | LPE, Linux kernel, pidfd_getfd, ptrace, ssh-keysign, chage, fd-theft | Patched |
 | 2026-06-10 | 2026-06-09 | [rogueplanet-defender-lpe](./pocs/binary/2026-06-10_rogueplanet-defender-lpe/) | `binary` | CVE-2026-50656 | High | LPE, Windows Defender, race-condition, TOCTOU, ISO-mount, VirtualDisk, Task-Scheduler, WER, EICAR, SYSTEM-shell, Windows-10, Windows-11, local | Weaponized |
 | 2026-06-26 | 2026-06-18 | [cve-2026-50656-rogueplanet-checker](./pocs/binary/2026-06-26_cve-2026-50656-rogueplanet-checker/) | `binary` | CVE-2026-50656 | High | LPE, Windows Defender, TOCTOU, symlink, reparse-point, junction, CWE-59, checker, detection, non-destructive, MsMpEng | Researched |
+| 2026-06-26 | 2026-05-31 | [yellowkey-bitlocker-bypass](./pocs/misc/2026-06-26_yellowkey-bitlocker-bypass/) | `misc` | CVE-2026-45585 | Medium | BitLocker, bypass, physical-access, WinRE, TPM, autofstx, NTFS-transactions, FsTx, Windows-11, Windows-Server-2022, zero-day, full-disk-access | Researched |
 | 2026-05-18 | N/A | [tossup-terramaster-redis-rce](./pocs/network/2026-05-18_tossup-terramaster-redis-rce/) | `network` | N/A (vendor confirmed TOS4 is EOL; no fix planned) | Critical | RCE, unauthenticated, Redis, TerraMaster, NAS, AArch64, root, module-loading, replication-abuse, NFS, no_root_squash, LPE, network | Weaponized |
 | 2026-06-04 | 2026-06-04 | [netlogon-cldap-stack-buffer-overflow](./pocs/network/2026-06-04_netlogon-cldap-stack-buffer-overflow/) | `network` | CVE-2026-41089 | Critical | Netlogon, CLDAP, Windows Server, stack-overflow, unauthenticated, DoS, potential-RCE | Weaponized |
 | 2026-05-14 | — | [nginx-rift-cve-2026-42945](./pocs/web/2026-05-14_nginx-rift-cve-2026-42945/) | `web` | CVE-2026-42945 | Critical | RCE, unauthenticated, nginx, heap-overflow, buffer-overflow, rewrite | Weaponized |
@@ -47,7 +48,7 @@
 
 ---
 
-*Total POCs: 69*
+*Total POCs: 70*
 
 ## By Category
 
@@ -55,7 +56,7 @@
 - **`cloud`** — 2 entries
 - **`crypto`** — 0 entries
 - **`hardware`** — 0 entries
-- **`misc`** — 2 entries
+- **`misc`** — 3 entries
 - **`network`** — 12 entries
 - **`social-engineering`** — 0 entries
 - **`web`** — 32 entries
