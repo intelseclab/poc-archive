@@ -1,0 +1,32 @@
+{{- /* Renders one PoC as a responsive row/card. Context (.) is the page. */ -}}
+{{- $p := . -}}
+<a
+  href="{{ $p.RelPermalink }}"
+  class="poc-row group grid grid-cols-1 gap-2 border-b border-zinc-200 px-3 py-3 transition hover:bg-zinc-50 sm:grid-cols-[7rem_1fr_8rem_6rem] sm:items-center sm:gap-4 dark:border-zinc-800 dark:hover:bg-zinc-900/60"
+  data-category="{{ $p.Params.category }}"
+  data-severity="{{ $p.Params.severity }}"
+  data-patched="{{ $p.Params.patched }}"
+  data-date="{{ $p.Date.Format "2006-01-02" }}"
+  data-permalink="{{ $p.RelPermalink }}"
+>
+  <div class="order-2 sm:order-1">{{ partial "severity-chip.html" $p.Params.severity }}</div>
+
+  <div class="order-1 min-w-0 sm:order-2">
+    <div class="truncate text-sm font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-zinc-100 dark:group-hover:text-emerald-400">
+      {{ $p.Title }}
+    </div>
+    <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-zinc-500 dark:text-zinc-400">
+      {{ with $p.Params.cve }}<span class="text-emerald-600 dark:text-emerald-400">{{ . }}</span><span class="text-zinc-300 dark:text-zinc-700">·</span>{{ end }}
+      <span class="truncate">{{ $p.Params.affected_product }}</span>
+      {{ if $p.Params.patched }}
+        <span class="inline-flex items-center gap-1 rounded border border-emerald-500/30 px-1.5 text-[10px] uppercase text-emerald-600 dark:text-emerald-400">patched</span>
+      {{ else }}
+        <span class="inline-flex items-center gap-1 rounded border border-amber-400/40 px-1.5 text-[10px] uppercase text-amber-600 dark:text-amber-400">unpatched</span>
+      {{ end }}
+    </div>
+  </div>
+
+  <div class="order-3 hidden font-mono text-xs text-zinc-500 sm:block dark:text-zinc-400">{{ $p.Params.category }}</div>
+
+  <div class="order-4 hidden text-right font-mono text-xs text-zinc-500 sm:block dark:text-zinc-400">{{ $p.Date.Format "2006-01-02" }}</div>
+</a>

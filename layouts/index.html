@@ -1,0 +1,98 @@
+{{ define "main" }}
+{{- $pocs := where .Site.RegularPages "Section" "pocs" -}}
+{{- $total := len $pocs -}}
+{{- $patched := len (where $pocs "Params.patched" true) -}}
+{{- $sevOrder := slice "Critical" "High" "Medium" "Low" "Info" -}}
+
+<!-- Hero -->
+<section class="border-b border-zinc-200 pb-10 dark:border-zinc-800">
+  <div class="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 font-mono text-xs text-emerald-600 dark:text-emerald-400">
+    <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"></span>
+    security research · proof-of-concept archive
+  </div>
+  <h1 class="mt-5 max-w-3xl text-balance font-mono text-3xl font-semibold tracking-tight text-zinc-900 sm:text-4xl dark:text-zinc-100">
+    A reproducible archive of security research PoCs.
+  </h1>
+  <p class="mt-4 max-w-2xl text-pretty leading-relaxed text-zinc-600 dark:text-zinc-400">
+    {{ .Site.Params.description }}
+  </p>
+  <div class="mt-6 flex flex-wrap gap-3">
+    <a href="{{ "/pocs/" | relURL }}" class="inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2 font-mono text-sm font-semibold text-zinc-950 transition hover:bg-emerald-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
+      Browse all PoCs
+    </a>
+    <a href="{{ "/archive/" | relURL }}" class="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2 font-mono text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900">
+      View by year
+    </a>
+  </div>
+</section>
+
+<!-- Stats -->
+<section class="grid grid-cols-1 gap-6 py-10 lg:grid-cols-3">
+  <!-- Totals -->
+  <div class="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900/40">
+    <p class="font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Total PoCs</p>
+    <p class="mt-2 font-mono text-4xl font-semibold text-emerald-600 dark:text-emerald-400">{{ $total }}</p>
+    <div class="mt-4 grid grid-cols-2 gap-3 font-mono text-xs">
+      <div class="rounded-md border border-zinc-200 p-2 dark:border-zinc-800">
+        <span class="block text-zinc-500 dark:text-zinc-400">patched</span>
+        <span class="text-emerald-600 dark:text-emerald-400">{{ $patched }}</span>
+      </div>
+      <div class="rounded-md border border-zinc-200 p-2 dark:border-zinc-800">
+        <span class="block text-zinc-500 dark:text-zinc-400">unpatched</span>
+        <span class="text-amber-600 dark:text-amber-400">{{ sub $total $patched }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Severity breakdown -->
+  <div class="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900/40">
+    <p class="font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">By severity</p>
+    <div class="mt-3 space-y-2">
+      {{ range $sevOrder }}
+        {{ $sev := . }}
+        {{ $n := len (where $pocs "Params.severity" $sev) }}
+        {{ $pct := 0 }}{{ if gt $total 0 }}{{ $pct = mul (div (float $n) (float $total)) 100 }}{{ end }}
+        <a href="{{ "/pocs/" | relURL }}?severity={{ $sev }}" class="block">
+          <div class="flex items-center justify-between font-mono text-xs">
+            <span class="text-zinc-600 dark:text-zinc-300">{{ $sev }}</span>
+            <span class="text-zinc-500 dark:text-zinc-400">{{ $n }}</span>
+          </div>
+          <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+            <div class="h-full rounded-full
+              {{ if eq $sev "Critical" }}bg-red-500{{ else if eq $sev "High" }}bg-orange-500{{ else if eq $sev "Medium" }}bg-yellow-500{{ else if eq $sev "Low" }}bg-blue-400{{ else }}bg-zinc-400{{ end }}"
+              style="width: {{ printf "%.0f" $pct }}%"></div>
+          </div>
+        </a>
+      {{ end }}
+    </div>
+  </div>
+
+  <!-- Category breakdown -->
+  <div class="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900/40">
+    <p class="font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">By category</p>
+    <div class="mt-3 grid grid-cols-2 gap-2">
+      {{ range (slice "web" "network" "binary" "crypto" "cloud" "hardware" "social-engineering" "misc") }}
+        {{ $cat := . }}
+        {{ $n := len (where $pocs "Params.category" $cat) }}
+        <a href="{{ printf "/pocs/%s/" $cat | relURL }}" class="flex items-center justify-between rounded-md border border-zinc-200 px-2.5 py-1.5 font-mono text-xs text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">
+          <span class="truncate">{{ $cat }}</span>
+          <span class="ml-2 rounded bg-zinc-100 px-1.5 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">{{ $n }}</span>
+        </a>
+      {{ end }}
+    </div>
+  </div>
+</section>
+
+<!-- Recent -->
+<section class="pb-4">
+  <div class="flex items-center justify-between">
+    <h2 class="font-mono text-lg font-semibold text-zinc-900 dark:text-zinc-100">Recent additions</h2>
+    <a href="{{ "/pocs/" | relURL }}" class="font-mono text-xs text-emerald-600 hover:underline dark:text-emerald-400">view all →</a>
+  </div>
+  <div class="mt-4 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
+    {{ range first 10 $pocs }}
+      {{ partial "poc-row.html" . }}
+    {{ end }}
+  </div>
+</section>
+{{ end }}

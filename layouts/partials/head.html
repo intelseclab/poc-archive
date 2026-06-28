@@ -1,0 +1,66 @@
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+{{- $title := .Title -}}
+{{- if .IsHome }}{{ $title = .Site.Title }}{{ else }}{{ $title = printf "%s · %s" .Title .Site.Title }}{{ end -}}
+<title>{{ $title }}</title>
+
+{{- $desc := .Site.Params.description -}}
+{{- with .Description }}{{ $desc = . }}{{ end -}}
+{{- with .Params.summary }}{{ $desc = . }}{{ end -}}
+<meta name="description" content="{{ $desc }}" />
+<meta name="author" content="{{ .Site.Params.author }}" />
+<meta name="theme-color" content="#09090b" />
+
+<meta property="og:title" content="{{ $title }}" />
+<meta property="og:description" content="{{ $desc }}" />
+<meta property="og:type" content="website" />
+{{ with .OutputFormats.Get "html" }}<link rel="canonical" href="{{ .Permalink }}" />{{ end }}
+
+<!-- Prevent theme flash: apply stored theme before paint -->
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('theme');
+      if (t === 'light') { document.documentElement.classList.remove('dark'); }
+      else { document.documentElement.classList.add('dark'); }
+    } catch (e) {}
+  })();
+</script>
+
+<!-- Tailwind CSS via Play CDN (no build step) -->
+<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        },
+      },
+    },
+  };
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+  rel="stylesheet"
+/>
+
+<style>
+  html.dark body { background-color: #09090b; }
+  /* Smooth color transitions on theme switch */
+  body, body * { transition: background-color .15s ease, border-color .15s ease, color .15s ease; }
+  /* Light theme overrides for the prose code blocks */
+  .prose pre { background-color: #18181b !important; border: 1px solid rgba(255,255,255,0.08); }
+</style>
+
+{{ with .OutputFormats.Get "json" }}
+<link rel="alternate" type="application/json" href="{{ .Permalink }}" title="Search index" />
+{{ end }}
+
+<link rel="icon" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2334d399' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'&gt;&lt;path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10'/&gt;&lt;/svg&gt;" />

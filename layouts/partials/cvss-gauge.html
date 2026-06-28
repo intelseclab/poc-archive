@@ -1,0 +1,19 @@
+{{- /* Renders a CVSS gauge. Context (.) is the cvss_score float (0-10). */ -}}
+{{- $score := . | float -}}
+{{- $pct := mul (div $score 10.0) 100 -}}
+{{- $color := "text-zinc-400" -}}
+{{- $bar := "bg-zinc-400" -}}
+{{- if ge $score 9.0 }}{{ $color = "text-red-500 dark:text-red-400" }}{{ $bar = "bg-red-500" }}
+{{- else if ge $score 7.0 }}{{ $color = "text-orange-500 dark:text-orange-400" }}{{ $bar = "bg-orange-500" }}
+{{- else if ge $score 4.0 }}{{ $color = "text-yellow-600 dark:text-yellow-500" }}{{ $bar = "bg-yellow-500" }}
+{{- else if gt $score 0.0 }}{{ $color = "text-blue-500 dark:text-blue-400" }}{{ $bar = "bg-blue-400" }}
+{{- end -}}
+<div>
+  <div class="flex items-baseline justify-between">
+    <span class="font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">CVSS</span>
+    <span class="font-mono text-lg font-semibold {{ $color }}">{{ printf "%.1f" $score }}<span class="text-xs text-zinc-400 dark:text-zinc-600">/10</span></span>
+  </div>
+  <div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+    <div class="h-full rounded-full {{ $bar }}" style="width: {{ printf "%.0f" $pct }}%"></div>
+  </div>
+</div>

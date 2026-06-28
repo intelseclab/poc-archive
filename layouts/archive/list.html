@@ -1,0 +1,37 @@
+{{ define "main" }}
+{{- $pocs := where .Site.RegularPages "Section" "pocs" -}}
+{{- /* Derive CVE year per page (fallback to disclosure year) and collect distinct years */ -}}
+{{- $years := slice -}}
+{{- range $pocs -}}
+  {{- $y := cond (and .Params.cve (ge (len .Params.cve) 8)) (substr .Params.cve 4 4) (.Date.Format "2006") -}}
+  {{- $years = $years | append $y -}}
+{{- end -}}
+{{- $years = $years | uniq | sort | collections.Reverse -}}
+
+<header class="border-b border-zinc-200 pb-6 dark:border-zinc-800">
+  <h1 class="font-mono text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">Archive by year</h1>
+  <p class="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+    {{ if .Content }}{{ .Content }}{{ else }}Every proof-of-concept grouped by CVE year. Entries without an assigned CVE are grouped by disclosure year.{{ end }}
+  </p>
+</header>
+
+<div class="mt-8 space-y-10">
+  {{ range $years }}
+    {{ $year := . }}
+    <section>
+      <div class="flex items-baseline gap-3">
+        <h2 class="font-mono text-xl font-semibold text-emerald-600 dark:text-emerald-400">{{ $year }}</h2>
+        {{ $count := 0 }}
+        {{ range $pocs }}{{ $y := cond (and .Params.cve (ge (len .Params.cve) 8)) (substr .Params.cve 4 4) (.Date.Format "2006") }}{{ if eq $y $year }}{{ $count = add $count 1 }}{{ end }}{{ end }}
+        <span class="font-mono text-xs text-zinc-500 dark:text-zinc-400">{{ $count }} entr{{ if eq $count 1 }}y{{ else }}ies{{ end }}</span>
+      </div>
+      <div class="mt-3 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
+        {{ range $pocs.ByDate.Reverse }}
+          {{ $y := cond (and .Params.cve (ge (len .Params.cve) 8)) (substr .Params.cve 4 4) (.Date.Format "2006") }}
+          {{ if eq $y $year }}{{ partial "poc-row.html" . }}{{ end }}
+        {{ end }}
+      </div>
+    </section>
+  {{ end }}
+</div>
+{{ end }}

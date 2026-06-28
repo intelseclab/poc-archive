@@ -1,0 +1,22 @@
+{{- $pages := where (where .Site.RegularPages "Section" "pocs") "Params.draft" "!=" true -}}
+[
+{{- range $i, $p := $pages -}}
+{{- if $i }},{{ end }}
+  {
+    "title": {{ $p.Title | jsonify }},
+    "cve": {{ ($p.Params.cve | default "") | jsonify }},
+    "category": {{ ($p.Params.category | default "") | jsonify }},
+    "severity": {{ ($p.Params.severity | default "Info") | jsonify }},
+    "cvss_score": {{ ($p.Params.cvss_score | default 0.0) }},
+    "tags": {{ ($p.Params.tags | default slice) | jsonify }},
+    "affected_product": {{ ($p.Params.affected_product | default "") | jsonify }},
+    "affected_versions": {{ ($p.Params.affected_versions | default "") | jsonify }},
+    "author": {{ ($p.Params.author | default "") | jsonify }},
+    "patched": {{ ($p.Params.patched | default false) }},
+    "date": {{ $p.Date.Format "2006-01-02" | jsonify }},
+    "year": {{ $p.Date.Format "2006" | jsonify }},
+    "summary": {{ ($p.Summary | plainify | chomp) | jsonify }},
+    "permalink": {{ $p.RelPermalink | jsonify }}
+  }
+{{- end }}
+]
