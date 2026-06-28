@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-06-28 03:31:56
+> Last updated: 2026-06-28 05:49:01
 
 ---
 
@@ -22,6 +22,7 @@
 | 2026-06-10 | 2026-06-09 | [rogueplanet-defender-lpe](./pocs/binary/2026-06-10_rogueplanet-defender-lpe/) | `binary` | CVE-2026-50656 | High | LPE, Windows Defender, race-condition, TOCTOU, ISO-mount, VirtualDisk, Task-Scheduler, WER, EICAR, SYSTEM-shell, Windows-10, Windows-11, local | Weaponized |
 | 2026-06-26 | 2026-06-18 | [cve-2026-50656-rogueplanet-checker](./pocs/binary/2026-06-26_cve-2026-50656-rogueplanet-checker/) | `binary` | CVE-2026-50656 | High | LPE, Windows Defender, TOCTOU, symlink, reparse-point, junction, CWE-59, checker, detection, non-destructive, MsMpEng | Researched |
 | 2026-06-28 | 2026-05-12 | [cve-2026-45586-ctfmon-greenplasma-lpe](./pocs/binary/2026-06-28_cve-2026-45586-ctfmon-greenplasma-lpe/) | `binary` | CVE-2026-45586 | High | LPE, EoP, Windows, CTFMON, section-object, object-directory, link-following, zero-day, CTF-challenge, Windows-11, Windows-2022, Windows-2026, incomplete-poc | PoC |
+| 2026-06-28 | 2026-06-28 | [dirtyclone-cve-2026-43503-lpe](./pocs/binary/2026-06-28_dirtyclone-cve-2026-43503-lpe/) | `binary` | CVE-2026-43503 | High | LPE, Linux kernel, netfilter, TEE, IPsec, XFRM, page-cache, file-backed memory, DirtyFrag, skb, privilege escalation, C, in-the-wild | Weaponized |
 | 2026-06-26 | 2026-05-31 | [yellowkey-bitlocker-bypass](./pocs/misc/2026-06-26_yellowkey-bitlocker-bypass/) | `misc` | CVE-2026-45585 | Medium | BitLocker, bypass, physical-access, WinRE, TPM, autofstx, NTFS-transactions, FsTx, Windows-11, Windows-Server-2022, zero-day, full-disk-access | Researched |
 | 2026-05-18 | N/A | [tossup-terramaster-redis-rce](./pocs/network/2026-05-18_tossup-terramaster-redis-rce/) | `network` | N/A (vendor confirmed TOS4 is EOL; no fix planned) | Critical | RCE, unauthenticated, Redis, TerraMaster, NAS, AArch64, root, module-loading, replication-abuse, NFS, no_root_squash, LPE, network | Weaponized |
 | 2026-06-04 | 2026-06-04 | [netlogon-cldap-stack-buffer-overflow](./pocs/network/2026-06-04_netlogon-cldap-stack-buffer-overflow/) | `network` | CVE-2026-41089 | Critical | Netlogon, CLDAP, Windows Server, stack-overflow, unauthenticated, DoS, potential-RCE | Weaponized |
@@ -54,11 +55,11 @@
 
 ---
 
-*Total POCs: 76*
+*Total POCs: 77*
 
 ## By Category
 
-- **`binary`** — 22 entries
+- **`binary`** — 23 entries
 - **`cloud`** — 2 entries
 - **`crypto`** — 0 entries
 - **`hardware`** — 0 entries
