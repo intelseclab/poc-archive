@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Convert pocs/*/README.md into Hugo content pages under content/pocs/."""
 
-import re, sys, datetime
+import re, sys, datetime, shutil
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
@@ -211,6 +211,12 @@ def main():
             write_frontmatter(f, fm)
             f.write('\n')
             f.write(content)
+
+        # Copy bundled exploit files (non-README, non-hidden) into the content dir
+        for src in sorted(readme.parent.iterdir()):
+            if src.name == "README.md" or src.name.startswith('.') or not src.is_file():
+                continue
+            shutil.copy2(src, out_dir / src.name)
 
         count += 1
 

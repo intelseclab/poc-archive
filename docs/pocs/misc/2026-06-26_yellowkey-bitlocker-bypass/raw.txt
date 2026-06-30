@@ -1,0 +1,147 @@
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-06-26 |
+| **Last Updated** | 2026-05-31 |
+| **Author / Researcher** | Ashraf Zaryouh (0xBlackash) |
+| **CVE / Advisory** | CVE-2026-45585 |
+| **Category** | misc |
+| **Severity** | Medium |
+| **CVSS Score** | 6.1 (estimated CVSSv3, AV:P/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N) |
+| **Status** | Researched |
+| **Tags** | BitLocker, bypass, physical-access, WinRE, TPM, autofstx, NTFS-transactions, FsTx, Windows-11, Windows-Server-2022, zero-day, full-disk-access |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Windows BitLocker / WinRE (`autofstx.exe`) |
+| **Versions Affected** | Windows 11 (all builds), Windows Server 2022/2025; Windows 10 not affected |
+| **Language / Platform** | Windows (PowerShell for mitigation) |
+| **Authentication Required** | No |
+| **Network Access Required** | No (physical access only) |
+
+---
+
+## Summary
+
+CVE-2026-45585 (YellowKey) is a zero-day physical-access vulnerability discovered in May 2026 that allows an attacker with physical access to a Windows 11 device to fully bypass BitLocker disk encryption without the PIN, password, or recovery key. The attacker boots the device into the Windows Recovery Environment (WinRE), uses a crafted USB containing NTFS transaction logs (FsTx), and exploits `autofstx.exe` registered in the `BootExecute` key to obtain an elevated command prompt. Since BitLocker is automatically unlocked by TPM during WinRE boot without requiring user authentication, the attacker gains full access to the encrypted drive. This repository contains a mitigation/hardening script; no weaponized exploit code is included.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+Windows 11's WinRE environment boots with TPM-based automatic BitLocker unlock (no PIN prompt by default) and executes binaries registered in `HKLM\SYSTEM\ControlSet001\Control\Session Manager\BootExecute`. The `autofstx.exe` binary, when present in that key, can be abused via a crafted NTFS filesystem transaction log (`FsTx`) supplied from an attacker-controlled USB to trigger an elevated command prompt within WinRE — before any user authentication occurs.
+
+### Attack Vector
+
+1. Attacker obtains **physical access** to a target Windows 11 device.
+2. Boots the device into **WinRE** (Windows Recovery Environment) using the USB or boot menu.
+3. Supplies a crafted USB with NTFS transaction logs (`FsTx`) targeting `autofstx.exe`.
+4. `autofstx.exe` is triggered via the `BootExecute` registry key, yielding an elevated command prompt.
+5. TPM has already auto-unlocked BitLocker for the WinRE session — full filesystem access obtained without any credential.
+
+### Impact
+
+Complete BitLocker bypass with full read/write access to the encrypted drive. An attacker can exfiltrate data, plant malware, or modify system files on any unattended Windows 11 device without knowing the PIN, password, or recovery key.
+
+---
+
+## Environment / Lab Setup
+
+```
+Target:   Windows 11 device with BitLocker enabled (TPM-only protector)
+Attacker: Physical access, USB drive with crafted FsTx payload
+Tools:    WinRE boot, autofstx.exe exploit chain (not published in this repo)
+```
+
+---
+
+## Proof of Concept
+
+No weaponized exploit code is published in the source repository. The attack chain has been documented by the researcher and the mitigation script confirms the attack vector (BootExecute + autofstx.exe + WinRE TPM auto-unlock).
+
+### Mitigation / Detection Script
+
+> See `Mitigate-YellowKey.ps1` in this folder. Run as Administrator on Windows 11.
+
+```powershell
+.\Mitigate-YellowKey.ps1
+
+.\Mitigate-YellowKey.ps1 -SkipTPMPIN
+
+.\Mitigate-YellowKey.ps1 -Drive "C:" -SkipWinRE
+```
+
+### Expected Output (post-mitigation)
+
+```
+YellowKey Mitigation Tool (CVE-2026-45585)
+========================================
+[1/2] Applying WinRE Mitigation (remove autofstx.exe)...
+[+] autofstx.exe removed from BootExecute.
+[2/2] Enforcing TPM+PIN on BitLocker drives...
+[+] PIN protector added to C:
+[✓] Mitigation complete. Reboot required.
+```
+
+---
+
+## Screenshots / Evidence
+
+<!-- None included in upstream source -->
+
+---
+
+## Detection & Indicators of Compromise
+
+```powershell
+$be = (Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager").BootExecute
+$be | Where-Object { $_ -match "autofstx" }
+
+manage-bde -protectors -get C:
+
+reagentc /info
+```
+
+**Signs of compromise:**
+- Unexpected access to encrypted files without credentials
+- WinRE boot entries in logs not initiated by the owner
+- `autofstx.exe` present in `BootExecute` on systems where it should not be
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Primary fix** | Remove `autofstx.exe` from WinRE `BootExecute` registry key (see `Mitigate-YellowKey.ps1 -SkipTPMPIN`) |
+| **Secondary fix** | Add TPM+PIN protector to all BitLocker-protected drives (see `Mitigate-YellowKey.ps1 -SkipWinRE`) |
+| **Physical hardening** | Enable Secure Boot; restrict physical access; set BIOS/UEFI password; disable USB boot |
+| **Patch** | Apply Microsoft security update for CVE-2026-45585 when released |
+| **Verify** | `manage-bde -status` and `reagentc /info` to confirm mitigation applied |
+
+---
+
+## References
+
+- [CVE-2026-45585](https://nvd.nist.gov/vuln/detail/CVE-2026-45585)
+- [Source repository (0xBlackash/CVE-2026-45585)](https://github.com/0xBlackash/CVE-2026-45585)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/0xBlackash/CVE-2026-45585 on 2026-06-26. Ingested via issue #121.
+
+No weaponized exploit code is published. The repository contains only the mitigation script (`Mitigate-YellowKey.ps1`). The attack chain description is based on the researcher's README documentation. Status set to `Researched` accordingly.
+
+CVSS score is an estimate based on the documented attack vector (AV:P/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N = 6.1); official MSRC score may differ.
+

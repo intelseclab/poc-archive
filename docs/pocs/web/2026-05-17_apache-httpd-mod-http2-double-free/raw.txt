@@ -1,0 +1,167 @@
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-17 |
+| **Last Updated** | 2026-05-11 |
+| **Author / Researcher** | striga-ai, Bartlomiej Dmitruk, Stanislaw Strzalkowski |
+| **CVE / Advisory** | CVE-2026-23918 |
+| **Category** | web |
+| **Severity** | Critical |
+| **CVSS Score** | N/A |
+| **Status** | Weaponized |
+| **Tags** | RCE, pre-auth, unauthenticated, double-free, heap-corruption, Apache, httpd, mod_http2, HTTP/2, TLS |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Apache HTTP Server (`httpd`) with `mod_http2` |
+| **Versions Affected** | 2.4.66 (fixed in 2.4.67) when `mod_http2` is enabled with multi-threaded MPM (event/worker) |
+| **Language / Platform** | C (target), Python 3 (PoC), Linux/Docker lab |
+| **Authentication Required** | No (pre-authentication) |
+| **Network Access Required** | Yes (HTTPS/HTTP2 access) |
+
+---
+
+## Summary
+
+CVE-2026-23918 is a pre-authentication double-free vulnerability in Apache httpd's `mod_http2` stream cleanup path. Under affected configurations, a remote attacker can trigger memory corruption over HTTP/2 before authentication. The upstream PoC demonstrates probabilistic remote command execution by combining a trigger path with memory spraying. Apache fixed this issue in 2.4.67.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+A stream-cleanup lifecycle bug in `mod_http2` can free related structures more than once. In multi-threaded MPM setups, this double-free creates a reusable corruption primitive. The PoC abuses corrupted pointers in scoreboard-adjacent memory to redirect a callback to `system()`.
+
+### Attack Vector
+
+An unauthenticated attacker sends crafted HTTP/2 traffic over TLS (`h2`) to an exposed Apache instance. The sequence includes initialization writes, request spraying, and repeated stream reset/cleanup triggers to hit a favorable memory state for control-flow hijack.
+
+### Impact
+
+Successful exploitation can result in pre-auth remote code execution in the Apache worker context (`www-data` in the provided lab). This enables arbitrary command execution, persistence, lateral movement, and data exposure from affected hosts.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Linux host with Docker
+Target:      httpd:2.4.66 + mod_http2 (provided Dockerfile)
+Attacker:    Python 3 host with network reachability to target
+Tools:       Docker, Python 3
+```
+
+### Setup Steps
+
+```bash
+docker build -t httpd-poc .
+docker run -d --name httpd-poc --privileged -p 9443:443 httpd-poc
+docker exec httpd-poc python3 /getaddr.py 1
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Build and start vulnerable target**
+   ```bash
+   docker build -t httpd-poc .
+   docker run -d --name httpd-poc --privileged -p 9443:443 httpd-poc
+   ```
+
+2. **Collect required addresses from target**
+   ```bash
+   docker exec httpd-poc python3 /getaddr.py 1
+   # example output:
+   # scoreboard->servers[0][0].request: 0x7f...
+   # system: 0x7f...
+   ```
+
+3. **Run exploit**
+   ```bash
+   python3 poc.py --host localhost --port 9443 \
+       --cmd 'date >> /tmp/win' --workers 64 \
+       --system <system_addr> --scoreboard <scoreboard_addr>
+   ```
+
+4. **Verify command execution**
+   ```bash
+   docker exec httpd-poc cat /tmp/win
+   ```
+
+### Exploit Code
+
+> See `poc.py` and helper `getaddr.py` in this folder.
+
+```python
+trigger = Trigger(args.host, args.port)
+trigger.run(20)
+```
+
+### Expected Output
+
+```
+[*] Target: localhost:9443
+[*] Starting 64 spray threads
+[*] Trigger round 1...
+[status] spray connections: 12345
+```
+
+---
+
+## Screenshots / Evidence
+
+<!-- No screenshots captured at ingest time -->
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+- Bursts of abnormal HTTP/2 stream resets followed by worker instability/crashes
+- Apache error logs indicating mod_http2 cleanup failures or segfaults
+- Unexpected command execution artifacts (e.g., /tmp/win) from httpd worker context
+```
+
+**SIEM / IDS Rule (example):**
+```
+alert tcp any any -> any 443 (msg:"Possible CVE-2026-23918 HTTP/2 exploit attempt";
+  flow:to_server,established; content:"PRI * HTTP/2.0"; depth:14;
+  sid:90002623918;)
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Upgrade Apache HTTP Server to 2.4.67 or newer |
+| **Workaround** | Disable `mod_http2` where feasible and restrict external access to HTTPS endpoints |
+| **Config Hardening** | Minimize exposed attack surface; monitor for anomalous HTTP/2 reset patterns and crashes |
+
+---
+
+## References
+
+- [CVE-2026-23918](https://nvd.nist.gov/vuln/detail/CVE-2026-23918)
+- [Apache HTTP Server Security Advisories](https://httpd.apache.org/security_report.html)
+- [Striga AI research write-up](https://striga.ai/research/apache-httpd-mod-http2-double-free)
+- [Source Repository](https://github.com/striga-ai/CVE-2026-23918)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/striga-ai/CVE-2026-23918 on 2026-05-17.
+

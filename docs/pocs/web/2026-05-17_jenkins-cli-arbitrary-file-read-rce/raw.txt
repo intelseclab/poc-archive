@@ -1,0 +1,169 @@
+
+<!-- 
+  File: README.md
+  Location: pocs/web/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-17 |
+| **Author / Researcher** | godylockz (source PoC), Jenkins/SonarSource advisory ecosystem |
+| **CVE / Advisory** | CVE-2024-23897 |
+| **Category** | web |
+| **Severity** | Critical |
+| **CVSS Score** | 9.8 (CVSSv3) |
+| **Status** | Weaponized |
+| **Tags** | arbitrary-file-read, Jenkins, CLI, credential-theft, RCE, unauthenticated, KEV |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Jenkins controller (CLI endpoint) |
+| **Versions Affected** | Jenkins <= 2.441, Jenkins LTS <= 2.426.2 |
+| **Language / Platform** | Java, Jenkins web/controller deployments |
+| **Authentication Required** | No |
+| **Network Access Required** | Yes |
+
+---
+
+## Summary
+
+CVE-2024-23897 is an arbitrary file read vulnerability in the Jenkins CLI command parser. The parser expands arguments that start with `@` and can disclose controller-local files to unauthenticated attackers in common deployments. This disclosure can expose secrets and credentials (for example key material and user data), enabling attacker pivoting to full Jenkins compromise and remote code execution paths. The vulnerability is listed in CISA KEV and has been publicly associated with RansomEXX activity.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+Jenkins CLI argument parsing did not safely disable or constrain `@file` expansion behavior in affected versions. When user-supplied CLI arguments include `@<path>`, parser behavior can read and return local file content from the Jenkins controller filesystem.
+
+### Attack Vector
+
+A remote attacker with network access to the Jenkins web/CLI endpoint sends crafted CLI requests (for example through `/cli?remoting=false`) that pass `@`-prefixed file paths. Returned output can leak sensitive plaintext fragments and operational secrets.
+
+### Impact
+
+- Arbitrary local file disclosure from Jenkins controller hosts.
+- Credential and secret extraction that can enable account takeover.
+- Escalation chain to remote code execution through compromised Jenkins credentials/tokens and build pipeline abuse.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Linux attacker host with Python 3
+Target:      Authorized Jenkins instance in vulnerable version range
+Attacker:    Security testing workstation
+Tools:       Python 3, requests, network access to Jenkins HTTP(S)
+```
+
+### Setup Steps
+
+```bash
+cd pocs/web/2026-05-17_jenkins-cli-arbitrary-file-read-rce
+python3 -m py_compile jenkins_fileread.py
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Confirm authorized scope and reachable Jenkins endpoint.**
+   ```bash
+   curl -I http://<jenkins-host>:8080/login
+   ```
+
+2. **Run the PoC and request a readable target file.**
+   ```bash
+   python3 jenkins_fileread.py -u http://<jenkins-host>:8080 -f /etc/passwd
+   ```
+
+3. **Attempt high-value file paths in authorized labs to validate disclosure impact.**
+   ```bash
+   python3 jenkins_fileread.py -u http://<jenkins-host>:8080 -f /var/jenkins_home/secrets/master.key
+   ```
+
+### Exploit Code
+
+> See `jenkins_fileread.py` in this folder.
+
+```python
+import requests
+
+target = "http://<jenkins-host>:8080"
+```
+
+### Expected Output
+
+```
+Welcome to the Jenkins file-read shell. Type help or ? to list commands.
+file> /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+...
+```
+
+---
+
+## Screenshots / Evidence
+
+- `screenshots/` — add authorized captures of CLI request/response and extracted file fragments.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+- Requests to /cli?remoting=false with unusual Session/Side headers
+- Repeated command arguments containing '@/' file-path patterns
+- Unexpected reads of Jenkins secrets and user configuration files
+```
+
+**SIEM / IDS Rule (example):**
+```
+alert http any any -> $HOME_NET any (
+  msg:"Possible Jenkins CVE-2024-23897 file-read attempt";
+  flow:to_server,established;
+  content:"/cli?remoting=false"; http_uri;
+  content:"@/"; http_client_body;
+  sid:952423897; rev:1;
+)
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Upgrade Jenkins to fixed releases (2.442+ or LTS 2.426.3+) per Jenkins advisory |
+| **Workaround** | Restrict/disable CLI endpoint exposure and enforce authentication controls |
+| **Config Hardening** | Rotate Jenkins secrets/tokens, restrict controller filesystem access, and monitor anomalous CLI usage |
+
+---
+
+## References
+
+- [CVE-2024-23897 — NVD](https://nvd.nist.gov/vuln/detail/CVE-2024-23897)
+- [Jenkins Security Advisory 2024-01-24](https://www.jenkins.io/security/advisory/2024-01-24/)
+- [SonarSource: Excessive Expansion — Jenkins vulnerabilities](https://www.sonarsource.com/blog/excessive-expansion-uncovering-critical-security-vulnerabilities-in-jenkins/)
+- [CISA Known Exploited Vulnerabilities Catalog](https://www.cisa.gov/known-exploited-vulnerabilities-catalog)
+- [Source Repository — godylockz/CVE-2024-23897](https://github.com/godylockz/CVE-2024-23897)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/godylockz/CVE-2024-23897 on 2026-05-17.
+

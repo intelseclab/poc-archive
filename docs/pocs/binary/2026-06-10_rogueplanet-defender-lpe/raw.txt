@@ -1,0 +1,157 @@
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-06-10 |
+| **Last Updated** | 2026-06-09 |
+| **Author / Researcher** | MSNightmare (Nightmare-Eclipse) |
+| **CVE / Advisory** | CVE-2026-50656 |
+| **Category** | binary |
+| **Severity** | High |
+| **CVSS Score** | 7.8 (CVSSv3) |
+| **Status** | Weaponized |
+| **Tags** | LPE, Windows Defender, race-condition, TOCTOU, ISO-mount, VirtualDisk, Task-Scheduler, WER, EICAR, SYSTEM-shell, Windows-10, Windows-11, local |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Microsoft Windows Defender / Windows Error Reporting Task Scheduler |
+| **Versions Affected** | Windows 10 and Windows 11 (including Canary channel) with June 2026 patch; Windows Server all versions (PoC requires redesign for Server) |
+| **Language / Platform** | C++ (Windows x64) |
+| **Authentication Required** | No (standard local user) |
+| **Network Access Required** | No (local only) |
+
+---
+
+## Summary
+
+RoguePlanet is a local privilege escalation exploit for Windows 10 and 11 that abuses a race condition in Windows Defender's scan pipeline. The exploit mounts an attacker-controlled ISO image via the VirtualDisk API, plants an EICAR-like trigger file inside it, and races Defender's file-open handle against a directory junction swap while simultaneously driving the WER `QueueReporting` Task Scheduler task to execute as SYSTEM. If the race is won, the attacker's payload runs in the SYSTEM context. The exploit is non-deterministic (race-dependent) but achieves high success rates on tested builds.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+Windows Defender opens scan targets using shared file handles and resolves paths at scan time without holding exclusive locks across the entire scan-to-action pipeline. A TOCTOU window exists between when Defender opens the EICAR-triggered file path and when it acts on it. Combined with directory junction swaps and reparse point manipulation, an attacker can redirect Defender's file handle into a privileged execution context backed by the WER `QueueReporting` scheduled task (running as SYSTEM under `\Microsoft\Windows\Windows Error Reporting`).
+
+### Attack Vector
+
+1. Mount a crafted ISO image using `OpenVirtualDisk` / `AttachVirtualDisk` (no admin required on Windows 10/11 for standard users).
+2. Write an EICAR-compatible trigger file into a working directory, triggering a Defender scan (`WDStartScan`).
+3. Race a directory junction swap (`NtSetInformationFile` rename + reparse point replacement) against Defender's handle acquisition.
+4. Simultaneously connect to Task Scheduler and trigger the WER `QueueReporting` task (`\Microsoft\Windows\Windows Error Reporting\QueueReporting`).
+5. If the race succeeds, `wermgr.exe` path resolution is hijacked and the attacker's payload is executed as SYSTEM.
+
+### Impact
+
+Full local privilege escalation to SYSTEM on Windows 10/11 for any standard (non-admin) local user. Windows Server is also theoretically vulnerable but requires a redesigned PoC (standard users cannot mount ISOs on Server).
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:       Windows 10 (June 2026 patch) or Windows 11 (Official + Canary)
+Attacker: Standard local user (no admin, no special privileges)
+Tools:    RoguePlanet.exe (prebuilt) or compile from RoguePlanet.cpp with MSVC
+```
+
+### Setup Steps
+
+```
+RoguePlanet.exe
+
+cl /O2 RoguePlanet.cpp /link kernel32.lib bcrypt.lib taskschd.lib comsupp.lib virtdisk.lib ntdll.lib Rpcrt4.lib shlwapi.lib
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Copy `RoguePlanet.exe`** (or compile from source) to the target machine as a standard user.
+2. **Run `RoguePlanet.exe`** from a command prompt.
+3. The exploit races Defender scan + junction swap. On success a SYSTEM shell spawns.
+4. Verify: `whoami` → `nt authority\system`.
+
+### Exploit Code
+
+> See `RoguePlanet.cpp` in this folder for full source. Prebuilt `RoguePlanet.exe` is also included.
+
+### Expected Output
+
+```
+[*] Mounting ISO...
+[*] Racing Defender scan...
+[+] Race won — spawning SYSTEM shell
+Microsoft Windows [Version ...]
+C:\Windows\system32> whoami
+nt authority\system
+```
+
+---
+
+## Screenshots / Evidence
+
+- `RoguePlanet.png` — Screenshot of successful SYSTEM shell from researcher's system.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+Get-WinEvent -LogName System | Where-Object {$_.Id -eq 7045 -or $_.Message -like "*VirtualDisk*"}
+
+auditpol /set /subcategory:"File System" /success:enable
+Get-WinEvent -LogName "Microsoft-Windows-TaskScheduler/Operational" |
+  Where-Object {$_.Message -like "*QueueReporting*"}
+
+Get-WinEvent -LogName Security | Where-Object {$_.Id -eq 4688 -and $_.Message -like "*wermgr*"}
+```
+
+**YARA (memory/on-disk):**
+```
+rule RoguePlanet_LPE {
+  strings:
+    $pipe = "\\\\.\\pipe\\RoguePlanet" wide
+    $task = "QueueReporting" wide
+    $wer  = "Windows Error Reporting" wide
+    $eicar_fn = "wermgr.exe" wide
+  condition:
+    3 of them
+}
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | No CVE or official patch announced at time of ingest; report to MSRC |
+| **Workaround** | Restrict standard users from mounting ISO images via Group Policy (`User Configuration → Administrative Templates → Windows Components → File Explorer → Prevent users from mounting ISO/IMG files`) |
+| **Config Hardening** | Disable or restrict the WER `QueueReporting` scheduled task for non-essential endpoints; enable Defender tamper protection and ASR rules |
+
+---
+
+## References
+
+- [RoguePlanet source repository](https://github.com/MSNightmare/RoguePlanet)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/MSNightmare/RoguePlanet on 2026-06-10. Ingested via issue #118.
+
+The exploit is race-condition dependent and non-deterministic. The researcher reports 100% success rate on some machines and variable rates on others. Windows Server is theoretically vulnerable but requires a redesigned PoC (standard users cannot mount ISOs without admin on Server builds).
+
+The `RoguePlanet.cpp` source is 5.5 MB due to embedded NT/Win32 header definitions inlined directly in the file.
+

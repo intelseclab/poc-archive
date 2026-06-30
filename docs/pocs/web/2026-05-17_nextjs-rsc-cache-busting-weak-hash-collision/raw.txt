@@ -1,0 +1,181 @@
+
+<!-- 
+  File: 2026-05-17_nextjs-rsc-cache-busting-weak-hash-collision.md
+  Location: pocs/<category>/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-17 |
+| **Author / Researcher** | dwisiswant0 |
+| **CVE / Advisory** | CVE-2026-44582 |
+| **Category** | web |
+| **Severity** | Low |
+| **CVSS Score** | 3.7 (CVSSv3) |
+| **Status** | Weaponized |
+| **Tags** | cache-poisoning, RSC, weak-hash, Next.js, unauthenticated |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Next.js App Router |
+| **Versions Affected** | 13.4.6–15.5.15 and 16.0.0–16.2.4 (fixed in 15.5.16 / 16.2.5) |
+| **Language / Platform** | JavaScript / Node.js |
+| **Authentication Required** | No |
+| **Network Access Required** | Yes |
+
+---
+
+## Summary
+
+Next.js used a weak cache-busting hash for the `_rsc` query parameter in vulnerable versions. Because this hash had practical collision resistance limits, an attacker could generate alternative header/state tuples that map to the same `_rsc` token as a victim route variant. In cache setups that key too heavily on URL+query, this enables cache poisoning where users can receive the wrong React Server Component response variant. The issue is low severity (CVSS 3.7) and was patched in 15.5.16 / 16.2.5.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+The vulnerable implementation computed `_rsc` with a weak legacy hash design that did not provide strong collision resistance for attacker-controlled input combinations (router prefetch/state headers and `Next-Url`). As a result, an attacker could search for colliding tuples that produced the same `_rsc` value used by legitimate navigation/prefetch flows, causing cache-key confusion.
+
+### Attack Vector
+
+An attacker targets a URL expected to generate a high-value RSC response and computes a colliding tuple for the same `_rsc` value. They then send crafted requests (including `RSC` and related router headers) so intermediary caches store attacker-influenced response data under the victim URL variant. Later user traffic can be served the poisoned variant.
+
+### Impact
+
+Successful exploitation can poison cached RSC variants and cause users to receive incorrect page state or content for a given URL. Depending on the application, this can lead to content confusion, integrity issues in rendered UI, and follow-on security impact where cached responses influence user actions.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Linux/macOS/Windows
+Target:      Next.js 16.2.4 (or other affected version)
+Attacker:    Any host with Python 3
+Tools:       python3, optional curl, optional CDN/proxy test environment
+```
+
+### Setup Steps
+
+```bash
+git clone https://github.com/dwisiswant0/next-16.2.4-pocs.git
+cd next-16.2.4-pocs/poc/CVE-2026-44582_GHSA-vfv6-92ff-j949
+
+python3 exploit.py http://127.0.0.1:3000/dashboard
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Identify a vulnerable target** (Next.js 13.4.6–15.5.15 or 16.0.0–16.2.4).
+   ```bash
+   curl -i http://127.0.0.1:3000/dashboard
+   ```
+
+2. **Run the collision PoC** to generate a colliding legacy `_rsc` tuple.
+   ```bash
+   python3 exploit.py http://127.0.0.1:3000/dashboard
+   ```
+
+3. **Optional live check**: send crafted request attempt with `--send`.
+   ```bash
+   python3 exploit.py http://127.0.0.1:3000/dashboard --send
+   ```
+
+### Exploit Code
+
+> See `exploit.py` (or relevant file) in this folder.
+
+```python
+from exploit import legacy_hash, find_collision
+
+target_tuple_hash = legacy_hash(
+    "1",
+    "/_tree",
+    '%5B%22%22%2C%7B%22a%22%3A%22victim%22%7D%5D',
+    "/dashboard",
+)
+collision = find_collision(target_tuple_hash)
+print(target_tuple_hash, collision["hash"], collision["attempts"])
+```
+
+### Expected Output
+
+```
+=================================================================
+  CVE-2026-44582 -- _rsc weak hash collision
+=================================================================
+[*] Searching for a colliding tuple...
+[+] COLLISION FOUND in N attempts (x.xx s).
+[i] Implication: attacker-influenced RSC payload can share cache slot.
+```
+
+---
+
+## Screenshots / Evidence
+
+- `screenshots/` — add collision search output and cache-behavior evidence if captured
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+GET /dashboard?_rsc=<token>
+RSC: 1
+Next-Router-Prefetch: 1
+Next-Router-Segment-Prefetch: /_tree
+Next-Router-State-Tree: ...
+Next-Url: /p<random>
+```
+
+**SIEM / IDS Rule (example):**
+```
+alert http any any -> $HTTP_SERVERS any (
+  msg:"Possible Next.js _rsc collision cache-poisoning attempt";
+  content:"?_rsc="; http_uri;
+  content:"Next-Router-State-Tree"; http_header;
+  sid:900044582; rev:1;
+)
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Upgrade Next.js to 15.5.16 or 16.2.5+ |
+| **Workaround** | Reduce cache risk by varying on `RSC`, `Next-Router-State-Tree`, `Next-Url`, and related prefetch headers |
+| **Config Hardening** | Avoid cache keying only on URL query for RSC flows; monitor unexpected `_rsc` collision patterns |
+
+---
+
+## References
+
+- [CVE-2026-44582 — NVD](https://nvd.nist.gov/vuln/detail/CVE-2026-44582)
+- [Next.js Advisory — GHSA-vfv6-92ff-j949](https://github.com/vercel/next.js/security/advisories/GHSA-vfv6-92ff-j949)
+- [Next.js Patch Commit 688ed31e21](https://github.com/vercel/next.js/commit/688ed31e210d81ab7d0dee57afae807fa00ff162)
+- [Source Repository — dwisiswant0/next-16.2.4-pocs](https://github.com/dwisiswant0/next-16.2.4-pocs)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/dwisiswant0/next-16.2.4-pocs on 2026-05-17.
+
+Issue notes indicate no known active exploitation at time of reporting.
+

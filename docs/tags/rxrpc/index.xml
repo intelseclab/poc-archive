@@ -1,168 +1,26 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>RxRPC on PoC Archive</title><link>https://poc.intelseclab.com/tags/rxrpc/</link><description>Recent content in RxRPC on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 18 May 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/rxrpc/index.xml" rel="self" type="application/rss+xml"/><item><title>DirtyDecrypt / DirtyCBC — rxgk Page-Cache Write (Dirty Pipe Variant)</title><link>https://poc.intelseclab.com/pocs/binary/2026-05-18_dirtydecrypt/</link><pubDate>Mon, 18 May 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-05-18_dirtydecrypt/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-05-18&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>Aaron Esau / V12 security team (v12.sh)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>N/A (reported as duplicate by kernel maintainers; patched on mainline)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>binary&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>High&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>Weaponized&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>LPE, Linux kernel, page-cache, rxgk, RxRPC, COW, write-primitive, unprivileged, Dirty-Pipe-variant, splice, MSG_SPLICE_PAGES&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>pocs/binary/2026-05-14_linux-xfrm-rxrpc-lpe/&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>Linux kernel — net/rxrpc (&lt;code>rxgk_decrypt_skb&lt;/code>)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>Kernels with RxRPC + rxgk support prior to mainline patch (reported 2026-05-09)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>C, Linux x86-64 (unprivileged user)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>No (local)&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>DirtyDecrypt (also called DirtyCBC) is a variant of the CopyFail / DirtyFrag / Fragnesia bug class. &lt;code>rxgk_decrypt_skb()&lt;/code> in &lt;code>net/rxrpc/rxgk_common.h&lt;/code> calls &lt;code>skb_to_sgvec()&lt;/code> followed by &lt;code>crypto_krb5_decrypt()&lt;/code> without first calling &lt;code>skb_cow_data()&lt;/code>. The krb5enc AEAD template decrypts in-place before verifying the HMAC, so when skb frag pages are pagecache pages (spliced in via &lt;code>splice&lt;/code> → &lt;code>MSG_SPLICE_PAGES&lt;/code> → loopback), the decrypt corrupts the page cache. An unprivileged local attacker can use a sliding-window technique to write arbitrary bytes into the pagecache, rewriting &lt;code>/etc/passwd&lt;/code> to clear the root password and escalate to root.&lt;/p></description></item><item><title>Dirty Frag: Linux XFRM/RxRPC Page Cache Write Chain LPE</title><link>https://poc.intelseclab.com/pocs/binary/2026-05-14_linux-xfrm-rxrpc-lpe/</link><pubDate>Thu, 14 May 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-05-14_linux-xfrm-rxrpc-lpe/</guid><description>&lt;!-- 
- File: 2026-05-14_linux-xfrm-rxrpc-lpe.md
- Location: pocs/binary/
--->
-&lt;hr>
-&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-05-14&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>Hyunwoo Kim (@v4bel)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-43500, CVE-2026-43284&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>binary&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Critical&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>7.8 (CVSSv3)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>Weaponized&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>LPE, Linux kernel, page-cache, xfrm, RxRPC, local, unauthenticated, Dirty Pipe variant&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>Linux kernel&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-43284: cac2661c53f3 (2017-01-17) – f4c50a4034e6 (2026-05-05); CVE-2026-43500: 2dc334f1a63a (2023-06-08) – aa54b1d27fe0 (2026-05-10)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>C, Linux x86_64&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>No (local only)&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>Dirty Frag is a universal Linux Local Privilege Escalation (LPE) vulnerability class discovered by Hyunwoo Kim (@v4bel) that chains two Page Cache Write primitives: the xfrm-ESP Page-Cache Write (CVE-2026-43284) and the RxRPC Page-Cache Write (CVE-2026-43500). By exploiting these bugs, an unprivileged local user can overwrite arbitrary read-only pages in the kernel page cache — including SUID binaries such as &lt;code>/usr/bin/su&lt;/code> — and obtain root privileges on all major Linux distributions. The exploit is deterministic, requires no race condition, and has a very high success rate.&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>RxRPC on PoC Archive</title>
+    <link>http://100.89.152.30:1313/tags/rxrpc/</link>
+    <description>Recent content in RxRPC on PoC Archive</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 18 May 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://100.89.152.30:1313/tags/rxrpc/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>DirtyDecrypt / DirtyCBC — rxgk Page-Cache Write (Dirty Pipe Variant)</title>
+      <link>http://100.89.152.30:1313/pocs/binary/2026-05-18_dirtydecrypt/</link>
+      <pubDate>Mon, 18 May 2026 00:00:00 +0000</pubDate>
+      <guid>http://100.89.152.30:1313/pocs/binary/2026-05-18_dirtydecrypt/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-05-18&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Aaron Esau / V12 security team (v12.sh)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A (reported as duplicate by kernel maintainers; patched on mainline)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;binary&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;High&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Weaponized&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;LPE, Linux kernel, page-cache, rxgk, RxRPC, COW, write-primitive, unprivileged, Dirty-Pipe-variant, splice, MSG_SPLICE_PAGES&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;pocs/binary/2026-05-14_linux-xfrm-rxrpc-lpe/&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Linux kernel — net/rxrpc (&lt;code&gt;rxgk_decrypt_skb&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Kernels with RxRPC + rxgk support prior to mainline patch (reported 2026-05-09)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;C, Linux x86-64 (unprivileged user)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No (local)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;DirtyDecrypt (also called DirtyCBC) is a variant of the CopyFail / DirtyFrag / Fragnesia bug class. &lt;code&gt;rxgk_decrypt_skb()&lt;/code&gt; in &lt;code&gt;net/rxrpc/rxgk_common.h&lt;/code&gt; calls &lt;code&gt;skb_to_sgvec()&lt;/code&gt; followed by &lt;code&gt;crypto_krb5_decrypt()&lt;/code&gt; without first calling &lt;code&gt;skb_cow_data()&lt;/code&gt;. The krb5enc AEAD template decrypts in-place before verifying the HMAC, so when skb frag pages are pagecache pages (spliced in via &lt;code&gt;splice&lt;/code&gt; → &lt;code&gt;MSG_SPLICE_PAGES&lt;/code&gt; → loopback), the decrypt corrupts the page cache. An unprivileged local attacker can use a sliding-window technique to write arbitrary bytes into the pagecache, rewriting &lt;code&gt;/etc/passwd&lt;/code&gt; to clear the root password and escalate to root.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Dirty Frag: Linux XFRM/RxRPC Page Cache Write Chain LPE</title>
+      <link>http://100.89.152.30:1313/pocs/binary/2026-05-14_linux-xfrm-rxrpc-lpe/</link>
+      <pubDate>Thu, 14 May 2026 00:00:00 +0000</pubDate>
+      <guid>http://100.89.152.30:1313/pocs/binary/2026-05-14_linux-xfrm-rxrpc-lpe/</guid>
+      <description>&lt;!-- &#xA;  File: 2026-05-14_linux-xfrm-rxrpc-lpe.md&#xA;  Location: pocs/binary/&#xA;--&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-05-14&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Hyunwoo Kim (@v4bel)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-43500, CVE-2026-43284&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;binary&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;7.8 (CVSSv3)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Weaponized&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;LPE, Linux kernel, page-cache, xfrm, RxRPC, local, unauthenticated, Dirty Pipe variant&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Linux kernel&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-43284: cac2661c53f3 (2017-01-17) – f4c50a4034e6 (2026-05-05); CVE-2026-43500: 2dc334f1a63a (2023-06-08) – aa54b1d27fe0 (2026-05-10)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;C, Linux x86_64&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No (local only)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;Dirty Frag is a universal Linux Local Privilege Escalation (LPE) vulnerability class discovered by Hyunwoo Kim (@v4bel) that chains two Page Cache Write primitives: the xfrm-ESP Page-Cache Write (CVE-2026-43284) and the RxRPC Page-Cache Write (CVE-2026-43500). By exploiting these bugs, an unprivileged local user can overwrite arbitrary read-only pages in the kernel page cache — including SUID binaries such as &lt;code&gt;/usr/bin/su&lt;/code&gt; — and obtain root privileges on all major Linux distributions. The exploit is deterministic, requires no race condition, and has a very high success rate.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

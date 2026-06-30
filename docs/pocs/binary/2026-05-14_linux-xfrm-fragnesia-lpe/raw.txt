@@ -1,0 +1,183 @@
+
+<!-- 
+  File: 2026-05-14_linux-xfrm-fragnesia-lpe.md
+  Location: pocs/binary/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-14 |
+| **Author / Researcher** | William Bowling / V12 team (v12.sh) |
+| **CVE / Advisory** | CVE-2026-46300 |
+| **Category** | binary |
+| **Severity** | High |
+| **CVSS Score** | 7.8 (CVSSv3) |
+| **Status** | Weaponized |
+| **Tags** | LPE, privilege-escalation, kernel, XFRM, ESP-in-TCP, page-cache, write-primitive, unprivileged |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Linux kernel (XFRM ESP-in-TCP subsystem) |
+| **Versions Affected** | All Linux kernel versions before the May 13 2026 XFRM patch (confirmed on 6.8.0-111-generic) |
+| **Language / Platform** | C / Linux x86-64 |
+| **Authentication Required** | No |
+| **Network Access Required** | Local only |
+
+---
+
+## Summary
+
+CVE-2026-46300 ("Fragnesia") is a universal Linux local privilege escalation vulnerability in the XFRM ESP-in-TCP subsystem. It is a member of the Dirty Frag vulnerability class — a **separate bug** from the original dirtyfrag — that abuses a logic flaw where the kernel "forgets" that a fragment is shared during TCP coalescing. An unprivileged local user can exploit this to perform arbitrary byte writes into the kernel page cache of read-only files without any race condition, ultimately overwriting a setuid binary in-cache to gain a root shell.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+When a TCP socket transitions to `espintcp` ULP mode after data has already been spliced from a file into the receive queue, the kernel processes the queued file pages as ESP ciphertext. Specifically, the AES-GCM keystream byte at counter block position 2, byte 0 is XORed directly into the cached file page. Because the skb "forgets" that the frag is shared during coalescing, the in-place decryption mutates the read-only page-cache page of the spliced file, not a private copy. By selecting the IV nonce to produce any desired keystream byte, an attacker can set any target byte in the file to any value — one byte per trigger invocation — without requiring a race condition.
+
+### Attack Vector
+
+An unprivileged local user creates a user+network namespace (`unshare(CLONE_NEWUSER | CLONE_NEWNET)`), installs a transport-mode ESP-in-TCP XFRM security association with a known AES-128-GCM key, builds a 256-entry keystream lookup table, then iterates over a payload: for each byte to change, the exploit splices the target file into a TCP socket pre-loaded with an ESP header whose IV is chosen to produce the required keystream byte, then enables `TCP_ULP espintcp` on the receiver — causing the kernel to XOR the GCM keystream into the underlying page-cache page.
+
+### Impact
+
+Arbitrary byte write into the kernel page cache of any file readable by the attacker, without needing write permission. In practice: a 192-byte position-independent ELF stub (`setresuid(0,0,0)` / `setresgid(0,0,0)` / `execve("/bin/sh")`) is written over `/usr/bin/su` in the page cache. Running `execve("/usr/bin/su")` then yields a root shell. The on-disk binary is untouched; the modification lives only in the page cache until evicted.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Ubuntu 22.04 LTS (confirmed); other Linux distros with kernel < May 13 2026 patch
+Target:      Linux 6.8.0-111-generic (Ubuntu) — any kernel missing the XFRM patch
+Attacker:    Same host (local user, no privileges required)
+Tools:       gcc, standard libc (static build supported)
+```
+
+### Setup Steps
+
+```bash
+git clone --depth=1 https://github.com/v12-security/pocs.git /tmp/fragnesia-src
+
+gcc -O2 -Wall -o exp fragnesia.c
+
+sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+./exp
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Build** — compile the exploit as a regular (non-root) user.
+   ```bash
+   gcc -O2 -Wall -o exp fragnesia.c
+   ```
+
+2. **User + network namespace** — the exploit calls `unshare(CLONE_NEWUSER | CLONE_NEWNET)` internally to obtain `CAP_NET_ADMIN` in an isolated namespace without real host privileges.
+
+3. **XFRM SA installation** — inside the namespace, a transport-mode ESP-in-TCP SA is installed via `NETLINK_XFRM` using AES-128-GCM with a known key and SPI `0x100`.
+
+4. **Keystream table** — the 16-byte AES-GCM counter block for sequence position 2 is encrypted under the known key; by varying the lower 32 bits of the IV, all 256 possible keystream byte values are reachable. The table is built once via `AF_ALG`.
+
+5. **Byte-by-byte payload write** — for each byte in the 192-byte ELF stub that differs from the current `/usr/bin/su` content, the exploit fires a splice/ULP trigger pair: sender splices 4096 bytes of the target file into a TCP stream with the chosen IV; receiver enables `TCP_ULP espintcp`, causing the kernel to XOR the keystream byte into the page-cache page.
+
+6. **Execution** — once all 192 bytes are verified, `execve("/usr/bin/su")` runs the injected stub.
+   ```bash
+   ./exp
+   # Expected: root shell
+   ```
+
+### Exploit Code
+
+> See `fragnesia.c` in this folder.
+
+```c
+/* Minimal trigger concept — full exploit in fragnesia.c */
+
+// 1. splice() target file bytes into TCP socket (sender side)
+splice(file_fd, &file_off, pipe_fds[1], NULL, PAGE_SIZE, 0);
+splice(pipe_fds[0], NULL, tcp_sock, NULL, PAGE_SIZE, 0);
+
+// 2. enable espintcp ULP on receiver — triggers in-place AES-GCM "decryption"
+//    which XORs keystream into the shared page-cache page
+int mode = TCP_ENCAP_ESPINTCP;
+setsockopt(recv_sock, IPPROTO_TCP, TCP_ULP, "espintcp", 8);
+setsockopt(recv_sock, SOL_TCP, TCP_ULP, &mode, sizeof(mode));
+```
+
+### Expected Output
+
+```
+[*] uid=1000 euid=1000 gid=1000 egid=1000
+[*] mode=xfrm_espintcp_pagecache_replace collateral=after
+[*] target=/usr/bin/su size=...
+[+] building keystream table...
+[+] writing payload byte 0/192 ...
+...
+[+] all 192 bytes verified
+```
+
+---
+
+## Screenshots / Evidence
+
+<!-- Add paths to screenshots or embed them -->
+- `screenshots/` — add evidence of successful exploitation here
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+-a always,exit -F arch=b64 -S unshare -k namespace_abuse
+-a always,exit -F arch=b64 -S socket -F a0=16 -k xfrm_socket
+```
+
+**SIEM / IDS Rule (example):**
+```
+alert: unprivileged process opens AF_NETLINK/NETLINK_XFRM socket
+       followed by splice() into TCP socket with espintcp ULP activation
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Apply the XFRM patch from https://lists.openwall.net/netdev/2026/05/13/79 (included in kernels built after 2026-05-13) |
+| **Workaround** | `rmmod esp4 esp6 rxrpc` to unload ESP modules; block future loading with modprobe blacklist |
+| **Config Hardening** | `printf 'install esp4 /bin/false\ninstall esp6 /bin/false\ninstall rxrpc /bin/false\n' > /etc/modprobe.d/dirtyfrag.conf` |
+
+---
+
+## References
+
+- [CVE-2026-46300](https://nvd.nist.gov/vuln/detail/CVE-2026-46300)
+- [XFRM Patch — netdev mailing list](https://lists.openwall.net/netdev/2026/05/13/79)
+- [Dirty Frag (related vulnerability class)](https://github.com/V4bel/dirtyfrag)
+- [Source Repository — v12-security/pocs](https://github.com/v12-security/pocs)
+- [V12 Security](https://v12.sh)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/v12-security/pocs on 2026-05-14.
+
+Fragnesia is a **separate bug** from the original Dirty Frag vulnerability, though it affects the same attack surface (Linux XFRM ESP-in-TCP) and shares the same mitigation. Unlike Dirty Frag, Fragnesia requires no race condition. The page-cache mutation is volatile (not backed to disk); running `echo 1 | tee /proc/sys/vm/drop_caches` clears the injected payload from memory. On Ubuntu, AppArmor's `kernel.apparmor_restrict_unprivileged_userns=0` sysctl must be set (or bypassed via a separate bug) before the exploit can obtain the required namespace capabilities.
+

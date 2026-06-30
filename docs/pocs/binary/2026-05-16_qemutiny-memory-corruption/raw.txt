@@ -1,0 +1,170 @@
+
+<!-- 
+  File: 2026-05-16_qemutiny-memory-corruption.md
+  Location: pocs/binary/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-16 |
+| **Author / Researcher** | Aaron Esau (V12 security team); weaponized PoC prepared by @xia0o0o0o |
+| **CVE / Advisory** | N/A |
+| **Category** | binary |
+| **Severity** | Critical |
+| **CVSS Score** | N/A |
+| **Status** | Weaponized |
+| **Tags** | QEMU, CXL, memory-corruption, OOB-read, OOB-write, guest-to-host-escape, local, root-in-guest |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | QEMU CXL Type-3 device emulation (`hw/cxl/cxl-mailbox-utils.c`) |
+| **Versions Affected** | OOB read path: QEMU v7.1.0+ (introduced by `056172691b`); OOB write path: QEMU v11.0.0+ (introduced by `5e5a86bab8` and `da5cafdc4d`) |
+| **Language / Platform** | C / QEMU on Linux x86_64 |
+| **Authentication Required** | Yes (root execution inside guest in provided PoC flow) |
+| **Network Access Required** | Local only |
+
+---
+
+## Summary
+
+QEMUtiny is a memory corruption exploit chain in QEMU CXL Type-3 emulation that combines an out-of-bounds read (`GET_LOG`) with an out-of-bounds write (`SET_FEATURE`). The PoC leaks QEMU process pointers and then corrupts CXL device-adjacent state to steer execution toward attacker-controlled callbacks. In the demonstrated setup, this enables code execution in the host QEMU process from a guest context.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+The chain relies on two mailbox handler bugs in `hw/cxl/cxl-mailbox-utils.c`:
+
+1. `cmd_logs_get_log()` treats a byte-based mailbox offset as an array index when computing the source address for `memmove()`, enabling out-of-bounds reads.
+2. `cmd_features_set_feature()` accepts attacker-controlled offsets for feature write-attribute structures and fails to enforce `offset + length <= sizeof(struct)`, enabling out-of-bounds writes into neighboring fields.
+
+### Attack Vector
+
+An attacker with execution inside the guest uses MMIO mailbox access to the emulated CXL device BAR, first issuing crafted `GET_LOG` requests to leak pointers and derive QEMU/libc addresses, then issuing crafted `SET_FEATURE` payloads to overflow CXL Type-3 structures. A subsequent sanitize/media operation traverses corrupted state and triggers a forged callback chain.
+
+### Impact
+
+Potential guest-to-host escape in vulnerable QEMU configurations, with attacker-controlled execution flow inside the QEMU host process. This can lead to full host compromise depending on host hardening and runtime constraints.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Linux host with vulnerable QEMU build and KVM/QEMU tooling
+Target:      QEMU CXL Type-3 emulation path (`qemu-system-x86_64`)
+Attacker:    Root-capable guest user in authorized test VM
+Tools:       gcc, readelf, objdump, ldd, shell scripts in this folder
+```
+
+### Setup Steps
+
+```bash
+git clone --depth=1 https://github.com/atiilla/QEMUtiny /tmp/qemutiny
+cd /tmp/qemutiny
+
+./update_poc_offsets.sh
+
+gcc -O2 -Wall -Wextra -o exp poc.c
+
+sudo ./exp
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Prepare environment** — Start the provided QEMU lab and guest shell helper:
+   ```bash
+   ./run_qemu_shell.sh
+   ```
+
+2. **Adjust offsets and compile** — Update hard-coded offsets then compile:
+   ```bash
+   ./update_poc_offsets.sh
+   gcc -O2 -Wall -Wextra -o exp poc.c
+   ```
+
+3. **Execute exploit inside guest** — Run with sufficient permissions:
+   ```bash
+   sudo ./exp
+   ```
+
+### Exploit Code
+
+> See `poc.c` in this folder.
+
+```c
+/* Minimal conceptual flow (full chain in poc.c):
+ * 1) Leak QEMU/CXL pointers via GET_LOG OOB read.
+ * 2) Use SET_FEATURE offset+length overflow to corrupt CXL Type-3 state.
+ * 3) Trigger sanitize/media path to invoke forged callback state.
+ */
+```
+
+### Expected Output
+
+```
+[*] leak: handler pointer ...
+[*] leak: CXLType3Dev heap pointer ...
+[*] libc leak successful
+[+] controlled callback reached
+```
+
+---
+
+## Screenshots / Evidence
+
+- `screenshots/` — reserved for authorized lab evidence capture
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+```
+
+**SIEM / IDS Rule (example):**
+```
+Alert on guest workloads that repeatedly issue malformed CXL mailbox offsets
+(GET_LOG + SET_FEATURE combinations) followed by QEMU crashes/restarts.
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Apply upstream fixes for CXL mailbox bounds checks in `GET_LOG` and `SET_FEATURE` handlers once available |
+| **Workaround** | Disable or avoid exposing vulnerable CXL Type-3 functionality in untrusted guest scenarios |
+| **Config Hardening** | Run QEMU with least privilege, strict isolation (seccomp/AppArmor/SELinux), and monitor mailbox-heavy guest behavior |
+
+---
+
+## References
+
+- [Source Repository — atiilla/QEMUtiny](https://github.com/atiilla/QEMUtiny)
+- [QEMU project](https://github.com/qemu/qemu)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/atiilla/QEMUtiny on 2026-05-16.
+
+Repository metadata at ingestion time: language `C`, stars `0`, license `N/A` (no license metadata reported).
+

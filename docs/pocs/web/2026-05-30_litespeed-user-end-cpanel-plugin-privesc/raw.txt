@@ -1,0 +1,150 @@
+
+<!-- 
+  File: 2026-05-30_litespeed-user-end-cpanel-plugin-privesc.md
+  Location: pocs/web/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-05-30 |
+| **Last Updated** | 2026-04-30 |
+| **Author / Researcher** | HORKimhab (collab: @RABBIT6049) |
+| **CVE / Advisory** | CVE-2026-48172 |
+| **Category** | web |
+| **Severity** | High |
+| **CVSS Score** | N/A |
+| **Status** | Patched |
+| **Tags** | local-privilege-escalation, cPanel, LiteSpeed, symlink, archive-extraction |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | LiteSpeed cPanel Plugin |
+| **Versions Affected** | LiteSpeed cPanel Plugin v6.5.0 and earlier |
+| **Language / Platform** | Linux / cPanel server environment |
+| **Authentication Required** | Yes (local cPanel user) |
+| **Network Access Required** | No |
+
+---
+
+## Summary
+
+CVE-2026-48172 is a local privilege-escalation flaw in LiteSpeed cPanel Plugin v6.5.0 and earlier. The plugin installation flow does not sufficiently validate package ownership/permissions and can be abused with symlinked install targets. A normal cPanel user can influence extraction behavior to overwrite privileged files such as `/etc/sudoers`, resulting in root-level command execution.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+The plugin installer accepts package content and extraction targets without enforcing safe ownership/permission checks and without rejecting dangerous symlink states in the plugin path.
+
+### Attack Vector
+
+An attacker with local cPanel-level access replaces plugin path artifacts with symlinks (for example pointing `settings-file` to `/etc/sudoers`), places a malicious archive where the updater expects package files, and triggers the plugin installer script.
+
+### Impact
+
+Successful exploitation enables local privilege escalation to root by writing attacker-controlled content into privileged files and granting passwordless sudo to the attacker account.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Linux cPanel host (authorized lab)
+Target:      LiteSpeed cPanel Plugin <= 6.5.0
+Attacker:    Local cPanel user account
+Tools:       Python 3, tar/gzip, plugin installer script
+```
+
+### Setup Steps
+
+```bash
+cd pocs/web/2026-05-30_litespeed-user-end-cpanel-plugin-privesc
+python3 exploit.py
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. Replace `settings-file` in plugin path with a symlink to `/etc/sudoers`.
+2. Build and place a malicious `ls_web_cache_mgr.tar.gz` archive in `/usr/src`.
+3. Trigger `install-cpanel-plugin` so extraction writes attacker-controlled sudoers content.
+
+### Exploit Code
+
+> See `exploit.py` in this folder.
+
+```python
+python3 exploit.py
+```
+
+### Expected Output
+
+```
+[+] Current user: <user>
+[+] Replacing settings-file with symlink to /etc/sudoers...
+[+] Building malicious archive at /usr/src/ls_web_cache_mgr.tar.gz
+[+] Triggering installer script...
+[+] Exploit complete. Verify sudoers:
+    grep <user> /etc/sudoers
+```
+
+---
+
+## Screenshots / Evidence
+
+- `screenshots/` — add authorized terminal captures showing installer execution and sudoers modification.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+```
+
+**SIEM / IDS Rule (example):**
+```
+alert syslog any any -> any any (
+  msg:"Possible LiteSpeed cPanel plugin CVE-2026-48172 privilege escalation";
+  content:"install-cpanel-plugin";
+  content:"sudoers";
+  sid:952648172; rev:1;
+)
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Upgrade LiteSpeed cPanel Plugin to v6.6.0 or later |
+| **Workaround** | Restrict plugin management and package directories to root-only write access |
+| **Config Hardening** | Enforce ownership/permission checks and reject symlinked install targets before extraction |
+
+---
+
+## References
+
+- [LiteSpeed Security Advisory — CVE-2026-48172](https://litespeedtech.com/support/forum/threads/security-vulnerability-in-litespeed-cpanel-plugin-v6-5-0-and-earlier-version.24695/)
+- [Source Repository — HORKimhab/CVE-2026-48172](https://github.com/HORKimhab/CVE-2026-48172)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/HORKimhab/CVE-2026-48172 on 2026-05-30.
+
