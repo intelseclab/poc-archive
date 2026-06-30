@@ -112,7 +112,7 @@ while IFS= read -r -d '' readme; do
   echo "," >> "$TMPDIR_JSON/entries.json"
 
   total=$((total + 1))
-done < <(find "$POCS_DIR" -name "README.md" -not -path "*/node_modules/*" -print0 | sort -z)
+done < <(find "$POCS_DIR" -mindepth 3 -maxdepth 3 -name "README.md" -print0 | sort -z)
 
 # Write archive files for past years
 if compgen -G "$TMPDIR_ROWS/*.rows" > /dev/null 2>&1; then
