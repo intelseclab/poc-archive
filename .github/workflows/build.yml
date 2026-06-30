@@ -46,3 +46,10 @@ jobs:
             git commit -m "ci: rebuild site [skip ci]"
             git push
           fi
+
+      - name: Ping search engines
+        run: |
+          SITEMAP="https://poc.intelseclab.com/sitemap.xml"
+          curl -sf "https://www.google.com/ping?sitemap=${SITEMAP}" -o /dev/null && echo "Google pinged" || echo "Google ping failed"
+          curl -sf "https://www.bing.com/ping?sitemap=${SITEMAP}" -o /dev/null && echo "Bing pinged" || echo "Bing ping failed"
+          curl -sf "https://webmaster.yandex.com/ping?sitemap=${SITEMAP}" -o /dev/null && echo "Yandex pinged" || echo "Yandex ping failed"
