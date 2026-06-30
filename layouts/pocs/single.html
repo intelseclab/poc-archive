@@ -95,9 +95,20 @@
         </div>
       </div>
 
-      {{/* Editor body */}}
+      {{/* Editor body — skip syntax highlight for files > 2000 lines to avoid giant HTML */}}
       <div class="poc-viewer overflow-x-auto">
+        {{- $lines := len (split $exploit.Content "\n") -}}
+        {{- if gt $lines 2000 -}}
+        <div class="flex items-center justify-center bg-zinc-950 px-6 py-10 text-center">
+          <div>
+            <p class="font-mono text-sm text-zinc-400">File too large to render inline ({{ $lines }} lines)</p>
+            <a href="{{ $exploit.RelPermalink }}" target="_blank" rel="noopener"
+               class="mt-3 inline-block rounded bg-emerald-600 px-4 py-2 font-mono text-xs font-medium text-white transition hover:bg-emerald-500">View raw file →</a>
+          </div>
+        </div>
+        {{- else -}}
         {{ highlight $exploit.Content $lang "lineNos=true,lineNumbersInTable=true" }}
+        {{- end -}}
       </div>
 
     </div>
