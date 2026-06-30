@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Integer-Overflow on PoC Archive</title><link>https://poc.intelseclab.com/tags/integer-overflow/</link><description>Recent content in Integer-Overflow on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Tue, 30 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/integer-overflow/index.xml" rel="self" type="application/rss+xml"/><item><title>libssh2 SSH Packet Length OOB Heap Write / Unauthenticated RCE (CVE-2026-55200)</title><link>https://poc.intelseclab.com/pocs/network/2026-06-30_cve-2026-55200-libssh2-oob-rce/</link><pubDate>Tue, 30 Jun 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-06-30_cve-2026-55200-libssh2-oob-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-06-30&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06-30&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>TristanInSec (discovery); Ashraf Zaryouh / 0xBlackash (PoC)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-55200&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (CVSSv3.1, NIST); 9.2 (CVSSv4, VulnCheck)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>RCE, OOB-write, heap-corruption, libssh2, SSH, integer-overflow, unauthenticated, C, network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>libssh2 (SSH client library)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>libssh2 0.x through 1.11.1&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C; Linux / macOS / Windows (any platform embedding libssh2)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (client connects to attacker-controlled SSH server)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-55200 is a critical heap out-of-bounds write in libssh2&amp;rsquo;s SSH transport layer (&lt;code>ssh2_transport_read()&lt;/code> in &lt;code>src/transport.c&lt;/code>). The function validates that &lt;code>packet_length&lt;/code> is greater than zero but performs no upper-bound check, allowing an attacker-controlled SSH server to supply &lt;code>packet_length = 0xFFFFFFFF&lt;/code>. libssh2 then allocates insufficient memory and writes packet data far beyond the buffer boundary, corrupting heap structures. The vulnerability requires no authentication — any libssh2 client that connects to a malicious server is at risk. Fixed in libssh2 commit &lt;code>97acf3dfda80c91c3a8c9f2372546301d4a1a7a8&lt;/code> (PR #2052, merged June 12, 2026).&lt;/p></description></item></channel></rss>

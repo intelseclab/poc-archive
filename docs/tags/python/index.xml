@@ -1,4 +1,344 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Python on PoC Archive</title><link>https://poc.intelseclab.com/tags/python/</link><description>Recent content in Python on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Wed, 29 Apr 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/python/index.xml" rel="self" type="application/rss+xml"/><item><title>Copy Fail Linux Kernel Local Privilege Escalation (CVE-2026-31431)</title><link>https://poc.intelseclab.com/pocs/binary/2026-05-17_copy-fail-cve-2026-31431/</link><pubDate>Sun, 17 May 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-05-17_copy-fail-cve-2026-31431/</guid><description>&lt;!-- 
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Python on PoC Archive</title><link>https://poc.intelseclab.com/tags/python/</link><description>Recent content in Python on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Tue, 30 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/python/index.xml" rel="self" type="application/rss+xml"/><item><title>FFmpeg MagicYUV Decoder Out-of-Bounds Write / RCE — PixelSmash (CVE-2026-8461)</title><link>https://poc.intelseclab.com/pocs/binary/2026-06-30_cve-2026-8461-ffmpeg-magicyuv-oob-rce/</link><pubDate>Tue, 30 Jun 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-06-30_cve-2026-8461-ffmpeg-magicyuv-oob-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-06-30&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06-30&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>JFrog Security Research (CNA, discovery); Ashraf Zaryouh / 0xBlackash (PoC)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-8461&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>8.8 (CVSSv3.1; AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>RCE, OOB-write, heap-corruption, FFmpeg, MagicYUV, media, video, PixelSmash, libavcodec, Python, High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>FFmpeg &lt;code>libavcodec&lt;/code> — MagicYUV video decoder&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>FFmpeg &amp;lt; 8.1.2&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python (PoC / file generator); C (FFmpeg target)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (file processed by target application)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No (requires user to open or server to process a malicious file)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-8461 (codename PixelSmash) is a High-severity out-of-bounds heap write in FFmpeg&amp;rsquo;s MagicYUV decoder (&lt;code>libavcodec&lt;/code>). Improper bounds validation during frame decoding allows a specially crafted video file with an odd slice height to trigger a heap buffer overflow. The corruption overwrites &lt;code>AVBuffer&lt;/code> structures with attacker-controlled pointers, enabling a chain to &lt;code>system()&lt;/code> and arbitrary code execution. Because FFmpeg is embedded in a wide range of media applications — Jellyfin, Nextcloud, OBS Studio, Kodi, mpv, and Red Hat AI infrastructure — any application that processes untrusted media files is a potential attack surface. Fixed in FFmpeg 8.1.2 (PR #23159, published June 18, 2026).&lt;/p></description></item><item><title>GeoVision GV-I/O Box 4E DVRSearch Unauthenticated Stack Buffer Overflow RCE (CVE-2026-12485)</title><link>https://poc.intelseclab.com/pocs/network/2026-06-30_cve-2026-12485-geovision-dvrsearch-rce/</link><pubDate>Tue, 30 Jun 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-06-30_cve-2026-12485-geovision-dvrsearch-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-06-30&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06-30&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Cisco Talos Intelligence (discovery, TALOS-2026-2377); Ashraf Zaryouh / 0xBlackash (PoC)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-12485&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (CVSSv3.1; AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>RCE, unauthenticated, stack-overflow, buffer-overflow, IoT, GeoVision, DVR, embedded, UDP, network, Python, CVSS-10&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>GeoVision GV-I/O Box 4E (Linux-based smart embedded I/O device)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Firmware v2.09 and earlier&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python (PoC); Linux ARM/MIPS (target firmware)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (unauthenticated, network-accessible)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (UDP port 10001)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-12485 is a CVSS 10.0 unauthenticated stack-based buffer overflow in the GeoVision GV-I/O Box 4E, a Linux-based smart I/O device used in physical security and building automation. The &lt;code>DVRSearch&lt;/code> service listens on UDP port 10001 and handles &lt;code>CMD_IP_SET&lt;/code> commands for network configuration. The handler performs an unsafe &lt;code>memcpy()&lt;/code> of user-controlled data into a fixed-size stack buffer without length validation, enabling remote code execution with no authentication required. Discovered by Cisco Talos Intelligence (TALOS-2026-2377). Fixed in firmware v2.12.&lt;/p></description></item><item><title>GNU Inetutils telnetd Unauthenticated Root RCE via NEW-ENVIRON (CVE-2026-24061)</title><link>https://poc.intelseclab.com/pocs/network/2026-06-30_cve-2026-24061-gnu-telnetd-rce/</link><pubDate>Tue, 30 Jun 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-06-30_cve-2026-24061-gnu-telnetd-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-06-30&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06-30&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Ashraf Zaryouh / 0xBlackash&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-24061&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (CVSSv3.1; AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>RCE, unauthenticated, authentication-bypass, telnetd, GNU-Inetutils, NEW-ENVIRON, legacy, OT, CISA-KEV, active-exploitation, Python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>GNU Inetutils telnetd&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>1.9.3 through 2.7; Debian Linux 11.0 ships vulnerable version&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python (PoC); C / Linux (target daemon)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (unauthenticated network attacker)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (TCP port 23)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-24061 is a critical authentication bypass in GNU Inetutils &lt;code>telnetd&lt;/code> that grants an unauthenticated network attacker an immediate root shell. The &lt;code>NEW-ENVIRON&lt;/code> Telnet option handler passes the &lt;code>USER&lt;/code> environment variable unsanitised to &lt;code>/bin/login&lt;/code>. Setting &lt;code>USER=-f root&lt;/code> causes login to treat the session as pre-authenticated root, skipping all password verification. CISA added CVE-2026-24061 to the Known Exploited Vulnerabilities (KEV) catalog in January 2026, with a remediation deadline of 02/16/2026. Mass exploitation against legacy and OT systems was observed shortly after public disclosure. Fixed in GNU Inetutils 2.8 (two patch commits on Codeberg).&lt;/p></description></item><item><title>SP Page Builder (Joomla) Unauthenticated File Upload RCE (CVE-2026-48908)</title><link>https://poc.intelseclab.com/pocs/web/2026-06-30_cve-2026-48908-sp-page-builder-joomla-rce/</link><pubDate>Tue, 30 Jun 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-06-30_cve-2026-48908-sp-page-builder-joomla-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-06-30&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06-30&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Ashraf Zaryouh / 0xBlackash&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-48908&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (CVSSv4, Joomla! Project CNA; AV:N/AC:L/AT:N/PR:N/UI:N)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>RCE, unauthenticated, file-upload, PHP-webshell, Joomla, CMS, access-control, Python, CVSS-10&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>SP Page Builder extension for Joomla (joomshaper.net)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>1.0.0 through 6.6.1&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python (PoC); PHP / Joomla (target)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (unauthenticated)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP/HTTPS)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-48908 is a CVSS 10.0 unauthenticated remote code execution vulnerability in SP Page Builder, one of the most widely used Joomla page-builder extensions (joomshaper.net). The &lt;code>asset.uploadCustomIcon&lt;/code> endpoint enforces no authentication, no authorisation, and no file-type restrictions, allowing any unauthenticated attacker to upload a crafted IcoMoon ZIP archive containing a PHP web shell. The uploaded shell is immediately accessible and provides full server-side code execution. Fixed in SP Page Builder 6.6.2.&lt;/p></description></item><item><title>Copy Fail Linux Kernel Local Privilege Escalation (CVE-2026-31431)</title><link>https://poc.intelseclab.com/pocs/binary/2026-05-17_copy-fail-cve-2026-31431/</link><pubDate>Sun, 17 May 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-05-17_copy-fail-cve-2026-31431/</guid><description>&lt;!-- 
  File: 2026-05-17_copy-fail-cve-2026-31431.md
  Location: pocs/binary/
 -->

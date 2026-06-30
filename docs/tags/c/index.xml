@@ -1,4 +1,259 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>C on PoC Archive</title><link>https://poc.intelseclab.com/tags/c/</link><description>Recent content in C on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 28 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/c/index.xml" rel="self" type="application/rss+xml"/><item><title>DirtyClone — Linux Kernel LPE via Cloned Packet Page-Cache Overwrite (CVE-2026-43503)</title><link>https://poc.intelseclab.com/pocs/binary/2026-06-28_dirtyclone-cve-2026-43503-lpe/</link><pubDate>Sun, 28 Jun 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-06-28_dirtyclone-cve-2026-43503-lpe/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>C on PoC Archive</title><link>https://poc.intelseclab.com/tags/c/</link><description>Recent content in C on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Tue, 30 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/c/index.xml" rel="self" type="application/rss+xml"/><item><title>libcurl mTLS Connection Reuse Authentication Bypass (CVE-2026-8932)</title><link>https://poc.intelseclab.com/pocs/network/2026-06-30_cve-2026-8932-libcurl-mtls-auth-bypass/</link><pubDate>Tue, 30 Jun 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-06-30_cve-2026-8932-libcurl-mtls-auth-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-06-30&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06-30&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Ashraf Zaryouh / 0xBlackash&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-8932&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Low&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Low (no numeric score published)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>authentication-bypass, mTLS, TLS, libcurl, connection-reuse, client-certificate, C, Low&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>libcurl (embedded library; standalone curl CLI unaffected)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>7.7 through 8.20.0&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C (PoC); any platform embedding libcurl&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>N/A (the bug bypasses mTLS authentication itself)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTPS/TLS endpoint)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-8932 is a Low-severity authentication bypass in libcurl&amp;rsquo;s TLS connection reuse logic. Certain mTLS private-key configuration parameters (key file path, key type, key password) were omitted from the connection-matching comparison performed when libcurl evaluates whether an existing TLS session can be reused. As a result, when an application switches from one client certificate to another within a shared connection pool, libcurl incorrectly reuses the existing TLS session authenticated under the first certificate, rather than performing a fresh handshake with the new certificate. The server receives traffic authenticated as the original client even though the application believes it is using different credentials. Notably, this bug dates to curl 7.7 (2001), making it the oldest security vulnerability ever fixed in the libcurl project — undetected for approximately 25 years. Fixed in libcurl 8.21.0.&lt;/p></description></item><item><title>libssh2 SSH Packet Length OOB Heap Write / Unauthenticated RCE (CVE-2026-55200)</title><link>https://poc.intelseclab.com/pocs/network/2026-06-30_cve-2026-55200-libssh2-oob-rce/</link><pubDate>Tue, 30 Jun 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-06-30_cve-2026-55200-libssh2-oob-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-06-30&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06-30&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>TristanInSec (discovery); Ashraf Zaryouh / 0xBlackash (PoC)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-55200&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (CVSSv3.1, NIST); 9.2 (CVSSv4, VulnCheck)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>RCE, OOB-write, heap-corruption, libssh2, SSH, integer-overflow, unauthenticated, C, network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>libssh2 (SSH client library)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>libssh2 0.x through 1.11.1&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C; Linux / macOS / Windows (any platform embedding libssh2)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (client connects to attacker-controlled SSH server)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-55200 is a critical heap out-of-bounds write in libssh2&amp;rsquo;s SSH transport layer (&lt;code>ssh2_transport_read()&lt;/code> in &lt;code>src/transport.c&lt;/code>). The function validates that &lt;code>packet_length&lt;/code> is greater than zero but performs no upper-bound check, allowing an attacker-controlled SSH server to supply &lt;code>packet_length = 0xFFFFFFFF&lt;/code>. libssh2 then allocates insufficient memory and writes packet data far beyond the buffer boundary, corrupting heap structures. The vulnerability requires no authentication — any libssh2 client that connects to a malicious server is at risk. Fixed in libssh2 commit &lt;code>97acf3dfda80c91c3a8c9f2372546301d4a1a7a8&lt;/code> (PR #2052, merged June 12, 2026).&lt;/p></description></item><item><title>Linux Kernel act_pedit Partial COW Page-Cache LPE (CVE-2026-46331)</title><link>https://poc.intelseclab.com/pocs/binary/2026-06-30_cve-2026-46331-linux-act-pedit-lpe/</link><pubDate>Tue, 30 Jun 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-06-30_cve-2026-46331-linux-act-pedit-lpe/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-06-30&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06-30&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Ashraf Zaryouh / 0xBlackash (PoC); sgkdev (alternative PoC)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-46331&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>7.8 (CVSSv3.1, kernel.org CNA); 6.7 (Red Hat)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>LPE, Linux kernel, COW, page-cache, act_pedit, tc, netlink, traffic-control, privilege-escalation, userns, C, DirtyFrag&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-31431, CVE-2026-43284, CVE-2026-43500, CVE-2026-46300, CVE-2026-43503&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Linux Kernel — &lt;code>net/sched/act_pedit&lt;/code> (traffic control packet editing)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>4.19.244 through current; confirmed on 5.18–7.1-rc7&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C; Linux x86-64&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (local unprivileged shell)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Local only (loopback, via netlink)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-46331 is a local privilege escalation in the Linux kernel&amp;rsquo;s &lt;code>net/sched/act_pedit&lt;/code> subsystem. The vulnerable function &lt;code>tcf_pedit_act()&lt;/code> computes the writable Copy-on-Write (COW) region using a pre-calculated maximum hint (&lt;code>tcfp_off_max_hint&lt;/code>) before the actual runtime packet-edit offset is resolved. Typed pedit keys introduce header offset deltas at runtime, causing the write to land outside the originally COW&amp;rsquo;d memory region — corrupting page-cache pages that were never privatised. An attacker with &lt;code>CAP_NET_ADMIN&lt;/code> (trivially obtained via unprivileged user namespaces on most distributions) can use netlink tc rules to inject shellcode directly into a setuid binary&amp;rsquo;s page-cache copy, then execute it to obtain a root shell. CVE-2026-46331 is the fifth member of the DirtyFrag family of page-cache corruption vulnerabilities.&lt;/p></description></item><item><title>DirtyClone — Linux Kernel LPE via Cloned Packet Page-Cache Overwrite (CVE-2026-43503)</title><link>https://poc.intelseclab.com/pocs/binary/2026-06-28_dirtyclone-cve-2026-43503-lpe/</link><pubDate>Sun, 28 Jun 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-06-28_dirtyclone-cve-2026-43503-lpe/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>
