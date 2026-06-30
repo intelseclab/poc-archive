@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-06-30 21:21:56
+> Last updated: 2026-06-30 22:06:06
 
 ---
 
@@ -67,7 +67,7 @@
 
 ## By Category
 
-- **`binary`** — 26 entries
+- **`binary`** — 27 entries
 - **`cloud`** — 2 entries
 - **`crypto`** — 0 entries
 - **`hardware`** — 0 entries
