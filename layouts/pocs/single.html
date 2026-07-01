@@ -54,6 +54,8 @@
     {{- if not $exploit -}}{{- with .Resources.GetMatch "*.sh"  -}}{{- $exploit = . -}}{{- $lang = "bash"       -}}{{- $extKey = "sh"   -}}{{- end -}}{{- end -}}
     {{- if not $exploit -}}{{- with .Resources.GetMatch "*.bat" -}}{{- $exploit = . -}}{{- $lang = "bat"        -}}{{- $extKey = "bat"  -}}{{- end -}}{{- end -}}
     {{- if $exploit -}}
+    {{- $ghBase    := printf "%s/blob/master/%s%s" .Site.Params.repoURL .File.Dir $exploit.Name -}}
+    {{- $ghRaw     := printf "https://raw.githubusercontent.com/intelseclab/poc-archive/master/%s%s" .File.Dir $exploit.Name -}}
     {{- $extColors := dict
         "py"   "#3b82f6"
         "sh"   "#22c55e"
@@ -88,9 +90,11 @@
         {{/* Language badge + download */}}
         <div class="flex shrink-0 items-center gap-2">
           <span class="rounded border border-zinc-600 bg-zinc-700/40 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-zinc-400">{{ $lang }}</span>
-          <a href="{{ $exploit.RelPermalink }}" target="_blank" rel="noopener"
+          <a href="{{ $ghRaw }}" target="_blank" rel="noopener"
              class="font-mono text-xs text-zinc-400 hover:text-zinc-200 transition">raw</a>
-          <a href="{{ $exploit.RelPermalink }}" download="{{ $exploit.Name }}"
+          <a href="{{ $ghBase }}" target="_blank" rel="noopener"
+             class="font-mono text-xs text-zinc-400 hover:text-zinc-200 transition">GitHub</a>
+          <a href="{{ $ghRaw }}" download="{{ $exploit.Name }}"
              class="rounded bg-emerald-600 px-2.5 py-1 font-mono text-xs font-medium text-white transition hover:bg-emerald-500">↓ Download</a>
         </div>
       </div>
@@ -111,8 +115,8 @@
       {{- if $truncated }}
       <div class="flex items-center justify-between border-t border-zinc-700 bg-zinc-900 px-4 py-2">
         <span class="font-mono text-xs text-zinc-500">Showing 500 of {{ $lineCount }} lines</span>
-        <a href="{{ $exploit.RelPermalink }}" target="_blank" rel="noopener"
-           class="font-mono text-xs text-emerald-400 hover:underline">View full file →</a>
+        <a href="{{ $ghBase }}" target="_blank" rel="noopener"
+           class="font-mono text-xs text-emerald-400 hover:underline">View full file on GitHub →</a>
       </div>
       {{- end }}
 
