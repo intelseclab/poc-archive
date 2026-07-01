@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-06-30 22:06:06
+> Last updated: 2026-07-01 08:43:25
 
 ---
 
@@ -37,6 +37,9 @@
 | 2026-06-30 | 2026-06-30 | [cve-2026-24061-gnu-telnetd-rce](./pocs/network/2026-06-30_cve-2026-24061-gnu-telnetd-rce/) | `network` | CVE-2026-24061 | Critical | RCE, unauthenticated, authentication-bypass, telnetd, GNU-Inetutils, NEW-ENVIRON, legacy, OT, CISA-KEV, active-exploitation, Python | Weaponized |
 | 2026-06-30 | 2026-06-30 | [cve-2026-55200-libssh2-oob-rce](./pocs/network/2026-06-30_cve-2026-55200-libssh2-oob-rce/) | `network` | CVE-2026-55200 | Critical | RCE, OOB-write, heap-corruption, libssh2, SSH, integer-overflow, unauthenticated, C, network | PoC |
 | 2026-06-30 | 2026-06-30 | [cve-2026-8932-libcurl-mtls-auth-bypass](./pocs/network/2026-06-30_cve-2026-8932-libcurl-mtls-auth-bypass/) | `network` | CVE-2026-8932 | Low | authentication-bypass, mTLS, TLS, libcurl, connection-reuse, client-certificate, C, Low | PoC |
+| 2026-07-01 | 2026-06-25 | [cve-2026-20230-cisco-ucm-webdialer-ssrf-rce](./pocs/network/2026-07-01_cve-2026-20230-cisco-ucm-webdialer-ssrf-rce/) | `network` | CVE-2026-20230 | Critical | SSRF, RCE, Cisco, Unified-Communications-Manager, WebDialer, file-write, webshell, jsp-webshell, CISA-KEV, active-exploitation | Weaponized |
+| 2026-07-01 | 2026-06-17 | [cve-2026-20262-cisco-sdwan-manager-file-write](./pocs/network/2026-07-01_cve-2026-20262-cisco-sdwan-manager-file-write/) | `network` | CVE-2026-20262 | Medium | path-traversal, file-write, Cisco, SD-WAN, vManage, authenticated, CWE-22, active-exploitation | PoC |
+| 2026-07-01 | 2026-06 | [cve-2026-47729-squidbleed-squid-ftp-oob-read](./pocs/network/2026-07-01_cve-2026-47729-squidbleed-squid-ftp-oob-read/) | `network` | CVE-2026-47729 | Medium | memory-disclosure, information-disclosure, Squid, proxy, FTP, heap-overflow, oob-read, credential-theft, legacy | PoC |
 | 2026-05-14 | — | [nginx-rift-cve-2026-42945](./pocs/web/2026-05-14_nginx-rift-cve-2026-42945/) | `web` | CVE-2026-42945 | Critical | RCE, unauthenticated, nginx, heap-overflow, buffer-overflow, rewrite | Weaponized |
 | 2026-05-15 | — | [exchange-health-checker-outbound-rule-blind-spot](./pocs/web/2026-05-15_exchange-health-checker-outbound-rule-blind-spot/) | `web` | CVE-2026-42897 | Medium | Exchange, HealthChecker, IIS, URL-Rewrite, outbound-rules, EOMT, CSP, detection-gap | Researched |
 | 2026-05-16 | — | [chrome-cssfontfeaturevaluesmap-use-after-free](./pocs/web/2026-05-16_chrome-cssfontfeaturevaluesmap-use-after-free/) | `web` | CVE-2026-2441 | High | use-after-free, Chrome, Blink, CSSOM, renderer-rce, unauthenticated, drive-by | Weaponized |
@@ -60,10 +63,15 @@
 | 2026-06-08 | 2026-06-08 | [firefox-focus-ios-uxss-redirect-scheme-race-condition](./pocs/web/2026-06-08_firefox-focus-ios-uxss-redirect-scheme-race-condition/) | `web` | N/A | Critical | UXSS, XSS, race-condition, TOCTOU, redirect-validation, javascript-scheme, iOS, Firefox Focus | Unpatched |
 | 2026-06-28 | 2026-06-12 | [cve-2026-20253-splunk-preauth-rce](./pocs/web/2026-06-28_cve-2026-20253-splunk-preauth-rce/) | `web` | CVE-2026-20253 | Critical | pre-auth, RCE, PostgreSQL, Splunk, CISA-KEV, lo-export, sidecar, unauthenticated, file-write | PoC |
 | 2026-06-30 | 2026-06-30 | [cve-2026-48908-sp-page-builder-joomla-rce](./pocs/web/2026-06-30_cve-2026-48908-sp-page-builder-joomla-rce/) | `web` | CVE-2026-48908 | Critical | RCE, unauthenticated, file-upload, PHP-webshell, Joomla, CMS, access-control, Python, CVSS-10 | PoC |
+| 2026-07-01 | 2026-05-29 | [cve-2026-0257-pan-os-globalprotect-auth-bypass](./pocs/web/2026-07-01_cve-2026-0257-pan-os-globalprotect-auth-bypass/) | `web` | CVE-2026-0257 | High | auth-bypass, VPN, GlobalProtect, PAN-OS, Palo-Alto, certificate-bypass, cookie-forgery, Prisma-Access, unauthenticated | PoC |
+| 2026-07-01 | 2026-06 | [cve-2026-11645-chrome-v8-oob-crash](./pocs/web/2026-07-01_cve-2026-11645-chrome-v8-oob-crash/) | `web` | CVE-2026-11645 | High | browser, chrome, v8, javascript, turbofan, out-of-bounds, memory-corruption, zero-day, incomplete-poc, active-exploitation | Incomplete PoC (crash only — no confirmed public RCE chain) |
+| 2026-07-01 | 2026-06 | [cve-2026-42271-litellm-mcp-command-injection](./pocs/web/2026-07-01_cve-2026-42271-litellm-mcp-command-injection/) | `web` | CVE-2026-42271 | High | command-injection, LiteLLM, MCP, AI-application, ai-gateway, authenticated, api-key, subprocess | PoC |
+| 2026-07-01 | 2026-06 | [cve-2026-45247-mirasvit-magento-cache-warmer-rce](./pocs/web/2026-07-01_cve-2026-45247-mirasvit-magento-cache-warmer-rce/) | `web` | CVE-2026-45247 | Critical | php-object-injection, insecure-deserialization, RCE, Magento, Mirasvit, e-commerce, cookie-based, unauthenticated, CISA-KEV, active-exploitation | Weaponized |
+| 2026-07-01 | 2026-06-16 | [cve-2026-48907-joomla-jce-unauth-rce](./pocs/web/2026-07-01_cve-2026-48907-joomla-jce-unauth-rce/) | `web` | CVE-2026-48907 | Critical | RCE, unauthenticated, Joomla, JCE, CMS, access-control, webshell, php-webshell, file-upload, CISA-KEV, active-exploitation | Weaponized |
 
 ---
 
-*Total POCs: 85*
+*Total POCs: 94*
 
 ## By Category
 
@@ -71,14 +79,14 @@
 - **`cloud`** — 2 entries
 - **`crypto`** — 0 entries
 - **`hardware`** — 0 entries
-- **`misc`** — 3 entries
-- **`network`** — 20 entries
+- **`misc`** — 4 entries
+- **`network`** — 23 entries
 - **`social-engineering`** — 0 entries
-- **`web`** — 34 entries
+- **`web`** — 39 entries
 
 ## Archives
 
-- [2025](./archive/2025.md) — 17 entries
+- [2025](./archive/2025.md) — 18 entries
 - [2024](./archive/2024.md) — 12 entries
 - [2023](./archive/2023.md) — 2 entries
 - [2021](./archive/2021.md) — 1 entries

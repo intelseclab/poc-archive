@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>MCP on PoC Archive</title><link>https://poc.intelseclab.com/tags/mcp/</link><description>Recent content in MCP on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Wed, 01 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/mcp/index.xml" rel="self" type="application/rss+xml"/><item><title>Authenticated Command Injection in LiteLLM MCP Test Endpoints (CVE-2026-42271)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-01_cve-2026-42271-litellm-mcp-command-injection/</link><pubDate>Wed, 01 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-01_cve-2026-42271-litellm-mcp-command-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-01&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Horizon3.ai (discovery/writeup); learner202649 (PoC)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-42271&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>8.7 (CVSSv3)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>command-injection, LiteLLM, MCP, AI-application, ai-gateway, authenticated, api-key, subprocess&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-48710&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>BerriAI LiteLLM (proxy) — MCP preview/test endpoints&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>1.74.2 through 1.83.6&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (any valid proxy API key, including low-privilege internal-user keys)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP to LiteLLM proxy)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-42271 is a command injection vulnerability in BerriAI LiteLLM&amp;rsquo;s MCP preview/test endpoints — &lt;code>POST /mcp-rest/test/connection&lt;/code> and &lt;code>POST /mcp-rest/test/tools/list&lt;/code>. These endpoints accept a full MCP server configuration in the request body, including stdio-transport fields (&lt;code>command&lt;/code>, &lt;code>args&lt;/code>, &lt;code>env&lt;/code>). When a request specifies a stdio configuration, LiteLLM spawns the supplied command as a subprocess on the proxy host to test the connection. The endpoints were protected only by possession of a valid proxy API key with no role check, so any authenticated user — including low-privilege internal-user key holders — could supply arbitrary commands for execution with the privileges of the LiteLLM proxy process. Horizon3.ai&amp;rsquo;s research also notes this can be chained with CVE-2026-48710 for unauthenticated exploitation in some configurations. Fixed in LiteLLM 1.83.7 by restricting these endpoints to the &lt;code>PROXY_ADMIN&lt;/code> role.&lt;/p></description></item></channel></rss>
