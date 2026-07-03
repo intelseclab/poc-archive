@@ -1,4 +1,89 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Redis on PoC Archive</title><link>https://poc.intelseclab.com/tags/redis/</link><description>Recent content in Redis on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 18 May 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/redis/index.xml" rel="self" type="application/rss+xml"/><item><title>TossUp — TerraMaster TOS Unauthenticated Redis Root RCE + NFS LPE</title><link>https://poc.intelseclab.com/pocs/network/2026-05-18_tossup-terramaster-redis-rce/</link><pubDate>Mon, 18 May 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-05-18_tossup-terramaster-redis-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Redis on PoC Archive</title><link>https://poc.intelseclab.com/tags/redis/</link><description>Recent content in Redis on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Fri, 03 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/redis/index.xml" rel="self" type="application/rss+xml"/><item><title>Redis Vector Set Duplicate HNSW Node ID RCE</title><link>https://poc.intelseclab.com/pocs/network/2026-07-03_redis-vector-set-hnsw-id-rce/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-03_redis-vector-set-hnsw-id-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>bikini (@ashdfrkl) — original discovery; mirrored via exploitarium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>None assigned as of 2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not yet scored (no CVE/CVSS assigned)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>redis, vector-set, hnsw, rce, deserialization, use-after-free, heap-corruption, rdb-restore&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Redis server, Vector Set module (&lt;code>modules/vector-sets&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Tested commit &lt;code>5b22a09918743ba72952e35e431db23eb3d19605&lt;/code> (&lt;code>v=255.255.255&lt;/code>), Linux x86-64, libc malloc&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python PoC driving Redis over the RESP/TCP protocol&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (assumes network access to an unauthenticated or reachable Redis instance; no Redis AUTH needed by the PoC)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Redis Vector Set RDB/RESTORE deserialization accepts serialized HNSW graph nodes that reuse the same node ID, but the ID-lookup table only tracks one node per ID while the element dictionary tracks nodes by name, so link validation ends up trusting IDs instead of enforcing a strict one-to-one ID-to-object mapping. Removing the dictionary-visible node for a duplicated ID leaves other HNSW links pointing at freed memory, which remains reachable through further graph operations such as &lt;code>VLINKS&lt;/code>. By reclaiming freed nodes with attacker-shaped Redis strings, the PoC first builds a 64-bit arbitrary-address read oracle via &lt;code>VLINKS ... WITHSCORES&lt;/code> to leak &lt;code>free@GOT&lt;/code>/libc/&lt;code>system&lt;/code>, and then uses two stale neighbor links during &lt;code>hnsw_reconnect_nodes()&lt;/code> to overwrite a live module value&amp;rsquo;s type and value pointers; deleting the corrupted key routes through &lt;code>freeModuleObject()&lt;/code> and invokes &lt;code>system()&lt;/code> with an attacker-controlled buffer inside the Redis process. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated &amp;ldquo;exploitarium&amp;rdquo; vulnerability dump; it has not been vendor-confirmed.&lt;/p></description></item><item><title>TossUp — TerraMaster TOS Unauthenticated Redis Root RCE + NFS LPE</title><link>https://poc.intelseclab.com/pocs/network/2026-05-18_tossup-terramaster-redis-rce/</link><pubDate>Mon, 18 May 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-05-18_tossup-terramaster-redis-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

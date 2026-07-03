@@ -1,4 +1,174 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Browser on PoC Archive</title><link>https://poc.intelseclab.com/tags/browser/</link><description>Recent content in Browser on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Wed, 01 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/browser/index.xml" rel="self" type="application/rss+xml"/><item><title>Google Chromium V8 Out-of-Bounds Read/Write — Crash PoC (CVE-2026-11645)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-01_cve-2026-11645-chrome-v8-oob-crash/</link><pubDate>Wed, 01 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-01_cve-2026-11645-chrome-v8-oob-crash/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Browser on PoC Archive</title><link>https://poc.intelseclab.com/tags/browser/</link><description>Recent content in Browser on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Fri, 03 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/browser/index.xml" rel="self" type="application/rss+xml"/><item><title>Firefox Smart Window Private URL Exfiltration</title><link>https://poc.intelseclab.com/pocs/web/2026-07-03_firefox-smartwindow-private-url-exfil/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-03_firefox-smartwindow-private-url-exfil/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>bikini (@ashdfrkl) — original discovery; mirrored via exploitarium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>None assigned as of 2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not yet scored (no CVE/CVSS assigned)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>firefox, smart-window, ai-assistant, privacy-leak, information-disclosure, url-token-exfiltration, browser, prompt-injection&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Firefox Smart Window (AI browsing assistant feature)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Firefox 152.0.2 x64 (Windows), Smart Window with custom OpenAI-compatible endpoint&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Firefox privileged JS (&lt;code>Tools.sys.mjs&lt;/code>, &lt;code>ChatUtils.sys.mjs&lt;/code>, &lt;code>Chat.sys.mjs&lt;/code>) + Node.js 18+ PoC harness&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Firefox&amp;rsquo;s Smart Window assistant exposes &lt;code>get_open_tabs&lt;/code> and &lt;code>search_browsing_history&lt;/code> tools that return private tab/history URLs to the model and mark the conversation as containing &lt;code>privateData&lt;/code>, but they never mark it as containing &lt;code>untrustedInput&lt;/code> even though the returned titles originate from attacker-controlled web pages. Smart Window&amp;rsquo;s URL-token expansion (&lt;code>expandUrlTokensInToolParams&lt;/code>) then substitutes those private URLs into a later &lt;code>get_page_content&lt;/code> tool call, and &lt;code>get_page_content&lt;/code> only blocks outbound fetches when both &lt;code>privateData&lt;/code> and &lt;code>untrustedInput&lt;/code> are set — so the private-only state still permits the browser to send an HTTP request carrying expanded private URLs to an attacker-controlled endpoint. In effect, a malicious tab title or history entry can steer the assistant into leaking up to 15 open-tab or 15 history URLs (including query strings such as session tokens or reset links) off the user&amp;rsquo;s machine. The included PoC is a dependency-free Node.js server that impersonates the configured model endpoint, drives the tool-call sequence, and logs whether the private URLs were expanded and exfiltrated. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated &amp;ldquo;exploitarium&amp;rdquo; vulnerability dump; it has not been vendor-confirmed.&lt;/p></description></item><item><title>Ladybird Browser WebAssembly ESM Host-Function Use-After-Free RCE</title><link>https://poc.intelseclab.com/pocs/web/2026-07-03_ladybird-wasm-esm-host-function-rce/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-03_ladybird-wasm-esm-host-function-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>bikini (@ashdfrkl) — original discovery; mirrored via exploitarium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>None assigned as of 2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not yet scored (no CVE/CVSS assigned)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>ladybird, browser, webassembly, wasm-gc, use-after-free, memory-corruption, rce, javascript-engine, sandbox-escape&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Ladybird web browser (WebContent process, LibWeb / LibWasm)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Upstream commit &lt;code>31bb4d872d802c78ce23d2f273a300f36e8ef6a0&lt;/code> and likely surrounding history&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>HTML/JavaScript PoC page; targets a native C++ browser engine on Linux&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No (victim loads a local/remote HTML page in the browser)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The PoC targets a lifetime bug in Ladybird&amp;rsquo;s WebAssembly ESM import path: &lt;code>WebAssemblyModule.cpp&lt;/code> builds a &lt;code>Wasm::FunctionType&lt;/code> as a stack-local value and passes it by reference into &lt;code>create_host_function()&lt;/code>, so the resulting long-lived JS host callback retains a dangling reference to that type after the caller returns. Because the WebAssembly bytecode interpreter does not validate a host function&amp;rsquo;s returned result arity against the statically declared call-site type, a host callback made to return zero values while the call site expects one leaves a stale, attacker-influenced value sitting in a destination register. That stale register is later consumed by a WebAssembly GC &lt;code>array.set&lt;/code> operation as a raw pointer-shaped abstract reference, giving the attacker a write primitive through a fake &lt;code>ArrayInstance&lt;/code>. The PoC pairs this with a separate &lt;code>ImageData&lt;/code>/WebGL memory64 leak (a moved backing store still referenced by a stale bitmap pointer) to defeat ASLR, then pivots through a &lt;code>DataView&lt;/code> retarget and a crafted &lt;code>setcontext&lt;/code> frame to reach arbitrary native code execution inside the WebContent renderer process. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated &amp;ldquo;exploitarium&amp;rdquo; vulnerability dump; it has not been vendor-confirmed.&lt;/p></description></item><item><title>Google Chromium V8 Out-of-Bounds Read/Write — Crash PoC (CVE-2026-11645)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-01_cve-2026-11645-chrome-v8-oob-crash/</link><pubDate>Wed, 01 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-01_cve-2026-11645-chrome-v8-oob-crash/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

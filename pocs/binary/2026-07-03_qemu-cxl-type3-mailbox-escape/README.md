@@ -1,0 +1,120 @@
+# QEMU CXL Type-3 Mailbox Guest-to-Host Escape
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-07-03 |
+| **Last Updated** | 2026-07 |
+| **Author / Researcher** | bikini (@ashdfrkl) — original discovery; mirrored via exploitarium |
+| **CVE / Advisory** | None assigned as of 2026-07-03 |
+| **Category** | binary |
+| **Severity** | Critical |
+| **CVSS Score** | Not yet scored (no CVE/CVSS assigned) |
+| **Status** | Weaponized |
+| **Tags** | qemu, cxl, virtualization, vm-escape, memory-corruption, mailbox, guest-to-host, pointer-leak |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | QEMU (CXL Type-3 device emulation, `hw/cxl/cxl-mailbox-utils.c`) |
+| **Versions Affected** | Upstream QEMU commit `30e8a06b64aa58a3990ba39cb5d09531e7d265e0` (reports as `QEMU emulator version 11.0.50`), built with CXL Type-3 support |
+| **Language / Platform** | C (QEMU host), 16/32-bit x86 guest bootloader/stage2 (assembly + freestanding C) |
+| **Authentication Required** | No (requires guest code execution on a VM configured with a CXL Type-3 device) |
+| **Network Access Required** | No |
+
+---
+
+## Summary
+
+QEMU's CXL Type-3 mailbox command handling contains two related out-of-bounds issues: the GET_LOG handler validates `offset + length` as a byte range but then uses `offset` as an array index into `cci->cel_log`, and the SET_FEATURE rank-sparing handler copies guest-supplied data to `rank_sparing_wr_attrs + hdr->offset` without validating the destination object's bounds. A guest with a CXL Type-3 endpoint attached can chain these primitives to leak QEMU and libc pointers via GET_LOG, then use the unchecked SET_FEATURE copy to forge in-memory `FlatView`/`AddressSpaceDispatch`/`MemoryRegion`/`MemoryRegionOps` structures inside the CXL device object, and finally trigger a MEDIA_OPERATIONS sanitize call that invokes the forged `MemoryRegionOps.write` callback to call libc `system()` on the QEMU host process. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated "exploitarium" vulnerability dump; it has not been vendor-confirmed.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+The CXL GET_LOG mailbox command validates the requested byte range against `sizeof(cci->cel_log)` but then uses the raw `offset` value as an array index/pointer offset in `memmove(payload_out, cci->cel_log + get_log->offset, get_log->length)`, permitting an out-of-bounds read that leaks host pointers. Separately, the SET_FEATURE rank-sparing handler performs `memcpy((uint8_t *)&ct3d->rank_sparing_wr_attrs + hdr->offset, mem_sparing_write_attrs, bytes_to_copy)` without validating that `hdr->offset` keeps the write inside the destination object, enabling an out-of-bounds write into adjacent `CXLType3Dev` object memory.
+
+### Attack Vector
+
+1. Guest bootloader switches to protected mode and jumps into a freestanding stage-2 payload.
+2. Stage-2 configures the CXL root port and Type-3 endpoint via PCI config space I/O.
+3. GET_LOG is abused to leak a QEMU text-segment pointer and the host `CXLType3Dev` object pointer, from which the QEMU PIE base is derived.
+4. A fake callback to `memmove@plt` is used to further leak the libc base and resolve `system()`.
+5. SET_FEATURE rank-sparing writes forge a dynamic-capacity state plus `FlatView`/`AddressSpaceDispatch`/`MemoryRegionSection`/`MemoryRegion`/`MemoryRegionOps` structures into the tail of the CXL Type-3 device object.
+6. A MEDIA_OPERATIONS sanitize command calls `address_space_set()` against the forged dynamic-capacity address space, invoking the forged `MemoryRegionOps.write` callback.
+7. The forged callback first leaks libc addresses, then calls `system()` on the QEMU host process with an attacker-chosen command, writing a marker file to prove host code execution.
+
+### Impact
+
+Full guest-to-host virtual machine escape: arbitrary command execution in the QEMU host process from a guest that only has a CXL Type-3 device attached. This is a critical hypervisor-breakout primitive in any environment where QEMU exposes CXL Type-3 emulation to guest control.
+
+---
+
+## Environment / Lab Setup
+
+```
+Target:   qemu-system-x86_64 built with CXL Type-3 support, commit 30e8a06b64aa58a3990ba39cb5d09531e7d265e0
+Attacker: nasm, gcc (32-bit freestanding), ld, python3 (to rebuild poc.img); Linux host shell with `timeout` to replay
+```
+
+---
+
+## Proof of Concept
+
+### PoC Script
+
+> See `boot.asm`, `stage2.c`, `stage2.ld`, `build.sh`, `run.sh`, and the prebuilt `poc.img` in this folder.
+
+```bash
+sh run.sh /absolute/path/to/qemu-system-x86_64
+```
+
+`run.sh` launches a CXL-enabled q35 QEMU machine with one CXL Type-3 endpoint and boots `poc.img` from floppy. The guest stage drives the PCI/CXL mailbox exploit chain and, on success, the host process executes `id > /tmp/qemu_cxl_escape_marker`, which `run.sh` checks for. Use `build.sh` to rebuild `poc.img` from the assembly/C sources.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+# Unexpected child process execution (id, sh -c) spawned by the qemu-system-x86_64 host process
+# Marker file evidence:
+/tmp/qemu_cxl_escape_marker
+
+# Guest serial trace showing exploit stages (if serial logging enabled):
+# "fake leak call", "media-op sent", "bg done", "fake system call"
+```
+
+**Signs of compromise:**
+- QEMU host process spawning unexpected child processes (shell, `id`, or arbitrary commands) with no corresponding guest-initiated device operation that should cause this
+- Anomalous CXL mailbox command sequences (GET_LOG with unusual offsets, repeated SET_FEATURE rank-sparing commands) in QEMU trace/monitor logs
+- Unexplained files created by the user account running the QEMU process
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Primary fix** | No vendor patch confirmed as of 2026-07-03 — monitor for advisory; upstream QEMU CXL maintainers should bound-check `offset`/`length` against the destination object size in both GET_LOG and SET_FEATURE rank-sparing handlers |
+| **Interim mitigation** | Disable or avoid exposing CXL Type-3 device emulation to untrusted/guest-controlled VMs until patched; restrict who can configure CXL devices on guests; run QEMU with additional host-level sandboxing (seccomp, minimal privileges) to limit impact of a host-process command execution |
+
+---
+
+## References
+
+- [Source repository (bikini/exploitarium)](https://github.com/bikini/exploitarium/tree/main/qemu-cxl-type3-mailbox-escape-poc)
+
+---
+
+## Notes
+
+Mirrored from https://github.com/bikini/exploitarium (folder: `qemu-cxl-type3-mailbox-escape-poc`) on 2026-07-03. No CVE has been assigned as of ingestion — this is an uncoordinated disclosure by a pseudonymous researcher; treat with appropriate caution pending vendor confirmation. The prebuilt `poc.img` disk image (~1.4MB) is included in this folder; the source repository also provides `build.sh` to regenerate it.

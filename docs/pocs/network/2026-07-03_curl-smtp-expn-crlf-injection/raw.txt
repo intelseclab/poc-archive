@@ -1,0 +1,109 @@
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-07-03 |
+| **Last Updated** | 2026-07 |
+| **Author / Researcher** | bikini (@ashdfrkl) — original discovery; mirrored via exploitarium |
+| **CVE / Advisory** | None assigned as of 2026-07-03 |
+| **Category** | network |
+| **Severity** | Medium |
+| **CVSS Score** | Not yet scored (no CVE/CVSS assigned) |
+| **Status** | PoC |
+| **Tags** | curl, smtp, crlf-injection, command-injection, expn, vrfy, protocol-injection, libcurl |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | curl / libcurl (SMTP support) |
+| **Versions Affected** | Stock curl with SMTP support (version not pinned in source; reproduced against system curl) |
+| **Language / Platform** | Python 3 driver invoking the `curl` binary; underlying bug is in curl's C `lib/smtp.c` |
+| **Authentication Required** | Yes (attacker must control or influence the `CURLOPT_MAIL_RCPT`/`mail-rcpt` operand passed to curl, e.g., via an application that lets users supply an SMTP recipient/EXPN target) |
+| **Network Access Required** | Yes (SMTP session to a target mail server) |
+
+---
+
+## Summary
+
+Stock curl does not reject CR/LF sequences in the recipient operand used with SMTP `EXPN`/`VRFY` custom requests (`CURLOPT_MAIL_RCPT`), allowing an attacker who controls that operand to inject arbitrary additional SMTP protocol lines into the same authenticated session. The PoC demonstrates this by supplying a recipient value containing `\r\n`-separated `MAIL FROM`, `RCPT TO`, and `DATA` commands terminated with a dot, causing curl's single `EXPN Friends` request to smuggle in a full, separate SMTP message transaction under the same `AUTH PLAIN`-authenticated connection. The vulnerable code path is `Curl_pp_sendf(data, &smtpc->pp, "%s %s%s", smtp->custom, smtp->rcpt->data, ...)` in `lib/smtp.c`, where the custom command is control-byte checked but the recipient operand is not. This lets an application that passes user-controlled input into the SMTP recipient field have curl inject and send attacker-chosen SMTP commands, including full spoofed emails, within its own authenticated session. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated "exploitarium" vulnerability dump; it has not been vendor-confirmed.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+In `lib/smtp.c`, the SMTP custom-request line is built as `"%s %s%s"` using `smtp->custom` and `smtp->rcpt->data` without stripping or rejecting embedded CR/LF characters from the recipient operand, so attacker-controlled CRLF sequences in that operand are serialized directly into the protocol stream as additional SMTP command lines.
+
+### Attack Vector
+
+1. Attacker-influenced application constructs a curl SMTP request using `EXPN`/`VRFY` with a `CURLOPT_MAIL_RCPT`/`mail-rcpt` value that is partially or fully attacker-controlled.
+2. Attacker embeds CRLF-separated SMTP commands in the recipient operand: `Friends\r\nMAIL FROM:<...>\r\nRCPT TO:<...>\r\nDATA\r\n<headers>\r\n\r\n<body>\r\n.`.
+3. curl authenticates normally (e.g., `AUTH PLAIN`), sends the legitimate `EXPN Friends` line, then continues writing the remaining injected lines as if they were part of the same command.
+4. The target SMTP server processes the injected `MAIL FROM`/`RCPT TO`/`DATA` sequence as additional commands within the already-authenticated session, accepting and delivering the injected message.
+
+### Impact
+
+An application that passes attacker-influenced input into curl's SMTP recipient operand can be coerced into sending arbitrary attacker-controlled SMTP commands and full email messages under its own authenticated SMTP session/credentials — enabling spoofed mail relay, mail spam, or further protocol abuse from a trusted sending context.
+
+---
+
+## Environment / Lab Setup
+
+```
+Target:   Any SMTP server reachable by the vulnerable curl-based application
+Attacker: Python 3, stock curl built with SMTP support (system curl or specified path)
+```
+
+---
+
+## Proof of Concept
+
+### PoC Script
+
+> See `run_demo.py` in this folder.
+
+```bash
+python run_demo.py
+```
+
+The script starts a local SMTP peer, writes a curl config (`-K`) file with an `EXPN`/`mail-rcpt` operand containing embedded CRLF and a full injected SMTP transaction, invokes stock `curl`, and records the wire transcript, confirming injection via `auth_seen`, `injected_mail_seen`, `injected_rcpt_seen`, `injected_data_seen`, and `marker_in_message` flags plus a `VULNERABILITY_CONFIRMED.marker` file. Use `--curl /path/to/curl` to target a specific curl binary, `--mode vrfy` to exercise the same path via `VRFY`, and `--work-dir`/`--port` to control output location and listener port.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+```
+
+**Signs of compromise:**
+- SMTP server logs showing multiple message transactions initiated from a single client command intended only for `EXPN`/`VRFY`
+- Outbound mail relay activity from automation/application service accounts that should only be performing address verification
+- Applications logging user-supplied "recipient" or "username" fields that contain embedded CR/LF sequences
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Primary fix** | No vendor patch confirmed as of 2026-07-03 — monitor curl release notes; the source suggests rejecting CR/LF in the SMTP custom recipient operand (`strpbrk(smtp->rcpt->data, "\r\n")`) before serialization |
+| **Interim mitigation** | Never pass unsanitized user input into `CURLOPT_MAIL_RCPT`/`mail-rcpt`; validate/reject CR and LF characters in any value destined for an SMTP command operand before invoking curl |
+
+---
+
+## References
+
+- [Source repository (bikini/exploitarium)](https://github.com/bikini/exploitarium/tree/main/curl-smtp-expn-recipient-crlf-injection)
+
+---
+
+## Notes
+
+Mirrored from https://github.com/bikini/exploitarium (folder: `curl-smtp-expn-recipient-crlf-injection`) on 2026-07-03. No CVE has been assigned as of ingestion — this is an uncoordinated disclosure by a pseudonymous researcher; treat with appropriate caution pending vendor confirmation.
+

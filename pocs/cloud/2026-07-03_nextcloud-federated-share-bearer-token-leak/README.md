@@ -1,0 +1,125 @@
+# Nextcloud Federated Share OCM Bearer Token Scope Escalation to Sender WebDAV Access
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-07-03 |
+| **Last Updated** | 2026-06 |
+| **Author / Researcher** | bikini (@ashdfrkl) — original discovery; mirrored via exploitarium |
+| **CVE / Advisory** | None assigned as of 2026-07-03 |
+| **Category** | cloud |
+| **Severity** | High |
+| **CVSS Score** | Not yet scored (no CVE/CVSS assigned) |
+| **Status** | PoC |
+| **Tags** | nextcloud, federated-sharing, ocm, bearer-token, webdav, token-scope, authorization-bypass, oauth-like-flow |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Nextcloud Server — federated file sharing, OCM token exchange, WebDAV bearer authentication |
+| **Versions Affected** | Nextcloud Server `35.0.0 dev` / build `35.0.0.1`, commit `d9027189329b6b13159d480f7d5e36444badde13` |
+| **Language / Platform** | Python 3.10+ standard library; targets Nextcloud Server HTTP/OCS/WebDAV APIs across two federated instances |
+| **Authentication Required** | Yes — attacker needs a normal local account on the recipient instance; sender must create one federated share to that account |
+| **Network Access Required** | Yes |
+
+---
+
+## Summary
+
+When a Nextcloud user creates a normal federated file share, the sender instance generates a permanent authentication token that is also stored as the federated share's secret; that token is created without an explicit narrow scope, so it defaults to full filesystem access. The recipient instance's pending remote-shares OCS API (`/remote_shares/pending`) serializes this same secret back to the recipient as a `refresh_token` field. The sender's OCM token endpoint (`cloud_federation_api`) accepts that value as an authorization code and exchanges it for a bearer access token — again without applying a filesystem-restricting scope — and that bearer token is then honored by the sender's WebDAV endpoint as a full session for the sender user, not just for the one shared file. As a result, a recipient of a single federated share can read the sender's pending-share metadata, exchange the leaked token, and use the resulting bearer to fetch arbitrary WebDAV paths belonging to the sender account, well outside the scope of what was actually shared. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated "exploitarium" vulnerability dump; it has not been vendor-confirmed.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+`FederatedShareProvider::createFederatedShare` generates a permanent token via `PublicKeyTokenProvider::generateToken` using a caller-default scope (which defaults to filesystem access in `PublicKeyToken.php` when no scope is supplied), and stores that same token value as the federated share secret; `ExternalShare::jsonSerialize` then exposes this secret to the recipient as `refresh_token` through the OCS pending remote-shares API, and `TokenController::accessToken` exchanges it for an OCM bearer token without binding that token to the specific share, node, or restricted permissions — allowing the resulting bearer to authenticate full sender WebDAV sessions via `BearerAuth`/`User\Session`.
+
+### Attack Vector
+
+1. Sender (victim) creates a normal federated file share of one file to the attacker's account on a separate recipient instance.
+2. Nextcloud generates a permanent, filesystem-scoped authentication token on the sender side and stores it as the share's secret.
+3. Attacker, authenticated as the recipient, queries `GET /ocs/v2.php/apps/files_sharing/api/v1/remote_shares/pending` on the recipient instance and reads the `refresh_token` field for the pending share.
+4. Attacker submits that `refresh_token` to the sender's `POST /index.php/apps/cloud_federation_api/api/v1/access-token` endpoint, which validates it as a known share token and returns a Bearer access token scoped to the sender's filesystem session.
+5. Attacker uses the returned bearer token against the sender's WebDAV endpoint (`GET /remote.php/dav/files/<sender>/<path>`) to fetch arbitrary files belonging to the sender, not limited to the originally shared item.
+
+### Impact
+
+A recipient of a single, intentionally limited federated file share can read arbitrary files from the sender's account via WebDAV, fully escaping the scope of the share that was actually granted.
+
+---
+
+## Environment / Lab Setup
+
+```
+Target:   Two Nextcloud Server instances (35.0.0 dev / build 35.0.0.1) with federatedfilesharing, files_sharing, cloud_federation_api, and dav enabled
+Attacker: Python 3.10+ standard library only
+```
+
+---
+
+## Proof of Concept
+
+### PoC Script
+
+> See `poc.py` in this folder.
+
+```bash
+python poc.py \
+  --sender-base https://127.0.0.1:18880 \
+  --recipient-base https://127.0.0.1:18881 \
+  --sender-user victim \
+  --sender-password 'VictimPass123!' \
+  --recipient-user attacker \
+  --recipient-password 'AttackerPass123!' \
+  --share-path /shared.txt \
+  --proof-path /secret.txt \
+  --insecure \
+  --timeout 90 \
+  --output proof.json
+```
+
+The script creates a federated share of `/shared.txt` from the sender to the recipient, reads the recipient's pending remote-shares API to extract the leaked `refresh_token`, exchanges it at the sender's OCM token endpoint for a bearer token, and uses that bearer against the sender's WebDAV endpoint to fetch an unrelated sender file (`/secret.txt`), printing and saving full proof of the out-of-scope access.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+# WebDAV requests authenticated via OCM-issued bearer tokens accessing paths outside the originally federated share
+# access-token exchanges at /apps/cloud_federation_api/api/v1/access-token immediately followed by WebDAV requests to unrelated paths
+```
+
+**Signs of compromise:**
+- WebDAV access logs showing a bearer-authenticated session for a sender account fetching files never part of a federated share
+- OCM token exchange requests correlated with pending remote-share `refresh_token` values shortly followed by broad WebDAV traversal
+- Recipient accounts querying `/remote_shares/pending` at unusual frequency or immediately after receiving a new federated share
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Primary fix** | No vendor patch confirmed as of 2026-07-03 — monitor for advisory |
+| **Interim mitigation** | Create federated-share refresh tokens with a purpose-specific, non-filesystem-wide scope; bind exchanged OCM access tokens to the specific share id/node/permissions; remove sender refresh tokens from recipient-facing OCS responses; enforce OCM token scope inside WebDAV bearer authentication |
+
+---
+
+## References
+
+- [Source repository (bikini/exploitarium)](https://github.com/bikini/exploitarium/tree/main/nextcloud-federated-share-bearer-token-poc)
+
+---
+
+## Notes
+
+Mirrored from https://github.com/bikini/exploitarium (folder: `nextcloud-federated-share-bearer-token-poc`) on 2026-07-03. No CVE has been assigned as of ingestion — this is an uncoordinated disclosure by a pseudonymous researcher; treat with appropriate caution pending vendor confirmation.

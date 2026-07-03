@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Nextjs on PoC Archive</title><link>https://poc.intelseclab.com/tags/nextjs/</link><description>Recent content in Nextjs on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Fri, 03 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/nextjs/index.xml" rel="self" type="application/rss+xml"/><item><title>Next.js unstable_cache Object-Argument Cache-Key Collision</title><link>https://poc.intelseclab.com/pocs/web/2026-07-03_nextjs-unstable-cache-key-collision/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-03_nextjs-unstable-cache-key-collision/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>bikini (@ashdfrkl) — original discovery; mirrored via exploitarium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>None assigned as of 2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not yet scored (no CVE/CVSS assigned)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>nextjs, unstable_cache, cache-poisoning, cache-key-collision, data-cache, information-disclosure, server-side-caching, javascript&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Next.js (App Router, Data Cache)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&lt;code>next@16.3.0-canary.70&lt;/code> (behavior demonstrated against this canary; likely affects a broader range of &lt;code>unstable_cache()&lt;/code> implementations)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>JavaScript/Node.js PoC driving a generated Next.js application&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (PoC drives HTTP requests against a locally started &lt;code>next start&lt;/code> server; applies to any deployment reachable by multiple users)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Next.js&amp;rsquo;s &lt;code>unstable_cache()&lt;/code> API derives its cache key by running &lt;code>JSON.stringify()&lt;/code> over the arguments passed to the cached function. When a route handler passes a stock request-wrapper object — a &lt;code>Request&lt;/code>, &lt;code>URLSearchParams&lt;/code>, or &lt;code>FormData&lt;/code> instance — directly into &lt;code>unstable_cache()&lt;/code>, &lt;code>JSON.stringify()&lt;/code> serializes that object as an empty &lt;code>{}&lt;/code> because these objects do not expose their internal state to naive JSON serialization. Because the serialized key collapses to the same value regardless of the object&amp;rsquo;s actual contents (cookies, query parameters, form fields), Next.js treats requests carrying entirely different user-specific data as identical cache entries. The first request&amp;rsquo;s result — and the live, request-specific data it captured — is returned to every subsequent request in the same cache group, even after the caching server process is restarted. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated &amp;ldquo;exploitarium&amp;rdquo; vulnerability dump; it has not been vendor-confirmed.&lt;/p></description></item></channel></rss>

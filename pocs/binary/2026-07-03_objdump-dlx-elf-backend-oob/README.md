@@ -1,0 +1,119 @@
+# objdump DLX ELF Backend Out-of-Bounds Write (Crash-to-Calc)
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-07-03 |
+| **Last Updated** | 2026-06 |
+| **Author / Researcher** | 4D4J (original discovery — [objdump-Out-Of-Bounds-write](https://github.com/4D4J/objdump-Out-Of-Bounds-write), credited as prior/primary finder with a more complete PoC including full ASLR bypass); bikini (@ashdfrkl) — independent/parallel PoC, mirrored via exploitarium |
+| **CVE / Advisory** | None assigned as of 2026-07-03 |
+| **Category** | binary |
+| **Severity** | Medium |
+| **CVSS Score** | Not yet scored (no CVE/CVSS assigned) |
+| **Status** | PoC |
+| **Tags** | binutils, objdump, elf-parsing, dlx, out-of-bounds-write, aslr-bypass, local-code-execution, crash-to-calc |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | GNU Binutils `objdump` — DLX ELF backend (`elf32-dlx`) |
+| **Versions Affected** | binutils-gdb master at commit `c311f4d37f31ff3fbb5db6923abcdf93bb75a37b`; also validated against GNU Binutils `2.46.1` release with a clean `dlx-elf` build |
+| **Language / Platform** | C (target: `objdump`/binutils DLX backend); crafted ELF/DLX object files + shell helper (PoC) |
+| **Authentication Required** | Local-only (attacker must get a victim/process to run `objdump -g` on a crafted file) |
+| **Network Access Required** | No |
+
+---
+
+## Summary
+
+`objdump -g` (debug-info dumping) against a crafted ELF/DLX object file triggers an out-of-bounds write in the DLX ELF backend's relocation-processing code, writing outside the intended debug section buffer. The researcher shapes the crafted relocation data so that, when process memory layout cooperates, control flow is redirected to run an attacker-supplied helper command — demonstrated here by launching a benign local helper script (`P`) that logs a marker and opens Windows Calculator via WSL. Because ASLR remains enabled, the PoC ships a set of layout-specific payload variants and a retry loop rather than a single deterministic shot; the researcher measured close to 100% hit rates in repeated local runs against a stable target build. Note: the source README explicitly states that researcher 4D4J's independent repository ([objdump-Out-Of-Bounds-write](https://github.com/4D4J/objdump-Out-Of-Bounds-write)) found and published this bug first, with a stronger PoC including a full ASLR bypass; this exploitarium entry is a parallel/independent finding by bikini. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated "exploitarium" vulnerability dump; it has not been vendor-confirmed.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+The DLX ELF backend in `objdump`'s relocation-processing path writes debug-section relocation data without properly bounding the write to the intended buffer, allowing a crafted DLX object file's relocation entries to write outside the intended debug section during `objdump -g` processing.
+
+### Attack Vector
+
+1. Attacker crafts a malicious ELF/DLX object file containing relocation data engineered to overflow the DLX backend's debug-section write buffer.
+2. Victim (or an automated pipeline) runs `objdump -g <file>` against the crafted object, e.g., as part of build tooling, malware triage, or CI artifact inspection.
+3. The out-of-bounds write corrupts adjacent memory in a way that, given a matching ASLR-influenced heap/library layout, redirects execution toward attacker-controlled data.
+4. The PoC uses one of several layout-specific payload variants (profiles for measured WSL/Ubuntu 24.04 and GNU Binutils 2.46.1 builds) and retries across variants until the process layout matches, at which point execution reaches a named helper command (`P`) resolved via `PATH`.
+5. The helper runs with the privileges of the user invoking `objdump`, demonstrated benignly here as launching Calculator and logging a marker file.
+
+### Impact
+
+Local arbitrary code execution in the context of the user running `objdump -g` against a malicious/untrusted object file — relevant to any workflow (CI, malware analysis, build systems) that runs `objdump` on attacker-influenced input. Not a network-reachable RCE by itself.
+
+---
+
+## Environment / Lab Setup
+
+```
+Target:   objdump from binutils-gdb master (c311f4d3) or GNU Binutils 2.46.1, dlx-elf support built in, ASLR enabled
+Attacker: WSL/Linux shell, bash, a crafted ELF/DLX payload set (payloads/*.bin)
+```
+
+---
+
+## Proof of Concept
+
+### PoC Script
+
+> See `run_dlx_calc_poc.sh`, `P`, `generate_objdump_dlx_calc_poc.py`, `dlx_chain_builder.py`, and `payloads/*.bin` in this folder.
+
+```bash
+chmod +x P
+export PATH="$PWD:$PATH"
+MAX_TRIES=50 bash run_dlx_calc_poc.sh /path/to/objdump
+cat calc_hit.log
+```
+
+`run_dlx_calc_poc.sh` iterates through the pre-generated `payloads/*.bin` crafted DLX object files, invoking `objdump -g` on each until the out-of-bounds write lands correctly and the `P` helper script runs (logging to `calc_hit.log` and opening Calculator on WSL). `generate_objdump_dlx_calc_poc.py` (using `dlx_chain_builder.py`) can regenerate the payload set for a different target profile.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+# Repeated objdump crashes (SIGSEGV) when processing untrusted ELF/DLX
+# object files in build pipelines or malware-analysis sandboxes
+# Unexpected child processes spawned by an objdump invocation
+```
+
+**Signs of compromise:**
+- `objdump -g` segfaulting or spawning unexpected child processes when analyzing untrusted input files
+- CI/build logs showing repeated crashes on DLX-format object files from untrusted sources
+- Presence of unexpected marker/log files or processes correlating with `objdump` invocation timing
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Primary fix** | No vendor patch confirmed as of 2026-07-03 — monitor binutils-gdb upstream for a fix to the DLX ELF backend relocation-processing bounds check |
+| **Interim mitigation** | Do not run `objdump -g` (or other debug-info dumping) on untrusted/attacker-supplied object files outside a sandboxed environment; avoid DLX-target object file processing on untrusted input |
+
+---
+
+## References
+
+- [Source repository (bikini/exploitarium)](https://github.com/bikini/exploitarium/tree/main/objdump-dlx-calc-poc)
+- [Prior/primary finding — 4D4J/objdump-Out-Of-Bounds-write](https://github.com/4D4J/objdump-Out-Of-Bounds-write)
+
+---
+
+## Notes
+
+Mirrored from https://github.com/bikini/exploitarium (folder: `objdump-dlx-calc-poc`) on 2026-07-03. No CVE has been assigned as of ingestion — this is an uncoordinated disclosure by a pseudonymous researcher; treat with appropriate caution pending vendor confirmation. The source README explicitly credits researcher **4D4J** ([objdump-Out-Of-Bounds-write](https://github.com/4D4J/objdump-Out-Of-Bounds-write)) as having found and published this bug first, with a more complete PoC including a full ASLR bypass; bikini's entry here is an independent/parallel finding of the same underlying DLX backend out-of-bounds write. Readers seeking the more complete exploit chain should refer to 4D4J's repository.

@@ -1,0 +1,119 @@
+# c-ares TCP ares_getaddrinfo() Use-After-Free Code Execution
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-07-03 |
+| **Last Updated** | 2026-06 |
+| **Author / Researcher** | bikini (@ashdfrkl) — original discovery; mirrored via exploitarium |
+| **CVE / Advisory** | None assigned as of 2026-07-03 |
+| **Category** | network |
+| **Severity** | High |
+| **CVSS Score** | Not yet scored (no CVE/CVSS assigned) |
+| **Status** | PoC |
+| **Tags** | c-ares, use-after-free, dns, resolver, tcp, heap-corruption, code-execution, edns |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | c-ares (async DNS resolver library) |
+| **Versions Affected** | Upstream `main` (`c93e50f3ebc0373fe57677523ec960f6c1cb0e15`) and latest release `v1.34.6` (`3ac47ee46edd8ea40370222f91613fc16c434853`) |
+| **Language / Platform** | C, Linux/WSL, requires gcc/cmake/POSIX sockets |
+| **Authentication Required** | No |
+| **Network Access Required** | Yes (attacker acts as, or spoofs, the DNS-over-TCP server the victim resolver connects to) |
+
+---
+
+## Summary
+
+c-ares's `ares_getaddrinfo()` path over DNS-over-TCP with EDNS enabled contains a use-after-free reachable when a malicious or compromised DNS server sends two responses for the same query ID in a single TCP read — the first a `FORMERR` without OPT data (triggering EDNS retry handling) and the second a successful empty response — followed by a connection reset before internal cleanup runs. This stale-state condition causes c-ares to later dereference a freed `ares_query_t` structure during query cleanup, ultimately reaching an attacker-shaped indirect function-pointer call (`node->parent->destruct(node->data)`) inside `ares_slist_node_destroy()`. The included PoC shapes the freed allocation via c-ares's public `ares_library_init_mem()` allocator hook to reliably redirect that destructor call to an arbitrary local function, which in this PoC writes a proof marker file and launches a calculator to demonstrate full control-flow hijack rather than a mere crash. It was verified against both current upstream `main` and the latest official release tag, and the researcher notes the bug is heap-layout sensitive so the harness retries until the marker is hit. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated "exploitarium" vulnerability dump; it has not been vendor-confirmed.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+During DNS-over-TCP resolution with `ARES_FLAG_EDNS | ARES_FLAG_USEVC`, receiving two responses for the same query ID in one read (a `FORMERR` retry followed by a success response) combined with a connection reset before the internal retry write completes leaves a stale `ares_query_t.node_queries_by_timeout` pointer. Later query cleanup dereferences this stale pointer and calls a destructor through it, reaching a use-after-free-controlled indirect call.
+
+### Attack Vector
+
+1. Attacker controls or spoofs a DNS server that the victim application resolves against over TCP with EDNS enabled.
+2. Victim application calls `ares_getaddrinfo()`, which opens a DNS-over-TCP connection and issues a query.
+3. Attacker's server returns a `FORMERR` response (without OPT data) for the query ID, prompting c-ares's EDNS retry logic.
+4. In the same read, attacker's server also returns a successful empty response for the same query ID.
+5. c-ares accepts the retry write, then the attacker resets the TCP connection before the next internal lookup write completes.
+6. During subsequent query cleanup, c-ares consumes the now-stale query state and calls `ares_slist_node_destroy()`, which invokes a destructor pointer that the attacker's allocator-hook-driven heap shaping has redirected to attacker-chosen code.
+
+### Impact
+
+Use-after-free leading to attacker-influenced indirect call / control-flow hijack in any process linking c-ares that performs DNS-over-TCP lookups with EDNS against an attacker-influenced or on-path DNS server (Node.js, gRPC, Envoy, libcurl, Wireshark, and various Python/Rust DNS wrappers are named as potential consumers).
+
+---
+
+## Environment / Lab Setup
+
+```
+Target:   c-ares (upstream main or v1.34.6) built from source, Linux/WSL
+Attacker: gcc, cmake, git, POSIX sockets/pthreads; PoC drives its own loopback DNS-over-TCP server
+```
+
+---
+
+## Proof of Concept
+
+### PoC Script
+
+> See `cares_tcp_uaf_calc_poc.c`, `build_from_checkout.sh`, and `run_until_hit.sh` in this folder.
+
+```bash
+git clone --depth 1 https://github.com/c-ares/c-ares.git /tmp/c-ares-main
+./build_from_checkout.sh /tmp/c-ares-main /tmp/c-ares-main-build ./cares_tcp_uaf_calc_poc
+chmod +x ./cares_tcp_uaf_calc_poc
+./run_until_hit.sh ./cares_tcp_uaf_calc_poc
+```
+
+`build_from_checkout.sh` compiles c-ares from a supplied checkout and statically links the PoC against it; `run_until_hit.sh` retries the harness (the heap-layout-sensitive trigger does not fire on every run) until the control-flow marker `CARES_RCE_PAYLOAD_TRIGGERED` is printed and a benign calculator is launched as proof of hijacked execution.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+# c-ares resolver crashes or unexpected process restarts correlated with DNS-over-TCP lookups
+# DNS servers returning duplicate/conflicting responses for the same query ID within one TCP read
+# Unexpected TCP RST from a DNS server immediately following an EDNS retry exchange
+```
+
+**Signs of compromise:**
+- Crash dumps or ASAN/GDB traces showing `ares_slist_node_destroy` calling into unexpected code
+- Applications linking c-ares crashing or behaving anomalously after resolving against untrusted/attacker-influenced DNS infrastructure
+- Anomalous child process spawns from services that only perform DNS resolution (e.g., a resolver process launching a shell or unexpected binary)
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Primary fix** | No vendor patch confirmed as of 2026-07-03 — monitor c-ares releases for an advisory; rebuild and redeploy all static consumers once available |
+| **Interim mitigation** | Avoid forcing DNS-over-TCP toward untrusted or attacker-influenced resolvers; sandbox DNS-heavy services; inventory statically bundled c-ares copies (Node.js, gRPC, Envoy, libcurl, Wireshark, pycares/aiodns, Rust c-ares crates) and monitor for abnormal exits |
+
+---
+
+## References
+
+- [Source repository (bikini/exploitarium)](https://github.com/bikini/exploitarium/tree/main/c-ares-tcp-uaf-calc-poc)
+
+---
+
+## Notes
+
+Mirrored from https://github.com/bikini/exploitarium (folder: `c-ares-tcp-uaf-calc-poc`) on 2026-07-03. No CVE has been assigned as of ingestion — this is an uncoordinated disclosure by a pseudonymous researcher; treat with appropriate caution pending vendor confirmation. The source README explicitly notes the trigger is heap-layout/probabilistic ("a clean run can exit normally," requiring retries) and is a local control-flow proof rather than a universal drop-in exploit for every c-ares consumer.

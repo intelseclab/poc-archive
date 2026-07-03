@@ -1,0 +1,109 @@
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-07-03 |
+| **Last Updated** | 2026-07 |
+| **Author / Researcher** | bikini (@ashdfrkl) — original discovery; mirrored via exploitarium |
+| **CVE / Advisory** | None assigned as of 2026-07-03 |
+| **Category** | binary |
+| **Severity** | High |
+| **CVSS Score** | Not yet scored (no CVE/CVSS assigned) |
+| **Status** | PoC |
+| **Tags** | imagemagick, ghostscript, windows, search-path-hijack, dll-planting-adjacent, delegate-execution, code-execution, pdf |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | ImageMagick (Ghostscript delegate for PDF/PS/EPS conversion) on Windows |
+| **Versions Affected** | ImageMagick 7.1.2-25 with Ghostscript 10.07.1 (Windows x64) |
+| **Language / Platform** | C/C++ (ImageMagick delegate handling), Python 3 PoC harness, Windows process creation API |
+| **Authentication Required** | Local-only (attacker needs write access to the conversion working directory) |
+| **Network Access Required** | No |
+
+---
+
+## Summary
+
+When ImageMagick converts PDF/PS/EPS-family inputs on Windows and cannot resolve a full path to Ghostscript, it falls back to invoking the bare executable name `gswin64c.exe` and launches it through the Windows process API with the application name left unset — letting standard Windows executable search order pick the binary that actually runs. If the conversion process's working directory is attacker-writable, a planted `gswin64c.exe` there can be launched instead of the real Ghostscript binary whenever ImageMagick processes a PDF/PS-family file placed in (or alongside inputs in) that directory. The included PoC demonstrates this with a harmless marker-writing helper: conversions from a "control" directory (no planted binary) succeed normally via `PATH`, while conversions from a "hijack" directory (containing the planted `gswin64c.exe`) launch the attacker's binary and record the exact delegate arguments ImageMagick passed to it. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated "exploitarium" vulnerability dump; it has not been vendor-confirmed.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+ImageMagick's Ghostscript delegate command template substitutes the bare name `gswin64c.exe` for `@PSDelegate@` when a full Ghostscript path cannot be resolved (e.g., no registry entry / portable deployment / restricted `MAGICK_GHOSTSCRIPT_PATH`). The resulting command is launched without an explicit absolute executable path, so Windows process-creation search order — which can include the current working directory — can select an attacker-planted binary over the legitimate Ghostscript executable on `PATH`.
+
+### Attack Vector
+
+1. Attacker gains write access to a directory ImageMagick will use as its working directory when processing PDF/PS/EPS-family files (e.g., a shared upload/conversion staging directory in an automated pipeline).
+2. Attacker plants a malicious `gswin64c.exe` in that directory.
+3. Attacker (or the pipeline) submits a PDF/PS-family file for conversion from that same directory, in an environment where ImageMagick's Ghostscript path resolution falls into the bare-name fallback (e.g., `MAGICK_GHOSTSCRIPT_PATH` pointing at a directory without Ghostscript DLLs, or portable/no-registry deployments).
+4. ImageMagick launches `gswin64c.exe` without an explicit path; Windows resolves and runs the attacker's planted binary instead of the real Ghostscript executable, executing attacker code in the ImageMagick conversion process's context.
+
+### Impact
+
+Arbitrary code execution in the context of the ImageMagick conversion process on Windows automated conversion services, image-processing pipelines, or any workflow where untrusted users can influence the working directory used for PDF/PS/EPS conversion.
+
+---
+
+## Environment / Lab Setup
+
+```
+Target:   ImageMagick 7.1.2-25 + Ghostscript 10.07.1 on Windows x64
+Attacker: Python 3, write access to the conversion working directory
+```
+
+---
+
+## Proof of Concept
+
+### PoC Script
+
+> See `poc.py`, `helper/FakeGswin64c.cs`, and `helper/gswin64c.exe.b64` in this folder.
+
+```bash
+python poc.py --magick "C:\path\to\magick.exe" --gs-bin "C:\path\to\ghostscript\bin"
+```
+
+The script builds a benign PDF, runs ImageMagick from a clean "control" directory (conversion succeeds via the real Ghostscript on `PATH`), then runs it again from a "hijack" directory containing the marker-writing `gswin64c.exe` built from `helper/FakeGswin64c.cs` — confirming the planted binary is launched instead and logging the exact delegate arguments it received.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+```
+
+**Signs of compromise:**
+- Ghostscript delegate processes spawned from upload/staging directories instead of the Ghostscript install path
+- Unexpected binaries named `gswin64c.exe`/`gswin32c.exe` present in conversion working directories
+- Marker files or unexpected side effects appearing after routine PDF/PS conversion jobs
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Primary fix** | No vendor patch confirmed as of 2026-07-03 — monitor for advisory |
+| **Interim mitigation** | Set `MAGICK_GHOSTSCRIPT_PATH` to an explicit, trusted Ghostscript `bin` directory; run conversion jobs from a working directory untrusted users cannot write to; keep upload/extraction directories separate from conversion working directories; disable PDF/PS-family delegates when not required |
+
+---
+
+## References
+
+- [Source repository (bikini/exploitarium)](https://github.com/bikini/exploitarium/tree/main/imagemagick-gs-delegate-hijack-poc)
+
+---
+
+## Notes
+
+Mirrored from https://github.com/bikini/exploitarium (folder: `imagemagick-gs-delegate-hijack-poc`) on 2026-07-03. No CVE has been assigned as of ingestion — this is an uncoordinated disclosure by a pseudonymous researcher; treat with appropriate caution pending vendor confirmation.
+

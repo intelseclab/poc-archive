@@ -1,0 +1,117 @@
+# System Informer phsvc Trusted-Host Confused Deputy LPE
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-07-03 |
+| **Last Updated** | 2026-06 |
+| **Author / Researcher** | bikini (@ashdfrkl) — original discovery; mirrored via exploitarium |
+| **CVE / Advisory** | None assigned as of 2026-07-03 |
+| **Category** | binary |
+| **Severity** | High |
+| **CVSS Score** | Not yet scored (no CVE/CVSS assigned) |
+| **Status** | PoC |
+| **Tags** | windows, system-informer, process-hacker, lpe, confused-deputy, alpc, phsvc, authenticode, local-privilege-escalation |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | System Informer (Process Hacker successor), `phsvc` helper process |
+| **Versions Affected** | System Informer canary `4.0.26162.539`, source commit `5311c5ff7ebe0a900a792730395faf147d4451b9` (build date 2026-06-11) |
+| **Language / Platform** | C, Windows x64 |
+| **Authentication Required** | Local-only (standard/medium-integrity local user) |
+| **Network Access Required** | No |
+
+---
+
+## Summary
+
+System Informer's privileged helper process `phsvc` exposes an ALPC API port (`\BaseNamedObjects\SiSvcApiPort`) with a connect ACL open to Everyone, and authorizes connecting clients purely by checking whether the client's process image is generically Authenticode-trusted via `PhVerifyFileEx`. Because a trusted Microsoft-signed host such as `rundll32.exe` can load and execute an attacker-controlled unsigned DLL, code running inside that DLL inherits the host image's trusted status when connecting to the helper, letting it invoke privileged helper APIs such as `PhSvcCreateProcessIgnoreIfeoDebuggerApiNumber`. When an elevated `phsvc` instance is live, this lets a low-privileged local user cause the helper to create an attacker-chosen process in the helper's elevated security context. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated "exploitarium" vulnerability dump; it has not been vendor-confirmed.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+`phsvc`'s IPC client verification (`SystemInformer/phsvc/svcapiport.c`) answers the wrong trust question: it checks whether the connecting process image is generically Authenticode-trusted (`VrTrusted`) rather than verifying that the executing code is actually System Informer. A trusted signed host process that loads arbitrary attacker DLL code (e.g. `rundll32.exe`) therefore passes the client-verification gate, creating a classic confused-deputy condition (CWE-441-style trust boundary failure).
+
+### Attack Vector
+
+1. As a low-privileged local user, compile the PoC DLL (`poc.c`) and load it into the Microsoft-signed `rundll32.exe` host process.
+2. The DLL connects to the fixed helper ALPC port `\BaseNamedObjects\SiSvcApiPort`.
+3. `phsvc` verifies the client image (`rundll32.exe`) via `PhVerifyFileEx`, sees it is Authenticode-trusted, and accepts the connection — without checking that the code making the request is System Informer.
+4. The DLL invokes the privileged `PhSvcApiCreateProcessIgnoreIfeoDebugger` API over the accepted connection.
+5. If the live `phsvc` instance is elevated, it creates the attacker-chosen process (in the PoC, a benign marker-writing command) in its own elevated security context.
+
+### Impact
+
+Local arbitrary code execution in the `phsvc` helper's security context; when the helper instance is elevated, this is a local privilege escalation from a medium-integrity user to an elevated/administrative context. The helper's additional service-management APIs (e.g. `PhSvcCreateServiceApiNumber`) could expand impact further, though the PoC deliberately limits itself to a marker-only process-creation request.
+
+---
+
+## Environment / Lab Setup
+
+```
+Target:   System Informer canary 4.0.26162.539 (commit 5311c5ff7ebe0a900a792730395faf147d4451b9), Windows x64, elevated phsvc instance live
+Attacker: Windows x64, MinGW-w64 gcc (or MSVC), rundll32.exe from Windows
+```
+
+---
+
+## Proof of Concept
+
+### PoC Script
+
+> See `poc.c` and `build.bat` in this folder.
+
+```cmd
+build.bat
+rundll32.exe phsvc_rundll_poc.dll,Run "%TEMP%\systeminformer_phsvc_poc.txt"
+```
+
+`poc.c` builds into either `phsvc_rundll_poc.dll` (loaded via `rundll32.exe` to demonstrate the confused-deputy bypass) or `phsvc_unsigned_client.exe` (a negative-control client that should be rejected by the helper's release-build verification). When run through the signed `rundll32.exe` host while an elevated `phsvc` is live, the DLL connects to the helper port and requests process creation, writing a marker file and `status=0x00000000` on success.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+# ALPC connections to \BaseNamedObjects\SiSvcApiPort from unexpected client images (e.g. rundll32.exe)
+# followed by privileged process-creation activity attributable to phsvc.exe
+
+# Unexpected child processes spawned by an elevated phsvc.exe with rundll32.exe as the requesting context
+```
+
+**Signs of compromise:**
+- `rundll32.exe` (or another generically-signed host) connecting to the System Informer helper ALPC port shortly before privileged process creation
+- `phsvc.exe` spawning processes not initiated through the legitimate System Informer UI
+- Presence of unsigned DLLs loaded into `rundll32.exe` around the time of elevated helper activity
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Primary fix** | No vendor patch confirmed as of 2026-07-03 — monitor for advisory; `phsvc` should authorize clients using a System Informer-specific identity (pinned signer plus expected binary identity) rather than generic Authenticode trust |
+| **Interim mitigation** | Restrict the helper's ALPC port DACL so only the intended System Informer process can connect; avoid running elevated `phsvc` sessions on multi-user or lower-trust systems; monitor for unsigned DLL loads into commonly-abused signed hosts like `rundll32.exe` |
+
+---
+
+## References
+
+- [Source repository (bikini/exploitarium)](https://github.com/bikini/exploitarium/tree/main/systeminformer-phsvc-trusted-host-lpe-poc)
+
+---
+
+## Notes
+
+Mirrored from https://github.com/bikini/exploitarium (folder: `systeminformer-phsvc-trusted-host-lpe-poc`) on 2026-07-03. No CVE has been assigned as of ingestion — this is an uncoordinated disclosure by a pseudonymous researcher; treat with appropriate caution pending vendor confirmation.

@@ -1,0 +1,111 @@
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-07-03 |
+| **Last Updated** | 2026-06 |
+| **Author / Researcher** | bikini (@ashdfrkl) — original discovery; mirrored via exploitarium |
+| **CVE / Advisory** | None assigned as of 2026-07-03 |
+| **Category** | cloud |
+| **Severity** | Critical |
+| **CVSS Score** | Not yet scored (no CVE/CVSS assigned) |
+| **Status** | Weaponized |
+| **Tags** | floci, api-gateway, velocity-template-language, rce, iam-bypass, sigv4, java-reflection, localstack-alternative |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Floci (AWS-compatible local cloud emulator) |
+| **Versions Affected** | 1.5.27 (rechecked against upstream commit `7efb280dbcf6f5ea8faab28f1c7d5f8c3f59b4e0`) |
+| **Language / Platform** | Java/Quarkus backend, API Gateway REST API emulation with Apache Velocity templates |
+| **Authentication Required** | No (IAM policy enforcement is disabled by default); bypassable even when enabled |
+| **Network Access Required** | Yes |
+
+---
+
+## Summary
+
+Floci evaluates user-controlled API Gateway integration response templates with an unrestricted Apache Velocity engine that exposes `$util`, allowing template code to reach `java.lang.ProcessBuilder` via reflection and execute arbitrary OS commands in the Floci JVM process. An attacker who can create/configure an API Gateway REST API, store a malicious `MOCK` integration response template, deploy a stage, and invoke the route achieves command execution. A companion finding weakens the precondition further: Floci derives the enforced IAM action from the service name embedded in the SigV4 credential scope, and if a request is sent with a non-`apigateway` scope (e.g., `iam`), action resolution returns null and the enforcement filter defaults to allow — letting a denied or low-privilege key still reach and trigger the same RCE path even with IAM enforcement enabled. The chain was verified end-to-end both via an in-process JUnit/Quarkus test and a live standalone run against a local Floci dev server. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated "exploitarium" vulnerability dump; it has not been vendor-confirmed.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+`ApiGatewayService.putIntegrationResponse` stores attacker-supplied `responseTemplates` without treating them as untrusted code, and `VtlTemplateEngine` evaluates them with a default `VelocityEngine` exposing Java helper objects (`$util`) that permit reflection into `java.lang.ProcessBuilder`. Separately, IAM enforcement extracts the target service from the caller-supplied `Credential=.../<service>/aws4_request` scope and treats an unmapped (null) action as implicitly allowed, so a wrong-service scope such as `iam` bypasses API Gateway authorization checks entirely.
+
+### Attack Vector
+
+1. `POST /restapis` to create a REST API (optionally with a wrong-scope `Authorization` header to bypass IAM).
+2. Walk resource creation/method/integration endpoints to build a `GET` method with a `MOCK` integration.
+3. `PUT .../integration/responses/200` storing a malicious VTL template that calls `$util.getClass().forName('java.lang.ProcessBuilder')` to build and start a process.
+4. Deploy the API (`POST /restapis/{apiId}/deployments`) and create a stage.
+5. `GET /execute-api/{apiId}/prod/rce` triggers template evaluation and OS command execution inside the Floci JVM.
+
+### Impact
+
+Full command execution in the Floci server process with the privileges of that process, including access to local credentials, mounted project files, Docker credentials, and adjacent emulator state — critical in shared developer/CI environments where Floci is exposed.
+
+---
+
+## Environment / Lab Setup
+
+```
+Target:   Floci 1.5.27, API Gateway service enabled, default config (IAM enforcement disabled)
+Attacker: Python 3 (stdlib only), network access to Floci's HTTP endpoint (default port 4566)
+```
+
+---
+
+## Proof of Concept
+
+### PoC Script
+
+> See `poc.py` in this folder.
+
+```bash
+python3 poc.py --host 127.0.0.1 --port 4566 --argv sh -c 'id > /tmp/floci_vtl_rce'
+python3 poc.py --host 127.0.0.1 --port 4566 --bypass-iam --auth-access-key AKIAEXAMPLE --argv sh -c 'id > /tmp/floci_vtl_rce'
+```
+
+The script drives the full REST API creation → MOCK integration → malicious VTL response template → deploy → invoke sequence over HTTP, optionally forging a SigV4-shaped `Authorization` header with an `iam` credential-scope service to bypass enforcement, and confirms command execution via the trigger response.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+```
+
+**Signs of compromise:**
+- Unexpected `ProcessBuilder`/shell invocations spawned from the Floci server process
+- API Gateway REST APIs/stages created by unfamiliar or low-privilege credentials
+- SigV4 `Authorization` headers where the credential-scope service does not match the invoked route
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Primary fix** | No vendor patch confirmed as of 2026-07-03 — monitor for advisory |
+| **Interim mitigation** | Configure Velocity with a secure uberspector denying reflection/classloader/process access; resolve IAM service/action from the matched route rather than the caller-supplied credential scope; fail closed on unmapped actions and unknown access keys when enforcement is enabled |
+
+---
+
+## References
+
+- [Source repository (bikini/exploitarium)](https://github.com/bikini/exploitarium/tree/main/floci-apigateway-vtl-rce-poc)
+
+---
+
+## Notes
+
+Mirrored from https://github.com/bikini/exploitarium (folder: `floci-apigateway-vtl-rce-poc`) on 2026-07-03. No CVE has been assigned as of ingestion — this is an uncoordinated disclosure by a pseudonymous researcher; treat with appropriate caution pending vendor confirmation.
+

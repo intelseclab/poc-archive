@@ -1,0 +1,115 @@
+# libarchive ZIP Declared-Size Boundary Bypass via debuginfod
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-07-03 |
+| **Last Updated** | 2026-06 |
+| **Author / Researcher** | bikini (@ashdfrkl) — original discovery; mirrored via exploitarium |
+| **CVE / Advisory** | None assigned as of 2026-07-03 |
+| **Category** | binary |
+| **Severity** | Medium |
+| **CVSS Score** | Not yet scored (no CVE/CVSS assigned) |
+| **Status** | PoC |
+| **Tags** | libarchive, zip, zip64, integer-overflow, debuginfod, elfutils, size-validation, boundary-bypass |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | libarchive (ZIP reader) and elfutils `debuginfod` |
+| **Versions Affected** | Stock/current libarchive ZIP64 reader; system `debuginfod` service |
+| **Language / Platform** | Python 3 (archive generator/runner) and Bash, targeting Linux libarchive/debuginfod |
+| **Authentication Required** | No |
+| **Network Access Required** | No (local demonstration); debuginfod service runs on loopback |
+
+---
+
+## Summary
+
+The PoC builds a stored ZIP64 archive entry whose declared uncompressed size field is `109` bytes while the actual inflated stream is `4 GiB + 109` bytes — crafted so the low 32 bits of the true length equal the advertised value (`0x100000004 mod 2^32 == 4`, offset so the declared size collides at `109`). A stock libarchive ZIP reader (`bsdtar`, `bsdunzip`) accepts and fully streams the oversized payload while `archive_entry_size()` continues to report only `109` bytes to calling applications. The PoC then demonstrates real-world impact by pointing elfutils `debuginfod` at the crafted archive: the service extracts and indexes an ELF binary embedded past the declared boundary, and later serves debug sections (including a hidden marker section) whose file offsets lie beyond the size the archive metadata promised, proving that applications trusting `archive_entry_size()` for validation, quotas, or authorization can be bypassed. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated "exploitarium" vulnerability dump; it has not been vendor-confirmed.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+libarchive's ZIP64 reader returns a fully decompressed/streamed size that can exceed the entry's declared metadata size field without erroring, because the declared size is only advisory and not enforced as a hard streaming boundary; consumers such as `debuginfod` that treat `archive_entry_size()` as an authoritative upper bound therefore index and serve data beyond that boundary.
+
+### Attack Vector
+
+1. Attacker crafts a ZIP64 archive with one stored entry whose declared size field is `109` bytes but whose real inflated stream is `4,294,967,405` bytes (`4 GiB + 109`), engineered so the low 32 bits alias the declared value.
+2. The entry's actual bytes begin with a genuine ELF executable containing a GNU build-id note and a hidden marker section located past byte 109.
+3. Victim tooling (`bsdtar`, `bsdunzip`, or a service built on libarchive such as `debuginfod`) opens the archive; stock validation (`bsdunzip -t`) reports success despite the size mismatch.
+4. `debuginfod` extracts the entry, classifies it as ELF content, and indexes its build-id, reading and caching bytes far past the declared 109-byte boundary.
+5. Attacker (or anyone) queries `debuginfod`'s build-id HTTP API and receives ELF sections — including data that was never accounted for by the declared archive metadata — proving the boundary was crossed and served externally.
+
+### Impact
+
+Any application or service that relies on `archive_entry_size()` / ZIP metadata as a trusted boundary for validation, storage quotas, authorization checks, or IPC framing can be made to process, index, or serve substantially more data than the declared size implies — demonstrated concretely against elfutils `debuginfod`, which indexes and serves hidden ELF sections beyond the advertised size.
+
+---
+
+## Environment / Lab Setup
+
+```
+Target:   Linux host with libarchive (bsdtar/bsdunzip), elfutils debuginfod, gcc, binutils, curl
+Attacker: Python 3, gcc, bash
+```
+
+---
+
+## Proof of Concept
+
+### PoC Script
+
+> See `make_debuginfod_zip.py`, `run_stock_marker.py`, and `run_demo.sh` in this folder.
+
+```bash
+python3 run_stock_marker.py --work-dir /tmp/libarchive-stock-marker
+bash run_demo.sh --work-dir /tmp/libarchive-zip-debuginfod-poc --port 18002
+```
+
+`make_debuginfod_zip.py` generates the crafted ZIP64 archive with the mismatched declared/actual size; `run_stock_marker.py` proves the stock `bsdunzip -p` CLI streams past the declared boundary; `run_demo.sh` builds the embedded ELF, starts a local `debuginfod` instance, indexes the crafted archive, and fetches ELF sections by build-id to prove the service served data beyond the advertised 109-byte size.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+# archive_entry_size() metadata disagreeing with actual bytes streamed/consumed from a ZIP entry
+# debuginfod indexing ELF build-ids whose section file offsets exceed the source archive entry's declared size
+```
+
+**Signs of compromise:**
+- Applications logging a large discrepancy between declared ZIP entry size and bytes actually read/written during extraction
+- `debuginfod` (or similar libarchive-based indexing services) processing archives with implausible declared-vs-actual size ratios
+- Unexpected disk/memory consumption when handling small-looking ZIP archives from untrusted sources
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Primary fix** | No vendor patch confirmed as of 2026-07-03 — monitor for advisory |
+| **Interim mitigation** | Validate the actual number of bytes streamed from a libarchive ZIP entry against the declared size and reject/truncate on mismatch; avoid trusting `archive_entry_size()` alone for quota or authorization decisions in services like debuginfod |
+
+---
+
+## References
+
+- [Source repository (bikini/exploitarium)](https://github.com/bikini/exploitarium/tree/main/libarchive-zip-debuginfod-size-boundary)
+
+---
+
+## Notes
+
+Mirrored from https://github.com/bikini/exploitarium (folder: `libarchive-zip-debuginfod-size-boundary`) on 2026-07-03. No CVE has been assigned as of ingestion — this is an uncoordinated disclosure by a pseudonymous researcher; treat with appropriate caution pending vendor confirmation.

@@ -1,0 +1,124 @@
+# NodeBB ActivityPub attributedTo Local UID Spoof
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-07-03 |
+| **Last Updated** | 2026-06 |
+| **Author / Researcher** | bikini (@ashdfrkl) — original discovery; mirrored via exploitarium |
+| **CVE / Advisory** | None assigned as of 2026-07-03 |
+| **Category** | web |
+| **Severity** | High |
+| **CVSS Score** | Not yet scored (no CVE/CVSS assigned) |
+| **Status** | PoC |
+| **Tags** | nodebb, activitypub, federation, authentication-bypass, spoofing, uid-forgery, forum-software, nodejs |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | NodeBB — ActivityPub server-to-server inbox |
+| **Versions Affected** | `4.13.2` (verified against tag `v4.13.2`) |
+| **Language / Platform** | Node.js (target); Node.js stdlib-only PoC (`poc.js`) |
+| **Authentication Required** | No (attacker only needs a self-hosted ActivityPub actor with a signing key, not a NodeBB account) |
+| **Network Access Required** | Yes (attacker's ActivityPub actor must be reachable over public HTTPS by the target NodeBB instance for signature verification and WebFinger) |
+
+---
+
+## Summary
+
+NodeBB's ActivityPub inbox authenticates the top-level signed `actor` of an incoming activity via HTTP Signatures, but never checks that the embedded `Note.attributedTo` field — used later as the internal local user id for chat message and post authorship — actually matches that authenticated actor. A remote, unauthenticated ActivityPub actor can therefore submit a signed `Create(Note)` activity whose `attributedTo` field is simply set to a numeric value like `1`, and NodeBB will accept that number directly as a local `uid`, creating a private chat message (or, via the public-note path, a forum post) that appears to originate from that local account — commonly the first administrator on a clean install. The researcher validated this end-to-end against a stock NodeBB 4.13.2 install with the default MongoDB adapter, confirming the forged message is persisted with `fromuid` set to the spoofed uid and visible to the targeted recipient. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated "exploitarium" vulnerability dump; it has not been vendor-confirmed.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+`src/middleware/activitypub.js` verifies the HTTP signature of the top-level ActivityPub `actor`, but the private-message chain (`activitypub.notes.assertPrivate()` → `activitypub.mocks.message()`) and the public-note chain independently read the embedded `Note.attributedTo` value and use it directly as the internal local `uid` for message/post authorship, with no equality check against the authenticated top-level actor.
+
+### Attack Vector
+
+1. Attacker generates an RSA key pair and hosts a minimal ActivityPub actor and WebFinger endpoint on a publicly reachable HTTPS origin.
+2. Attacker signs and sends a `Create(Note)` activity to the target NodeBB instance's `/inbox`, with the embedded `Note.attributedTo` set to a numeric local uid (e.g., `1`, typically the first admin) and a chosen recipient uid.
+3. NodeBB's inbox middleware verifies the HTTP signature against the attacker's own (legitimately signed) actor and accepts the request.
+4. `activitypub.mocks.message()` reads `object.attributedTo` and stores it directly as `message.uid` without validating it against the authenticated actor.
+5. `messaging.newRoom()` and `messaging.addMessage()` persist a chat message with `fromuid` set to the forged local uid, delivered to the attacker-selected recipient.
+6. The same unbound `attributedTo` handling also affects the public `Create(Note)` path, allowing forged authorship of public forum posts under an arbitrary local uid.
+
+### Impact
+
+A remote, unauthenticated federated actor can forge private chat messages or public forum posts that appear to originate from any local NodeBB user — including administrators — enabling social-engineering, impersonation, and potential further compromise of trust-based moderation/admin workflows.
+
+---
+
+## Environment / Lab Setup
+
+```
+Target:   NodeBB 4.13.2 with ActivityPub enabled, stock MongoDB adapter
+Attacker: Node.js 20+, a public HTTPS origin/tunnel for the attacker's ActivityPub actor
+```
+
+---
+
+## Proof of Concept
+
+### PoC Script
+
+> See `poc.js` in this folder.
+
+```bash
+node poc.js \
+  --target-base https://target-nodebb.example \
+  --actor-origin https://attacker.example \
+  --recipient-uid 2 \
+  --spoof-uid 1 \
+  --listen-host 127.0.0.1 \
+  --listen-port 8088 \
+  --output evidence.json
+```
+
+The script hosts a minimal ActivityPub actor and WebFinger responder, signs a `Create(Note)` activity with `attributedTo` set to the chosen spoof uid, sends it to the target's `/inbox`, and prints the resulting activity/note IDs and HTTP response, confirming the forged private chat message was accepted and stored under the spoofed local uid.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+# NodeBB database entries: message:<remote-note-id> with fromuid matching a
+# local uid that has no corresponding legitimate local send action
+# chat:room:<roomId>:uids containing a spoofed local uid alongside a
+# recipient who never messaged that user directly
+```
+
+**Signs of compromise:**
+- Chat messages or posts attributed to local users (especially admins) that those users did not send
+- Chat message IDs formatted as remote ActivityPub note URLs (`https://<attacker-origin>/private-notes/...`) stored against a local `fromuid`
+- Inbound `Create(Note)` activities from unfamiliar/newly-registered ActivityPub actors with numeric `attributedTo` values
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Primary fix** | No vendor patch confirmed as of 2026-07-03 — monitor for advisory |
+| **Interim mitigation** | Require `Note.attributedTo` to be an ActivityPub actor URI (not a bare local uid), reject numeric `attributedTo` values inbound, and assert the embedded actor matches the authenticated top-level actor before any local uid mapping occurs; apply consistently to private messages, public notes, updates, and announces |
+
+---
+
+## References
+
+- [Source repository (bikini/exploitarium)](https://github.com/bikini/exploitarium/tree/main/nodebb-activitypub-attributedto-local-uid-spoof-poc)
+
+---
+
+## Notes
+
+Mirrored from https://github.com/bikini/exploitarium (folder: `nodebb-activitypub-attributedto-local-uid-spoof-poc`) on 2026-07-03. No CVE has been assigned as of ingestion — this is an uncoordinated disclosure by a pseudonymous researcher; treat with appropriate caution pending vendor confirmation.

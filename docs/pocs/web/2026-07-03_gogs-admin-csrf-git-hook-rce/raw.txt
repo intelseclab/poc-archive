@@ -1,0 +1,115 @@
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-07-03 |
+| **Last Updated** | 2026-07 |
+| **Author / Researcher** | bikini (@ashdfrkl) — original discovery; mirrored via exploitarium |
+| **CVE / Advisory** | None assigned as of 2026-07-03 |
+| **Category** | web |
+| **Severity** | Critical |
+| **CVSS Score** | Not yet scored (no CVE/CVSS assigned) |
+| **Status** | Weaponized |
+| **Tags** | gogs, csrf, git-hooks, privilege-escalation, rce, admin-takeover, git, self-hosted |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Gogs (self-hosted Git service) |
+| **Versions Affected** | 0.15.0+dev (commit `5f51118ab513522462a54cef30599d7ddffcc55f`) |
+| **Language / Platform** | Go, classic server-rendered web routes, Git smart HTTP |
+| **Authentication Required** | Yes — attacker needs a normal user account; requires a logged-in site administrator to submit the forged request |
+| **Network Access Required** | Yes |
+
+---
+
+## Summary
+
+Gogs' admin user-edit route (`POST /admin/users/:userid`) performs the state-changing grant of `IsAdmin`/`AllowGitHook` without a CSRF token, so an authenticated site administrator can be induced (e.g., via a cross-site form submission) to grant those rights to an attacker-controlled account. Once the attacker account holds admin and Git-hook-edit rights, it can create a repository and write a `post-receive` hook through Gogs' own hook-editor route; that hook then executes as an OS command during a normal `git push` to the repository. The researcher validated the complete chain end-to-end against a stock Gogs build, confirming the account mutation via the forged POST, the hook write, and command execution (captured via `id`/`pwd` output) triggered by a real Git push. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated "exploitarium" vulnerability dump; it has not been vendor-confirmed.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+`templates/admin/user/edit.tmpl` renders the admin user-edit form without a CSRF token field, and the corresponding `POST /admin/users/:userid` handler (`admin.EditUserPost`) processes `Admin`/`AllowGitHook` field mutations from that unsafe request without validating Origin/Referer or a CSRF token — allowing a cross-site forged request, riding an authenticated administrator's session, to grant admin and Git-hook-edit rights to an arbitrary user id.
+
+### Attack Vector
+
+1. Attacker registers or controls a normal, non-privileged Gogs account.
+2. Attacker crafts a cross-site auto-submitting form targeting `POST /admin/users/:userid` for their own account id, setting `admin=on` and `allow_git_hook=on`.
+3. A logged-in site administrator visits the attacker's page (or otherwise has the forged request delivered with their session cookie attached), which submits the form and mutates the attacker's account to `IsAdmin=true, AllowGitHook=true`.
+4. Attacker creates a repository and writes a malicious `post-receive` hook through the stock `/settings/hooks/git/post-receive` route (now permitted due to `AllowGitHook`).
+5. Attacker performs a normal `git push` to the repository; Gogs executes `custom_hooks/post-receive` on the server, running the attacker's command as the Gogs server process.
+
+### Impact
+
+Full command execution as the Gogs server process, triggered by one CSRF-forged administrator request followed by a normal Git push — a complete privilege-escalation-to-RCE chain against a self-hosted Git server, which can also host CI/CD secrets and other repositories.
+
+---
+
+## Environment / Lab Setup
+
+```
+Target:   Gogs 0.15.0+dev, SQLite backend, HTTP Git enabled
+Attacker: Python 3.10+, git CLI, one site-admin session (or credentials) and one normal attacker account for local validation
+```
+
+---
+
+## Proof of Concept
+
+### PoC Script
+
+> See `poc.py` in this folder.
+
+```bash
+python poc.py \
+  --target-base http://127.0.0.1:38081 \
+  --admin-user siteadmin --admin-password 'AdminPass123!' \
+  --attacker-user attacker --attacker-password 'AttackerPass123!' \
+  --attacker-id 2 --attacker-email attacker@example.test \
+  --repo gogs-hook-proof --marker-path /tmp/gogs_hook_proof.txt --output proof.json
+```
+
+The script logs in as the site admin, submits the CSRF-vulnerable admin user-edit POST for the attacker account (with cross-site headers), confirms the attacker gained admin status, creates a repository, writes a `post-receive` hook, clones/commits/pushes over HTTP Git, and prints the resulting server-side marker to prove command execution.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+```
+
+**Signs of compromise:**
+- Server log lines such as `Account updated by admin "<admin>": <user>` for accounts that should not be admins
+- Newly admin-flagged accounts immediately editing repository Git hooks
+- `TriggerTask` log entries correlating with unexpected hook execution output on the host
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Primary fix** | No vendor patch confirmed as of 2026-07-03 — monitor for advisory |
+| **Interim mitigation** | Restore server-side CSRF token validation for all session-authenticated state-changing routes; validate Origin/Referer/Fetch Metadata on sensitive admin routes; require fresh confirmation for admin-rights and Git-hook-edit grants |
+
+---
+
+## References
+
+- [Source repository (bikini/exploitarium)](https://github.com/bikini/exploitarium/tree/main/gogs-admin-csrf-git-hook-rce-poc)
+
+---
+
+## Notes
+
+Mirrored from https://github.com/bikini/exploitarium (folder: `gogs-admin-csrf-git-hook-rce-poc`) on 2026-07-03. No CVE has been assigned as of ingestion — this is an uncoordinated disclosure by a pseudonymous researcher; treat with appropriate caution pending vendor confirmation.
+

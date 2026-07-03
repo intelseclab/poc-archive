@@ -1,0 +1,110 @@
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-07-03 |
+| **Last Updated** | 2026-06 |
+| **Author / Researcher** | bikini (@ashdfrkl) — original discovery; mirrored via exploitarium |
+| **CVE / Advisory** | None assigned as of 2026-07-03 |
+| **Category** | web |
+| **Severity** | High |
+| **CVSS Score** | Not yet scored (no CVE/CVSS assigned) |
+| **Status** | PoC |
+| **Tags** | firefox, smart-window, ai-assistant, privacy-leak, information-disclosure, url-token-exfiltration, browser, prompt-injection |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Firefox Smart Window (AI browsing assistant feature) |
+| **Versions Affected** | Firefox 152.0.2 x64 (Windows), Smart Window with custom OpenAI-compatible endpoint |
+| **Language / Platform** | Firefox privileged JS (`Tools.sys.mjs`, `ChatUtils.sys.mjs`, `Chat.sys.mjs`) + Node.js 18+ PoC harness |
+| **Authentication Required** | No |
+| **Network Access Required** | Yes |
+
+---
+
+## Summary
+
+Firefox's Smart Window assistant exposes `get_open_tabs` and `search_browsing_history` tools that return private tab/history URLs to the model and mark the conversation as containing `privateData`, but they never mark it as containing `untrustedInput` even though the returned titles originate from attacker-controlled web pages. Smart Window's URL-token expansion (`expandUrlTokensInToolParams`) then substitutes those private URLs into a later `get_page_content` tool call, and `get_page_content` only blocks outbound fetches when both `privateData` and `untrustedInput` are set — so the private-only state still permits the browser to send an HTTP request carrying expanded private URLs to an attacker-controlled endpoint. In effect, a malicious tab title or history entry can steer the assistant into leaking up to 15 open-tab or 15 history URLs (including query strings such as session tokens or reset links) off the user's machine. The included PoC is a dependency-free Node.js server that impersonates the configured model endpoint, drives the tool-call sequence, and logs whether the private URLs were expanded and exfiltrated. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated "exploitarium" vulnerability dump; it has not been vendor-confirmed.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+`get_open_tabs` and `search_browsing_history` in `Tools.sys.mjs` set `privateData` on the conversation but never set `untrustedInput` for the webpage-controlled titles they return. `get_page_content` only refuses an outbound fetch when both flags are already true, so a private-only conversation state still allows a model-driven fetch to an attacker URL, and Firefox expands private URL tokens inside that attacker-controlled URL string before dispatching it.
+
+### Attack Vector
+
+1. Attacker gets a malicious title/URL into the victim's open tabs or browsing history (e.g., a crafted page title or a visited URL with an embedded callback parameter).
+2. Victim opens a Smart Window and asks a benign question like "what tabs do I have open?" or "show my recent browsing history."
+3. Smart Window calls `get_open_tabs`/`search_browsing_history`, which returns private URLs and sets `privateData` only.
+4. The model (steered by the attacker-controlled title/content) calls `get_page_content` on the attacker's URL; Firefox expands Firefox URL tokens embedded in that URL before the fetch executes.
+5. The browser issues an outbound HTTP request to the attacker's server carrying the expanded private tab/history URLs and metadata.
+
+### Impact
+
+An attacker can exfiltrate up to 15 open-tab URLs and 15 browsing-history URLs (plus titles, visit counts, and relevance scores) per triggering interaction, potentially including sensitive session tokens, document identifiers, or one-time reset links embedded in those URLs.
+
+---
+
+## Environment / Lab Setup
+
+```
+Target:   Firefox 152.0.2 x64 (Windows) with Smart Window enabled
+Attacker: Node.js 18+, local HTTP server acting as a custom OpenAI-compatible endpoint
+```
+
+---
+
+## Proof of Concept
+
+### PoC Script
+
+> See `smartwindow_poc_server.js` and `package.json` in this folder.
+
+```bash
+npm run poc
+```
+
+The script runs a local fake model endpoint that always issues `get_open_tabs`/`search_browsing_history` followed by a `get_page_content` call to `/leak`, extracts leaked URL tokens and private metadata from the log, and reports whether Firefox expanded them before the fetch.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+```
+
+**Signs of compromise:**
+- Smart Window network telemetry showing `get_page_content` fetches to hosts other than the configured model endpoint
+- Query strings on outbound requests containing full URLs, session tokens, or history metadata
+- Unexpected page titles or history entries correlating with subsequent outbound leak requests
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Primary fix** | No vendor patch confirmed as of 2026-07-03 — monitor for advisory |
+| **Interim mitigation** | Set `untrustedInput` whenever `get_open_tabs`/`search_browsing_history` return webpage-controlled titles/metadata; block `get_page_content` while `privateData` is set unless the destination is an exact user-mentioned or browser-owned URL; disallow URL-token substitution as a substring inside attacker-selected URLs |
+
+---
+
+## References
+
+- [Source repository (bikini/exploitarium)](https://github.com/bikini/exploitarium/tree/main/firefox-smartwindow-private-url-exfil-poc)
+
+---
+
+## Notes
+
+Mirrored from https://github.com/bikini/exploitarium (folder: `firefox-smartwindow-private-url-exfil-poc`) on 2026-07-03. No CVE has been assigned as of ingestion — this is an uncoordinated disclosure by a pseudonymous researcher; treat with appropriate caution pending vendor confirmation.
+

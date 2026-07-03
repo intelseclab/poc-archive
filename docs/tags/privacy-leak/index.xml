@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Privacy-Leak on PoC Archive</title><link>https://poc.intelseclab.com/tags/privacy-leak/</link><description>Recent content in Privacy-Leak on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Fri, 03 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/privacy-leak/index.xml" rel="self" type="application/rss+xml"/><item><title>Firefox Smart Window Private URL Exfiltration</title><link>https://poc.intelseclab.com/pocs/web/2026-07-03_firefox-smartwindow-private-url-exfil/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-03_firefox-smartwindow-private-url-exfil/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>bikini (@ashdfrkl) — original discovery; mirrored via exploitarium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>None assigned as of 2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not yet scored (no CVE/CVSS assigned)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>firefox, smart-window, ai-assistant, privacy-leak, information-disclosure, url-token-exfiltration, browser, prompt-injection&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Firefox Smart Window (AI browsing assistant feature)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Firefox 152.0.2 x64 (Windows), Smart Window with custom OpenAI-compatible endpoint&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Firefox privileged JS (&lt;code>Tools.sys.mjs&lt;/code>, &lt;code>ChatUtils.sys.mjs&lt;/code>, &lt;code>Chat.sys.mjs&lt;/code>) + Node.js 18+ PoC harness&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Firefox&amp;rsquo;s Smart Window assistant exposes &lt;code>get_open_tabs&lt;/code> and &lt;code>search_browsing_history&lt;/code> tools that return private tab/history URLs to the model and mark the conversation as containing &lt;code>privateData&lt;/code>, but they never mark it as containing &lt;code>untrustedInput&lt;/code> even though the returned titles originate from attacker-controlled web pages. Smart Window&amp;rsquo;s URL-token expansion (&lt;code>expandUrlTokensInToolParams&lt;/code>) then substitutes those private URLs into a later &lt;code>get_page_content&lt;/code> tool call, and &lt;code>get_page_content&lt;/code> only blocks outbound fetches when both &lt;code>privateData&lt;/code> and &lt;code>untrustedInput&lt;/code> are set — so the private-only state still permits the browser to send an HTTP request carrying expanded private URLs to an attacker-controlled endpoint. In effect, a malicious tab title or history entry can steer the assistant into leaking up to 15 open-tab or 15 history URLs (including query strings such as session tokens or reset links) off the user&amp;rsquo;s machine. The included PoC is a dependency-free Node.js server that impersonates the configured model endpoint, drives the tool-call sequence, and logs whether the private URLs were expanded and exfiltrated. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated &amp;ldquo;exploitarium&amp;rdquo; vulnerability dump; it has not been vendor-confirmed.&lt;/p></description></item></channel></rss>

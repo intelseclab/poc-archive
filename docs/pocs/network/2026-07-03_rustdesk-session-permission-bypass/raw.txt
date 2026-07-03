@@ -1,0 +1,124 @@
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-07-03 |
+| **Last Updated** | 2026-07 |
+| **Author / Researcher** | bikini (@ashdfrkl) — original discovery; mirrored via exploitarium |
+| **CVE / Advisory** | None assigned as of 2026-07-03 |
+| **Category** | network |
+| **Severity** | High |
+| **CVSS Score** | Not yet scored (no CVE/CVSS assigned) |
+| **Status** | PoC |
+| **Tags** | rustdesk, remote-desktop, session-downgrade, authorization-bypass, protocol, relay, filetransfer, rust |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | RustDesk (`rustdesk/rustdesk`) — client relay/session setup and server-side connection dispatcher |
+| **Versions Affected** | Validated against source checkout `rustdesk/rustdesk` commit `ff226f6d8013dee2de5a6553abaf67bf32b3e875` |
+| **Language / Platform** | Rust (RustDesk client/server); PoC is a Rust protobuf payload generator with a loopback relay simulation |
+| **Authentication Required** | Finding 1 (session downgrade): requires attacker control of the relay/rendezvous metadata path (no victim password needed). Finding 2 (FileTransfer scope bypass): requires a valid FileTransfer authorization (password proof or user approval) |
+| **Network Access Required** | Yes |
+
+---
+
+## Summary
+
+This entry covers two related but distinct RustDesk findings. First, RustDesk's client can fail open on secure-session setup: when the signed peer key material from the rendezvous/relay path is missing or invalid, the client requests a non-secure relay and sends an empty handshake message rather than failing closed, allowing a malicious relay/rendezvous-position attacker to observe the subsequent plaintext login and inject protocol messages (e.g. mouse events) into an otherwise-authenticated session without knowing the password. Second, RustDesk records FileTransfer logins as `AuthConnType::FileTransfer`, but the post-authorization message dispatcher gates many message types (mouse, keyboard, screenshot, display capture) on the broad `self.authorized` flag instead of the specific connection type, so a session that was only authorized for file transfer can still reach remote-control-class message handlers. Both PoCs work by verifying the vulnerable source shape against a local RustDesk checkout and generating/replaying the relevant framed protocol payloads. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated "exploitarium" vulnerability dump; it has not been vendor-confirmed.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+**Session downgrade:** the client derives whether to request a secure relay from `!signed_id_pk.is_empty()`; when the signed peer key is absent or untrusted, it sends an empty/public-key-empty message and continues without installing a peer encryption key, and the server-side connection likewise skips the secure setup path when the secure flag/key-length requirements are not met — an insecure fallback that fails open instead of closed.
+
+**FileTransfer scope bypass:** `AuthConnType::FileTransfer` is recorded on login, but unlike the terminal and view-camera branches (which explicitly clear keyboard/input state), the FileTransfer post-login branch does not narrow later message dispatch; the dispatcher's broad `self.authorized`-gated branch still routes mouse, keyboard, and screenshot/capture messages regardless of the specific `AuthConnType`.
+
+### Attack Vector
+
+**Finding 1 — Relay session downgrade:**
+1. Attacker controls or manipulates the rendezvous/relay metadata path so the connecting client's signed peer key is absent or invalid.
+2. Client requests a non-secure relay and sends an empty first message; the controlled side proceeds without the peer encryption layer since the secure flag/key requirements aren't met.
+3. The legitimate client completes normal authentication (`Hash` challenge → valid `LoginRequest`) in the clear.
+4. The relay, sitting in this position, parses the plaintext `LoginRequest` and, after the controlled side authorizes the legitimate login, injects a plaintext `MouseEvent` (or similar) which the controlled side accepts because the session is already authorized.
+
+**Finding 2 — FileTransfer scope bypass:**
+1. Attacker obtains a valid FileTransfer authorization (password proof or explicit user approval for file transfer).
+2. Attacker sends a `LoginRequest` whose union is `FileTransfer`; the target records the connection as `AuthConnType::FileTransfer` and authorizes it.
+3. After `LoginResponse` success, the same connection sends non-file-transfer messages (screenshot request, display capture, mouse click, key press).
+4. Because later dispatch is gated by broad `self.authorized` state rather than `AuthConnType::Remote`, these messages reach handlers that should be reserved for remote-control sessions.
+
+### Impact
+
+Finding 1 allows a relay/rendezvous-position attacker to observe plaintext login traffic and inject arbitrary control messages (e.g. mouse input) into a session without needing the victim's password — it does not itself achieve RCE but breaks the confidentiality/integrity guarantee of the "secure" session. Finding 2 lets an attacker with only file-transfer-level authorization escalate to sending remote-control-class input and screen-capture messages, exceeding the scope the user consented to.
+
+---
+
+## Environment / Lab Setup
+
+```
+Target:   rustdesk/rustdesk source checkout at commit ff226f6d8013dee2de5a6553abaf67bf32b3e875
+Attacker: Rust toolchain (cargo), local RustDesk checkout path (--repo-root / RUSTDESK_REPO_ROOT) for protobuf bindings
+```
+
+---
+
+## Proof of Concept
+
+### PoC Script
+
+> See `session-downgrade/` (Cargo project, `src/main.rs`, sample payloads in `session-downgrade/payloads/`) and `filetransfer-scope-bypass/` (Cargo project, `src/main.rs`, sample payloads in `filetransfer-scope-bypass/payloads/`) in this folder. Sanitized local verification output is in `evidence/local-verification.txt`. Flattened top-level copies (`session-downgrade-poc.rs`, `filetransfer-scope-bypass-poc.rs`) are also provided for quick inline viewing.
+
+```bash
+cd session-downgrade
+RUSTDESK_REPO_ROOT=/path/to/rustdesk cargo run -- --repo-root /path/to/rustdesk --out ./payloads
+
+cd filetransfer-scope-bypass
+RUSTDESK_REPO_ROOT=/path/to/rustdesk cargo run -- --repo-root /path/to/rustdesk --out ./payloads \
+  --peer-id 123456789 --my-id 987654321 --my-name poc-controller \
+  --password "CorrectHorseBatteryStaple!" --salt "sample-server-salt" --challenge "123456"
+```
+
+The `session-downgrade` tool verifies the vulnerable source shape against the given RustDesk checkout, generates framed downgrade-handshake/login/injected-mouse/injected-screenshot payloads, and runs a local loopback relay simulation demonstrating plaintext login observation and message injection. The `filetransfer-scope-bypass` tool similarly verifies the source shape and emits a FileTransfer login plus screenshot/capture/mouse/keypress protobuf message bodies intended for replay against an authorized test session.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+```
+
+**Signs of compromise:**
+- RustDesk sessions that complete a "secure" handshake but show relay-observable plaintext login/control traffic
+- Connections authorized only for file transfer that subsequently send input or screen-capture protocol messages
+- Unexpected mouse/keyboard events or screenshot requests correlated with sessions established through untrusted or attacker-influenced relay/rendezvous infrastructure
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Primary fix** | No vendor patch confirmed as of 2026-07-03 — monitor for advisory; require valid signed peer key material for sessions expected to be secure and fail closed rather than falling back to an empty/insecure handshake; dispatch post-auth messages through an allowlist keyed by `AuthConnType` so FileTransfer sessions cannot reach remote-control message handlers |
+| **Interim mitigation** | Only use trusted, self-hosted rendezvous/relay servers; avoid relaying sessions through third-party infrastructure; review RustDesk server logs for FileTransfer-authorized connections sending non-file-transfer messages |
+
+---
+
+## References
+
+- [Source repository (bikini/exploitarium)](https://github.com/bikini/exploitarium/tree/main/rustdesk-session-permission-pocs)
+
+---
+
+## Notes
+
+Mirrored from https://github.com/bikini/exploitarium (folder: `rustdesk-session-permission-pocs`) on 2026-07-03. No CVE has been assigned as of ingestion — this is an uncoordinated disclosure by a pseudonymous researcher; treat with appropriate caution pending vendor confirmation. This entry bundles two separate sub-findings from the source repository, preserved here under the `session-downgrade/` and `filetransfer-scope-bypass/` subfolders, each with its own PoC source and sample payloads.
+

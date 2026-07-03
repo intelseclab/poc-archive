@@ -1,0 +1,115 @@
+# Next.js unstable_cache Object-Argument Cache-Key Collision
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-07-03 |
+| **Last Updated** | 2026-07 |
+| **Author / Researcher** | bikini (@ashdfrkl) — original discovery; mirrored via exploitarium |
+| **CVE / Advisory** | None assigned as of 2026-07-03 |
+| **Category** | web |
+| **Severity** | High |
+| **CVSS Score** | Not yet scored (no CVE/CVSS assigned) |
+| **Status** | PoC |
+| **Tags** | nextjs, unstable_cache, cache-poisoning, cache-key-collision, data-cache, information-disclosure, server-side-caching, javascript |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Next.js (App Router, Data Cache) |
+| **Versions Affected** | `next@16.3.0-canary.70` (behavior demonstrated against this canary; likely affects a broader range of `unstable_cache()` implementations) |
+| **Language / Platform** | JavaScript/Node.js PoC driving a generated Next.js application |
+| **Authentication Required** | No |
+| **Network Access Required** | Yes (PoC drives HTTP requests against a locally started `next start` server; applies to any deployment reachable by multiple users) |
+
+---
+
+## Summary
+
+Next.js's `unstable_cache()` API derives its cache key by running `JSON.stringify()` over the arguments passed to the cached function. When a route handler passes a stock request-wrapper object — a `Request`, `URLSearchParams`, or `FormData` instance — directly into `unstable_cache()`, `JSON.stringify()` serializes that object as an empty `{}` because these objects do not expose their internal state to naive JSON serialization. Because the serialized key collapses to the same value regardless of the object's actual contents (cookies, query parameters, form fields), Next.js treats requests carrying entirely different user-specific data as identical cache entries. The first request's result — and the live, request-specific data it captured — is returned to every subsequent request in the same cache group, even after the caching server process is restarted. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated "exploitarium" vulnerability dump; it has not been vendor-confirmed.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+`unstable_cache()` computes its cache key via `JSON.stringify()` on the callback's arguments. Stock Web API objects like `Request`, `URLSearchParams`, and `FormData` serialize to `{}` under `JSON.stringify()`, so distinct invocations carrying different request-specific data collide onto the same cache key while the cached callback body still reads the live object's actual contents.
+
+### Attack Vector
+
+1. A route handler passes a `Request`, `URLSearchParams`, or `FormData` object directly into `unstable_cache()` instead of extracting the specific primitive values it needs first.
+2. A first user (e.g., "alice") makes a request carrying user-specific data (a cookie, query parameter, or form field).
+3. Next.js computes the cache key as `{}` (since the wrapper object stringifies to an empty object) and stores the result, which was computed using alice's live data.
+4. A second user ("bob") makes a request with different data; because the cache key is identical (`{}`), Next.js serves alice's cached result to bob instead of computing bob's own result.
+5. The stale/cross-user result persists in the Data Cache even across a restart of the `next start` process.
+
+### Impact
+
+Cross-user cache poisoning and information disclosure: one user's request-specific response (potentially containing session-bound or sensitive data) can be served to a completely different, unrelated user, and the effect persists across server restarts as long as the underlying Data Cache entry survives.
+
+---
+
+## Environment / Lab Setup
+
+```
+Target:   Next.js application (App Router) using next@16.3.0-canary.70, react@19.2.3, react-dom@19.2.3
+Attacker: Node.js 20+, npm, network access to install Next.js and drive HTTP requests
+```
+
+---
+
+## Proof of Concept
+
+### PoC Script
+
+> See `run_demo.mjs` in this folder.
+
+```bash
+node run_demo.mjs
+```
+
+The script scaffolds a temporary Next.js application exposing three route handlers (`/api/request`, `/api/urlsearch`, `/api/form`) that pass a `Request`, `URLSearchParams`, or `FormData` object directly into `unstable_cache()`. It builds and starts the app, sends a request as "alice" followed by a request as "bob" to each route, and verifies that the second request receives alice's cached result instead of bob's own data — including after restarting the server without clearing the generated app directory.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+# Application logs showing identical cached response bodies returned to requests
+# carrying different cookies/query params/form fields on the same route
+# Data Cache entries whose key resolves to a bare "{}" JSON string
+```
+
+**Signs of compromise:**
+- Users reporting they see another user's data (session content, personalized values) on a page that should be user-specific
+- Cached API responses that do not vary despite differing request cookies, query strings, or submitted form data
+- Stale cross-user data persisting even after a deployment restart
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Primary fix** | No vendor patch confirmed as of 2026-07-03 — monitor for advisory |
+| **Interim mitigation** | Never pass `Request`, `URLSearchParams`, `FormData`, or other non-JSON-serializable wrapper objects directly into `unstable_cache()`; extract the specific primitive values (cookie value, query parameter, form field) needed and pass those instead |
+
+---
+
+## References
+
+- [Source repository (bikini/exploitarium)](https://github.com/bikini/exploitarium/tree/main/nextjs-unstable-cache-object-argument-collision)
+
+---
+
+## Notes
+
+Mirrored from https://github.com/bikini/exploitarium (folder: `nextjs-unstable-cache-object-argument-collision`) on 2026-07-03. No CVE has been assigned as of ingestion — this is an uncoordinated disclosure by a pseudonymous researcher; treat with appropriate caution pending vendor confirmation.

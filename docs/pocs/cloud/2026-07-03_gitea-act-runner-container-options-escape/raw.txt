@@ -1,0 +1,110 @@
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-07-03 |
+| **Last Updated** | 2026-07 |
+| **Author / Researcher** | bikini (@ashdfrkl) — original discovery; mirrored via exploitarium |
+| **CVE / Advisory** | None assigned as of 2026-07-03 |
+| **Category** | cloud |
+| **Severity** | High |
+| **CVSS Score** | Not yet scored (no CVE/CVSS assigned) |
+| **Status** | PoC |
+| **Tags** | gitea, act-runner, ci-cd, docker, container-escape, host-namespace, privilege-escalation, capabilities |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Gitea Actions `act_runner` (Docker-backed) |
+| **Versions Affected** | act_runner (Docker executor); version not explicitly pinned by source, validated against a current Docker-backed build |
+| **Language / Platform** | Go (act_runner), Python 3 PoC driver, Linux Docker host |
+| **Authentication Required** | Yes (ability to trigger a workflow on a repository serviced by the shared runner) |
+| **Network Access Required** | No (workflow-triggered, not a direct network attack against the runner) |
+
+---
+
+## Summary
+
+Gitea's `act_runner` allows workflow YAML to append Docker options via `jobs.<job>.container.options`. When the runner configuration disables privileged mode, `act_runner` forces `Privileged` back to false and sanitizes bind mounts, but it preserves every other Docker HostConfig field parsed from those options — including `PidMode=host`, `IpcMode=host`, `CapAdd=["ALL"]`, and unconfined seccomp/AppArmor security profiles. A workflow that sets these options can therefore share the host's PID and IPC namespaces with expanded capabilities and no security profile, letting a job container use `nsenter` to enter the host namespace and execute commands as root on the runner host, even though `Privileged` reports false. The PoC validated this with the runner's Docker socket mount disabled, isolating the issue to Docker option handling rather than direct socket access. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated "exploitarium" vulnerability dump; it has not been vendor-confirmed.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+`act_runner`'s `mergeContainerConfigs()` parses Docker CLI-style options from workflow-controlled `container.options` and merges them into the job container's HostConfig. When privileged mode is disabled, only `copts.privileged` is forced false; `sanitizeConfig()` filters only `Binds`/`Mounts`, leaving `PidMode`, `IpcMode`, `CapAdd`, `SecurityOpt`, `Devices`, and `VolumesFrom` unchecked and attacker-controllable.
+
+### Attack Vector
+
+1. Attacker with the ability to run a workflow on the affected Docker-backed `act_runner` (e.g., a PR from an untrusted fork, or a normal contributor account) authors a workflow with `container.options: --pid=host --ipc=host --cap-add=ALL --security-opt seccomp=unconfined --security-opt apparmor=unconfined` and an image containing `nsenter` (e.g., `ubuntu:22.04`).
+2. The runner creates the job container with `Privileged: false` but the above HostConfig fields intact.
+3. The job step uses `nsenter` to enter host PID/IPC namespaces from inside the container.
+4. The workflow step executes a command in the host namespace and writes a marker/output file on the runner host, effectively as root.
+
+### Impact
+
+Full host-namespace access and command execution as root on the CI runner host from a workflow-triggered job, despite privileged mode being disabled — a critical risk on shared runners serving untrusted repositories, exposing runner-host secrets, deployment credentials, and adjacent job/build infrastructure.
+
+---
+
+## Environment / Lab Setup
+
+```
+Target:   Docker-backed Gitea act_runner, Linux host, privileged mode disabled, --container-daemon-socket=-
+Attacker: Python 3 (stdlib only), an act_runner binary, Docker access on the runner host for validation
+```
+
+---
+
+## Proof of Concept
+
+### PoC Script
+
+> See `poc.py` in this folder.
+
+```bash
+python3 poc.py --runner ./act_runner --image ubuntu:22.04
+python3 poc.py --runner ./act_runner --image ubuntu:22.04 --debug
+```
+
+The script generates a workflow with the dangerous `container.options` shown above, runs it through `act_runner exec` (which exercises the real runner code path converting workflow options into Docker HostConfig), and verifies a host-side marker file created via `nsenter` as proof of host namespace access.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+```
+
+**Signs of compromise:**
+- CI job containers observed calling `nsenter` or otherwise touching host PID/IPC namespaces
+- Unexpected root-owned files or processes appearing on the runner host correlated with workflow runs
+- Job containers reporting `Privileged=false` but with host namespace or unconfined security-profile HostConfig fields set
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Primary fix** | No vendor patch confirmed as of 2026-07-03 — monitor for advisory |
+| **Interim mitigation** | Treat workflow-authored `container.options` as untrusted; reject or allowlist job-level Docker options (strip host namespaces, `--cap-add`, unconfined security-opt, device access, `--volumes-from`, `--runtime`/`--cgroup-parent` overrides); avoid sharing Docker-backed runners with untrusted repositories |
+
+---
+
+## References
+
+- [Source repository (bikini/exploitarium)](https://github.com/bikini/exploitarium/tree/main/gitea-act-runner-container-options-poc)
+
+---
+
+## Notes
+
+Mirrored from https://github.com/bikini/exploitarium (folder: `gitea-act-runner-container-options-poc`) on 2026-07-03. No CVE has been assigned as of ingestion — this is an uncoordinated disclosure by a pseudonymous researcher; treat with appropriate caution pending vendor confirmation.
+

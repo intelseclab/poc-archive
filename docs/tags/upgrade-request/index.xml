@@ -1,4 +1,89 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Upgrade-Request on PoC Archive</title><link>https://poc.intelseclab.com/tags/upgrade-request/</link><description>Recent content in Upgrade-Request on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 17 May 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/upgrade-request/index.xml" rel="self" type="application/rss+xml"/><item><title>Next.js WebSocket Upgrade SSRF (Self-Hosted) (CVE-2026-44578)</title><link>https://poc.intelseclab.com/pocs/web/2026-05-17_nextjs-websocket-upgrade-ssrf-self-hosted/</link><pubDate>Sun, 17 May 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-05-17_nextjs-websocket-upgrade-ssrf-self-hosted/</guid><description>&lt;!-- 
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Upgrade-Request on PoC Archive</title><link>https://poc.intelseclab.com/tags/upgrade-request/</link><description>Recent content in Upgrade-Request on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Fri, 03 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/upgrade-request/index.xml" rel="self" type="application/rss+xml"/><item><title>nghttpx HTTP/1.1 Upgrade Request Body Response Queue Poisoning</title><link>https://poc.intelseclab.com/pocs/network/2026-07-03_nghttpx-http-upgrade-queue-poisoning/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-03_nghttpx-http-upgrade-queue-poisoning/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>bikini (@ashdfrkl) — original discovery; mirrored via exploitarium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>None assigned as of 2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not yet scored (no CVE/CVSS assigned)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>nghttp2, nghttpx, reverse-proxy, request-smuggling, response-queue-poisoning, http-desync, upgrade-request, cache-poisoning&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>nghttp2&amp;rsquo;s &lt;code>nghttpx&lt;/code> reverse proxy&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&lt;code>v1.69.0&lt;/code> (fixed by upstream commit &lt;code>ab28105c4a0197da24f8bfc414bc116055249e1e&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C++ target (&lt;code>nghttpx&lt;/code>); Python 3 stdlib-only PoC driver&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (attacker connects to the &lt;code>nghttpx&lt;/code> HTTP/1.1 frontend; requires an Upgrade-aware HTTP/1.1 backend behind it)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>&lt;code>nghttpx&lt;/code>, the reverse proxy shipped with nghttp2, incorrectly accepts an HTTP/1.1 &lt;code>Upgrade&lt;/code> request that also carries a &lt;code>Content-Length&lt;/code> header, then forwards both the Upgrade headers and the body bytes unmodified to a keep-alive HTTP/1.1 backend connection. If the backend treats the Upgrade request as a protocol switch and parses the trailing body bytes as an entirely separate, smuggled HTTP request, that smuggled request&amp;rsquo;s response gets queued on the shared backend connection. When &lt;code>nghttpx&lt;/code> subsequently reuses the same backend connection for an unrelated victim client&amp;rsquo;s request, the victim receives the attacker&amp;rsquo;s queued/smuggled response instead of their own. The researcher verified this locally end-to-end against a real &lt;code>nghttpx&lt;/code> v1.69.0 binary, including a fixed-control run against the patched upstream commit. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated &amp;ldquo;exploitarium&amp;rdquo; vulnerability dump; it has not been vendor-confirmed.&lt;/p></description></item><item><title>Next.js WebSocket Upgrade SSRF (Self-Hosted) (CVE-2026-44578)</title><link>https://poc.intelseclab.com/pocs/web/2026-05-17_nextjs-websocket-upgrade-ssrf-self-hosted/</link><pubDate>Sun, 17 May 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-05-17_nextjs-websocket-upgrade-ssrf-self-hosted/</guid><description>&lt;!-- 
  File: 2026-05-17_nextjs-websocket-upgrade-ssrf-self-hosted.md
  Location: pocs/&lt;category>/
 -->

@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Docker on PoC Archive</title><link>https://poc.intelseclab.com/tags/docker/</link><description>Recent content in Docker on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Fri, 03 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/docker/index.xml" rel="self" type="application/rss+xml"/><item><title>Docker cp Copy-Out Destination Escape via Symlink Race</title><link>https://poc.intelseclab.com/pocs/cloud/2026-07-03_docker-cp-copyout-destination-escape/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/cloud/2026-07-03_docker-cp-copyout-destination-escape/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>bikini (@ashdfrkl) — original discovery; mirrored via exploitarium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>None assigned as of 2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>cloud&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Medium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not yet scored (no CVE/CVSS assigned)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>docker, container-escape, toctou, symlink-race, docker-cp, path-traversal, archive-extraction, host-file-write&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Docker Engine / CLI&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Validated on Docker Client/Server 29.6.0, API 1.55 (2026-06-23)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Bash PoC driver; underlying bug spans Docker CLI (&lt;code>cli/command/container/cp.go&lt;/code>) and daemon (&lt;code>daemon/archive_unix.go&lt;/code>, vendored &lt;code>go-archive&lt;/code>) in Go&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Local-only (attacker needs code execution inside a running container; a host user must separately run &lt;code>docker cp&lt;/code> from that container)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>&lt;code>docker cp&lt;/code> copy-out operations are vulnerable to a time-of-check/time-of-use race: the daemon walks the container&amp;rsquo;s source path with &lt;code>filepath.WalkDir&lt;/code> and builds a tar stream, but if a container process changes a directory entry (e.g., swaps it for a symlink) after the walk observes it but before the entry is added to the tar stream, the resulting archive can contain a symlink whose target escapes the intended destination. On the client side, &lt;code>archive.CopyTo&lt;/code>/&lt;code>Untar&lt;/code> checks the resolved symlink target with a raw &lt;code>strings.HasPrefix(targetPath, extractDir)&lt;/code> string check rather than a proper path-boundary check, so a symlink target like &lt;code>dst2&lt;/code> passes the prefix check against &lt;code>dst&lt;/code> even though it is a sibling directory outside the requested extraction root. Entries that follow the symlink in the tar stream are then written through it into the sibling path. The researcher validated this against Docker 29.6.0 by racing many padding files before the target path and reliably (in ~0.2s of skew) getting a marker file written outside the requested destination. This is a host-operator-initiated escape, not an unattended container breakout — it requires a host user to run &lt;code>docker cp&lt;/code> against an attacker-controlled container. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated &amp;ldquo;exploitarium&amp;rdquo; vulnerability dump; it has not been vendor-confirmed.&lt;/p></description></item><item><title>Gitea act_runner container.options Host Namespace Escape</title><link>https://poc.intelseclab.com/pocs/cloud/2026-07-03_gitea-act-runner-container-options-escape/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/cloud/2026-07-03_gitea-act-runner-container-options-escape/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>bikini (@ashdfrkl) — original discovery; mirrored via exploitarium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>None assigned as of 2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>cloud&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not yet scored (no CVE/CVSS assigned)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>gitea, act-runner, ci-cd, docker, container-escape, host-namespace, privilege-escalation, capabilities&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Gitea Actions &lt;code>act_runner&lt;/code> (Docker-backed)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>act_runner (Docker executor); version not explicitly pinned by source, validated against a current Docker-backed build&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Go (act_runner), Python 3 PoC driver, Linux Docker host&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (ability to trigger a workflow on a repository serviced by the shared runner)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No (workflow-triggered, not a direct network attack against the runner)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Gitea&amp;rsquo;s &lt;code>act_runner&lt;/code> allows workflow YAML to append Docker options via &lt;code>jobs.&amp;lt;job&amp;gt;.container.options&lt;/code>. When the runner configuration disables privileged mode, &lt;code>act_runner&lt;/code> forces &lt;code>Privileged&lt;/code> back to false and sanitizes bind mounts, but it preserves every other Docker HostConfig field parsed from those options — including &lt;code>PidMode=host&lt;/code>, &lt;code>IpcMode=host&lt;/code>, &lt;code>CapAdd=[&amp;quot;ALL&amp;quot;]&lt;/code>, and unconfined seccomp/AppArmor security profiles. A workflow that sets these options can therefore share the host&amp;rsquo;s PID and IPC namespaces with expanded capabilities and no security profile, letting a job container use &lt;code>nsenter&lt;/code> to enter the host namespace and execute commands as root on the runner host, even though &lt;code>Privileged&lt;/code> reports false. The PoC validated this with the runner&amp;rsquo;s Docker socket mount disabled, isolating the issue to Docker option handling rather than direct socket access. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated &amp;ldquo;exploitarium&amp;rdquo; vulnerability dump; it has not been vendor-confirmed.&lt;/p></description></item></channel></rss>

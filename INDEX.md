@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-07-03 16:36:13
+> Last updated: 2026-07-04 01:45:20
 
 ---
 
@@ -26,7 +26,23 @@
 | 2026-06-30 | 2026-06-30 | [cve-2026-46331-linux-act-pedit-lpe](./pocs/binary/2026-06-30_cve-2026-46331-linux-act-pedit-lpe/) | `binary` | CVE-2026-46331 | High | LPE, Linux kernel, COW, page-cache, act_pedit, tc, netlink, traffic-control, privilege-escalation, userns, C, DirtyFrag | PoC |
 | 2026-06-30 | 2026-06-30 | [cve-2026-7574-claude-desktop-cowork-vm-bypass](./pocs/binary/2026-06-30_cve-2026-7574-claude-desktop-cowork-vm-bypass/) | `binary` | CVE-2026-7574 | High | LPE, persistence, VM-integrity, rootfs, Claude, AI-application, macOS, ext4, integrity-bypass, Shell | PoC |
 | 2026-06-30 | 2026-06-30 | [cve-2026-8461-ffmpeg-magicyuv-oob-rce](./pocs/binary/2026-06-30_cve-2026-8461-ffmpeg-magicyuv-oob-rce/) | `binary` | CVE-2026-8461 | High | RCE, OOB-write, heap-corruption, FFmpeg, MagicYUV, media, video, PixelSmash, libavcodec, Python, High | PoC |
+| 2026-07-03 | 2026-06 | [anydesk-printer-pipe-com-impersonation-lpe](./pocs/binary/2026-07-03_anydesk-printer-pipe-com-impersonation-lpe/) | `binary` | None assigned as of 2026-07-03 | High | anydesk, windows, privilege-escalation, com-impersonation, named-pipe, local-service, lpe, ipc | PoC |
+| 2026-07-03 | 2026-06 | [ffmpeg-rasc-dlta-heap-oob-write](./pocs/binary/2026-07-03_ffmpeg-rasc-dlta-heap-oob-write/) | `binary` | None assigned as of 2026-07-03 | Critical | ffmpeg, libavcodec, heap-overflow, rasc, oob-write, media-parsing, codec, memory-corruption | PoC |
+| 2026-07-03 | 2026-07 | [ghidra-swift-demangler-ace](./pocs/binary/2026-07-03_ghidra-swift-demangler-ace/) | `binary` | None assigned as of 2026-07-03 | Medium | ghidra, reverse-engineering, arbitrary-code-execution, tracermi, sevenzipjbinding, native-parser, conditional-exploit, calc-poc | Incomplete PoC |
+| 2026-07-03 | 2026-07 | [imagemagick-ghostscript-delegate-hijack](./pocs/binary/2026-07-03_imagemagick-ghostscript-delegate-hijack/) | `binary` | None assigned as of 2026-07-03 | High | imagemagick, ghostscript, windows, search-path-hijack, dll-planting-adjacent, delegate-execution, code-execution, pdf | PoC |
+| 2026-07-03 | 2026-06 | [libarchive-zip-debuginfod-size-boundary](./pocs/binary/2026-07-03_libarchive-zip-debuginfod-size-boundary/) | `binary` | None assigned as of 2026-07-03 | Medium | libarchive, zip, zip64, integer-overflow, debuginfod, elfutils, size-validation, boundary-bypass | PoC |
+| 2026-07-03 | 2026-06 | [lunar-client-modrinth-rce-chain](./pocs/binary/2026-07-03_lunar-client-modrinth-rce-chain/) | `binary` | None assigned as of 2026-07-03 | Critical | lunar-client, electron, minecraft, modrinth, raw-html-injection, ipc, rce, sandbox-escape, launcher-abuse | Incomplete PoC |
+| 2026-07-03 | 2026-06 | [objdump-dlx-elf-backend-oob](./pocs/binary/2026-07-03_objdump-dlx-elf-backend-oob/) | `binary` | None assigned as of 2026-07-03 | Medium | binutils, objdump, elf-parsing, dlx, out-of-bounds-write, aslr-bypass, local-code-execution, crash-to-calc | PoC |
+| 2026-07-03 | 2026-07 | [pillow-imagecms-output-mode-oob-write](./pocs/binary/2026-07-03_pillow-imagecms-output-mode-oob-write/) | `binary` | None assigned as of 2026-07-03 | High | pillow, imagecms, littlecms, heap-overflow, oob-write, python, image-processing, memory-corruption | PoC |
+| 2026-07-03 | 2026-07 | [qemu-cxl-type3-mailbox-escape](./pocs/binary/2026-07-03_qemu-cxl-type3-mailbox-escape/) | `binary` | None assigned as of 2026-07-03 | Critical | qemu, cxl, virtualization, vm-escape, memory-corruption, mailbox, guest-to-host, pointer-leak | Weaponized |
+| 2026-07-03 | 2026-06 | [systeminformer-phsvc-trusted-host-lpe](./pocs/binary/2026-07-03_systeminformer-phsvc-trusted-host-lpe/) | `binary` | None assigned as of 2026-07-03 | High | windows, system-informer, process-hacker, lpe, confused-deputy, alpc, phsvc, authenticode, local-privilege-escalation | PoC |
+| 2026-07-03 | 2026-07 | [vlc-vp9-reschange-crash](./pocs/binary/2026-07-03_vlc-vp9-reschange-crash/) | `binary` | None assigned as of 2026-07-03 | Medium | vlc, ffmpeg, vp9, ivf, heap-overflow, media-parsing, crash, windows, decoder | Incomplete PoC |
+| 2026-07-03 | 2026-06 | [docker-cp-copyout-destination-escape](./pocs/cloud/2026-07-03_docker-cp-copyout-destination-escape/) | `cloud` | None assigned as of 2026-07-03 | Medium | docker, container-escape, toctou, symlink-race, docker-cp, path-traversal, archive-extraction, host-file-write | PoC |
+| 2026-07-03 | 2026-06 | [floci-apigateway-vtl-rce](./pocs/cloud/2026-07-03_floci-apigateway-vtl-rce/) | `cloud` | None assigned as of 2026-07-03 | Critical | floci, api-gateway, velocity-template-language, rce, iam-bypass, sigv4, java-reflection, localstack-alternative | Weaponized |
+| 2026-07-03 | 2026-07 | [gitea-act-runner-container-options-escape](./pocs/cloud/2026-07-03_gitea-act-runner-container-options-escape/) | `cloud` | None assigned as of 2026-07-03 | High | gitea, act-runner, ci-cd, docker, container-escape, host-namespace, privilege-escalation, capabilities | PoC |
+| 2026-07-03 | 2026-06 | [nextcloud-federated-share-bearer-token-leak](./pocs/cloud/2026-07-03_nextcloud-federated-share-bearer-token-leak/) | `cloud` | None assigned as of 2026-07-03 | High | nextcloud, federated-sharing, ocm, bearer-token, webdav, token-scope, authorization-bypass, oauth-like-flow | PoC |
 | 2026-06-26 | 2026-05-31 | [yellowkey-bitlocker-bypass](./pocs/misc/2026-06-26_yellowkey-bitlocker-bypass/) | `misc` | CVE-2026-45585 | Medium | BitLocker, bypass, physical-access, WinRE, TPM, autofstx, NTFS-transactions, FsTx, Windows-11, Windows-Server-2022, zero-day, full-disk-access | Researched |
+| 2026-07-03 | 2026-07 | [7zip-rar5-motw-ads-bypass](./pocs/misc/2026-07-03_7zip-rar5-motw-ads-bypass/) | `misc` | None assigned as of 2026-07-03 | High | 7-zip, rar5, mark-of-the-web, alternate-data-streams, ntfs, motw-bypass, windows, archive-extraction | PoC |
 | 2026-05-18 | N/A | [tossup-terramaster-redis-rce](./pocs/network/2026-05-18_tossup-terramaster-redis-rce/) | `network` | N/A (vendor confirmed TOS4 is EOL; no fix planned) | Critical | RCE, unauthenticated, Redis, TerraMaster, NAS, AArch64, root, module-loading, replication-abuse, NFS, no_root_squash, LPE, network | Weaponized |
 | 2026-06-04 | 2026-06-04 | [netlogon-cldap-stack-buffer-overflow](./pocs/network/2026-06-04_netlogon-cldap-stack-buffer-overflow/) | `network` | CVE-2026-41089 | Critical | Netlogon, CLDAP, Windows Server, stack-overflow, unauthenticated, DoS, potential-RCE | Weaponized |
 | 2026-06-28 | 2026-06-09 | [cve-2026-10520-ivanti-sentry-rce](./pocs/network/2026-06-28_cve-2026-10520-ivanti-sentry-rce/) | `network` | CVE-2026-10520, CVE-2026-10523 | Critical | pre-auth, RCE, OS-command-injection, Ivanti, Sentry, MICS-API, auth-bypass, admin-creation, CISA-KEV | PoC |
@@ -40,8 +56,17 @@
 | 2026-07-01 | 2026-06-25 | [cve-2026-20230-cisco-ucm-webdialer-ssrf-rce](./pocs/network/2026-07-01_cve-2026-20230-cisco-ucm-webdialer-ssrf-rce/) | `network` | CVE-2026-20230 | Critical | SSRF, RCE, Cisco, Unified-Communications-Manager, WebDialer, file-write, webshell, jsp-webshell, CISA-KEV, active-exploitation | Weaponized |
 | 2026-07-01 | 2026-06-17 | [cve-2026-20262-cisco-sdwan-manager-file-write](./pocs/network/2026-07-01_cve-2026-20262-cisco-sdwan-manager-file-write/) | `network` | CVE-2026-20262 | Medium | path-traversal, file-write, Cisco, SD-WAN, vManage, authenticated, CWE-22, active-exploitation | PoC |
 | 2026-07-01 | 2026-06 | [cve-2026-47729-squidbleed-squid-ftp-oob-read](./pocs/network/2026-07-01_cve-2026-47729-squidbleed-squid-ftp-oob-read/) | `network` | CVE-2026-47729 | Medium | memory-disclosure, information-disclosure, Squid, proxy, FTP, heap-overflow, oob-read, credential-theft, legacy | PoC |
+| 2026-07-03 | 2026-06 | [c-ares-tcp-getaddrinfo-uaf](./pocs/network/2026-07-03_c-ares-tcp-getaddrinfo-uaf/) | `network` | None assigned as of 2026-07-03 | High | c-ares, use-after-free, dns, resolver, tcp, heap-corruption, code-execution, edns | PoC |
+| 2026-07-03 | 2026-07 | [curl-smtp-expn-crlf-injection](./pocs/network/2026-07-03_curl-smtp-expn-crlf-injection/) | `network` | None assigned as of 2026-07-03 | Medium | curl, smtp, crlf-injection, command-injection, expn, vrfy, protocol-injection, libcurl | PoC |
 | 2026-07-03 | 2026-04 | [cve-2026-35616-forticlient-ems-auth-bypass](./pocs/network/2026-07-03_cve-2026-35616-forticlient-ems-auth-bypass/) | `network` | CVE-2026-35616 | Critical | authentication-bypass, header-spoofing, Fortinet, FortiClient-EMS, FortiBleed, credential-theft, CISA-KEV, active-exploitation, ransomware | Weaponized |
+| 2026-07-03 | 2026-06 | [cve-2026-55200-libssh2-packet-length-rce](./pocs/network/2026-07-03_cve-2026-55200-libssh2-packet-length-rce/) | `network` | CVE-2026-55200 | Critical | libssh2, ssh, integer-overflow, heap-overflow, packet-length, transport, rce, memory-corruption, cve-2026-55200 | Weaponized |
 | 2026-07-03 | 2026-06-30 | [cve-2026-8451-citrix-netscaler-memory-leak](./pocs/network/2026-07-03_cve-2026-8451-citrix-netscaler-memory-leak/) | `network` | CVE-2026-8451 | High | memory-disclosure, SAML, Citrix, NetScaler, ADC, Gateway, citrixbleed, unauthenticated, active-exploitation | Incomplete PoC (memory-leak/detection primitive only — no session-hijack automation) |
+| 2026-07-03 | 2026-06 | [libssh2-publickey-list-parser-oob](./pocs/network/2026-07-03_libssh2-publickey-list-parser-oob/) | `network` | None assigned as of 2026-07-03 | Critical | libssh2, ssh, publickey-subsystem, heap-overflow, use-after-free, integer-overflow, windows, rce, memory-corruption | Weaponized |
+| 2026-07-03 | 2026-06 | [nghttpx-http-upgrade-queue-poisoning](./pocs/network/2026-07-03_nghttpx-http-upgrade-queue-poisoning/) | `network` | None assigned as of 2026-07-03 | High | nghttp2, nghttpx, reverse-proxy, request-smuggling, response-queue-poisoning, http-desync, upgrade-request, cache-poisoning | PoC |
+| 2026-07-03 | 2026-06 | [nmap-ipv6-extension-length-wrap](./pocs/network/2026-07-03_nmap-ipv6-extension-length-wrap/) | `network` | None assigned as of 2026-07-03 | Low | nmap, ipv6, integer-wraparound, packet-parsing, libnetutil, extension-headers, denial-of-service, research-in-progress | Incomplete PoC |
+| 2026-07-03 | 2026-06 | [openvpn-connect-server-pushed-option-ace](./pocs/network/2026-07-03_openvpn-connect-server-pushed-option-ace/) | `network` | None assigned as of 2026-07-03 | High | openvpn, openvpn-connect, malicious-vpn-server, command-execution, script-permission-bypass, pushed-options, windows, client-side | PoC |
+| 2026-07-03 | 2026-07 | [redis-vector-set-hnsw-id-rce](./pocs/network/2026-07-03_redis-vector-set-hnsw-id-rce/) | `network` | None assigned as of 2026-07-03 | Critical | redis, vector-set, hnsw, rce, deserialization, use-after-free, heap-corruption, rdb-restore | Weaponized |
+| 2026-07-03 | 2026-07 | [rustdesk-session-permission-bypass](./pocs/network/2026-07-03_rustdesk-session-permission-bypass/) | `network` | None assigned as of 2026-07-03 | High | rustdesk, remote-desktop, session-downgrade, authorization-bypass, protocol, relay, filetransfer, rust | PoC |
 | 2026-05-14 | — | [nginx-rift-cve-2026-42945](./pocs/web/2026-05-14_nginx-rift-cve-2026-42945/) | `web` | CVE-2026-42945 | Critical | RCE, unauthenticated, nginx, heap-overflow, buffer-overflow, rewrite | Weaponized |
 | 2026-05-15 | — | [exchange-health-checker-outbound-rule-blind-spot](./pocs/web/2026-05-15_exchange-health-checker-outbound-rule-blind-spot/) | `web` | CVE-2026-42897 | Medium | Exchange, HealthChecker, IIS, URL-Rewrite, outbound-rules, EOMT, CSP, detection-gap | Researched |
 | 2026-05-16 | — | [chrome-cssfontfeaturevaluesmap-use-after-free](./pocs/web/2026-05-16_chrome-cssfontfeaturevaluesmap-use-after-free/) | `web` | CVE-2026-2441 | High | use-after-free, Chrome, Blink, CSSOM, renderer-rce, unauthenticated, drive-by | Weaponized |
@@ -70,21 +95,30 @@
 | 2026-07-01 | 2026-06 | [cve-2026-42271-litellm-mcp-command-injection](./pocs/web/2026-07-01_cve-2026-42271-litellm-mcp-command-injection/) | `web` | CVE-2026-42271 | High | command-injection, LiteLLM, MCP, AI-application, ai-gateway, authenticated, api-key, subprocess | PoC |
 | 2026-07-01 | 2026-06 | [cve-2026-45247-mirasvit-magento-cache-warmer-rce](./pocs/web/2026-07-01_cve-2026-45247-mirasvit-magento-cache-warmer-rce/) | `web` | CVE-2026-45247 | Critical | php-object-injection, insecure-deserialization, RCE, Magento, Mirasvit, e-commerce, cookie-based, unauthenticated, CISA-KEV, active-exploitation | Weaponized |
 | 2026-07-01 | 2026-06-16 | [cve-2026-48907-joomla-jce-unauth-rce](./pocs/web/2026-07-01_cve-2026-48907-joomla-jce-unauth-rce/) | `web` | CVE-2026-48907 | Critical | RCE, unauthenticated, Joomla, JCE, CMS, access-control, webshell, php-webshell, file-upload, CISA-KEV, active-exploitation | Weaponized |
+| 2026-07-03 | 2026-06 | [cve-2026-45115-mybb-acp-privilege-escalation](./pocs/web/2026-07-03_cve-2026-45115-mybb-acp-privilege-escalation/) | `web` | None assigned as of 2026-07-03 (see Notes — CVE-2026-45115 identifies a separate, already-patched MyBB issue) | High | mybb, privilege-escalation, admin-cp, authorization-bypass, forum-software, php, access-control | PoC |
+| 2026-07-03 | 2026-06 | [discourse-scoped-api-key-route-bypass](./pocs/web/2026-07-03_discourse-scoped-api-key-route-bypass/) | `web` | None assigned as of 2026-07-03 | High | discourse, authorization-bypass, api-key-scope, rails, middleware, privilege-escalation, route-confusion | PoC |
+| 2026-07-03 | 2026-06 | [firefox-smartwindow-private-url-exfil](./pocs/web/2026-07-03_firefox-smartwindow-private-url-exfil/) | `web` | None assigned as of 2026-07-03 | High | firefox, smart-window, ai-assistant, privacy-leak, information-disclosure, url-token-exfiltration, browser, prompt-injection | PoC |
+| 2026-07-03 | 2026-07 | [flowise-mcp-env-var-case-bypass](./pocs/web/2026-07-03_flowise-mcp-env-var-case-bypass/) | `web` | None assigned as of 2026-07-03 | High | flowise, mcp, model-context-protocol, windows, environment-variable, case-insensitivity, node-options, rce | PoC |
+| 2026-07-03 | 2026-07 | [gogs-admin-csrf-git-hook-rce](./pocs/web/2026-07-03_gogs-admin-csrf-git-hook-rce/) | `web` | None assigned as of 2026-07-03 | Critical | gogs, csrf, git-hooks, privilege-escalation, rce, admin-takeover, git, self-hosted | Weaponized |
+| 2026-07-03 | 2026-07 | [ladybird-wasm-esm-host-function-rce](./pocs/web/2026-07-03_ladybird-wasm-esm-host-function-rce/) | `web` | None assigned as of 2026-07-03 | Critical | ladybird, browser, webassembly, wasm-gc, use-after-free, memory-corruption, rce, javascript-engine, sandbox-escape | Weaponized |
+| 2026-07-03 | 2026-07 | [nextjs-unstable-cache-key-collision](./pocs/web/2026-07-03_nextjs-unstable-cache-key-collision/) | `web` | None assigned as of 2026-07-03 | High | nextjs, unstable_cache, cache-poisoning, cache-key-collision, data-cache, information-disclosure, server-side-caching, javascript | PoC |
+| 2026-07-03 | 2026-06 | [nodebb-activitypub-uid-spoof](./pocs/web/2026-07-03_nodebb-activitypub-uid-spoof/) | `web` | None assigned as of 2026-07-03 | High | nodebb, activitypub, federation, authentication-bypass, spoofing, uid-forgery, forum-software, nodejs | PoC |
+| 2026-07-03 | 2026-06 | [php-857-streambucket-soap-rce](./pocs/web/2026-07-03_php-857-streambucket-soap-rce/) | `web` | None assigned as of 2026-07-03 | Critical | php, type-confusion, streambucket, soap, hashtable-overwrite, memory-corruption, rce, zend-engine | PoC |
 
 ---
 
-*Total POCs: 97*
+*Total POCs: 131*
 
 ## By Category
 
-- **`binary`** — 27 entries
-- **`cloud`** — 2 entries
+- **`binary`** — 38 entries
+- **`cloud`** — 6 entries
 - **`crypto`** — 0 entries
 - **`hardware`** — 0 entries
-- **`misc`** — 4 entries
-- **`network`** — 25 entries
+- **`misc`** — 5 entries
+- **`network`** — 34 entries
 - **`social-engineering`** — 0 entries
-- **`web`** — 40 entries
+- **`web`** — 49 entries
 
 ## Archives
 

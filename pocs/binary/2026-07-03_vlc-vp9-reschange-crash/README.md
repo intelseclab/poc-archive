@@ -1,0 +1,114 @@
+# VLC Bundled FFmpeg VP9 Decoder Resolution-Change Heap Crash
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-07-03 |
+| **Last Updated** | 2026-07 |
+| **Author / Researcher** | bikini (@ashdfrkl) — original discovery; mirrored via exploitarium |
+| **CVE / Advisory** | None assigned as of 2026-07-03 |
+| **Category** | binary |
+| **Severity** | Medium |
+| **CVSS Score** | Not yet scored (no CVE/CVSS assigned) |
+| **Status** | Incomplete PoC |
+| **Tags** | vlc, ffmpeg, vp9, ivf, heap-overflow, media-parsing, crash, windows, decoder |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | VLC media player, bundled FFmpeg VP9 decoder (`plugins/codec/libavcodec_plugin.dll`) |
+| **Versions Affected** | VLC 3.0.23 for Windows x64; VP9 decoder source lineage FFmpeg 4.4.x |
+| **Language / Platform** | Python (crafts the malicious IVF/VP9 file); target is Windows x64 VLC |
+| **Authentication Required** | No |
+| **Network Access Required** | No (local file opened by the victim in VLC) |
+
+---
+
+## Summary
+
+VLC 3.0.23's bundled FFmpeg VP9 decoder tracks per-frame slice-thread progress in an `entries` array sized from the superblock row count (`sb_rows`) of the current frame. A crafted two-frame VP9 IVF file — a `64x64` first frame followed by a `64x8192` second frame that keeps the VP9 tile-column layout stable — causes the decoder to reuse a stale, undersized `entries` allocation (sized for the small first frame) while the slice-thread reset loop writes a zero value for every row of the much larger second frame, producing a sequence of out-of-bounds heap writes past the original allocation. The researcher explicitly marks this work "Research status: incomplete and continuing" and has intentionally stopped short of demonstrating full exploitability beyond a crash. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated "exploitarium" vulnerability dump; it has not been vendor-confirmed.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+The VP9 decoder's slice-thread `entries` progress array is allocated based on `sb_rows = (height + 63) >> 6` for the frame that triggers allocation, but is not reallocated when a later frame increases `sb_rows` while the tile-column count stays the same. The reset loop `for (i = 0; i < s->sb_rows; i++) atomic_store(&s->entries[i], 0);` then writes zeroes across the new, larger row count into the old, smaller allocation — an out-of-bounds heap write.
+
+### Attack Vector
+
+1. Craft a VP9 IVF file with two frames: frame 1 at `64x64` (allocates `entries` for `sb_rows = 1`, 4 bytes), frame 2 at `64x8192` (`sb_rows = 128`) with the same tile-column configuration.
+2. Deliver the file to a victim who opens it in VLC 3.0.23 on Windows (e.g. via download, email attachment, or web link).
+3. VLC's bundled FFmpeg VP9 decoder decodes frame 1, allocating the small `entries` array.
+4. On decoding frame 2, the stale slice-thread reset loop writes zero to 128 row entries against the 4-byte allocation, corrupting adjacent heap memory.
+
+### Impact
+
+Heap corruption in the VLC process when opening an attacker-supplied VP9 video file; observed outcomes include heap-corruption-triggered termination and access violations. The researcher's own instrumentation observed 127 of 129 total `entries` stores landing past the requested 4-byte allocation. Full exploitability (e.g. controlled code execution) has not been demonstrated and the research is explicitly ongoing.
+
+---
+
+## Environment / Lab Setup
+
+```
+Target:   VLC media player 3.0.23 for Windows x64 (plugins/codec/libavcodec_plugin.dll, FFmpeg 4.4.x VP9 decoder lineage)
+Attacker: Python 3 (stdlib only) to generate the malicious IVF file
+```
+
+---
+
+## Proof of Concept
+
+### PoC Script
+
+> See `poc.py` in this folder.
+
+```bash
+python poc.py -o sample.ivf
+python poc.py --vlc "C:\Path\To\VLC\vlc.exe"
+```
+
+The script generates a 405-byte two-frame VP9 IVF file (`64x64` then `64x8192`) with a stable tile-column layout, prints its SHA256 hash and size, and optionally launches a local VLC binary against the generated sample to observe the crash.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+# VLC process crash/access-violation shortly after opening an attacker-supplied .ivf/VP9 file
+# Crash signatures pointing into plugins/codec/libavcodec_plugin.dll VP9 slice-thread reset code
+```
+
+**Signs of compromise:**
+- VLC crash reports or Windows Error Reporting entries referencing `libavcodec_plugin.dll` shortly after a video file is opened
+- Unusual `.ivf`/VP9 files with a small initial frame followed by a dramatically larger frame at the same tile-column configuration
+- Heap corruption or access violation crash dumps with faulting addresses inside VP9 decoder slice-thread structures
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Primary fix** | No vendor patch confirmed as of 2026-07-03 — monitor for advisory; VP9 decoder should reallocate (or bound) the slice-thread `entries` array whenever `sb_rows` increases across frames, not only when tile-column count changes |
+| **Interim mitigation** | Avoid opening untrusted video files in VLC 3.0.23; consider using a hardened/sandboxed media player or up-to-date FFmpeg build for untrusted content until a fix lands |
+
+---
+
+## References
+
+- [Source repository (bikini/exploitarium)](https://github.com/bikini/exploitarium/tree/main/vlc-vp9-reschange-crash-poc)
+
+---
+
+## Notes
+
+Mirrored from https://github.com/bikini/exploitarium (folder: `vlc-vp9-reschange-crash-poc`) on 2026-07-03. No CVE has been assigned as of ingestion — this is an uncoordinated disclosure by a pseudonymous researcher; treat with appropriate caution pending vendor confirmation. The source author explicitly marks this entry "Research status: incomplete and continuing" — this is a compact crash reproducer, and full exploitability of the underlying primitive has not been established.

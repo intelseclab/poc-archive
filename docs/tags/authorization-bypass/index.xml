@@ -1,4 +1,344 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Authorization-Bypass on PoC Archive</title><link>https://poc.intelseclab.com/tags/authorization-bypass/</link><description>Recent content in Authorization-Bypass on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sat, 09 May 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/authorization-bypass/index.xml" rel="self" type="application/rss+xml"/><item><title>Next.js App Router Segment-Prefetch Middleware Bypass (CVE-2026-44575)</title><link>https://poc.intelseclab.com/pocs/web/2026-05-17_nextjs-segment-prefetch-middleware-bypass/</link><pubDate>Sun, 17 May 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-05-17_nextjs-segment-prefetch-middleware-bypass/</guid><description>&lt;!-- 
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Authorization-Bypass on PoC Archive</title><link>https://poc.intelseclab.com/tags/authorization-bypass/</link><description>Recent content in Authorization-Bypass on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Fri, 03 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/authorization-bypass/index.xml" rel="self" type="application/rss+xml"/><item><title>Discourse Scoped API Key Pre-Route Authorization Bypass</title><link>https://poc.intelseclab.com/pocs/web/2026-07-03_discourse-scoped-api-key-route-bypass/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-03_discourse-scoped-api-key-route-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>bikini (@ashdfrkl) — original discovery; mirrored via exploitarium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>None assigned as of 2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not yet scored (no CVE/CVSS assigned)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>discourse, authorization-bypass, api-key-scope, rails, middleware, privilege-escalation, route-confusion&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Discourse (forum platform)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Commit &lt;code>3dfcc8f884313da69711ed5f26f3749fb6516ef2&lt;/code> (verified against &lt;code>docker.io/discourse/discourse_dev:20260609-1222&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Ruby on Rails (target), Python 3.10+ (PoC driver using stdlib HTTP only)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (attacker needs a valid granular all-users API key scoped only to &lt;code>topics:read&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP access to the Discourse instance)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Discourse&amp;rsquo;s overload-protection middleware authenticates API requests before Rails routing has resolved the actual HTTP verb, and its scoped API key matcher (&lt;code>lib/route_matcher.rb&lt;/code>) calls &lt;code>Rails.application.routes.recognize_path(request.path_info)&lt;/code> without passing the real request method. By sending a caller-controlled &lt;code>X-Request-Start&lt;/code> header that makes the request appear queued long enough to trigger the overload-protection authentication path, an attacker holding a read-only scoped API key (&lt;code>topics:read&lt;/code>) can have that key&amp;rsquo;s permission check resolve against the GET route for a topic path even though the actual request is a &lt;code>PUT /t/:topic_id.json&lt;/code>. The middleware then caches the authenticated API user in the Rack environment, and the later &lt;code>TopicsController#update&lt;/code> action executes using that cached user, effectively turning a read-scoped API key into a write-capable request. In the researcher&amp;rsquo;s validated run, a control &lt;code>PUT&lt;/code> without the header was correctly rejected (403) while the same request with &lt;code>X-Request-Start: t=0&lt;/code> succeeded (200) and changed the topic title. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated &amp;ldquo;exploitarium&amp;rdquo; vulnerability dump; it has not been vendor-confirmed.&lt;/p></description></item><item><title>MyBB 1.8.40 Limited Admin CP User-Manager to Full Administrator Privilege Escalation</title><link>https://poc.intelseclab.com/pocs/web/2026-07-03_cve-2026-45115-mybb-acp-privilege-escalation/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-03_cve-2026-45115-mybb-acp-privilege-escalation/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>bikini (@ashdfrkl) — original discovery; mirrored via exploitarium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>None assigned as of 2026-07-03 (see Notes — CVE-2026-45115 identifies a separate, already-patched MyBB issue)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not yet scored (no CVE/CVSS assigned)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>mybb, privilege-escalation, admin-cp, authorization-bypass, forum-software, php, access-control&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-45115 (different, already-patched MyBB buddy-list XSS chain)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>MyBB forum software, Admin CP add-user flow&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>MyBB 1.8.40 (version code 1840), latest release as of source publication&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (standard library only); targets PHP-based MyBB Admin CP over HTTP(S)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — requires an authenticated Admin CP account with only the &lt;code>user-users&lt;/code> (manage users) permission&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>A non-super Admin CP account that has only the user-management permission (&lt;code>user-users = 1&lt;/code>) can use the standard Admin CP &amp;ldquo;add user&amp;rdquo; form to create a brand-new account directly in the Administrator group (&lt;code>gid=4&lt;/code>), because the underlying user data handler&amp;rsquo;s &lt;code>verify_usergroup()&lt;/code> unconditionally returns &lt;code>true&lt;/code> and never checks whether the acting ACP user is authorized to grant an Admin CP-capable group. The add-user form itself renders every non-guest usergroup, including Administrator, and the submitted &lt;code>usergroup&lt;/code>/&lt;code>additionalgroups&lt;/code>/&lt;code>displaygroup&lt;/code> fields are forwarded to the handler without an authorization check. The newly created account fully inherits Administrator-group Admin CP permissions, including access to modules (such as Configuration) that the original limited account was explicitly denied — a complete privilege escalation from a narrowly scoped ACP role to full application administration. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated &amp;ldquo;exploitarium&amp;rdquo; vulnerability dump; it has not been vendor-confirmed, and the source README explicitly distinguishes this issue from CVE-2026-45115, which is a different, already-patched buddy/ignore-list username stored-XSS chain in the same MyBB version.&lt;/p></description></item><item><title>Nextcloud Federated Share OCM Bearer Token Scope Escalation to Sender WebDAV Access</title><link>https://poc.intelseclab.com/pocs/cloud/2026-07-03_nextcloud-federated-share-bearer-token-leak/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/cloud/2026-07-03_nextcloud-federated-share-bearer-token-leak/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>bikini (@ashdfrkl) — original discovery; mirrored via exploitarium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>None assigned as of 2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>cloud&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not yet scored (no CVE/CVSS assigned)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>nextcloud, federated-sharing, ocm, bearer-token, webdav, token-scope, authorization-bypass, oauth-like-flow&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Nextcloud Server — federated file sharing, OCM token exchange, WebDAV bearer authentication&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Nextcloud Server &lt;code>35.0.0 dev&lt;/code> / build &lt;code>35.0.0.1&lt;/code>, commit &lt;code>d9027189329b6b13159d480f7d5e36444badde13&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3.10+ standard library; targets Nextcloud Server HTTP/OCS/WebDAV APIs across two federated instances&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — attacker needs a normal local account on the recipient instance; sender must create one federated share to that account&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>When a Nextcloud user creates a normal federated file share, the sender instance generates a permanent authentication token that is also stored as the federated share&amp;rsquo;s secret; that token is created without an explicit narrow scope, so it defaults to full filesystem access. The recipient instance&amp;rsquo;s pending remote-shares OCS API (&lt;code>/remote_shares/pending&lt;/code>) serializes this same secret back to the recipient as a &lt;code>refresh_token&lt;/code> field. The sender&amp;rsquo;s OCM token endpoint (&lt;code>cloud_federation_api&lt;/code>) accepts that value as an authorization code and exchanges it for a bearer access token — again without applying a filesystem-restricting scope — and that bearer token is then honored by the sender&amp;rsquo;s WebDAV endpoint as a full session for the sender user, not just for the one shared file. As a result, a recipient of a single federated share can read the sender&amp;rsquo;s pending-share metadata, exchange the leaked token, and use the resulting bearer to fetch arbitrary WebDAV paths belonging to the sender account, well outside the scope of what was actually shared. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated &amp;ldquo;exploitarium&amp;rdquo; vulnerability dump; it has not been vendor-confirmed.&lt;/p></description></item><item><title>RustDesk Relay Session Downgrade and FileTransfer Authorization Scope Bypass</title><link>https://poc.intelseclab.com/pocs/network/2026-07-03_rustdesk-session-permission-bypass/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-03_rustdesk-session-permission-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>bikini (@ashdfrkl) — original discovery; mirrored via exploitarium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>None assigned as of 2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not yet scored (no CVE/CVSS assigned)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>rustdesk, remote-desktop, session-downgrade, authorization-bypass, protocol, relay, filetransfer, rust&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>RustDesk (&lt;code>rustdesk/rustdesk&lt;/code>) — client relay/session setup and server-side connection dispatcher&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Validated against source checkout &lt;code>rustdesk/rustdesk&lt;/code> commit &lt;code>ff226f6d8013dee2de5a6553abaf67bf32b3e875&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Rust (RustDesk client/server); PoC is a Rust protobuf payload generator with a loopback relay simulation&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Finding 1 (session downgrade): requires attacker control of the relay/rendezvous metadata path (no victim password needed). Finding 2 (FileTransfer scope bypass): requires a valid FileTransfer authorization (password proof or user approval)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>This entry covers two related but distinct RustDesk findings. First, RustDesk&amp;rsquo;s client can fail open on secure-session setup: when the signed peer key material from the rendezvous/relay path is missing or invalid, the client requests a non-secure relay and sends an empty handshake message rather than failing closed, allowing a malicious relay/rendezvous-position attacker to observe the subsequent plaintext login and inject protocol messages (e.g. mouse events) into an otherwise-authenticated session without knowing the password. Second, RustDesk records FileTransfer logins as &lt;code>AuthConnType::FileTransfer&lt;/code>, but the post-authorization message dispatcher gates many message types (mouse, keyboard, screenshot, display capture) on the broad &lt;code>self.authorized&lt;/code> flag instead of the specific connection type, so a session that was only authorized for file transfer can still reach remote-control-class message handlers. Both PoCs work by verifying the vulnerable source shape against a local RustDesk checkout and generating/replaying the relevant framed protocol payloads. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated &amp;ldquo;exploitarium&amp;rdquo; vulnerability dump; it has not been vendor-confirmed.&lt;/p></description></item><item><title>Next.js App Router Segment-Prefetch Middleware Bypass (CVE-2026-44575)</title><link>https://poc.intelseclab.com/pocs/web/2026-05-17_nextjs-segment-prefetch-middleware-bypass/</link><pubDate>Sun, 17 May 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-05-17_nextjs-segment-prefetch-middleware-bypass/</guid><description>&lt;!-- 
  File: 2026-05-17_nextjs-segment-prefetch-middleware-bypass.md
  Location: pocs/&lt;category>/
 -->

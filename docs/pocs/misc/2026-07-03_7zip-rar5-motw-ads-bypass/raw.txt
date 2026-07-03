@@ -1,0 +1,110 @@
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-07-03 |
+| **Last Updated** | 2026-07 |
+| **Author / Researcher** | bikini (@ashdfrkl) — original discovery; mirrored via exploitarium |
+| **CVE / Advisory** | None assigned as of 2026-07-03 |
+| **Category** | misc |
+| **Severity** | High |
+| **CVSS Score** | Not yet scored (no CVE/CVSS assigned) |
+| **Status** | PoC |
+| **Tags** | 7-zip, rar5, mark-of-the-web, alternate-data-streams, ntfs, motw-bypass, windows, archive-extraction |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | 7-Zip 26.01 x64 for Windows |
+| **Versions Affected** | 7-Zip 26.01 (Windows, NTFS destination) |
+| **Language / Platform** | Python 3.10+ (PoC generator/driver, invokes installed 7z.exe) |
+| **Authentication Required** | No (victim must extract the crafted archive) |
+| **Network Access Required** | No (local archive extraction; delivery is out of scope) |
+
+---
+
+## Summary
+
+7-Zip 26.01 on Windows mishandles RAR5 archives that contain crafted `STM` (stream) service records alongside a normal file entry. By naming one stream `::$DATA` and another `:Zone.Identifier:$DATA`, an attacker can make the archive-provided data silently override both the extracted file's final visible bytes and its propagated Mark-of-the-Web (MotW) Zone.Identifier stream, because NTFS resolves these differently-suffixed stream names to the same underlying alternate data stream that 7-Zip's own zone-propagation logic writes to. When the source archive itself carries an Internet-zone marker, 7-Zip normally propagates that marker to extracted files, but the crafted RAR5 stream is applied afterward and overwrites it, effectively resetting the extracted file's zone to `ZoneId=0` (trusted) while also swapping in attacker-controlled content. This lets a downloaded archive produce an extracted document that both looks different from what a user might expect and no longer carries the "downloaded from the internet" security warning. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated "exploitarium" vulnerability dump; it has not been vendor-confirmed.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+7-Zip's Zone.Identifier propagation guard checks for streams named exactly `Zone.Identifier`, but treats an archive-supplied stream name suffixed with `:$DATA` (e.g., `Zone.Identifier:$DATA`) as a distinct name even though NTFS resolves both forms to the identical alternate data stream on disk — allowing the archive-supplied stream to silently replace the zone marker 7-Zip itself just wrote.
+
+### Attack Vector
+
+1. Attacker builds a minimal RAR5 archive containing a normal, benign-looking `invoice.docx` file entry.
+2. Attacker adds a RAR5 `STM` stream named `::$DATA` carrying attacker-controlled final file bytes (targets the file's default/unnamed NTFS stream).
+3. Attacker adds a second RAR5 `STM` stream named `:Zone.Identifier:$DATA` carrying attacker-controlled MotW content (e.g., `ZoneId=0`).
+4. Attacker marks the archive itself with an Internet-zone identifier (`ZoneId=3`), as it would be after download.
+5. Victim extracts the archive with a vulnerable 7-Zip 26.01 build; 7-Zip propagates the archive's Internet zone to the extracted file, then the crafted `STM` streams overwrite both the visible content and the zone marker.
+
+### Impact
+
+Arbitrary control over both the final content written to disk and the security-zone metadata of an extracted file, enabling MotW-based security warnings (SmartScreen, Office Protected View, etc.) to be suppressed on a file that originated from the internet.
+
+---
+
+## Environment / Lab Setup
+
+```
+Target:   Windows host with 7-Zip 26.01 (x64) installed, NTFS volume
+Attacker: Python 3.10+, no additional packages required
+```
+
+---
+
+## Proof of Concept
+
+### PoC Script
+
+> See `poc.py` in this folder.
+
+```bash
+python poc.py --sevenzip "C:\Program Files\7-Zip\7z.exe"
+```
+
+The script builds a RAR5 archive in memory containing a decoy `invoice.docx` entry plus the two crafted `STM` streams, marks the archive itself as Internet-zone, extracts it with the target 7-Zip build, and verifies both that the extracted file content was swapped and that its Zone.Identifier stream was reset to `ZoneId=0`.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+```
+
+**Signs of compromise:**
+- Documents extracted from downloaded archives that unexpectedly open without SmartScreen/Protected View warnings
+- RAR5 archives containing multiple `STM` records with `$DATA`-suffixed stream names for a single file entry
+- Mismatch between an archive's own Zone.Identifier and the Zone.Identifier of files extracted from it
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Primary fix** | No vendor patch confirmed as of 2026-07-03 — monitor for advisory from 7-Zip |
+| **Interim mitigation** | Extract untrusted RAR5 archives in an isolated/sandboxed environment; do not rely on MotW alone to gate execution of extracted files; verify extracted file Zone.Identifier streams before opening |
+
+---
+
+## References
+
+- [Source repository (bikini/exploitarium)](https://github.com/bikini/exploitarium/tree/main/7zip-rar5-motw-chain-poc)
+
+---
+
+## Notes
+
+Mirrored from https://github.com/bikini/exploitarium (folder: `7zip-rar5-motw-chain-poc`) on 2026-07-03. No CVE has been assigned as of ingestion — this is an uncoordinated disclosure by a pseudonymous researcher; treat with appropriate caution pending vendor confirmation.
+

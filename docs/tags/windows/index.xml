@@ -1,4 +1,684 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Windows on PoC Archive</title><link>https://poc.intelseclab.com/tags/windows/</link><description>Recent content in Windows on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Thu, 28 May 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/windows/index.xml" rel="self" type="application/rss+xml"/><item><title>Windows CTFMON Arbitrary Section Object EoP — GreenPlasma (CVE-2026-45586)</title><link>https://poc.intelseclab.com/pocs/binary/2026-06-28_cve-2026-45586-ctfmon-greenplasma-lpe/</link><pubDate>Sun, 28 Jun 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-06-28_cve-2026-45586-ctfmon-greenplasma-lpe/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Windows on PoC Archive</title><link>https://poc.intelseclab.com/tags/windows/</link><description>Recent content in Windows on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Fri, 03 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/windows/index.xml" rel="self" type="application/rss+xml"/><item><title>7-Zip RAR5 Mark-of-the-Web / ADS Full-Chain Bypass</title><link>https://poc.intelseclab.com/pocs/misc/2026-07-03_7zip-rar5-motw-ads-bypass/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/misc/2026-07-03_7zip-rar5-motw-ads-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>bikini (@ashdfrkl) — original discovery; mirrored via exploitarium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>None assigned as of 2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>misc&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not yet scored (no CVE/CVSS assigned)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>7-zip, rar5, mark-of-the-web, alternate-data-streams, ntfs, motw-bypass, windows, archive-extraction&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>7-Zip 26.01 x64 for Windows&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>7-Zip 26.01 (Windows, NTFS destination)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3.10+ (PoC generator/driver, invokes installed 7z.exe)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (victim must extract the crafted archive)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No (local archive extraction; delivery is out of scope)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>7-Zip 26.01 on Windows mishandles RAR5 archives that contain crafted &lt;code>STM&lt;/code> (stream) service records alongside a normal file entry. By naming one stream &lt;code>::$DATA&lt;/code> and another &lt;code>:Zone.Identifier:$DATA&lt;/code>, an attacker can make the archive-provided data silently override both the extracted file&amp;rsquo;s final visible bytes and its propagated Mark-of-the-Web (MotW) Zone.Identifier stream, because NTFS resolves these differently-suffixed stream names to the same underlying alternate data stream that 7-Zip&amp;rsquo;s own zone-propagation logic writes to. When the source archive itself carries an Internet-zone marker, 7-Zip normally propagates that marker to extracted files, but the crafted RAR5 stream is applied afterward and overwrites it, effectively resetting the extracted file&amp;rsquo;s zone to &lt;code>ZoneId=0&lt;/code> (trusted) while also swapping in attacker-controlled content. This lets a downloaded archive produce an extracted document that both looks different from what a user might expect and no longer carries the &amp;ldquo;downloaded from the internet&amp;rdquo; security warning. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated &amp;ldquo;exploitarium&amp;rdquo; vulnerability dump; it has not been vendor-confirmed.&lt;/p></description></item><item><title>AnyDesk Printer Pipe COM Impersonation Local Privilege Escalation</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-03_anydesk-printer-pipe-com-impersonation-lpe/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-03_anydesk-printer-pipe-com-impersonation-lpe/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>bikini (@ashdfrkl) — original discovery; mirrored via exploitarium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>None assigned as of 2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not yet scored (no CVE/CVSS assigned)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>anydesk, windows, privilege-escalation, com-impersonation, named-pipe, local-service, lpe, ipc&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>AnyDesk for Windows 9.7.6&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>9.7.6 (release observed 2026-06-15); other nearby versions unconfirmed&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3.10+ with &lt;code>pywin32&lt;/code> (PoC), targets Windows x86 service process&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Local-only (requires a low-privileged local Windows account)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>AnyDesk&amp;rsquo;s local printer IPC worker creates a named pipe (&lt;code>\\.\pipe\adprinterpipe&lt;/code>) with an ACL that grants access to &lt;code>Everyone&lt;/code>, then accepts a message containing attacker-controlled COM marshaling bytes, unmarshals it into an &lt;code>IUnknown&lt;/code>, queries for &lt;code>IStream&lt;/code>, and invokes &lt;code>IStream::Read&lt;/code> on it. Because the AnyDesk process initializes COM security with impersonation level &lt;code>RPC_C_IMP_LEVEL_IMPERSONATE&lt;/code>, the attacker-supplied COM object&amp;rsquo;s callback can impersonate the calling AnyDesk process during that invocation. When AnyDesk is installed as a Windows service (the default, since &lt;code>CreateServiceW&lt;/code> is called with a null service account and thus runs as LocalSystem), a low-privileged local user who can connect to the pipe can escalate to the AnyDesk service identity — in the default configuration, &lt;code>NT AUTHORITY\SYSTEM&lt;/code>. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated &amp;ldquo;exploitarium&amp;rdquo; vulnerability dump; it has not been vendor-confirmed.&lt;/p></description></item><item><title>Flowise Custom MCP Environment Variable Case Bypass</title><link>https://poc.intelseclab.com/pocs/web/2026-07-03_flowise-mcp-env-var-case-bypass/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-03_flowise-mcp-env-var-case-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>bikini (@ashdfrkl) — original discovery; mirrored via exploitarium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>None assigned as of 2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not yet scored (no CVE/CVSS assigned)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>flowise, mcp, model-context-protocol, windows, environment-variable, case-insensitivity, node-options, rce&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Flowise / &lt;code>flowise-components&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>3.1.2&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Node.js/TypeScript, Windows deployments (Custom MCP stdio transport)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (authenticated Flowise session or API-key context)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Flowise&amp;rsquo;s Custom MCP stdio node validates configured environment variables against a denylist (&lt;code>PATH&lt;/code>, &lt;code>LD_LIBRARY_PATH&lt;/code>, &lt;code>DYLD_LIBRARY_PATH&lt;/code>, &lt;code>NODE_OPTIONS&lt;/code>) using exact, case-sensitive string comparison. Windows, however, treats environment variable names case-insensitively, so a casing variant such as &lt;code>node_options&lt;/code> sails through Flowise&amp;rsquo;s validation while still being honored by a spawned Node.js child process as &lt;code>NODE_OPTIONS&lt;/code>. When the configured MCP command starts a Node.js process, this lets an authenticated user preload attacker-chosen JavaScript via Node&amp;rsquo;s startup option handling, achieving code execution in the Flowise worker/server context on Windows. The included PoC models Flowise&amp;rsquo;s validator, confirms the exact-case denylist blocks &lt;code>NODE_OPTIONS&lt;/code> but not &lt;code>node_options&lt;/code>, and launches a real Node.js child process to prove the lowercase variant is honored. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated &amp;ldquo;exploitarium&amp;rdquo; vulnerability dump; it has not been vendor-confirmed.&lt;/p></description></item><item><title>ImageMagick Ghostscript Delegate Search Path Hijack</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-03_imagemagick-ghostscript-delegate-hijack/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-03_imagemagick-ghostscript-delegate-hijack/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>bikini (@ashdfrkl) — original discovery; mirrored via exploitarium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>None assigned as of 2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not yet scored (no CVE/CVSS assigned)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>imagemagick, ghostscript, windows, search-path-hijack, dll-planting-adjacent, delegate-execution, code-execution, pdf&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>ImageMagick (Ghostscript delegate for PDF/PS/EPS conversion) on Windows&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>ImageMagick 7.1.2-25 with Ghostscript 10.07.1 (Windows x64)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C/C++ (ImageMagick delegate handling), Python 3 PoC harness, Windows process creation API&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Local-only (attacker needs write access to the conversion working directory)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>When ImageMagick converts PDF/PS/EPS-family inputs on Windows and cannot resolve a full path to Ghostscript, it falls back to invoking the bare executable name &lt;code>gswin64c.exe&lt;/code> and launches it through the Windows process API with the application name left unset — letting standard Windows executable search order pick the binary that actually runs. If the conversion process&amp;rsquo;s working directory is attacker-writable, a planted &lt;code>gswin64c.exe&lt;/code> there can be launched instead of the real Ghostscript binary whenever ImageMagick processes a PDF/PS-family file placed in (or alongside inputs in) that directory. The included PoC demonstrates this with a harmless marker-writing helper: conversions from a &amp;ldquo;control&amp;rdquo; directory (no planted binary) succeed normally via &lt;code>PATH&lt;/code>, while conversions from a &amp;ldquo;hijack&amp;rdquo; directory (containing the planted &lt;code>gswin64c.exe&lt;/code>) launch the attacker&amp;rsquo;s binary and record the exact delegate arguments ImageMagick passed to it. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated &amp;ldquo;exploitarium&amp;rdquo; vulnerability dump; it has not been vendor-confirmed.&lt;/p></description></item><item><title>libssh2 Publickey Subsystem List Parser Heap Corruption to Code Execution</title><link>https://poc.intelseclab.com/pocs/network/2026-07-03_libssh2-publickey-list-parser-oob/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-03_libssh2-publickey-list-parser-oob/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>bikini (@ashdfrkl) — original discovery; mirrored via exploitarium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>None assigned as of 2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not yet scored (no CVE/CVSS assigned)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>libssh2, ssh, publickey-subsystem, heap-overflow, use-after-free, integer-overflow, windows, rce, memory-corruption&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>libssh2, publickey subsystem list parser (&lt;code>src/publickey.c&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>libssh2/libssh2 &lt;code>master&lt;/code> at commit &lt;code>e75b4bae3c68a9bde71de1fb6b0fba5b0c716020&lt;/code> (2026-06-24)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C (Win32/Win64 PoC harnesses), Python (Paramiko-based live SSH server) — targets Windows libssh2 clients&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (triggered by a malicious/compromised SSH server against a connecting libssh2 client using the publickey subsystem)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (delivered over an SSH connection, including a live end-to-end transport proof)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>&lt;code>libssh2_publickey_list_fetch()&lt;/code> parses a stream of publickey-subsystem response packets and grows an array of &lt;code>libssh2_publickey_list&lt;/code> entries as responses arrive, but the parser has two distinct memory-safety defects depending on target architecture. On 32-bit Windows builds, &lt;code>num_attrs * sizeof(libssh2_publickey_attribute)&lt;/code> can integer-overflow (e.g. &lt;code>0x0ccccccd * 20 = 0x100000004&lt;/code>, truncating to a 4-byte allocation on 32-bit &lt;code>size_t&lt;/code>), after which the attribute-parsing loop writes multiple attacker-controlled fields past the undersized buffer, letting an attacker groom an adjacent callback pointer and redirect execution. On 64-bit builds the same tiny-allocation path is not reachable, but a use-after-free exists instead: an unexpected &amp;ldquo;recognized&amp;rdquo; version response frees an attacker-shaped response buffer while a subsequent malformed publickey response grows the list allocation into that freed slot, so list cleanup later walks attacker-shaped entries and frees attacker-chosen &lt;code>attrs&lt;/code> pointers, which can be reclaimed and used to hijack a callback. The PoC package includes both a Win32 heap-groom chain and a Win64 free/reclaim chain, plus a live end-to-end proof that drives the Win64 chain over a real localhost SSH session using a Paramiko server and a target-shaped libssh2 client. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated &amp;ldquo;exploitarium&amp;rdquo; vulnerability dump; it has not been vendor-confirmed.&lt;/p></description></item><item><title>OpenVPN Connect Server-Pushed Option Current-User Command Execution</title><link>https://poc.intelseclab.com/pocs/network/2026-07-03_openvpn-connect-server-pushed-option-ace/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-03_openvpn-connect-server-pushed-option-ace/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>bikini (@ashdfrkl) — original discovery; mirrored via exploitarium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>None assigned as of 2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not yet scored (no CVE/CVSS assigned)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>openvpn, openvpn-connect, malicious-vpn-server, command-execution, script-permission-bypass, pushed-options, windows, client-side&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>OpenVPN Connect for Windows&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&lt;code>3.8.0 (4528)&lt;/code>, OpenVPN core &lt;code>3.11.3&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Windows desktop client; Python 3.9+ PoC driving a local OpenVPN 2.x test server&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (attacker only needs the victim to import and connect to a malicious &lt;code>.ovpn&lt;/code> profile)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (victim must connect to the attacker-controlled OpenVPN server)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>A malicious OpenVPN server can push an &lt;code>echo&lt;/code> option to a connected OpenVPN Connect for Windows client that decodes into the internal &lt;code>script.win.user.disconnect&lt;/code> script key. OpenVPN Connect then executes that pushed command when the client disconnects, even though the imported profile&amp;rsquo;s script-permission state is unset or explicitly &lt;code>false&lt;/code> — meaning the client believes scripting is disabled while the server-pushed echo path bypasses that check entirely. The same PoC bundle also documents a second, lower-severity finding: a malicious server can push &lt;code>dhcp-option PROXY_AUTO_CONFIG_URL&lt;/code> to set a server-controlled PAC (proxy auto-config) URL in the victim&amp;rsquo;s HKCU Internet Settings for the duration of the VPN session, via the privileged &lt;code>/tun-setup&lt;/code> helper path, though this state is cleaned up automatically on disconnect. Both findings were locally verified by the researcher against the stated OpenVPN Connect build. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated &amp;ldquo;exploitarium&amp;rdquo; vulnerability dump; it has not been vendor-confirmed.&lt;/p></description></item><item><title>System Informer phsvc Trusted-Host Confused Deputy LPE</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-03_systeminformer-phsvc-trusted-host-lpe/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-03_systeminformer-phsvc-trusted-host-lpe/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>bikini (@ashdfrkl) — original discovery; mirrored via exploitarium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>None assigned as of 2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not yet scored (no CVE/CVSS assigned)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>windows, system-informer, process-hacker, lpe, confused-deputy, alpc, phsvc, authenticode, local-privilege-escalation&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>System Informer (Process Hacker successor), &lt;code>phsvc&lt;/code> helper process&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>System Informer canary &lt;code>4.0.26162.539&lt;/code>, source commit &lt;code>5311c5ff7ebe0a900a792730395faf147d4451b9&lt;/code> (build date 2026-06-11)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C, Windows x64&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Local-only (standard/medium-integrity local user)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>System Informer&amp;rsquo;s privileged helper process &lt;code>phsvc&lt;/code> exposes an ALPC API port (&lt;code>\BaseNamedObjects\SiSvcApiPort&lt;/code>) with a connect ACL open to Everyone, and authorizes connecting clients purely by checking whether the client&amp;rsquo;s process image is generically Authenticode-trusted via &lt;code>PhVerifyFileEx&lt;/code>. Because a trusted Microsoft-signed host such as &lt;code>rundll32.exe&lt;/code> can load and execute an attacker-controlled unsigned DLL, code running inside that DLL inherits the host image&amp;rsquo;s trusted status when connecting to the helper, letting it invoke privileged helper APIs such as &lt;code>PhSvcCreateProcessIgnoreIfeoDebuggerApiNumber&lt;/code>. When an elevated &lt;code>phsvc&lt;/code> instance is live, this lets a low-privileged local user cause the helper to create an attacker-chosen process in the helper&amp;rsquo;s elevated security context. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated &amp;ldquo;exploitarium&amp;rdquo; vulnerability dump; it has not been vendor-confirmed.&lt;/p></description></item><item><title>VLC Bundled FFmpeg VP9 Decoder Resolution-Change Heap Crash</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-03_vlc-vp9-reschange-crash/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-03_vlc-vp9-reschange-crash/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>bikini (@ashdfrkl) — original discovery; mirrored via exploitarium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>None assigned as of 2026-07-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Medium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not yet scored (no CVE/CVSS assigned)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Incomplete PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>vlc, ffmpeg, vp9, ivf, heap-overflow, media-parsing, crash, windows, decoder&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>VLC media player, bundled FFmpeg VP9 decoder (&lt;code>plugins/codec/libavcodec_plugin.dll&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>VLC 3.0.23 for Windows x64; VP9 decoder source lineage FFmpeg 4.4.x&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python (crafts the malicious IVF/VP9 file); target is Windows x64 VLC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No (local file opened by the victim in VLC)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>VLC 3.0.23&amp;rsquo;s bundled FFmpeg VP9 decoder tracks per-frame slice-thread progress in an &lt;code>entries&lt;/code> array sized from the superblock row count (&lt;code>sb_rows&lt;/code>) of the current frame. A crafted two-frame VP9 IVF file — a &lt;code>64x64&lt;/code> first frame followed by a &lt;code>64x8192&lt;/code> second frame that keeps the VP9 tile-column layout stable — causes the decoder to reuse a stale, undersized &lt;code>entries&lt;/code> allocation (sized for the small first frame) while the slice-thread reset loop writes a zero value for every row of the much larger second frame, producing a sequence of out-of-bounds heap writes past the original allocation. The researcher explicitly marks this work &amp;ldquo;Research status: incomplete and continuing&amp;rdquo; and has intentionally stopped short of demonstrating full exploitability beyond a crash. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated &amp;ldquo;exploitarium&amp;rdquo; vulnerability dump; it has not been vendor-confirmed.&lt;/p></description></item><item><title>Windows CTFMON Arbitrary Section Object EoP — GreenPlasma (CVE-2026-45586)</title><link>https://poc.intelseclab.com/pocs/binary/2026-06-28_cve-2026-45586-ctfmon-greenplasma-lpe/</link><pubDate>Sun, 28 Jun 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-06-28_cve-2026-45586-ctfmon-greenplasma-lpe/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

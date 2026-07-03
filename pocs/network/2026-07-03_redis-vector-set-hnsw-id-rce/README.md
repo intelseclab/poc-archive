@@ -1,0 +1,123 @@
+# Redis Vector Set Duplicate HNSW Node ID RCE
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-07-03 |
+| **Last Updated** | 2026-07 |
+| **Author / Researcher** | bikini (@ashdfrkl) — original discovery; mirrored via exploitarium |
+| **CVE / Advisory** | None assigned as of 2026-07-03 |
+| **Category** | network |
+| **Severity** | Critical |
+| **CVSS Score** | Not yet scored (no CVE/CVSS assigned) |
+| **Status** | Weaponized |
+| **Tags** | redis, vector-set, hnsw, rce, deserialization, use-after-free, heap-corruption, rdb-restore |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Redis server, Vector Set module (`modules/vector-sets`) |
+| **Versions Affected** | Tested commit `5b22a09918743ba72952e35e431db23eb3d19605` (`v=255.255.255`), Linux x86-64, libc malloc |
+| **Language / Platform** | Python PoC driving Redis over the RESP/TCP protocol |
+| **Authentication Required** | No (assumes network access to an unauthenticated or reachable Redis instance; no Redis AUTH needed by the PoC) |
+| **Network Access Required** | Yes |
+
+---
+
+## Summary
+
+Redis Vector Set RDB/RESTORE deserialization accepts serialized HNSW graph nodes that reuse the same node ID, but the ID-lookup table only tracks one node per ID while the element dictionary tracks nodes by name, so link validation ends up trusting IDs instead of enforcing a strict one-to-one ID-to-object mapping. Removing the dictionary-visible node for a duplicated ID leaves other HNSW links pointing at freed memory, which remains reachable through further graph operations such as `VLINKS`. By reclaiming freed nodes with attacker-shaped Redis strings, the PoC first builds a 64-bit arbitrary-address read oracle via `VLINKS ... WITHSCORES` to leak `free@GOT`/libc/`system`, and then uses two stale neighbor links during `hnsw_reconnect_nodes()` to overwrite a live module value's type and value pointers; deleting the corrupted key routes through `freeModuleObject()` and invokes `system()` with an attacker-controlled buffer inside the Redis process. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated "exploitarium" vulnerability dump; it has not been vendor-confirmed.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+`hnsw_deserialize_index()` populates the HNSW node-ID table and validates links purely by ID, allowing duplicate serialized node IDs to alias distinct node objects; `hnsw_delete_node()` then invokes `hnsw_reconnect_nodes()` while stale duplicate-ID neighbor links are still reachable, resulting in a use-after-free that is escalated into an arbitrary read/write primitive and ultimately code execution when the corrupted module value is freed.
+
+### Attack Vector
+
+1. Connect to the target `redis-server` over its normal TCP command port.
+2. Send a malformed Vector Set `RESTORE` payload containing duplicate HNSW node IDs.
+3. Remove one duplicate element with `VREM`, leaving a stale HNSW link pointing at freed memory.
+4. Reclaim the freed allocation with a `SET`/`SETRANGE` string shaped as a fake HNSW node.
+5. Use `VLINKS ... WITHSCORES` against masked probe nodes to read an attacker-selected 64-bit value (read oracle), leaking `free@GOT`, deriving libc, and resolving `system`.
+6. Walk keyspace structures with the oracle to locate the target Vector Set module value and two controlled string allocations.
+7. Restore a second malformed Vector Set with two stale neighbor links and reclaim both freed nodes with fake-node-shaped strings.
+8. Trigger `hnsw_reconnect_nodes()` via `VREM` so the fake nodes overwrite the module value's `type` and `value` pointers.
+9. `DEL` the corrupted key, causing `freeModuleObject()` to dispatch through the overwritten module type pointer and invoke `system()` with the attacker's command inside the Redis process.
+
+### Impact
+
+Unauthenticated remote command execution inside the Redis server process for any network-reachable Redis instance running the vulnerable Vector Set module code, given the ability to issue standard Redis commands (`RESTORE`, `VREM`, `VLINKS`, `SET`, `DEL`, etc.).
+
+---
+
+## Environment / Lab Setup
+
+```
+Target:   redis-server built from commit 5b22a09918743ba72952e35e431db23eb3d19605, libc malloc, Linux x86-64
+Attacker: Python 3, network/local access to the Redis TCP port
+```
+
+---
+
+## Proof of Concept
+
+### PoC Script
+
+> See `poc.py` in this folder. Sample local verification output is in `evidence/local-verification.txt`.
+
+```bash
+python3 poc.py \
+  --redis-server /path/to/redis/src/redis-server \
+  --work-dir /tmp/redis-vset-rce \
+  --port 6631
+```
+
+The script starts the target `redis-server`, drives the duplicate-HNSW-ID RESTORE/VREM/VLINKS/SET/DEL sequence over the Redis protocol to build the read oracle and overwrite the module value, then confirms code execution inside the Redis process by writing a proof marker file to the working directory.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+# Redis command logs showing RESTORE of Vector Set keys followed by rapid VREM/VLINKS/SET/DEL cycles
+# on the same key within a short window
+
+# Unexpected child process execution (system()/sh -c) spawned by the redis-server process
+```
+
+**Signs of compromise:**
+- `redis-server` process spawning unexpected shell commands or child processes
+- Vector Set keys repeatedly RESTOREd and deleted in rapid succession from a single client connection
+- Crash or SIGSEGV in `hnsw_reconnect_nodes()`/`freeModuleObject()` in Redis logs preceding anomalous process activity
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Primary fix** | No vendor patch confirmed as of 2026-07-03 — monitor for advisory; Vector Set deserialization should reject duplicate HNSW node IDs and enforce a strict one-to-one ID-to-object mapping |
+| **Interim mitigation** | Disable the Vector Set module on network-reachable Redis instances until patched; restrict Redis network exposure with firewalls/ACLs and require authentication; enable `sanitize-dump-payload yes` and monitor for anomalous RESTORE payloads |
+
+---
+
+## References
+
+- [Source repository (bikini/exploitarium)](https://github.com/bikini/exploitarium/tree/main/redis-vset-duplicate-hnsw-id-rce-poc)
+
+---
+
+## Notes
+
+Mirrored from https://github.com/bikini/exploitarium (folder: `redis-vset-duplicate-hnsw-id-rce-poc`) on 2026-07-03. No CVE has been assigned as of ingestion — this is an uncoordinated disclosure by a pseudonymous researcher; treat with appropriate caution pending vendor confirmation.

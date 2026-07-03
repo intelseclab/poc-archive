@@ -1,0 +1,111 @@
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-07-03 |
+| **Last Updated** | 2026-06 |
+| **Author / Researcher** | bikini (@ashdfrkl) — original discovery; mirrored via exploitarium |
+| **CVE / Advisory** | None assigned as of 2026-07-03 |
+| **Category** | network |
+| **Severity** | High |
+| **CVSS Score** | Not yet scored (no CVE/CVSS assigned) |
+| **Status** | PoC |
+| **Tags** | openvpn, openvpn-connect, malicious-vpn-server, command-execution, script-permission-bypass, pushed-options, windows, client-side |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | OpenVPN Connect for Windows |
+| **Versions Affected** | `3.8.0 (4528)`, OpenVPN core `3.11.3` |
+| **Language / Platform** | Windows desktop client; Python 3.9+ PoC driving a local OpenVPN 2.x test server |
+| **Authentication Required** | No (attacker only needs the victim to import and connect to a malicious `.ovpn` profile) |
+| **Network Access Required** | Yes (victim must connect to the attacker-controlled OpenVPN server) |
+
+---
+
+## Summary
+
+A malicious OpenVPN server can push an `echo` option to a connected OpenVPN Connect for Windows client that decodes into the internal `script.win.user.disconnect` script key. OpenVPN Connect then executes that pushed command when the client disconnects, even though the imported profile's script-permission state is unset or explicitly `false` — meaning the client believes scripting is disabled while the server-pushed echo path bypasses that check entirely. The same PoC bundle also documents a second, lower-severity finding: a malicious server can push `dhcp-option PROXY_AUTO_CONFIG_URL` to set a server-controlled PAC (proxy auto-config) URL in the victim's HKCU Internet Settings for the duration of the VPN session, via the privileged `/tun-setup` helper path, though this state is cleaned up automatically on disconnect. Both findings were locally verified by the researcher against the stated OpenVPN Connect build. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated "exploitarium" vulnerability dump; it has not been vendor-confirmed.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+OpenVPN Connect executes decoded `script.*` data received via a server-pushed `echo` option (specifically `script.win.user.disconnect`) on client disconnect, without checking that the corresponding profile's script-permission flag (`scriptsPermissionGranted`) has actually been granted by the user.
+
+### Attack Vector
+
+1. Attacker stands up a malicious OpenVPN 2.x server and crafts a client `.ovpn` profile pointing to it.
+2. Victim imports the profile into OpenVPN Connect for Windows (script permissions remain unset/false — no explicit grant occurs).
+3. Victim connects to the malicious server.
+4. The malicious server pushes `echo 0:0:<base64(script.win.user.disconnect)>.<base64(command)>` to the connected client.
+5. Victim disconnects from the VPN (normal user action).
+6. OpenVPN Connect decodes and executes the pushed command on disconnect under the current user's privileges, despite script permissions never having been granted for the profile.
+
+### Impact
+
+Current-user arbitrary command execution triggered purely by a victim connecting to and then disconnecting from a malicious/compromised OpenVPN server — no explicit script-permission grant or additional user interaction is required beyond the normal connect/disconnect flow. The companion PAC finding additionally shows a malicious server can transiently alter the victim's system proxy configuration while connected.
+
+---
+
+## Environment / Lab Setup
+
+```
+Target:   OpenVPN Connect for Windows 3.8.0 (4528), OpenVPN core 3.11.3, Windows desktop
+Attacker: Python 3.9+, local OpenVPN 2.x community binary (openvpn.exe), poc.py, cmd.exe only
+```
+
+---
+
+## Proof of Concept
+
+### PoC Script
+
+> See `poc.py` and `certs/` (throwaway lab TLS material) in this folder. This PoC bundle is intentionally **marker-only**: it does not use PowerShell, pop calc, install persistence, read credentials, modify protected files, or start a reverse shell — the pushed command instead writes a benign marker file to prove the code-execution primitive.
+
+```cmd
+python poc.py --mode auto --finding echo-script --openvpn "C:\Program Files\OpenVPN\bin\openvpn.exe"
+```
+
+The script builds a malicious server `.ovpn` config pushing the `echo 0:0:...` script payload, starts a local OpenVPN 2.x server, imports a disposable client profile into OpenVPN Connect, connects, disconnects, and checks for the benign marker file (`%TEMP%\openvpn_connect_echo_script_ace_marker.txt`) written by the executed command — confirming code execution without performing any actually harmful action.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+```
+
+**Signs of compromise:**
+- OpenVPN Connect logs showing pushed `echo` options containing base64-encoded `script.win.user.disconnect` values
+- Unexpected processes or file writes correlating with VPN disconnect events
+- HKCU Internet Settings `AutoConfigURL` set to an unfamiliar URL while connected to a VPN, cleared automatically on disconnect
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Primary fix** | No vendor patch confirmed as of 2026-07-03 — monitor for advisory |
+| **Interim mitigation** | Do not import/connect to `.ovpn` profiles from untrusted VPN providers; where possible, restrict or audit OpenVPN Connect's handling of server-pushed `echo` and `dhcp-option PROXY_AUTO_CONFIG_URL` options via endpoint policy |
+
+---
+
+## References
+
+- [Source repository (bikini/exploitarium)](https://github.com/bikini/exploitarium/tree/main/openvpn-connect-echo-script-ace-poc)
+
+---
+
+## Notes
+
+Mirrored from https://github.com/bikini/exploitarium (folder: `openvpn-connect-echo-script-ace-poc`) on 2026-07-03. No CVE has been assigned as of ingestion — this is an uncoordinated disclosure by a pseudonymous researcher; treat with appropriate caution pending vendor confirmation. The source author states the PoC is intentionally "marker-only" — it does not pop calc, spawn a shell, or perform any destructive/credential-accessing action; it only proves the primitive via a benign marker file/registry-state check.
+
