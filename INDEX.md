@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-07-03 17:54:48
+> Last updated: 2026-07-03 18:33:02
 
 ---
 
@@ -41,6 +41,7 @@
 | 2026-07-01 | 2026-06-17 | [cve-2026-20262-cisco-sdwan-manager-file-write](./pocs/network/2026-07-01_cve-2026-20262-cisco-sdwan-manager-file-write/) | `network` | CVE-2026-20262 | Medium | path-traversal, file-write, Cisco, SD-WAN, vManage, authenticated, CWE-22, active-exploitation | PoC |
 | 2026-07-01 | 2026-06 | [cve-2026-47729-squidbleed-squid-ftp-oob-read](./pocs/network/2026-07-01_cve-2026-47729-squidbleed-squid-ftp-oob-read/) | `network` | CVE-2026-47729 | Medium | memory-disclosure, information-disclosure, Squid, proxy, FTP, heap-overflow, oob-read, credential-theft, legacy | PoC |
 | 2026-07-03 | 2026-04 | [cve-2026-35616-forticlient-ems-auth-bypass](./pocs/network/2026-07-03_cve-2026-35616-forticlient-ems-auth-bypass/) | `network` | CVE-2026-35616 | Critical | authentication-bypass, header-spoofing, Fortinet, FortiClient-EMS, FortiBleed, credential-theft, CISA-KEV, active-exploitation, ransomware | Weaponized |
+| 2026-07-03 | 2026-06-30 | [cve-2026-8451-citrix-netscaler-memory-leak](./pocs/network/2026-07-03_cve-2026-8451-citrix-netscaler-memory-leak/) | `network` | CVE-2026-8451 | High | memory-disclosure, SAML, Citrix, NetScaler, ADC, Gateway, citrixbleed, unauthenticated, active-exploitation | Incomplete PoC (memory-leak/detection primitive only — no session-hijack automation) |
 | 2026-05-14 | — | [nginx-rift-cve-2026-42945](./pocs/web/2026-05-14_nginx-rift-cve-2026-42945/) | `web` | CVE-2026-42945 | Critical | RCE, unauthenticated, nginx, heap-overflow, buffer-overflow, rewrite | Weaponized |
 | 2026-05-15 | — | [exchange-health-checker-outbound-rule-blind-spot](./pocs/web/2026-05-15_exchange-health-checker-outbound-rule-blind-spot/) | `web` | CVE-2026-42897 | Medium | Exchange, HealthChecker, IIS, URL-Rewrite, outbound-rules, EOMT, CSP, detection-gap | Researched |
 | 2026-05-16 | — | [chrome-cssfontfeaturevaluesmap-use-after-free](./pocs/web/2026-05-16_chrome-cssfontfeaturevaluesmap-use-after-free/) | `web` | CVE-2026-2441 | High | use-after-free, Chrome, Blink, CSSOM, renderer-rce, unauthenticated, drive-by | Weaponized |
@@ -72,7 +73,7 @@
 
 ---
 
-*Total POCs: 95*
+*Total POCs: 96*
 
 ## By Category
 
@@ -81,7 +82,7 @@
 - **`crypto`** — 0 entries
 - **`hardware`** — 0 entries
 - **`misc`** — 4 entries
-- **`network`** — 24 entries
+- **`network`** — 25 entries
 - **`social-engineering`** — 0 entries
 - **`web`** — 39 entries
 
