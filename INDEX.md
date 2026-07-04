@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-07-03 23:46:33
+> Last updated: 2026-07-04 22:17:38
 
 ---
 
@@ -67,6 +67,7 @@
 | 2026-07-03 | 2026-06 | [openvpn-connect-server-pushed-option-ace](./pocs/network/2026-07-03_openvpn-connect-server-pushed-option-ace/) | `network` | None assigned as of 2026-07-03 | High | openvpn, openvpn-connect, malicious-vpn-server, command-execution, script-permission-bypass, pushed-options, windows, client-side | PoC |
 | 2026-07-03 | 2026-07 | [redis-vector-set-hnsw-id-rce](./pocs/network/2026-07-03_redis-vector-set-hnsw-id-rce/) | `network` | None assigned as of 2026-07-03 | Critical | redis, vector-set, hnsw, rce, deserialization, use-after-free, heap-corruption, rdb-restore | Weaponized |
 | 2026-07-03 | 2026-07 | [rustdesk-session-permission-bypass](./pocs/network/2026-07-03_rustdesk-session-permission-bypass/) | `network` | None assigned as of 2026-07-03 | High | rustdesk, remote-desktop, session-downgrade, authorization-bypass, protocol, relay, filetransfer, rust | PoC |
+| 2026-07-04 | 2026-07-04 | [postgres-ri-owner-switched-cast-rce](./pocs/network/2026-07-04_postgres-ri-owner-switched-cast-rce/) | `network` | None assigned as of 2026-07-04 | High | postgresql, privilege-escalation, referential-integrity, implicit-cast, command-execution, database, uncoordinated-disclosure | PoC |
 | 2026-05-14 | — | [nginx-rift-cve-2026-42945](./pocs/web/2026-05-14_nginx-rift-cve-2026-42945/) | `web` | CVE-2026-42945 | Critical | RCE, unauthenticated, nginx, heap-overflow, buffer-overflow, rewrite | Weaponized |
 | 2026-05-15 | — | [exchange-health-checker-outbound-rule-blind-spot](./pocs/web/2026-05-15_exchange-health-checker-outbound-rule-blind-spot/) | `web` | CVE-2026-42897 | Medium | Exchange, HealthChecker, IIS, URL-Rewrite, outbound-rules, EOMT, CSP, detection-gap | Researched |
 | 2026-05-16 | — | [chrome-cssfontfeaturevaluesmap-use-after-free](./pocs/web/2026-05-16_chrome-cssfontfeaturevaluesmap-use-after-free/) | `web` | CVE-2026-2441 | High | use-after-free, Chrome, Blink, CSSOM, renderer-rce, unauthenticated, drive-by | Weaponized |
@@ -107,7 +108,7 @@
 
 ---
 
-*Total POCs: 131*
+*Total POCs: 132*
 
 ## By Category
 
@@ -116,7 +117,7 @@
 - **`crypto`** — 0 entries
 - **`hardware`** — 0 entries
 - **`misc`** — 5 entries
-- **`network`** — 34 entries
+- **`network`** — 35 entries
 - **`social-engineering`** — 0 entries
 - **`web`** — 49 entries
 
