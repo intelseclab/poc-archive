@@ -147,6 +147,18 @@
   html.dark body { background-color: #09090b; }
   /* Smooth color transitions on theme switch */
   body, body * { transition: background-color .15s ease, border-color .15s ease, color .15s ease; }
+
+  /* Prevent long unbreakable tokens (file paths, URLs) in prose text/inline code
+     from forcing the whole page to overflow horizontally on narrow viewports. */
+  html, body { overflow-x: hidden; max-width: 100%; }
+  .prose :where(p, li, blockquote, td, th) {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+  .prose :where(code):not(pre code) {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
 </style>
 
 {{ with .OutputFormats.Get "json" }}
