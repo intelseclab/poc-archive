@@ -1,0 +1,54 @@
+# Organizational units
+dn: ou=users,dc=spinnaker,dc=test
+objectClass: organizationalUnit
+ou: users
+
+dn: ou=groups,dc=spinnaker,dc=test
+objectClass: organizationalUnit
+ou: groups
+
+# --- Users ---
+
+# lowpriv: authenticated, no special roles. Gets access to unrestricted apps only.
+dn: uid=lowpriv,ou=users,dc=spinnaker,dc=test
+objectClass: inetOrgPerson
+uid: lowpriv
+cn: Low Privilege User
+givenName: Low
+sn: Privuser
+mail: lowpriv@spinnaker.test
+userPassword: lowpriv123
+
+# viewer: authenticated, explicitly in a "viewers" group (read-only intent).
+dn: uid=viewer,ou=users,dc=spinnaker,dc=test
+objectClass: inetOrgPerson
+uid: viewer
+cn: Viewer User
+givenName: View
+sn: Only
+mail: viewer@spinnaker.test
+userPassword: viewer123
+
+# devuser: normal developer, member of target-team (has WRITE on targetapp).
+dn: uid=devuser,ou=users,dc=spinnaker,dc=test
+objectClass: inetOrgPerson
+uid: devuser
+cn: Dev User
+givenName: Dev
+sn: User
+mail: devuser@spinnaker.test
+userPassword: devuser123
+
+# --- Groups ---
+
+# viewers group — read-only access intent
+dn: cn=viewers,ou=groups,dc=spinnaker,dc=test
+objectClass: groupOfUniqueNames
+cn: viewers
+uniqueMember: uid=viewer,ou=users,dc=spinnaker,dc=test
+
+# target-team — has READ/WRITE/EXECUTE on targetapp
+dn: cn=target-team,ou=groups,dc=spinnaker,dc=test
+objectClass: groupOfUniqueNames
+cn: target-team
+uniqueMember: uid=devuser,ou=users,dc=spinnaker,dc=test

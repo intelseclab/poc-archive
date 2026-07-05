@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Multisite on PoC Archive</title><link>https://poc.intelseclab.com/tags/multisite/</link><description>Recent content in Multisite on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/multisite/index.xml" rel="self" type="application/rss+xml"/><item><title>Branda White Label &amp; Branding Plugin Unauthenticated Account Takeover — CVE-2026-11551</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-11551-branda-wp-account-takeover/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-11551-branda-wp-account-takeover/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>xxconi&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-11551&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (Critical)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, plugin, account-takeover, privilege-escalation, unauthenticated, multisite, branda&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Branda White Label &amp;amp; Branding WordPress plugin&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 3.4.29&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (requests-based HTTP PoC) targeting WordPress single-site and multisite installs&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Branda&amp;rsquo;s &lt;code>signup-password.php&lt;/code> registers a &lt;code>pre_insert_user_data()&lt;/code> hook that fires on every &lt;code>wp_insert_user()&lt;/code>/&lt;code>wp_update_user()&lt;/code> call, but is missing the standard &lt;code>if ($update) return $data;&lt;/code> guard used to distinguish new-user creation from existing-user updates. As a result, any request that supplies a &lt;code>password_1&lt;/code> field and causes WordPress to process a user-related insert/update — including the registration and account-activation flows — overwrites the password of an &lt;em>existing&lt;/em> targeted user rather than only setting a password for a genuinely new account. On single-site installs the flaw fires immediately when POSTing to &lt;code>wp-login.php?action=register&lt;/code> with an existing username; on multisite installs it requires completing the &lt;code>wp-signup.php&lt;/code> → &lt;code>wp-activate.php&lt;/code> activation flow. The PoC automates recon (Branda version detection, multisite detection, user enumeration via REST/author archives), attempts all three attack vectors (single-site registration, multisite signup+activation, and password-reset abuse) against a list of common admin usernames, and verifies successful takeover by logging in and confirming administrator access.&lt;/p></description></item></channel></rss>

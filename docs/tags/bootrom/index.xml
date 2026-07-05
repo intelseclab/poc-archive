@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Bootrom on PoC Archive</title><link>https://poc.intelseclab.com/tags/bootrom/</link><description>Recent content in Bootrom on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/bootrom/index.xml" rel="self" type="application/rss+xml"/><item><title>ZXIC/Sanechips ZX297520V3 BootROM Arbitrary Memory Write via USB Download Mode (CVE-2026-40003)</title><link>https://poc.intelseclab.com/pocs/hardware/2026-07-05_cve-2026-40003-zx297520v3-bootrom-memory-write/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/hardware/2026-07-05_cve-2026-40003-zx297520v3-bootrom-memory-write/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>rva3 (aka &amp;ldquo;Joselito&amp;rdquo;), with SoC reverse-engineering credit to Stefan Dösinger, fused-device testing by Mio Naganohara and exp-3&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-40003&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>hardware&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>bootrom, usb-download-mode, socket-modem, zx297520v3, arbitrary-memory-write, embedded, baseband, reverse-engineering&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>ZXIC/Sanechips ZX297520V3 SoC BootROM (used in USB modem/baseband devices)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>All SoC revisions prior to the March 2026 fix; no shipping products with the patched chip are known yet&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Rust host-side loader tool + Rust &lt;code>thumbv6m&lt;/code> (ARM Cortex-M0) payload, communicating with the device over USB&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Local-only (requires physical USB access and triggering USB download mode via a test point or corrupted flash)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The ZX297520V3 BootROM falls back to a USB download mode when it cannot load or verify a valid image from flash, entering a handshake loop that accepts a stage-1 image over USB for device recovery. The BootROM&amp;rsquo;s image-load command does not validate the destination address it is told to write to, allowing an attacker with physical USB access to write arbitrary data to arbitrary memory, including onto the boot stack. By further abusing the lack of any one-time-download restriction, the PoC sends a first payload to a chosen address, then overwrites the saved return address on the stack so that when image verification fails and &lt;code>verify_and_jump&lt;/code> returns into &lt;code>usbdl_init&lt;/code>, execution redirects into the attacker-controlled payload instead of normal error handling — achieving code execution on the BootROM before any anti-rollback/signature checks apply.&lt;/p></description></item></channel></rss>

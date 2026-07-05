@@ -1,0 +1,511 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Gadget-Chain on PoC Archive</title><link>https://poc.intelseclab.com/tags/gadget-chain/</link><description>Recent content in Gadget-Chain on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/gadget-chain/index.xml" rel="self" type="application/rss+xml"/><item><title>Apache MINA acceptMatchers Deserialization Filter Bypass to RCE (CVE-2026-42779)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-42779-apache-mina-deserialization-bypass/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-42779-apache-mina-deserialization-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Venkatraman Kumar (Securin); PoC by dinosn&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-42779&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>apache-mina, java, deserialization, cwe-502, gadget-chain, commons-collections, rce, filter-bypass&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-41635 (incomplete fix that this CVE re-opens)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Apache MINA (&lt;code>mina-core&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>2.1.0 - 2.1.11 (fixed 2.1.12); 2.2.0 - 2.2.6 (fixed 2.2.7)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Java, network application framework using &lt;code>ObjectSerializationCodecFactory&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (network-level access to a MINA endpoint that uses &lt;code>ObjectSerializationCodecFactory&lt;/code> is sufficient)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (raw TCP access to the MINA-based service/protocol endpoint)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-42779 is a deserialization filter bypass in Apache MINA&amp;rsquo;s &lt;code>AbstractIoBuffer.resolveClass()&lt;/code>. Applications configure an &lt;code>acceptMatchers&lt;/code> allowlist to restrict which Java classes &lt;code>ObjectSerializationCodecFactory&lt;/code> may deserialize, but the allowlist check is only reached when &lt;code>ObjectStreamClass.forClass()&lt;/code> returns non-null; when it returns &lt;code>null&lt;/code> (as it does for &amp;ldquo;type-0&amp;rdquo; class descriptors covering non-Serializable classes, primitives, and arrays), &lt;code>resolveClass()&lt;/code> calls &lt;code>Class.forName()&lt;/code> directly with no filter check at all. By crafting a payload that uses type-0 descriptors for classes that are actually &lt;code>Serializable&lt;/code> gadget-chain classes, an attacker bypasses the allowlist entirely and achieves full RCE via standard Java deserialization gadget chains (e.g. Commons Collections). This is an incomplete-fix re-opening of CVE-2026-41635 that was never backported to the 2.1.x/2.2.x branches. The PoC includes three escalating Java programs plus a Docker/Makefile harness and before/after screenshots.&lt;/p></description></item><item><title>Apache Tomcat Tribes EncryptInterceptor Fail-Open Unauthenticated RCE (CVE-2026-34486)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-34486-tomcat-tribes-deserialization-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-34486-tomcat-tribes-deserialization-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Bartlomiej Dmitruk (striga.ai)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-34486&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>deserialization, rce, tomcat, tribes, clustering, java, gadget-chain, unauthenticated&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Apache Tomcat Tribes clustering (EncryptInterceptor)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>11.0.19+, 10.1.53+, 9.0.116+ (fixed in 11.0.21, 10.1.54, 9.0.117)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Java (target and gadget generator), Python 3 (payload delivery)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-34486 is a fail-open flaw in Apache Tomcat&amp;rsquo;s Tribes clustering &lt;code>EncryptInterceptor&lt;/code>, which is meant to require encrypted, authenticated membership traffic between cluster nodes. Due to the bypass, an attacker can send an unencrypted, crafted message directly to the Tribes receiver channel and have it processed as if it were a legitimate encrypted cluster message. Because Tribes deserializes incoming membership payloads, this allows delivery of a Java deserialization gadget chain (a CommonsCollections6 variant) that achieves remote code execution with no authentication. The included PoC builds the gadget payload, sends it unencrypted to the Tribes port, and verifies RCE via a dropped marker file inside a Dockerized Tomcat target.&lt;/p></description></item><item><title>Group-Office PHP Deserialization Remote Code Execution (CVE-2026-34838)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-34838-groupoffice-deserialization-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-34838-groupoffice-deserialization-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>bamuwe&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-34838 (GHSA-h22j-frrf-5vxq)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>php, deserialization, rce, groupware, gadget-chain, authenticated, group-office, guzzlehttp&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Group-Office groupware suite&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Group-Office &amp;lt;= 25.0.89&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (PoC), target is a PHP web application&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (valid username/password)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-34838 is a PHP object deserialization vulnerability in Group-Office. The &lt;code>AbstractSettingsCollection::_loadData()&lt;/code> method calls &lt;code>unserialize()&lt;/code> on a stored setting value prefixed with &lt;code>serialized:&lt;/code>, without validating the object type. By storing a crafted &lt;code>GuzzleHttp\Cookie\FileCookieJar&lt;/code> object as one of the export-related settings (e.g. &lt;code>export_include_headers&lt;/code>) and then triggering an export action, the attacker causes the gadget&amp;rsquo;s &lt;code>__destruct()&lt;/code> method to write attacker-controlled content — including a PHP web shell — to an arbitrary file path via &lt;code>file_put_contents()&lt;/code>. The included PoC authenticates, stores the crafted gadget chain via the settings-save endpoint, and triggers one of several export routes to fire the deserialization and file write, demonstrating arbitrary file write and disclosing the path toward RCE.&lt;/p></description></item><item><title>OpenAM Pre-Authentication RCE via `jato.clientSession` Deserialization (CVE-2026-33439)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-33439-openam-deserialization-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-33439-openam-deserialization-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Ibonok (nuclei template author: ibonok)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-33439&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per bundled nuclei template)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>openam, forgerock, deserialization, rce, pre-auth, java, gadget-chain, xalan, jato&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>ForgeRock / OpenIdentityPlatform OpenAM&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>OpenAM versions prior to the fix in commit &lt;code>014007c63cacc834cc795a89fac0e611aebc4a32&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Java (JDK 11+ to build/run the exploit; targets a Java-based OpenAM server)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>OpenAM&amp;rsquo;s unauthenticated Password Reset pages accept a &lt;code>jato.clientSession&lt;/code> parameter that is passed to &lt;code>Encoder.deserialize()&lt;/code> without any class allowlist/filtering, allowing an attacker to submit an arbitrary serialized Java object graph. The PoC builds a &lt;code>PriorityQueue&lt;/code>-based deserialization gadget chain combining the Click1 web framework and an external Xalan &lt;code>TemplatesImpl&lt;/code> gadget, whose translet bytecode calls &lt;code>com.iplanet.jato.RequestManager.getRequestContext()&lt;/code> to obtain the JATO framework&amp;rsquo;s active ThreadLocal request/response objects during deserialization — a technique that works even on modern JVMs (Java 21+) where classic Tomcat-thread-introspection echo techniques fail. The translet reads a command from the &lt;code>cmd&lt;/code> HTTP header, executes it via &lt;code>sh -c&lt;/code>, and writes the output directly into the HTTP response body, giving unauthenticated, pre-authentication remote code execution with in-band command output (no DNS/OOB exfiltration needed).&lt;/p></description></item><item><title>SP LMS PHP Object Injection → Unauthenticated RCE (CVE-2026-48909)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-48909-sp-lms-joomla-phpobjectinjection-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-48909-sp-lms-joomla-phpobjectinjection-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Amin İsayev / Proxima Cyber Security (Is4yev)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-48909 (GHSA-gf8c-xmwj-whrh)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.5 (CVSS 4.0: AV:N/AC:L/AT:P/PR:N/UI:N)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>joomla, sp-lms, com_splms, php-object-injection, cwe-502, deserialization, unauthenticated-rce, gadget-chain&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>JoomShaper SP LMS (&lt;code>com_splms&lt;/code>) Joomla Learning Management System extension&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>1.0.0 - 4.1.3 (fixed in 4.1.4); RCE additionally requires Joomla core &amp;lt; 5.2.2&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP / Joomla CMS, PoC written in Python 3.10+&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>SP LMS&amp;rsquo;s cart model (&lt;code>components/com_splms/models/cart.php&lt;/code>) reads the &lt;code>lmsOrders&lt;/code> cookie, base64-decodes it, and passes the result directly to PHP&amp;rsquo;s &lt;code>unserialize()&lt;/code> with no validation, giving an unauthenticated attacker full control over the deserialized object graph. On Joomla versions before 5.2.2, this chains into Joomla&amp;rsquo;s &lt;code>FormattedtextLogger&lt;/code> gadget: the object&amp;rsquo;s &lt;code>__destruct()&lt;/code> writes attacker-controlled bytes to an attacker-chosen file path via &lt;code>File::write()&lt;/code>, allowing a PHP webshell to be dropped on disk. The repo ships a detection-only script (&lt;code>CVE-2026-48909.py&lt;/code>) that fingerprints the vulnerable &lt;code>unserialize()&lt;/code> behavior via response-status/timing differentials, and a full exploit script (&lt;code>CVE-2026-48909_exploit.py&lt;/code>) that builds a filter-safe serialized payload and writes a webshell to a specified server path.&lt;/p></description></item><item><title>WP Activity Log Unauthenticated PHP Object Injection — CVE-2026-54806</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-54806-wp-activity-log-poi-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-54806-wp-activity-log-poi-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06-22&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Joshua van der Poll (github.com/joshuavanderpoll)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-54806&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, wp-activity-log, wp-security-audit-log, php-object-injection, deserialization, cwe-502, blind-rce, gadget-chain&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>WP Activity Log (plugin slug: wp-security-audit-log) by Melapress, for WordPress&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 5.6.3.1 (fixed in 5.6.4); gadget chain requires WordPress core 6.4.0 - 6.4.1&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP / WordPress plugin; PoC written in Python 3&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP access to any endpoint that triggers a logged event, e.g. wp-login.php)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>WP Activity Log logs the &lt;code>User-Agent&lt;/code> header on any request that generates a loggable event (such as a failed login), and stores that value in the database without treating it as untrusted input. The stored value is later deserialized (via PHP&amp;rsquo;s native unserialize) without restriction when an administrator loads the WP Activity Log dashboard widget, allowing an unauthenticated attacker to smuggle a serialized PHP object into the User-Agent header and achieve remote code execution once an admin views the dashboard. The PoC exploits this using the &lt;code>WP_HTML_Token&lt;/code> gadget — the only WordPress core class with all-public properties (so it survives &lt;code>sanitize_text_field()&lt;/code>) and a magic method that fits within the plugin&amp;rsquo;s 255-character storage column, which is present only in WordPress 6.4.0–6.4.1 (blocked by a &lt;code>__wakeup()&lt;/code> guard added in 6.4.2).&lt;/p></description></item></channel></rss>

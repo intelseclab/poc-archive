@@ -1,4 +1,599 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Buffer-Overflow on PoC Archive</title><link>https://poc.intelseclab.com/tags/buffer-overflow/</link><description>Recent content in Buffer-Overflow on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Tue, 30 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/buffer-overflow/index.xml" rel="self" type="application/rss+xml"/><item><title>GeoVision GV-I/O Box 4E DVRSearch Unauthenticated Stack Buffer Overflow RCE (CVE-2026-12485)</title><link>https://poc.intelseclab.com/pocs/network/2026-06-30_cve-2026-12485-geovision-dvrsearch-rce/</link><pubDate>Tue, 30 Jun 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-06-30_cve-2026-12485-geovision-dvrsearch-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Buffer-Overflow on PoC Archive</title><link>https://poc.intelseclab.com/tags/buffer-overflow/</link><description>Recent content in Buffer-Overflow on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/buffer-overflow/index.xml" rel="self" type="application/rss+xml"/><item><title>dnsmasq extract_addresses() RDLEN/RDATA Buffer Overflow — CVE-2026-5172</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-5172-dnsmasq-srv-rdlen-overflow/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-5172-dnsmasq-srv-rdlen-overflow/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>lottiedeyan (GitHub); reproduction based on a public writeup by yanyuyingshu (Medium)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-5172&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Not disclosed&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not disclosed&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>dnsmasq, dns, buffer-overflow, srv-record, rdlen, upstream-resolver, memory-corruption&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>dnsmasq (DNS forwarder/resolver)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Not disclosed in repo (see upstream dnsmasq advisories for exact affected range)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (PoC harness); target is the C &lt;code>dnsmasq&lt;/code> daemon&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — attacker must be reachable as an upstream/authoritative DNS server that dnsmasq queries&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The PoC targets &lt;code>extract_addresses()&lt;/code> in dnsmasq, which parses resource records (RRs) returned by an upstream DNS server. The function is reported to trust the RR&amp;rsquo;s declared &lt;code>RDLENGTH&lt;/code> field without properly validating it against the actual RDATA bytes present in the reply, leading to a buffer overflow/mismatch condition when a malicious or compromised upstream server returns a crafted answer. This repository provides a minimal, self-contained reproduction harness: a rogue authoritative nameserver (&lt;code>server.py&lt;/code>) that replies to any query with a hand-crafted SRV record whose declared RDLENGTH (6) is smaller than its actual RDATA length (8), plus a client (&lt;code>query_client.py&lt;/code>) that sends a query to a locally configured dnsmasq instance to trigger the parsing path. A &lt;code>dnsmasq.conf&lt;/code> is included to point dnsmasq at the rogue server as its upstream resolver.&lt;/p></description></item><item><title>GNU InetUtils telnetd LINEMODE SLC Pre-Auth Buffer Overflow (CVE-2026-32746)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-32746-telnetd-linemode-slc-overflow/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-32746-telnetd-linemode-slc-overflow/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>DREAM Security Research Team (Adiel Sol, Arad Inbar, Erez Cohen, Nir Somech, Ben Grinberg, Daniel Lubel); PoC by jeffaf&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-32746&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (CVSS 3.1)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC (overflow trigger + verification only; no code execution/shellcode included)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>telnetd, inetutils, linemode, slc, buffer-overflow, pre-auth, cwe-120, cwe-787&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>GNU InetUtils telnetd&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Through 2.7 (all versions); any telnetd derived from the BSD SLC codebase&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 PoC targeting a C telnetd daemon on Linux&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (triggered before login prompt/authentication)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>GNU InetUtils telnetd&amp;rsquo;s &lt;code>add_slc()&lt;/code> function in &lt;code>telnetd/slc.c&lt;/code> appends 3 bytes per SLC (Set Local Characters) triplet into a fixed 108-byte buffer (&lt;code>slcbuf&lt;/code>) with no bounds checking. During telnet option negotiation, before any login prompt is shown, an unauthenticated client can request LINEMODE and then send a crafted SLC suboption containing 40-60 triplets with out-of-range function codes, causing the buffer to overflow and corrupting the &lt;code>slcptr&lt;/code> pointer plus adjacent BSS data. This PoC completes the negotiation, sends the oversized SLC suboption, and confirms the overflow by observing an anomalously large SLC response that leaks BSS memory back to the client — it does not attempt to weaponize the overflow into code execution.&lt;/p></description></item><item><title>PJSIP / PJNATH ICE Session Stack Buffer Overflow via SDP ice-ufrag (CVE-2026-25994)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-25994-pjsip-ice-stack-overflow/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-25994-pjsip-ice-stack-overflow/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>V.Nos / BinSmasher Team (VABISMO)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-25994&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>pjsip, pjnath, ice, sip, voip, stack-overflow, dos, sdp, buffer-overflow&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>PJSIP / PJNATH (ICE implementation used by pjsua and SIP/VoIP stacks)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 2.16 (fixed in 2.17)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (socket-based SIP INVITE sender) targeting a Linux/pjsua host&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (UDP SIP signaling)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-25994 is a stack-based buffer overflow in PJNATH&amp;rsquo;s ICE (Interactive Connectivity Establishment) session handling, specifically in &lt;code>pj_ice_sess_create_check_list()&lt;/code> in &lt;code>pjnath/src/pjnath/ice_session.c&lt;/code>. When constructing the ICE username, the code copies the remote &lt;code>ice-ufrag&lt;/code> SDP attribute into a fixed 128-byte stack buffer using &lt;code>pj_strcpy&lt;/code>/&lt;code>pj_strcat&lt;/code> without any length validation. An attacker who can send a SIP INVITE with an SDP body containing an oversized &lt;code>a=ice-ufrag:&lt;/code> value can overflow the stack, corrupting the return address, stack frame, and canary/alignment data. The included PoC sends a crafted UDP SIP INVITE with a 520-byte &lt;code>ice-ufrag&lt;/code> (chosen for reliability) to a target running &lt;code>pjsua&lt;/code> with ICE enabled, and detects a crash via response timeout.&lt;/p></description></item><item><title>PX4 Autopilot MAVLink FTP Stack Buffer Overflow (CVE-2026-32743)</title><link>https://poc.intelseclab.com/pocs/hardware/2026-07-05_cve-2026-32743-px4-mavlink-overflow/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/hardware/2026-07-05_cve-2026-32743-px4-mavlink-overflow/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Mohammed Idrees Banyamer (original discovery); PoC wrapper by Americo Simoes / SimoesCTT&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-32743&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>hardware&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Medium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>6.5 (Medium) per original disclosure — the source repository claimed a fabricated 9.8 &amp;ldquo;CTT-Enhanced&amp;rdquo; rating (see Notes), which is not used here&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>px4, autopilot, mavlink, drone, uav, buffer-overflow, denial-of-service, mavlink-ftp&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>PX4 Autopilot flight controller firmware&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 1.17.0-rc2&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (pymavlink) PoC targeting embedded C/C++ flight controller firmware&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (MAVLink FTP is enabled by default, no credentials)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (UDP 14550, or adjacent radio/telemetry link)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>PX4 Autopilot&amp;rsquo;s MAVLink FTP log-handling code (&lt;code>MavlinkLogHandler&lt;/code> / MAVLink FTP directory listing path) copies an attacker-supplied directory path into a fixed-size stack buffer without validating its length. Sending a MAVLink FTP request (e.g. via &lt;code>MAV_CMD_REQUEST_LOG_LIST&lt;/code>) with a directory path of roughly 60 bytes or more overflows the buffer and crashes the MAVLink task, cutting off telemetry and command links to the flight controller. The PoC in this repo is a real, working trigger for that overflow, but the repository wraps it in invented pseudo-scientific language (&amp;ldquo;Convergent Time Theory,&amp;rdquo; &amp;ldquo;33 temporal layers,&amp;rdquo; a &amp;ldquo;Riemann-Hadamard constant,&amp;rdquo; claims of being &amp;ldquo;unpatchable&amp;rdquo;) that has no technical basis and is not reflected in this write-up — the underlying bug is an ordinary unbounded-copy stack overflow triggered over MAVLink.&lt;/p></description></item><item><title>Tasmota fetch_jpg() Combined Buffer Overflow RCE Chain (CVE-2026-38422)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-38422-tasmota-fetchjpg-combined-overflow-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-38422-tasmota-fetchjpg-combined-overflow-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Saidakbarxon Maxsudxonov (sermikr0)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-38422&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>tasmota, esp32, iot, buffer-overflow, integer-overflow, rce, mjpeg, scripter&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-38426, CVE-2026-38427&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Arendst Tasmota (ESP32 firmware)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 15.3.0.3&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python (PoC server) targeting C++/Arduino ESP32 firmware&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (device must be scripted to connect to attacker&amp;rsquo;s MJPEG server)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Tasmota&amp;rsquo;s scripter driver (&lt;code>xdrv_10_scripter.ino&lt;/code>) implements an MJPEG client via &lt;code>fetch_jpg()&lt;/code> that contains two compounding memory-corruption bugs: a &lt;code>strcpy()&lt;/code> overflow of a fixed 40-byte &lt;code>boundary[]&lt;/code> buffer when parsing the &lt;code>Content-Type&lt;/code> boundary string (CVE-2026-38426), and a &lt;code>uint16_t&lt;/code> integer wraparound when parsing &lt;code>Content-Length&lt;/code> for subsequent MJPEG frames that causes an undersized buffer allocation and stream desynchronization (CVE-2026-38427). Chained together in one attack session against a Tasmota device that connects to an attacker-controlled MJPEG server, the two primitives maximize heap corruption around adjacent &lt;code>WiFiClient&lt;/code>/&lt;code>HTTPClient&lt;/code> vtable pointers, significantly increasing the likelihood of remote code execution on the ESP32.&lt;/p></description></item><item><title>Tasmota fetch_jpg() strcpy() Buffer Overflow in boundary[40] (CVE-2026-38426)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-38426-tasmota-fetchjpg-strcpy-overflow/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-38426-tasmota-fetchjpg-strcpy-overflow/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Saidakbarxon Maxsudxonov (sermikr0)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-38426&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>tasmota, esp32, iot, buffer-overflow, strcpy, rce, mjpeg, scripter&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-38422, CVE-2026-38427&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Arendst Tasmota (ESP32 firmware)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 15.3.0.3&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python (PoC server) targeting C++/Arduino ESP32 firmware&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (device must be scripted to connect to attacker&amp;rsquo;s MJPEG server)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The &lt;code>fetch_jpg()&lt;/code> function&amp;rsquo;s initial-connection handling (case 0) in Tasmota&amp;rsquo;s scripter driver extracts the MJPEG multipart boundary string from the HTTP &lt;code>Content-Type&lt;/code> response header and copies it into a fixed 40-byte &lt;code>boundary[40]&lt;/code> field of the &lt;code>JPG_TASK&lt;/code> struct using &lt;code>strcpy()&lt;/code>, with no length validation. Because &lt;code>boundary[40]&lt;/code> sits directly before other struct fields — including embedded &lt;code>WiFiClient&lt;/code> and &lt;code>HTTPClient&lt;/code> objects whose vtable pointers live further in the struct — an attacker-controlled MJPEG server can send a boundary string longer than 39 characters to overflow into and corrupt adjacent memory, potentially achieving remote code execution when a corrupted vtable pointer is later dereferenced.&lt;/p></description></item><item><title>Tenda HG7/HG9/HG10 Router Stack-Based Buffer Overflow — CVE-2026-11499</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-11499-tenda-router-bof/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-11499-tenda-router-bof/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Ashraf Zaryouh (0xBlackash)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-11499&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>tenda, router, buffer-overflow, cwe-121, dos, embedded, iot, rce&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Tenda HG7 / HG9 / HG10 routers (firmware family &lt;code>HG7_HG9_HG10re_300001138_en_xpon&lt;/code> and similar)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>HG7, HG9, HG10 firmware lines prior to vendor patch&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (requests-based HTTP PoC) targeting embedded router web management interface&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Unknown / unconfirmed in source (PoC does not perform authentication)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-11499 is a stack-based buffer overflow (CWE-121) in the web-management &lt;code>formDOMAINBLK&lt;/code> handler of Tenda HG7/HG9/HG10 router firmware. The vulnerable code path copies the attacker-supplied &lt;code>blkDomain&lt;/code> form parameter into a fixed-size stack buffer without length validation (functionally equivalent to an unchecked &lt;code>strcpy&lt;/code>), so an oversized value corrupts adjacent stack memory. The included PoC sends an HTTP POST to &lt;code>/boaform/formDOMAINBLK&lt;/code> with an oversized &lt;code>blkDomain&lt;/code> value to trigger the overflow, and supports both a fixed-length send mode and an incremental mode that steps the payload size up to approximate the crash offset. Depending on the corrupted stack contents and the device&amp;rsquo;s mitigations, exploitation can range from denial of service (device crash/hang) to potential remote code execution.&lt;/p></description></item><item><title>GeoVision GV-I/O Box 4E DVRSearch Unauthenticated Stack Buffer Overflow RCE (CVE-2026-12485)</title><link>https://poc.intelseclab.com/pocs/network/2026-06-30_cve-2026-12485-geovision-dvrsearch-rce/</link><pubDate>Tue, 30 Jun 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-06-30_cve-2026-12485-geovision-dvrsearch-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

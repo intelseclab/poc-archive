@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Feature-Store on PoC Archive</title><link>https://poc.intelseclab.com/tags/feature-store/</link><description>Recent content in Feature-Store on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Tue, 30 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/feature-store/index.xml" rel="self" type="application/rss+xml"/><item><title>Feast Registry gRPC Unauthenticated RCE via dill.loads — CVE-2026-56121</title><link>https://poc.intelseclab.com/pocs/misc/2026-07-05_cve-2026-56121-feast-unauth-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/misc/2026-07-05_cve-2026-56121-feast-unauth-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06-30&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Caio Fabrício (BiiTts) — &lt;a href="https://github.com/BiiTts">github.com/BiiTts&lt;/a>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-56121&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>misc&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (&lt;code>AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H&lt;/code>, per source repository)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>feast, feature-store, dill, pickle, deserialization, grpc, unauth-rce, mlops&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Feast (open-source feature store) registry gRPC server&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Feast &amp;lt; 0.63.0 (fixed in 0.63.0)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (Feast SDK / registry server)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No — shipped default config is &lt;code>auth: type: no_auth&lt;/code>; deserialization also runs before any authorization check even when auth is enabled&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — reach the registry gRPC port (default &lt;code>6570&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Feast&amp;rsquo;s registry gRPC server deserializes the user-defined function (UDF) body of an &lt;code>OnDemandFeatureView&lt;/code> with &lt;code>dill.loads()&lt;/code> (a pickle superset) the moment a spec is received via the &lt;code>ApplyFeatureView&lt;/code> RPC — before any permission check runs. Because the default deployment ships &lt;code>auth: no_auth&lt;/code>, any client that can reach the registry port can submit a crafted &lt;code>ApplyFeatureView&lt;/code> request containing a malicious pickle in &lt;code>user_defined_function.body&lt;/code> and achieve arbitrary OS command execution on the registry host. The PoC reproduces this end-to-end against &lt;code>feast==0.62.0&lt;/code> inside a Docker lab, confirming command execution via a &lt;code>__reduce__&lt;/code>-based &lt;code>os.system&lt;/code> gadget.&lt;/p></description></item></channel></rss>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Prefect on PoC Archive</title><link>https://poc.intelseclab.com/tags/prefect/</link><description>Recent content in Prefect on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/prefect/index.xml" rel="self" type="application/rss+xml"/><item><title>Prefect GitRepository Git Argument Injection RCE via `commit_sha` — CVE-2026-5366</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-5366-prefect-git-argument-injection/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-5366-prefect-git-argument-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>renat0z3r0&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-5366 (Huntr bounty e2e88a0f-a8f6-49c9-94c5-e98dc385f07a)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>prefect, git, argument-injection, rce, upload-pack, workflow-orchestration, supply-chain, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Prefect (workflow orchestration platform), &lt;code>GitRepository&lt;/code> storage class&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>3.6.23 (vulnerable); fixed in 3.6.25+&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python (&lt;code>prefect.runner.storage.GitRepository&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No additional auth beyond ability to configure a &lt;code>GitRepository&lt;/code> (e.g. via a flow/deployment definition)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No — reproducible entirely offline against a local &lt;code>file://&lt;/code> git repo; only fires on local/ssh git transports, not &lt;code>https://&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-5366 is a git argument-injection vulnerability in Prefect&amp;rsquo;s &lt;code>GitRepository&lt;/code> storage class (&lt;code>src/prefect/runner/storage.py&lt;/code>). The &lt;code>commit_sha&lt;/code> parameter is stored verbatim with no validation beyond a &lt;code>branch&lt;/code>/&lt;code>commit_sha&lt;/code> mutual-exclusion check, then passed directly into &lt;code>git fetch origin &amp;lt;commit_sha&amp;gt;&lt;/code> and &lt;code>git checkout &amp;lt;commit_sha&amp;gt;&lt;/code> argument lists with no &lt;code>--&lt;/code> separator. Because git parses any leading-dash value as an option rather than a positional argument, a &lt;code>commit_sha&lt;/code> of &lt;code>--upload-pack=/bin/sh -c '&amp;lt;command&amp;gt;'&lt;/code> causes git to execute the attacker&amp;rsquo;s shell command locally in place of the real &lt;code>git-upload-pack&lt;/code> helper when the repository is fetched over a local or ssh transport, achieving remote code execution on the Prefect worker. A sibling &lt;code>directories&lt;/code> parameter is injectable in the same way but lands in &lt;code>git sparse-checkout set&lt;/code>, which has no &lt;code>--upload-pack&lt;/code> option, so it is argument injection without RCE.&lt;/p></description></item></channel></rss>

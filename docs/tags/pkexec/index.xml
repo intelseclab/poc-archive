@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Pkexec on PoC Archive</title><link>https://poc.intelseclab.com/tags/pkexec/</link><description>Recent content in Pkexec on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/pkexec/index.xml" rel="self" type="application/rss+xml"/><item><title>Pardus Software Center Local Privilege Escalation via APT Option Injection (CVE-2026-14459 / CVE-2026-14460)</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-14459-pardus-software-lpe/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-14459-pardus-software-lpe/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>dasokkk (Kerem Kaan Daşmaz)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-14459 (also covers CVE-2026-14460)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>8.8 (CVSS 3.1, per CERT-TR advisory, for both CVEs)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>linux, pardus, privilege-escalation, polkit, pkexec, apt-injection, argument-injection, local-dos&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>&lt;code>pardus-software&lt;/code> (Pardus Software Center)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>1.0.4 (fixed in 1.0.5)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Bash shell scripts targeting Python PolicyKit helpers on Pardus Linux&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Local-only (CVE-2026-14459 requires membership in the &lt;code>pardus-software&lt;/code> group, no sudo/password; CVE-2026-14460 requires no group membership or authentication at all)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Two local privilege-escalation flaws affect the &lt;code>pardus-software&lt;/code> package that powers the Pardus Software Center&amp;rsquo;s PolicyKit-mediated install/update helpers. CVE-2026-14459 (CWE-88, argument injection) arises because the privileged &lt;code>Actions.py&lt;/code> helper splits its &lt;code>packages&lt;/code> argument on spaces and forwards the tokens directly to &lt;code>apt&lt;/code> without validating package names or inserting a &lt;code>--&lt;/code> terminator, letting a low-privileged group member smuggle in APT options such as &lt;code>-o Dir::Bin::dpkg=&amp;lt;attacker script&amp;gt;&lt;/code> that get executed as root. CVE-2026-14460 (CWE-862, missing authorization) is caused by the &lt;code>autoaptupdateaction&lt;/code> PolicyKit action being declared with &lt;code>allow_any=yes&lt;/code>, letting any local user invoke the root update helper without authentication, creating a local denial-of-service surface. The repository ships both a benign proof (&lt;code>poc.sh&lt;/code>, which records &lt;code>id&lt;/code> output and drops a setuid-root shell as evidence) and weaponized &lt;code>exploit-14459.sh&lt;/code> / &lt;code>exploit-14460.sh&lt;/code> scripts.&lt;/p></description></item></channel></rss>

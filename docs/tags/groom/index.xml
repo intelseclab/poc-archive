@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Groom on PoC Archive</title><link>https://poc.intelseclab.com/tags/groom/</link><description>Recent content in Groom on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/groom/index.xml" rel="self" type="application/rss+xml"/><item><title>Linux FUSE Readdir Cache Out-of-Bounds Write to Root LPE — CVE-2026-31694</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-31694-fuse-readdir-cache-oob/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-31694-fuse-readdir-cache-oob/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>0xCyberstan&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-31694&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>linux-kernel, fuse, oob-write, page-cache, lpe, groom, unprivileged, qemu-kvm&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Linux kernel — &lt;code>fs/fuse/readdir.c&lt;/code> (&lt;code>fuse_add_dirent_to_cache()&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>6.15+ (the &lt;code>FUSE_NAME_MAX&lt;/code> bump to &lt;code>PATH_MAX - 1&lt;/code> made the readdir path reachable); fixed by &lt;code>51a8de6c50bf9&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C, Linux kernel (FUSE), tested via QEMU/KVM guest&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Local-only (ability to run a FUSE server as an unprivileged user, typical on many distros)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>&lt;code>fuse_add_dirent_to_cache()&lt;/code> is missing a bounds check when copying a FUSE server-supplied directory entry into the kernel&amp;rsquo;s readdir page-cache. A malicious (or attacker-controlled) FUSE server can return a &lt;code>dirent&lt;/code> with &lt;code>namelen = 4095&lt;/code>, which serializes to a 4120-byte record — 24 bytes larger than the single 4096-byte page-cache page the kernel copies it into, overflowing into the next physical page with fully server-controlled bytes. The included exploit uses a marker PoC to confirm the write primitive, then grooms the overflow so the 24 controlled bytes land on the page-cache copy of &lt;code>/etc/passwd&lt;/code>, turning the root account passwordless for a full local privilege escalation.&lt;/p></description></item></channel></rss>

@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Llm-Proxy on PoC Archive</title><link>https://poc.intelseclab.com/tags/llm-proxy/</link><description>Recent content in Llm-Proxy on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/llm-proxy/index.xml" rel="self" type="application/rss+xml"/><item><title>LiteLLM Guardrail Custom-Code Sandbox Escape to Root RCE (CVE-2026-40217)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-40217-litellm-guardrail-sandbox-escape/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-40217-litellm-guardrail-sandbox-escape/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Markus Vervier (X41 D-Sec GmbH); PoC packaged by learner202649&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-40217 (X41-2026-001, GHSA-3926-2jvf-fg29)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>8.8 (CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H, per source advisory)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>litellm, llm-proxy, sandbox-escape, bytecode-manipulation, cwe-913, docker, root-rce, authenticated&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>LiteLLM (open-source LLM proxy/gateway), &lt;code>POST /guardrails/test_custom_code&lt;/code> endpoint&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>LiteLLM through the 2026-04-08 build (pre-v1.83.11); fixed in v1.83.11+&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 exploit against the LiteLLM proxy&amp;rsquo;s HTTP API, targeting its default Docker deployment (runs as root)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (a valid LiteLLM API/master key with access to the guardrail-testing endpoint)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>LiteLLM&amp;rsquo;s guardrail-testing endpoint lets authenticated users submit custom Python code that is checked with a regex-based source-code filter meant to block dangerous identifiers such as &lt;code>__globals__&lt;/code>, &lt;code>__builtins__&lt;/code>, and &lt;code>__import__&lt;/code>. Because the filter only inspects source text and not runtime behavior, an attacker can build the blocked identifiers via string concatenation and then use CPython&amp;rsquo;s &lt;code>code.replace()&lt;/code>/&lt;code>object.__setattr__()&lt;/code> to rewrite a generator function&amp;rsquo;s bytecode name table (&lt;code>co_names&lt;/code>) at runtime, recovering access to real builtins and &lt;code>__import__&lt;/code> without the blocked strings ever appearing literally in the submitted code. This bypass lets the submitted &amp;ldquo;guardrail&amp;rdquo; code execute arbitrary OS commands inside the proxy process, which in LiteLLM&amp;rsquo;s default Docker image runs as root, giving full container compromise from what is nominally a code-testing sandbox.&lt;/p></description></item><item><title>LiteLLM Proxy Privilege Escalation via `/user/update` (CVE-2026-47102)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-47102-litellm-privesc-user-update/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-47102-litellm-privesc-user-update/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Fenix Qiao (13ph03nix) — Obsidian Security&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-47102&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>8.8 (CVSS v3.1: AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>litellm, privilege-escalation, broken-access-control, cwe-863, api-authorization, llm-proxy&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-47101 (chainable &lt;code>/key/generate&lt;/code> wildcard-route vulnerability)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>LiteLLM (LLM API proxy / gateway)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt; 1.83.10 (confirmed on 1.83.7; fixed in 1.83.10)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python (FastAPI-based proxy)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (any low-privileged API key with route access to &lt;code>/user/update&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>LiteLLM&amp;rsquo;s &lt;code>/user/update&lt;/code> endpoint is meant to let a user update their own account attributes (name, email, metadata). The authorization check &lt;code>can_user_call_user_update()&lt;/code> only verifies &lt;em>which user record&lt;/em> the caller may modify (their own, or any if they are already &lt;code>proxy_admin&lt;/code>) but does not restrict &lt;em>which fields&lt;/em> a self-update may change. A low-privileged &lt;code>internal_user&lt;/code> who has been granted (or otherwise obtains) API-key route access to &lt;code>/user/update&lt;/code> can therefore include &lt;code>user_role&lt;/code> in their own update request and set it to &lt;code>proxy_admin&lt;/code>, instantly escalating to full administrative privileges over the LiteLLM proxy.&lt;/p></description></item><item><title>LiteLLM Proxy Unauthenticated Auth Bypass via Host-Header Route Confusion (CVE-2026-49468)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-49468-litellm-host-header-auth-bypass/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-49468-litellm-host-header-auth-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>BiiTts (Caio Fabrício)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-49468&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (CVSS 3.1, &lt;code>AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H&lt;/code>, per NVD as stated in source); 9.5 (CVSS 4.0 per GitHub advisory, as stated in source)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>litellm, llm-proxy, auth-bypass, host-header, route-confusion, cwe-290, fastapi, starlette, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>LiteLLM (BerriAI) proxy&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&lt;code>&amp;lt; 1.84.0&lt;/code> (verified by the source repo on &lt;code>v1.83.14-stable&lt;/code>); fixed in &lt;code>1.84.0&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python (FastAPI / Starlette ASGI application)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (pre-auth; bypasses authentication entirely)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>&lt;code>exploit.py&lt;/code> demonstrates a pre-authentication bypass in the LiteLLM proxy caused by a single crafted &lt;code>Host&lt;/code> header (&lt;code>Host: evil/?&lt;/code>). LiteLLM&amp;rsquo;s &lt;code>get_request_route()&lt;/code> derives the route used for auth decisions from &lt;code>request.url.path&lt;/code>, which Starlette reconstructs from the client-controlled &lt;code>Host&lt;/code> header rather than from the real ASGI routing path. Injecting &lt;code>/?&lt;/code> into the Host header pushes the real request path into the URL&amp;rsquo;s query component, making &lt;code>get_request_route()&lt;/code> return &lt;code>/&lt;/code> — a public, unauthenticated health-check route — while FastAPI still dispatches the request to the real, normally-protected handler. This lets an unauthenticated attacker mint valid API keys, create users, run inference, and read configuration/spend data on any endpoint whose only protection is this route-based check.&lt;/p></description></item></channel></rss>

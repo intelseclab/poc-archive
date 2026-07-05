@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Unserialize on PoC Archive</title><link>https://poc.intelseclab.com/tags/unserialize/</link><description>Recent content in Unserialize on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/unserialize/index.xml" rel="self" type="application/rss+xml"/><item><title>Everest Forms Unauthenticated PHP Object Injection to RCE (CVE-2026-3296)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-3296-everest-forms-object-injection/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-3296-everest-forms-object-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>0xsabre (Wordfence); PoC scanner by xxconi&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-3296&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC (functional two-phase injection/trigger tool; RCE requires supplying a real POP gadget chain via PHPGGC)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, everest-forms, php-object-injection, deserialization, unserialize, rce, cwe-502&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Everest Forms (WordPress plugin — Contact Form, Payment Form, Quiz, Survey &amp;amp; Custom Form Builder)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 3.4.3 (fixed in 3.4.4)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP (WordPress plugin); PoC written in Python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No for injection phase; Admin session required to trigger deserialization&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Everest Forms saves submitted form field values into the &lt;code>wp_evf_entrymeta&lt;/code> table using &lt;code>maybe_serialize()&lt;/code>, and its sanitization routine (&lt;code>sanitize_text_field()&lt;/code>) strips HTML/null bytes but does not strip PHP serialization control characters, so an attacker can submit a serialized PHP object as a form field value and have it stored verbatim. The plugin&amp;rsquo;s admin entry-view page (&lt;code>html-admin-page-entries-view.php&lt;/code>) later calls PHP&amp;rsquo;s native &lt;code>unserialize()&lt;/code> on that stored value without the &lt;code>allowed_classes&lt;/code> restriction, so when an administrator views the submission, any POP (property-oriented-programming) gadget chain available in the WordPress/plugin environment can be instantiated, leading to remote code execution. The PoC in this repo automates both the unauthenticated injection phase and the admin-triggered deserialization phase, and includes benign probe payloads as well as placeholders for real POP chains generated via PHPGGC.&lt;/p></description></item></channel></rss>

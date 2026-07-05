@@ -98,8 +98,8 @@ def yaml_str(s):
     """Emit a YAML string value, quoting if needed."""
     if not s:
         return '""'
-    # Quote if starts with a reserved YAML indicator or contains special chars
-    if s[0] in '@`' or any(c in s for c in ':#{}[]|>&*!,?'):
+    # Quote if starts with a reserved YAML indicator, contains special chars, or embeds a quote
+    if s[0] in '@`' or '"' in s or any(c in s for c in ':#{}[]|>&*!,?'):
         escaped = s.replace('\\', '\\\\').replace('"', '\\"')
         return f'"{escaped}"'
     return s

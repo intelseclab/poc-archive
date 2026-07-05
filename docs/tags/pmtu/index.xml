@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Pmtu on PoC Archive</title><link>https://poc.intelseclab.com/tags/pmtu/</link><description>Recent content in Pmtu on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/pmtu/index.xml" rel="self" type="application/rss+xml"/><item><title>Linux Kernel ICMP Fragmentation-Needed NULL Pointer Dereference (CVE-2026-23398)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-23398-icmp-frag-needed/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-23398-icmp-frag-needed/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>zpol&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-23398&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>linux-kernel, icmp, denial-of-service, null-pointer-dereference, kernel-panic, pmtu, scapy, remote-dos&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Linux kernel, &lt;code>icmp_tag_validation()&lt;/code> / &lt;code>icmp_unreach()&lt;/code> in &lt;code>net/ipv4/icmp.c&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Kernels predating the March 2026 fix (commit &lt;code>614aefe56af8e&lt;/code>); PoC reproduces on mainline 6.12.0 (2024-11 build)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python (Scapy) PoC targeting the Linux networking stack; lab built on QEMU + Docker&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-23398 is a NULL pointer dereference in the Linux kernel&amp;rsquo;s ICMP handling path, reachable when a host has &lt;code>net.ipv4.ip_no_pmtu_disc&lt;/code> set to &lt;code>3&lt;/code> (a hardened Path MTU Discovery mode) and receives a crafted ICMP &amp;ldquo;Fragmentation Needed&amp;rdquo; (type 3, code 4) packet. The quoted inner IPv4 header inside the ICMP payload references a protocol number that has no registered handler in &lt;code>inet_protos[]&lt;/code>, and &lt;code>icmp_tag_validation()&lt;/code> dereferences that missing handler pointer without a NULL check, panicking the kernel. The archived PoC ships a full reproduction lab (QEMU victim VM + a Dockerized Scapy sender) plus a standalone Python script that crafts and sends the offending ICMP packet, and includes a captured serial-console dump showing the resulting kernel oops.&lt;/p></description></item></channel></rss>

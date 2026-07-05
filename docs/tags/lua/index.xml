@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Lua on PoC Archive</title><link>https://poc.intelseclab.com/tags/lua/</link><description>Recent content in Lua on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/lua/index.xml" rel="self" type="application/rss+xml"/><item><title>Wing FTP Server Admin Session Poisoning via Lua loadfile() RCE (CVE-2026-44403)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-44403-wingftp-session-poisoning-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-44403-wingftp-session-poisoning-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>ZemarKhos&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-44403&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>N/A (see advisory)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wingftp, lua, session-poisoning, loadfile, rce, webadmin, authenticated&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-47812 (earlier, incompletely-fixed Wing FTP session-injection RCE)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Wing FTP Server (WebAdmin console)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>v8.1.2 confirmed vulnerable (issue traces back through the line since the incomplete CVE-2025-47812 fix in v7.4.4)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Lua (server-side WebAdmin scripts), HTTP admin interface&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — requires valid full-administrator credentials (not readonly, not domain admin)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — HTTP(S) access to the WebAdmin interface (default port 5466)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Wing FTP Server&amp;rsquo;s WebAdmin session mechanism serializes session values as executable Lua source using &lt;code>[[...]]&lt;/code> long-string literals. Because bracket-sanitization code that would strip &lt;code>[&lt;/code>/&lt;code>]&lt;/code> characters from session values was commented out, a value containing &lt;code>]]&lt;/code> prematurely closes the long string and lets an attacker inject arbitrary Lua that executes the next time the session file is loaded via &lt;code>loadfile()&lt;/code>. An authenticated full administrator can set a malicious &lt;code>mydirectory&lt;/code> (basefolder) value on a domain admin account; when that account&amp;rsquo;s session is created and subsequently reloaded, the injected Lua runs with the privileges of the Wing FTP Server process (SYSTEM on Windows, root on Linux). This is a distinct, still-exploitable variant of the vulnerability class only partially fixed by CVE-2025-47812.&lt;/p></description></item></channel></rss>

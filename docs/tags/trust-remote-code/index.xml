@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Trust-Remote-Code on PoC Archive</title><link>https://poc.intelseclab.com/tags/trust-remote-code/</link><description>Recent content in Trust-Remote-Code on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/trust-remote-code/index.xml" rel="self" type="application/rss+xml"/><item><title>AI Model-Loader `trust_remote_code` Order-of-Operations RCE Simulation (CVE-2026-22807)</title><link>https://poc.intelseclab.com/pocs/misc/2026-07-05_cve-2026-22807-vllm-trust-remote-code-bypass/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/misc/2026-07-05_cve-2026-22807-vllm-trust-remote-code-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-01&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>otakuliu&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-22807&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>misc&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>vllm, huggingface, trust-remote-code, toctou, model-loading, supply-chain, python, code-execution&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>AI inference/model-loading frameworks that resolve custom model classes via &lt;code>auto_map&lt;/code> before validating &lt;code>trust_remote_code&lt;/code> (pattern seen in vLLM/Transformers-style loaders)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Logic-pattern PoC; not tied to a specific upstream package version&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3, no third-party dependencies required&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Local-only&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>This repository is a small, self-contained Python testbed (&lt;code>vulnerable_lib.py&lt;/code>) that reproduces a class of AI supply-chain vulnerability found in model-loading frameworks: when a loader resolves a model&amp;rsquo;s Python class via a &lt;code>config.json&lt;/code>&amp;rsquo;s &lt;code>auto_map&lt;/code> field, it can end up importing (and therefore executing) attacker-controlled code before it ever checks whether &lt;code>trust_remote_code&lt;/code> was set to &lt;code>False&lt;/code>. The companion script (&lt;code>poc.py&lt;/code>) builds a malicious &amp;ldquo;model&amp;rdquo; directory containing a &lt;code>config.json&lt;/code> that points &lt;code>AutoModel&lt;/code> at a &lt;code>malicious.py&lt;/code> module, whose top-level code runs an arbitrary OS command supplied on the command line. Loading that model with &lt;code>trust_remote_code=False&lt;/code> still results in the command executing, and only afterward does the loader raise its &amp;ldquo;remote code not allowed&amp;rdquo; exception — proving the security check happens too late to matter.&lt;/p></description></item></channel></rss>

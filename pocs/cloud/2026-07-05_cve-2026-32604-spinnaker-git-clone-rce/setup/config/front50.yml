@@ -1,0 +1,45 @@
+server:
+  port: 8080
+
+spinnaker:
+  redis:
+    enabled: false
+  s3:
+    enabled: true
+    storage-service:
+      enabled: false
+    plugin-storage:
+      enabled: true
+      bucket: front50
+      region: us-east-1
+      endpoint: http://minio:9000
+      path-style-access: true
+  gcs:
+    enabled: false
+
+# SQL storage backend
+sql:
+  enabled: true
+  connectionPools:
+    default:
+      default: true
+      jdbcUrl: jdbc:mysql://mysql:3306/front50
+      user: root
+      password: spinnaker
+  migration:
+    jdbcUrl: jdbc:mysql://mysql:3306/front50
+    user: root
+    password: spinnaker
+
+services:
+  fiat:
+    enabled: true
+    baseUrl: http://fiat:7003
+
+spring:
+  mvc:
+    pathmatch:
+      matching-strategy: ANT_PATH_MATCHER
+
+swagger:
+  enabled: true

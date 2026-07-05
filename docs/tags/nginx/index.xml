@@ -1,4 +1,429 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Nginx on PoC Archive</title><link>https://poc.intelseclab.com/tags/nginx/</link><description>Recent content in Nginx on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Thu, 14 May 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/nginx/index.xml" rel="self" type="application/rss+xml"/><item><title>NGINX Rift — Heap Buffer Overflow RCE (CVE-2026-42945)</title><link>https://poc.intelseclab.com/pocs/web/2026-05-14_nginx-rift-cve-2026-42945/</link><pubDate>Thu, 14 May 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-05-14_nginx-rift-cve-2026-42945/</guid><description>&lt;!-- 
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Nginx on PoC Archive</title><link>https://poc.intelseclab.com/tags/nginx/</link><description>Recent content in Nginx on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/nginx/index.xml" rel="self" type="application/rss+xml"/><item><title>HPE Aruba AOS-CX Pre-Auth REST API Bypass via nginx Version Smuggling (CVE-2026-23813)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-23813-aruba-aoscx-auth-bypass/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-23813-aruba-aoscx-auth-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>4252nez (OffSecKit); original report by moonv via HPE Bugcrowd&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-23813&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (CVSS 3.x, Critical)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>aruba, aos-cx, authentication-bypass, nginx, ovsdb, network-switch, config-disclosure, cwe-287&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>HPE Aruba Networking AOS-CX&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>10.17.x &amp;lt;= 10.17.0001, 10.16.x &amp;lt;= 10.16.1020, 10.13.x &amp;lt;= 10.13.1160, 10.10.x &amp;lt;= 10.10.1170 (fixed in 10.17.1001 / 10.16.1030 / 10.13.1161 / 10.10.1180)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3.8+ (requests) against AOS-CX REST management API&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>AOS-CX fronts its management REST API with nginx, which uses an over-permissive regular expression to route requests by API version/login path. By smuggling a &lt;code>login&lt;/code>-flavored token into the request path, an unauthenticated attacker can reach REST endpoints that should only be accessible to authenticated sessions, exposing the OVSDB-backed device configuration — including the administrator&amp;rsquo;s password hash. On the 10.10.x branch specifically, this bypass can additionally be chained into creating a configuration checkpoint and reading it back in full via the unauthenticated path. The repository ships a non-destructive detector, an educational side-by-side demo of the routing bypass, and a full config-disclosure PoC scoped to 10.10.x.&lt;/p></description></item><item><title>NGINX HTTP/2 Frame Injection via Vulnerable Upstream Proxying (CVE-2026-42926)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-42926-nginx-http2-frame-injection/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-42926-nginx-http2-frame-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>ikarolaborda&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-42926&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>nginx, http2, frame-injection, reverse-proxy, request-smuggling, docker-lab&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>NGINX (HTTP/2 upstream proxying)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>1.29.4 through 1.30.0 (fixed in 1.30.1+ / 1.31.0+)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C (NGINX core), PHP/Python lab tooling&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP access to the vulnerable proxy location)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-42926 is an HTTP/2 frame injection issue in NGINX that occurs when a specific vulnerable proxy configuration is used — proxying to an upstream over HTTP/2 (&lt;code>proxy_http_version 2&lt;/code>) while forwarding a client-controlled request body via a variable (&lt;code>proxy_set_body $request_body&lt;/code>) with a large &lt;code>client_max_body_size&lt;/code>. Under this configuration, attacker-controlled bytes in the client request body can be interpreted as raw HTTP/2 frame data by the upstream connection, allowing frame-level injection into the proxied HTTP/2 stream. The lab in this repository builds NGINX from source (vulnerable and patched versions), runs a controlled raw HTTP/2 &amp;ldquo;upstream logger&amp;rdquo; to capture what the upstream actually receives, and provides a PHP validation harness that issues a crafted request and inspects the upstream logs for injected-frame evidence, comparing vulnerable vs. patched behavior.&lt;/p></description></item><item><title>nginx PoolSlip × Rift Chained ASLR-Independent Remote Code Execution (CVE-2026-9256 / CVE-2026-42945)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-9256-nginx-poolslip-rift-rce-chain/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-9256-nginx-poolslip-rift-rce-chain/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>y198nt (chaining, ASLR-independent technique, Debian glibc-2.41 port); rift component PoC by DepthFirstDisclosures&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-9256 (&amp;ldquo;PoolSlip&amp;rdquo;), chained with CVE-2026-42945 (&amp;ldquo;rift&amp;rdquo;)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>nginx, heap-overflow, heap-over-read, aslr-bypass, rce, rewrite-engine, request-smuggling-adjacent, chained-exploit&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-42945&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>nginx (rewrite engine)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-42945 (rift): 0.6.27 – 1.30.0; CVE-2026-9256 (PoolSlip): 0.1.17 – 1.30.1 and 1.31.0 (both fixed only as of 1.30.2 / 1.31.1)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C (nginx core), tested on stock &lt;code>nginx:1.30.0&lt;/code> Docker image, Debian 13 / glibc 2.41&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>This PoC chains two nginx rewrite-engine bugs that share the same root cause — a two-pass mismatch in how &lt;code>is_args&lt;/code>/&lt;code>$args&lt;/code> length is computed — into a single ASLR-independent remote &lt;code>system()&lt;/code> call on a stock, unmodified &lt;code>nginx:1.30.0&lt;/code> Docker image, with no hardcoded addresses and no nginx restart required (~90% reliability per fresh worker). CVE-2026-9256 (&amp;ldquo;PoolSlip&amp;rdquo;) is a heap over-read triggered via a crafted &lt;code>rewrite&lt;/code> directive that lets &lt;code>$args&lt;/code> be reflected past its buffer, leaking live libc and heap addresses. CVE-2026-42945 (&amp;ldquo;rift&amp;rdquo;) is a heap overflow limited to URL-safe bytes, used here to perform a 2-byte partial overwrite of an already-valid &lt;code>limit_conn&lt;/code> cleanup pointer — since only the ASLR-random low bytes are overwritten, the technique works regardless of ASLR. The corrupted pointer is redirected to a sprayed cleanup handler that calls &lt;code>system(cmd)&lt;/code>, achieving remote code execution when nginx tears down the connection.&lt;/p></description></item><item><title>Nginx QUIC/HTTP-3 DCID Length Heap Overflow Lab (CVE-2026-0211)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-0211-nginx-quic-heap-overflow/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-0211-nginx-quic-heap-overflow/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Hamza Arda Karabacak (student), advised by Keyvan Arasteh — İstinye University, &amp;ldquo;Sızma Testi&amp;rdquo; (Penetration Testing) course BGT006&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-0211 (repository explicitly labels this as a hypothetical/simulated CVE for coursework, not a confirmed vendor-assigned vulnerability)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source — repository states this is a simulated/educational scenario and does not claim a real-world CVSS score&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>nginx, quic, http-3, heap-overflow, dos, fuzzing, dcid, academic-lab, docker&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>A custom, deliberately vulnerabilized fork of Nginx 1.25.3&amp;rsquo;s QUIC transport module (&lt;code>ngx_event_quic_transport.c&lt;/code>), run inside a purpose-built Docker lab — not the stock upstream Nginx release&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Lab-modified Nginx 1.25.3 with HTTP/3 (QUIC) enabled and DCID length bounds-checking intentionally weakened&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python (recon/DoS/fuzzer scripts, Scapy), C (target patch/diff), Docker Compose&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>This repository is a university penetration-testing course project that models a hypothetical heap buffer overflow in Nginx&amp;rsquo;s QUIC (HTTP/3) packet parser, where the Destination Connection ID (DCID) length field is not properly bounds-checked before being used to read/copy the DCID bytes. The lab target is a custom-built, intentionally vulnerable Nginx container (not real-world production Nginx) fronting a mock &amp;ldquo;enterprise security gateway&amp;rdquo; website inside an isolated Docker network. Included Python tooling probes for QUIC/HTTP-3 support, crafts QUIC Initial packets with an oversized DCID length (&lt;code>0xFF&lt;/code> / 255 bytes against an expected max of ~20), and either fuzzes the target with Scapy-crafted packets or floods it with malformed packets across many threads to trigger crashes/resource exhaustion. A companion patch under &lt;code>src/savunma/&lt;/code> demonstrates the defensive fix (stricter DCID length + buffer-bounds validation) that closes the simulated hole. Framed honestly, this is an academic reproduction of a QUIC parser bug class rather than an exploit against a currently-shipping Nginx release.&lt;/p></description></item><item><title>nginx Resolver Use-After-Free in OCSP Stapling (CVE-2026-40701)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-40701-nginx-resolver-ocsp-uaf/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-40701-nginx-resolver-ocsp-uaf/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>edgecases-PurpleHax (rwils83)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-40701&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Medium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>~6.3 (CVSS v3, per source README)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>nginx, use-after-free, ocsp-stapling, resolver, memory-corruption, docker-lab, tls&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>nginx (open source)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>1.19.0 – 1.30.0 (fixed in 1.30.1 / 1.31.0)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C (nginx core resolver module); PoC delivered as a Docker lab image&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>nginx&amp;rsquo;s resolver contains a use-after-free that is reachable when a server is configured with &lt;code>ssl_stapling on;&lt;/code>, &lt;code>ssl_stapling_verify on;&lt;/code>, and a &lt;code>resolver&lt;/code> directive — the combination that causes nginx to perform DNS resolution of the OCSP responder hostname on the OCSP stapling code path. This repository provides a Docker-based reproduction lab (an nginx 1.30.0 build from source, the last vulnerable release, plus a matching TLS configuration) that reaches the vulnerable configuration state; it documents the trigger conditions and points to the F5 advisory for the exact freed-then-reused sequence rather than shipping a weaponized memory-corruption trigger. This entry mirrors only the CVE-2026-40701-specific subset (the shared nginx base image plus the resolver-lab overlay) extracted from a larger multi-CVE nginx lab bundle.&lt;/p></description></item><item><title>NGINX Rift — Heap Buffer Overflow RCE (CVE-2026-42945)</title><link>https://poc.intelseclab.com/pocs/web/2026-05-14_nginx-rift-cve-2026-42945/</link><pubDate>Thu, 14 May 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-05-14_nginx-rift-cve-2026-42945/</guid><description>&lt;!-- 
  File: 2026-05-14_nginx-rift-cve-2026-42945.md
  Location: pocs/web/
 -->

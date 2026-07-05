@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Scapy on PoC Archive</title><link>https://poc.intelseclab.com/tags/scapy/</link><description>Recent content in Scapy on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/scapy/index.xml" rel="self" type="application/rss+xml"/><item><title>Linux Kernel ICMP Fragmentation-Needed NULL Pointer Dereference (CVE-2026-23398)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-23398-icmp-frag-needed/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-23398-icmp-frag-needed/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>zpol&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-23398&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>linux-kernel, icmp, denial-of-service, null-pointer-dereference, kernel-panic, pmtu, scapy, remote-dos&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Linux kernel, &lt;code>icmp_tag_validation()&lt;/code> / &lt;code>icmp_unreach()&lt;/code> in &lt;code>net/ipv4/icmp.c&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Kernels predating the March 2026 fix (commit &lt;code>614aefe56af8e&lt;/code>); PoC reproduces on mainline 6.12.0 (2024-11 build)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python (Scapy) PoC targeting the Linux networking stack; lab built on QEMU + Docker&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-23398 is a NULL pointer dereference in the Linux kernel&amp;rsquo;s ICMP handling path, reachable when a host has &lt;code>net.ipv4.ip_no_pmtu_disc&lt;/code> set to &lt;code>3&lt;/code> (a hardened Path MTU Discovery mode) and receives a crafted ICMP &amp;ldquo;Fragmentation Needed&amp;rdquo; (type 3, code 4) packet. The quoted inner IPv4 header inside the ICMP payload references a protocol number that has no registered handler in &lt;code>inet_protos[]&lt;/code>, and &lt;code>icmp_tag_validation()&lt;/code> dereferences that missing handler pointer without a NULL check, panicking the kernel. The archived PoC ships a full reproduction lab (QEMU victim VM + a Dockerized Scapy sender) plus a standalone Python script that crafts and sends the offending ICMP packet, and includes a captured serial-console dump showing the resulting kernel oops.&lt;/p></description></item><item><title>OpenBSD slaacd/rad Infinite Loop via Malformed ND Option (CVE-2026-41285)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-41285-openbsd-slaacd-nd-dos/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-41285-openbsd-slaacd-nd-dos/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Daniel Wade (Rat5ak)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-41285&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>openbsd, slaacd, rad, icmpv6, ipv6, dos, infinite-loop, scapy, neighbor-discovery&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>OpenBSD &lt;code>slaacd&lt;/code> (SLAAC autoconfiguration daemon) and &lt;code>rad&lt;/code> (Router Advertisement daemon)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>OpenBSD 7.8 GENERIC amd64 (tested); parsing bug present in &lt;code>sbin/slaacd/engine.c&lt;/code> and &lt;code>usr.sbin/rad/engine.c&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C (OpenBSD userland daemons); PoC in Python/Scapy&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (same L2 network segment)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>&lt;code>slaacd&lt;/code> and &lt;code>rad&lt;/code> each contain their own userland parser for ICMPv6 Neighbor Discovery (ND) options, separate from the kernel&amp;rsquo;s already-correct &lt;code>nd6_options()&lt;/code> validation. Their parsing loop computes &lt;code>optlen = nd_opt_len * 8 - 2&lt;/code>, and when an attacker sends an ND option with &lt;code>nd_opt_len == 0&lt;/code>, this evaluates to &lt;code>-2&lt;/code>, which — due to signed/unsigned promotion — fails to trigger the loop&amp;rsquo;s bounds-check guard. The loop pointer then effectively regresses instead of advancing, spinning the daemon&amp;rsquo;s engine process at 100% CPU forever. A single 18-byte crafted ICMPv6 Router Advertisement (or Router Solicitation, for &lt;code>rad&lt;/code>) from any host on the local network segment permanently disables IPv6 SLAAC address autoconfiguration until the daemon is manually restarted. The repository includes both a minimal one-packet exploit and a full before/after proof script that verifies SLAAC works, sends the exploit, and confirms subsequent legitimate RAs are ignored.&lt;/p></description></item></channel></rss>

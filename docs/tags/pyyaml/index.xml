@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Pyyaml on PoC Archive</title><link>https://poc.intelseclab.com/tags/pyyaml/</link><description>Recent content in Pyyaml on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/pyyaml/index.xml" rel="self" type="application/rss+xml"/><item><title>docling-core Unsafe YAML Deserialization Leading to Code Execution — CVE-2026-24009</title><link>https://poc.intelseclab.com/pocs/misc/2026-07-05_cve-2026-24009-docling-core-yaml-deserialization/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/misc/2026-07-05_cve-2026-24009-docling-core-yaml-deserialization/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-02&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Biran Perez (BiranPeretz)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-24009&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>misc&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>docling-core, yaml-deserialization, pyyaml, unsafe-loader, rce, python, cwe-502&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>docling-core (Python library)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>docling-core &amp;gt;= 2.21.0 and &amp;lt; 2.48.4, combined with PyYAML &amp;lt; 5.4&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (depends on how the host application exposes YAML loading)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No (local file / library-level PoC; exploitability depends on the consuming application)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>&lt;code>docling-core&lt;/code>&amp;rsquo;s &lt;code>DoclingDocument.load_from_yaml()&lt;/code> deserializes YAML using &lt;code>yaml.load(f, Loader=yaml.FullLoader)&lt;/code> rather than a safe loader. When paired with a vulnerable &lt;code>PyYAML&lt;/code> version (&amp;lt; 5.4, related to CVE-2020-14343), a crafted YAML document can trigger code execution during parsing, before any &lt;code>DoclingDocument&lt;/code> schema validation even runs. The repository provides &lt;code>check_loader.py&lt;/code> to confirm which loader a given docling-core version uses, &lt;code>repro_docling_load.py&lt;/code> to actually trigger execution via a malicious YAML payload (&lt;code>malicious.yaml&lt;/code>), and a &lt;code>scanner/&lt;/code> helper to check whether an installed environment&amp;rsquo;s resolved dependency versions fall into the vulnerable range. The fix is to upgrade docling-core to &amp;gt;= 2.48.4 (which switches to &lt;code>yaml.SafeLoader&lt;/code>) or upgrade PyYAML to &amp;gt;= 5.4.&lt;/p></description></item></channel></rss>

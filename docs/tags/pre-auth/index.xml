@@ -1,4 +1,514 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Pre-Auth on PoC Archive</title><link>https://poc.intelseclab.com/tags/pre-auth/</link><description>Recent content in Pre-Auth on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Fri, 12 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/pre-auth/index.xml" rel="self" type="application/rss+xml"/><item><title>Ivanti Sentry Pre-Auth RCE + Auth Bypass (CVE-2026-10520 / CVE-2026-10523)</title><link>https://poc.intelseclab.com/pocs/network/2026-06-28_cve-2026-10520-ivanti-sentry-rce/</link><pubDate>Sun, 28 Jun 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-06-28_cve-2026-10520-ivanti-sentry-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Pre-Auth on PoC Archive</title><link>https://poc.intelseclab.com/tags/pre-auth/</link><description>Recent content in Pre-Auth on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/pre-auth/index.xml" rel="self" type="application/rss+xml"/><item><title>Discuz! X5.0 Race Condition + CAPTCHA-Solving Pre-Auth to RCE Chain (CVE-2026-49952)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-49952-discuz-race-condition-captcha-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-49952-discuz-race-condition-captcha-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Egidio Romano (EgiX) / passwa11 (mirror)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-49952 (chain also referenced as KIS-2026-09, KIS-2026-10, KIS-2026-11)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>discuz, php, forum, race-condition, captcha-bypass, ocr, account-takeover, lfi, webshell, rce, pre-auth&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Discuz! X5.0 (PHP-based forum/CMS software)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Discuz! X5.0&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP (target application), Python 3 (exploit tooling: &lt;code>requests&lt;/code>, PyTorch/Pillow for CAPTCHA OCR)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (pre-authentication chain; the exploit registers its own account as part of the attack)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>This is a multi-stage, pre-auth-to-RCE exploit chain against Discuz! X5.0 that combines several bugs: an authcode-based DB export/import feature is abused to leak the admin&amp;rsquo;s username and MD5 password hash from a database backup; the exploit then registers a &amp;ldquo;special&amp;rdquo; crafted username containing that MD5 hash, solves the site&amp;rsquo;s login CAPTCHA using a bundled PyTorch OCR model, and wins a race condition between the DB-import process and the login flow to obtain an authenticated admin session cookie. From there it resets the admin password, logs into admincp, uploads a PHP webshell disguised as a PNG image via the header-nav icon upload feature, and abuses the plugin import/enable functionality (Local File Inclusion) to execute the disguised PHP stager, yielding an interactive webshell.&lt;/p></description></item><item><title>GNU InetUtils telnetd LINEMODE SLC Pre-Auth Buffer Overflow (CVE-2026-32746)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-32746-telnetd-linemode-slc-overflow/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-32746-telnetd-linemode-slc-overflow/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>DREAM Security Research Team (Adiel Sol, Arad Inbar, Erez Cohen, Nir Somech, Ben Grinberg, Daniel Lubel); PoC by jeffaf&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-32746&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (CVSS 3.1)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC (overflow trigger + verification only; no code execution/shellcode included)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>telnetd, inetutils, linemode, slc, buffer-overflow, pre-auth, cwe-120, cwe-787&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>GNU InetUtils telnetd&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Through 2.7 (all versions); any telnetd derived from the BSD SLC codebase&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 PoC targeting a C telnetd daemon on Linux&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (triggered before login prompt/authentication)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>GNU InetUtils telnetd&amp;rsquo;s &lt;code>add_slc()&lt;/code> function in &lt;code>telnetd/slc.c&lt;/code> appends 3 bytes per SLC (Set Local Characters) triplet into a fixed 108-byte buffer (&lt;code>slcbuf&lt;/code>) with no bounds checking. During telnet option negotiation, before any login prompt is shown, an unauthenticated client can request LINEMODE and then send a crafted SLC suboption containing 40-60 triplets with out-of-range function codes, causing the buffer to overflow and corrupting the &lt;code>slcptr&lt;/code> pointer plus adjacent BSS data. This PoC completes the negotiation, sends the oversized SLC suboption, and confirms the overflow by observing an anomalously large SLC response that leaks BSS memory back to the client — it does not attempt to weaponize the overflow into code execution.&lt;/p></description></item><item><title>MIPS-Based Managed Switch Firmware Pre-Auth Kernel RCE — CVE-2026-1668</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-1668-mips-switch-kernel-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-1668-mips-switch-kernel-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>tangrs&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-1668&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>mips, embedded-linux, kernel-exploit, firmware, managed-switch, reverse-shell, pre-auth, shellcode&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>MIPS-based managed switch firmware (web management HTTP server), e.g. SG2005P/SG2008/SG2016P/SG2210MP/SG2218/SG2428/SG3210/SL2428/TL-SG2428 series firmware built around 2025-10-31&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Firmware images matching SHA256 &lt;code>4b862b8dd7fde44fa57a39b35b562f21878dd6abb8e92ccd9cdef571ed60d544&lt;/code> (multiple product/model builds share this image); earlier firmware versions are likely also vulnerable with payload adjustments&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C/MIPS assembly payload built with a MIPS Linux GCC cross-toolchain; targets embedded Linux firmware&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The switch&amp;rsquo;s embedded web management HTTP server contains a memory-corruption flaw reachable via a crafted request to the &lt;code>/data/login.json&lt;/code> endpoint, exploitable before the device&amp;rsquo;s first legitimate HTTP request after boot. The PoC builds a raw MIPS shellcode payload (position-independent, using a custom linker script and freestanding C/assembly stub) that is appended after crafted HTTP headers with an oversized &lt;code>Content-Length&lt;/code> value, triggering the vulnerable code path in the kernel/HTTP server. Successful exploitation spawns a reverse shell back to the attacker, granting root access to the switch&amp;rsquo;s underlying embedded Linux system. The author has published a companion blog series explaining the memory-corruption primitive and payload construction in detail.&lt;/p></description></item><item><title>NVIDIA Triton Inference Server SageMaker Auth Bypass to Unauthenticated RCE (CVE-2026-24207)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-24207-triton-sagemaker-auth-bypass-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-24207-triton-sagemaker-auth-bypass-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>4252nez (offseckit.com); original vulnerability reported by Hyeonjun Ahn (@deayzl)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-24207 (sibling: CVE-2026-24206, Vertex AI, analysis only)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (NVIDIA CNA); not yet scored by NIST/NVD&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>nvidia-triton, sagemaker, auth-bypass, rce, cwe-288, ml-inference, model-loading, pre-auth&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>NVIDIA Triton Inference Server&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 26.02 (v2.66.0); fixed in 26.03 (v2.67.0)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C++/Python Triton server; PoC written in Python 3 with &lt;code>requests&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>NVIDIA Triton Inference Server exposes separate HTTP endpoints for SageMaker and Vertex AI multi-model integration. These endpoints bypass the operator-configured &lt;code>--http-restricted-api&lt;/code> access control, meaning the model-management surface (load/unload/enumerate models) remains reachable by unauthenticated network clients even when restricted-API protections are enabled on the standard HTTP port. Chained with the SageMaker Multi-Model Endpoint (MME) LOAD primitive, an attacker who can place files on a Triton-readable filesystem path can load a malicious Python-backend model, whose &lt;code>model.py&lt;/code> executes as the Triton process user — resulting in pre-authentication remote code execution. The repository ships a non-destructive detector, an educational bypass demonstrator, and a full probe/RCE-chain exploit script, verified against official NVIDIA NGC containers.&lt;/p></description></item><item><title>OpenAM Pre-Authentication RCE via `jato.clientSession` Deserialization (CVE-2026-33439)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-33439-openam-deserialization-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-33439-openam-deserialization-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Ibonok (nuclei template author: ibonok)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-33439&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per bundled nuclei template)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>openam, forgerock, deserialization, rce, pre-auth, java, gadget-chain, xalan, jato&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>ForgeRock / OpenIdentityPlatform OpenAM&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>OpenAM versions prior to the fix in commit &lt;code>014007c63cacc834cc795a89fac0e611aebc4a32&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Java (JDK 11+ to build/run the exploit; targets a Java-based OpenAM server)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>OpenAM&amp;rsquo;s unauthenticated Password Reset pages accept a &lt;code>jato.clientSession&lt;/code> parameter that is passed to &lt;code>Encoder.deserialize()&lt;/code> without any class allowlist/filtering, allowing an attacker to submit an arbitrary serialized Java object graph. The PoC builds a &lt;code>PriorityQueue&lt;/code>-based deserialization gadget chain combining the Click1 web framework and an external Xalan &lt;code>TemplatesImpl&lt;/code> gadget, whose translet bytecode calls &lt;code>com.iplanet.jato.RequestManager.getRequestContext()&lt;/code> to obtain the JATO framework&amp;rsquo;s active ThreadLocal request/response objects during deserialization — a technique that works even on modern JVMs (Java 21+) where classic Tomcat-thread-introspection echo techniques fail. The translet reads a command from the &lt;code>cmd&lt;/code> HTTP header, executes it via &lt;code>sh -c&lt;/code>, and writes the output directly into the HTTP response body, giving unauthenticated, pre-authentication remote code execution with in-band command output (no DNS/OOB exfiltration needed).&lt;/p></description></item><item><title>strongSwan RADIUS Attribute-Iterator Pre-Auth Infinite Loop / Remote DoS (CVE-2026-35333)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-35333-strongswan-radius-infinite-loop-dos/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-35333-strongswan-radius-infinite-loop-dos/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>JohannesLks&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-35333&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Medium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>strongswan, radius, dos, infinite-loop, integer-underflow, pre-auth&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>strongSwan — libradius&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Versions containing the flawed radius_message.c iterator&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (pre-authentication)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (RADIUS protocol)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>strongSwan&amp;rsquo;s &lt;code>attribute_enumerate()&lt;/code> in &lt;code>src/libradius/radius_message.c&lt;/code> accepts RADIUS attributes whose &lt;code>length&lt;/code> byte is smaller than &lt;code>sizeof(rattr_t)&lt;/code> (2 bytes). When &lt;code>length == 0&lt;/code>, the remaining-data counter underflows to a huge value and the loop&amp;rsquo;s decrement condition never triggers termination, causing an infinite loop that hangs the RADIUS-processing thread — a pre-authentication remote denial of service.&lt;/p></description></item><item><title>Ivanti Sentry Pre-Auth RCE + Auth Bypass (CVE-2026-10520 / CVE-2026-10523)</title><link>https://poc.intelseclab.com/pocs/network/2026-06-28_cve-2026-10520-ivanti-sentry-rce/</link><pubDate>Sun, 28 Jun 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-06-28_cve-2026-10520-ivanti-sentry-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

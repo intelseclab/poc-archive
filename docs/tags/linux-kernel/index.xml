@@ -1,4 +1,854 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Linux Kernel on PoC Archive</title><link>https://poc.intelseclab.com/tags/linux-kernel/</link><description>Recent content in Linux Kernel on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Tue, 30 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/linux-kernel/index.xml" rel="self" type="application/rss+xml"/><item><title>Linux Kernel act_pedit Partial COW Page-Cache LPE (CVE-2026-46331)</title><link>https://poc.intelseclab.com/pocs/binary/2026-06-30_cve-2026-46331-linux-act-pedit-lpe/</link><pubDate>Tue, 30 Jun 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-06-30_cve-2026-46331-linux-act-pedit-lpe/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Linux-Kernel on PoC Archive</title><link>https://poc.intelseclab.com/tags/linux-kernel/</link><description>Recent content in Linux-Kernel on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/linux-kernel/index.xml" rel="self" type="application/rss+xml"/><item><title>DirtyDecrypt-Go — RxRPC rxgk Page-Cache Overwrite LPE (Go Port) — CVE-2026-31635</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-31635-dirtydecrypt-go-rxgk-lpe/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-31635-dirtydecrypt-go-rxgk-lpe/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Koshmare-Blossom (Go port); original vulnerability discovery and PoC by Aaron Esau / V12 Security&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-31635&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>linux-kernel, lpe, rxrpc, rxgk, page-cache, dirty-pipe-variant, splice, golang, unprivileged&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>pocs/binary/2026-05-18_dirtydecrypt/&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Linux kernel — &lt;code>net/rxrpc/rxgk_common.h&lt;/code> (&lt;code>rxgk_decrypt_skb()&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Kernels with RxRPC + rxgk support prior to the upstream fix (same range as the wider &amp;ldquo;Dirty Frag&amp;rdquo; vulnerability class)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Go (single static binary PoC), Linux x86-64&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No (local; uses an &lt;code>AF_RXRPC&lt;/code> loopback connection)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>This is a Go re-implementation (&amp;ldquo;port&amp;rdquo;) of the original C &lt;code>dirtydecrypt&lt;/code> PoC, now tracked as its own CVE (CVE-2026-31635). The bug is a missing &lt;code>skb_cow_data()&lt;/code> call in &lt;code>rxgk_decrypt_skb()&lt;/code>: the krb5enc AEAD used by RxRPC&amp;rsquo;s &lt;code>rxgk&lt;/code> security class decrypts skb payload data in-place, directly into whatever physical page backs the skb — including page-cache pages pinned there via &lt;code>vmsplice&lt;/code>/&lt;code>splice&lt;/code>. Because RxRPC&amp;rsquo;s &lt;code>rxgk&lt;/code> AES-128-CTS decryption is keyed per-call (unlike the deterministic keystream-table technique used by the related &lt;code>fragnesia&lt;/code> bug), each corrupting write is probabilistic (~1/256 per byte), but a sliding-window technique allows forward-only, byte-by-byte recovery of the target value without ever needing to win a race. The PoC uses this to rewrite &lt;code>/usr/bin/su&lt;/code>&amp;rsquo;s in-page-cache bytes and obtain a root shell via a PTY, leaving the on-disk binary untouched.&lt;/p></description></item><item><title>KVM SEV-SNP Page State Change (PSC) Heap Out-of-Bounds — CVE-2026-53360</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-53360-kvm-sev-snp-psc-heap-oob/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-53360-kvm-sev-snp-psc-heap-oob/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>0xCyberstan (writeup: cyberstan.co.uk)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-53360&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High (guest-to-host host kernel heap corruption / info leak)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not disclosed&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>kvm, sev-snp, kernel, heap-oob, kasan, guest-escape, slab, kmalloc-cg, linux-kernel, cwe-125, cwe-787&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Linux KVM host, SEV-SNP support (&lt;code>arch/x86/kvm/svm/sev.c&lt;/code>, &lt;code>snp_begin_psc()&lt;/code> / &lt;code>setup_vmgexit_scratch()&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Introduced in commit &lt;code>9b54e248d264&lt;/code> (~v6.10, first KVM SNP PSC handling); fixed by commit &lt;code>db3f219&lt;/code> (mainline, tagged &lt;code>Fixes: 4af663c&lt;/code>, backported to stable). Tested vulnerable on host kernel 6.11.11.&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C — Linux kernel module (&lt;code>trigger.c&lt;/code>) run inside an SEV-SNP guest, attacking the KVM host via GHCB VMGEXIT requests&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (any code running inside an SEV-SNP guest, including as a kernel module the guest owner loads)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No (local guest-to-hypervisor channel via GHCB, not network-based)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>KVM&amp;rsquo;s SEV-SNP Page State Change (PSC) handler trusts a guest-supplied entry count against a fixed protocol constant (&lt;code>VMGEXIT_PSC_MAX_COUNT&lt;/code> = 253) instead of validating it against the actual size of the buffer the host allocated for the request. When a guest points its GHCB scratch area outside the shared GHCB buffer, the host allocates a &lt;code>kmalloc-cg&lt;/code>-backed buffer sized exactly to the guest-supplied length, but still permits the guest to specify an end index up to 253 entries. This lets a malicious SEV-SNP guest walk past the end of a small (e.g. 32-byte) slab allocation, reading and partially overwriting adjacent kernel heap objects on repeated requests. The included PoC is a guest kernel module that, on load, runs four escalating stages (heap-layout disclosure, persistence-of-write verification, extended OOB read, and a KASAN-triggering sweep) purely by crafting malformed PSC requests from inside the guest.&lt;/p></description></item><item><title>Linux BPF Verifier Scalar-Forking Soundness Bug to Container Escape — CVE-2026-31413</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-31413-bpf-verifier-container-escape/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-31413-bpf-verifier-container-escape/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Rat5ak&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-31413&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>linux-kernel, ebpf, bpf-verifier, container-escape, modprobe-path, gke, lpe, vtable-hijack&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Linux kernel — BPF verifier (&lt;code>maybe_fork_scalars()&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>6.12.75+ (stable backport &lt;code>dea9989a3f&lt;/code>) through 7.0-rc4; introduced by &lt;code>bffacdb80b93&lt;/code> (Linux 7.0-rc1), fixed by &lt;code>c845894ebd6f&lt;/code> (Linux 7.0-rc5)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C, Linux kernel (eBPF), container runtimes (tested against GKE nodes)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Local-only (requires &lt;code>CAP_BPF&lt;/code> + &lt;code>CAP_PERFMON&lt;/code> + &lt;code>CAP_NET_ADMIN&lt;/code>, e.g. inside an unprivileged-but-capable container)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The Linux BPF verifier&amp;rsquo;s &lt;code>maybe_fork_scalars()&lt;/code> forks verifier state when it sees an &lt;code>ARSH&lt;/code> followed by &lt;code>AND&lt;/code>/&lt;code>OR&lt;/code> with a constant. The forked (&amp;ldquo;pushed&amp;rdquo;) path is generated via &lt;code>push_stack(env, env-&amp;gt;insn_idx + 1, ...)&lt;/code>, which skips the ALU instruction on that path and assumes the destination register is &lt;code>0&lt;/code>. This assumption is correct for &lt;code>AND&lt;/code> (&lt;code>0 &amp;amp; K == 0&lt;/code>) but wrong for &lt;code>OR&lt;/code> (&lt;code>0 | K == K&lt;/code>) — so the verifier believes a register holds &lt;code>0&lt;/code> while the CPU actually computes &lt;code>K&lt;/code>. This register-value divergence lets a BPF program with &lt;code>CAP_BPF&lt;/code>/&lt;code>CAP_PERFMON&lt;/code>/&lt;code>CAP_NET_ADMIN&lt;/code> pass verifier bounds checks it should not pass, yielding an out-of-bounds read/write primitive against a BPF map. The included exploit chain leaks the map&amp;rsquo;s kernel address, forges a fake &lt;code>bpf_map_ops&lt;/code> vtable, redirects a map operation to achieve arbitrary write, and overwrites &lt;code>modprobe_path&lt;/code> to execute an attacker script as root when the kernel handles an unknown binary format — achieving full container-to-host escape.&lt;/p></description></item><item><title>Linux FUSE Readdir Cache Out-of-Bounds Write to Root LPE — CVE-2026-31694</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-31694-fuse-readdir-cache-oob/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-31694-fuse-readdir-cache-oob/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>0xCyberstan&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-31694&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>linux-kernel, fuse, oob-write, page-cache, lpe, groom, unprivileged, qemu-kvm&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Linux kernel — &lt;code>fs/fuse/readdir.c&lt;/code> (&lt;code>fuse_add_dirent_to_cache()&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>6.15+ (the &lt;code>FUSE_NAME_MAX&lt;/code> bump to &lt;code>PATH_MAX - 1&lt;/code> made the readdir path reachable); fixed by &lt;code>51a8de6c50bf9&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C, Linux kernel (FUSE), tested via QEMU/KVM guest&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Local-only (ability to run a FUSE server as an unprivileged user, typical on many distros)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>&lt;code>fuse_add_dirent_to_cache()&lt;/code> is missing a bounds check when copying a FUSE server-supplied directory entry into the kernel&amp;rsquo;s readdir page-cache. A malicious (or attacker-controlled) FUSE server can return a &lt;code>dirent&lt;/code> with &lt;code>namelen = 4095&lt;/code>, which serializes to a 4120-byte record — 24 bytes larger than the single 4096-byte page-cache page the kernel copies it into, overflowing into the next physical page with fully server-controlled bytes. The included exploit uses a marker PoC to confirm the write primitive, then grooms the overflow so the 24 controlled bytes land on the page-cache copy of &lt;code>/etc/passwd&lt;/code>, turning the root account passwordless for a full local privilege escalation.&lt;/p></description></item><item><title>Linux Kernel Futex-PI rtmutex remove_waiter() Use-After-Free (CVE-2026-43499)</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-43499-rtmutex-remove-waiter-uaf/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-43499-rtmutex-remove-waiter-uaf/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>MobiusM (PoC); reported by Yuan Tan, Yifan Wu, Juefei Pu, Xin Liu; fix by Keenan Dong, committed by Thomas Gleixner&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-43499&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>7.8 (CVSS 3.1, Local/Low complexity/Low privileges required — per upstream advisory)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>linux-kernel, android, use-after-free, futex, rtmutex, priority-inheritance, lpe, local, kernel-panic, ndk&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Linux kernel — &lt;code>kernel/locking/rtmutex.c&lt;/code>, futex-PI subsystem (&lt;code>futex_requeue()&lt;/code> / &lt;code>rt_mutex_start_proxy_lock()&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Linux 2.6.39 through 6.18.x; fixed in 6.1.175, 6.6.140, 6.12.86, 6.18.27, 7.0.4&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C, compiled/run on Android (arm64-v8a, NDK) in this PoC; generic Linux kernel bug&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Local (unprivileged)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No — local only&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-43499 is a use-after-free in the Linux kernel&amp;rsquo;s &lt;code>remove_waiter()&lt;/code> function (&lt;code>kernel/locking/rtmutex.c&lt;/code>), which is shared between the ordinary rtmutex slow-unlock path and the futex priority-inheritance (PI) proxy-lock rollback path invoked from &lt;code>futex_requeue()&lt;/code>. In the proxy-lock case the waiter being removed belongs to a different task than &lt;code>current&lt;/code>, but &lt;code>remove_waiter()&lt;/code> incorrectly operates on &lt;code>current&lt;/code>, causing an rbtree dequeue without the correct task&amp;rsquo;s &lt;code>pi_lock&lt;/code> held and leaving that task&amp;rsquo;s &lt;code>pi_blocked_on&lt;/code> pointer dangling. This PoC (&lt;code>trigger.c&lt;/code>) drives &lt;code>futex_requeue()&lt;/code>/&lt;code>futex_lock_pi()&lt;/code> on Android to reliably reproduce the bug, crashing the kernel with a documented panic in &lt;code>rt_mutex_adjust_prio_chain()&lt;/code>.&lt;/p></description></item><item><title>Linux Kernel ICMP Fragmentation-Needed NULL Pointer Dereference (CVE-2026-23398)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-23398-icmp-frag-needed/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-23398-icmp-frag-needed/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>zpol&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-23398&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>linux-kernel, icmp, denial-of-service, null-pointer-dereference, kernel-panic, pmtu, scapy, remote-dos&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Linux kernel, &lt;code>icmp_tag_validation()&lt;/code> / &lt;code>icmp_unreach()&lt;/code> in &lt;code>net/ipv4/icmp.c&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Kernels predating the March 2026 fix (commit &lt;code>614aefe56af8e&lt;/code>); PoC reproduces on mainline 6.12.0 (2024-11 build)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python (Scapy) PoC targeting the Linux networking stack; lab built on QEMU + Docker&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-23398 is a NULL pointer dereference in the Linux kernel&amp;rsquo;s ICMP handling path, reachable when a host has &lt;code>net.ipv4.ip_no_pmtu_disc&lt;/code> set to &lt;code>3&lt;/code> (a hardened Path MTU Discovery mode) and receives a crafted ICMP &amp;ldquo;Fragmentation Needed&amp;rdquo; (type 3, code 4) packet. The quoted inner IPv4 header inside the ICMP payload references a protocol number that has no registered handler in &lt;code>inet_protos[]&lt;/code>, and &lt;code>icmp_tag_validation()&lt;/code> dereferences that missing handler pointer without a NULL check, panicking the kernel. The archived PoC ships a full reproduction lab (QEMU victim VM + a Dockerized Scapy sender) plus a standalone Python script that crafts and sends the offending ICMP packet, and includes a captured serial-console dump showing the resulting kernel oops.&lt;/p></description></item><item><title>Linux Kernel KFENCE Cross-Cache Free of SKB Head via bpf_prog_test_run_skb — CVE-2026-31429</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-31429-linux-kfence-skb-crosscache/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-31429-linux-kfence-skb-crosscache/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Antonius / w1sdom (Blue Dragon Security)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-31429&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Medium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>linux-kernel, kfence, cross-cache, slab-corruption, ebpf, skb, cwe-763, use-after-free-adjacent&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Linux kernel — &lt;code>net/core/skbuff.c&lt;/code> (&lt;code>skb_kfree_head()&lt;/code>) via &lt;code>bpf_prog_test_run_skb&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Linux &amp;gt;= 6.3 (introduced by &lt;code>bf9f1baa279f&lt;/code>); fixed &amp;gt;= 6.12.82, &amp;gt;= 6.18.23, &amp;gt;= 6.19.13, &amp;gt;= 7.0 (commit &lt;code>0f42e3f4fe2a&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C, Linux kernel (KFENCE-enabled builds)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Local-only (ability to issue &lt;code>BPF_PROG_TEST_RUN&lt;/code>, typically requires &lt;code>CAP_BPF&lt;/code>/&lt;code>CAP_SYS_ADMIN&lt;/code>-class privilege depending on &lt;code>unprivileged_bpf_disabled&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Linux&amp;rsquo;s &lt;code>skb_kfree_head()&lt;/code> decides which slab cache to free an SKB&amp;rsquo;s head buffer back to based solely on whether &lt;code>end_offset&lt;/code> equals &lt;code>SKB_SMALL_HEAD_HEADROOM&lt;/code>, relying on the fact that &lt;code>SKB_SMALL_HEAD_CACHE_SIZE&lt;/code> is a non-power-of-2 value that normally never collides with a generic kmalloc bucket size. When KFENCE intercepts the allocation (as can happen via &lt;code>bpf_test_init()&lt;/code> in &lt;code>net/bpf/test_run.c&lt;/code> calling &lt;code>kzalloc()&lt;/code> with a size equal to &lt;code>SKB_SMALL_HEAD_CACHE_SIZE&lt;/code>), &lt;code>kfence_ksize()&lt;/code> returns the &lt;em>exact&lt;/em> requested size rather than the rounded-up bucket size, causing the heuristic to falsely conclude the buffer belongs to &lt;code>skb_small_head_cache&lt;/code> and freeing it to the wrong slab cache. This cross-cache free corrupts slab metadata and can be leveraged toward further memory-corruption primitives (the repository&amp;rsquo;s own README characterizes this as a proof-of-concept demonstrating the confusion, not a full working exploit).&lt;/p></description></item><item><title>Linux Kernel mm/mseal VMA-Merge Stale-Bound Bug (CVE-2026-23416)</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-23416-linux-kernel-mseal/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-23416-linux-kernel-mseal/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Antonius / Blue Dragon Security (bluedragonsecurity)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-23416&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Medium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>linux-kernel, mseal, mm-subsystem, vma, logic-error, unprivileged, security-feature-bypass, memfd&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Linux kernel, &lt;code>mm/mseal.c&lt;/code> / &lt;code>mm/vma.c&lt;/code> (&lt;code>mseal_apply()&lt;/code> / &lt;code>vma_merge_existing_range()&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Linux 6.17 through 7.0-rc5; fixed in 7.0-rc6, and stable backports 6.18.21 / 6.19.11&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C, standard Linux syscalls (&lt;code>memfd_create&lt;/code>, &lt;code>mmap&lt;/code>, &lt;code>mseal&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (unprivileged UID, no capabilities)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No (local only)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-23416 is a logic bug in the kernel&amp;rsquo;s &lt;code>mseal(2)&lt;/code> implementation. &lt;code>mseal_apply()&lt;/code> iterates over the target VMAs and advances its cursor by copying a previously-captured &lt;code>vm_end&lt;/code> value, but the underlying &lt;code>vma_modify_flags()&lt;/code> call can merge adjacent VMAs mid-iteration, changing &lt;code>vm_end&lt;/code> out from under the stale copy. The next loop iteration then starts from an incorrect address, producing an inconsistent VMA range. On debug kernels this trips a &lt;code>VM_WARN_ON_VMG()&lt;/code> assertion; on production kernels the inconsistency proceeds silently, meaning the &lt;code>VM_SEALED&lt;/code> protection that &lt;code>mseal()&lt;/code> is meant to guarantee can be applied to the wrong address range without any indication of failure. The included C PoC deterministically reproduces this by creating two adjacent memfd-backed mappings, partially sealing one, then issuing a second &lt;code>mseal()&lt;/code> call that spans across the sealed/unsealed boundary and forces the vulnerable merge path.&lt;/p></description></item><item><title>Linux Kernel PPP Unprivileged User-Namespace Precondition Probe — CVE-2026-53075</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-53075-ppp-userns-probe/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-53075-ppp-userns-probe/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>Unknown&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>lottiedeyan&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-53075&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Not disclosed&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not disclosed&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>linux-kernel, ppp, user-namespace, unshare, ioctl, privilege-check, cwe-284&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Linux kernel, PPP (&lt;code>/dev/ppp&lt;/code>) subsystem&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Kernels vulnerable to CVE-2026-53075 (source references testing against &amp;ldquo;4.14/6.17&amp;rdquo; class kernels; exact version range not specified in source)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C (compiles as a single unprivileged user-space binary)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (local, unprivileged user account)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>This is a small local diagnostic probe, not a full weaponized exploit. It checks whether the preconditions for CVE-2026-53075 (an unprivileged-user attack path against the kernel &lt;code>ppp&lt;/code> driver) are present on the running kernel: it creates an unprivileged user+network namespace via &lt;code>unshare(CLONE_NEWUSER | CLONE_NEWNET)&lt;/code>, writes a UID mapping so the calling user appears as root inside the new namespace, then attempts to open &lt;code>/dev/ppp&lt;/code> and issue the &lt;code>PPPIOCNEWUNIT&lt;/code> administrative ioctl from inside that sandbox. If the ioctl succeeds (or fails with an unexpected errno such as &lt;code>EFAULT&lt;/code>/&lt;code>EINVAL&lt;/code>/&lt;code>ENOTTY&lt;/code> rather than &lt;code>EPERM&lt;/code>/&lt;code>EACCES&lt;/code>), the kernel failed to block a cross-namespace privileged operation, indicating the host is vulnerable.&lt;/p></description></item><item><title>PinTheft: RDS zcopy Refcount-Steal Double-Free LPE — Pure NASM Rewrite (CVE-2026-43494)</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-43494-pintheft-nasm-kernel-lpe/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-43494-pintheft-nasm-kernel-lpe/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Koshmare-Blossom (rewrite); original PoC by Aaron Esau (stong) / V12 Security Team&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-43494&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>N/A (not published by upstream sources reviewed)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>linux-kernel, lpe, double-free, use-after-free, rds, io_uring, page-cache-overwrite, x86_64, nasm, asm, local, root-shell&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Linux kernel (RDS zerocopy send path + io_uring fixed buffers)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Kernels with &lt;code>CONFIG_RDS&lt;/code>, &lt;code>CONFIG_RDS_TCP&lt;/code>, and &lt;code>CONFIG_IO_URING&lt;/code> enabled — see advisory&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>x86-64 NASM assembly, Linux&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (local unprivileged user)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No — local only&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>This is a hand-written, dependency-free x86-64 NASM rewrite of the &amp;ldquo;PinTheft&amp;rdquo; Linux local privilege escalation exploit (originally published as PinTheft-go). It targets a refcount double-drop in the RDS zerocopy send path (&lt;code>rds_message_zcopy_from_user()&lt;/code>), which is abused together with &lt;code>io_uring&lt;/code> fixed/cloned buffers to steal page-pin references, free a page still mapped by a dangling &lt;code>io_uring&lt;/code> bvec, force page-cache reallocation of that frame onto a SUID-root binary, and then use &lt;code>IORING_OP_READ_FIXED&lt;/code> through the stale fixed buffer to overwrite that page cache with an embedded shell ELF payload — yielding a root shell. The asm source is heavily commented with a step-by-step chain summary at the top of the file.&lt;/p></description></item><item><title>Linux Kernel act_pedit Partial COW Page-Cache LPE (CVE-2026-46331)</title><link>https://poc.intelseclab.com/pocs/binary/2026-06-30_cve-2026-46331-linux-act-pedit-lpe/</link><pubDate>Tue, 30 Jun 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-06-30_cve-2026-46331-linux-act-pedit-lpe/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

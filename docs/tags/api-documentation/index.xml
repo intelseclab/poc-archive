@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Api-Documentation on PoC Archive</title><link>https://poc.intelseclab.com/tags/api-documentation/</link><description>Recent content in Api-Documentation on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/api-documentation/index.xml" rel="self" type="application/rss+xml"/><item><title>dedoc/scramble Laravel API-Doc Generator Unauthenticated eval() RCE (CVE-2026-44262)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-44262-dedoc-scramble-eval-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-44262-dedoc-scramble-eval-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Joshua van der Poll&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-44262 / &lt;a href="https://github.com/advisories/GHSA-4rm2-28vj-fj39">GHSA-4rm2-28vj-fj39&lt;/a>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>N/A (see advisory)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>laravel, php, dedoc-scramble, eval-injection, rce, unauthenticated, api-documentation, openapi&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>&lt;a href="https://github.com/dedoc/scramble">dedoc/scramble&lt;/a> — Laravel API documentation generator&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&lt;code>&amp;gt;= 0.13.2, &amp;lt; 0.13.22&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP / Laravel web application&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — HTTP access to the app&amp;rsquo;s Scramble-generated docs endpoint (e.g. &lt;code>/docs/api.json&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>dedoc/scramble generates OpenAPI documentation for Laravel APIs by statically analyzing controller code, including validation rules. Its &lt;code>NodeRulesEvaluator::doEvaluateExpression()&lt;/code> routine calls PHP&amp;rsquo;s &lt;code>extract($variables)&lt;/code> immediately before &lt;code>eval(&amp;quot;return $code;&amp;quot;)&lt;/code> to resolve dynamic validation-rule expressions. If a controller assigns &lt;code>$request-&amp;gt;input()&lt;/code> (attacker-controlled request data) to a variable named &lt;code>$code&lt;/code> and later uses that variable as a validation rule, Scramble&amp;rsquo;s static analysis extracts the tracked variables — including the attacker-controlled &lt;code>$code&lt;/code> — directly into the &lt;code>eval()&lt;/code> scope. By requesting the documentation endpoint with a crafted query parameter, an unauthenticated attacker can make Scramble&amp;rsquo;s own analysis pass execute arbitrary PHP.&lt;/p></description></item></channel></rss>

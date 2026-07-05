@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>System-Server on PoC Archive</title><link>https://poc.intelseclab.com/tags/system-server/</link><description>Recent content in System-Server on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/system-server/index.xml" rel="self" type="application/rss+xml"/><item><title>Samsung Android AT-Command Filter Bypass to system_server Code Execution (CVE-2026-20980)</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-20980-samsung-android-at-command-lpe/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-20980-samsung-android-at-command-lpe/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Vikramaditya015&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-20980 (chained with CVE-2026-20981 and CVE-2026-20982)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>android, samsung, at-command, privilege-escalation, usb, system-server, exploit-chain, java, apk&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Samsung Android AT-command distribution stack (&lt;code>at_distributor&lt;/code> / &lt;code>libpacm_client.so&lt;/code>, &lt;code>FacAtFunction&lt;/code> system app, &lt;code>ShortcutService&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Samsung Android devices with the vulnerable &lt;code>at_distributor&lt;/code> command filter and &lt;code>ShortcutService&lt;/code> restore path (device tested: Exynos-based Samsung phone, SM8550 platform referenced in AT responses)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python (serial/AT PoC) + Java (Android exploit component); target platform Android/Samsung&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Local-only (requires physical USB access to the device&amp;rsquo;s diagnostic serial port)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-20980 is the first stage of a three-bug exploit chain against Samsung&amp;rsquo;s AP AT-command handling. The &lt;code>at_distributor&lt;/code> daemon filters &amp;ldquo;protected&amp;rdquo; AT commands via &lt;code>libpacm_client.so&lt;/code>&amp;rsquo;s &lt;code>pacm_check_at_cmds&lt;/code>, which rejects multi-command payloads by checking for the literal prefixes &lt;code>at+&lt;/code>/&lt;code>AT+&lt;/code> but fails to also reject the mixed-case variants &lt;code>aT+&lt;/code>/&lt;code>At+&lt;/code>. By hiding a second, normally-protected AT command behind a first throwaway command using this mixed-case prefix, an attacker with USB serial access can smuggle unregistered/protected AT commands past the filter. This bypass is the entry point that lets the accompanying PoC chain into CVE-2026-20981 (unsanitized filename in the &lt;code>FacAtFunction&lt;/code> screen-capture AT command, enabling shell command injection as a system app) and CVE-2026-20982 (a path-traversal arbitrary file write in &lt;code>ShortcutService&lt;/code>&amp;rsquo;s Smart Switch bitmap-restore handler, enabling code execution inside &lt;code>system_server&lt;/code>).&lt;/p></description></item></channel></rss>

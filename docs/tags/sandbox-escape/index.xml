@@ -1,4 +1,514 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Sandbox-Escape on PoC Archive</title><link>https://poc.intelseclab.com/tags/sandbox-escape/</link><description>Recent content in Sandbox-Escape on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Fri, 03 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/sandbox-escape/index.xml" rel="self" type="application/rss+xml"/><item><title>Ladybird Browser WebAssembly ESM Host-Function Use-After-Free RCE</title><link>https://poc.intelseclab.com/pocs/web/2026-07-03_ladybird-wasm-esm-host-function-rce/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-03_ladybird-wasm-esm-host-function-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Sandbox-Escape on PoC Archive</title><link>https://poc.intelseclab.com/tags/sandbox-escape/</link><description>Recent content in Sandbox-Escape on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/sandbox-escape/index.xml" rel="self" type="application/rss+xml"/><item><title>Adobe Acrobat/Reader PDF Exploit Generator — Claimed Prototype Pollution (CVE-2026-3462)</title><link>https://poc.intelseclab.com/pocs/misc/2026-07-05_cve-2026-3462-acrobat-pdf-exploit-generator/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/misc/2026-07-05_cve-2026-3462-acrobat-pdf-exploit-generator/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>NULL200OK (NABEEL)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-3462 (repo internally references CVE-2026-34621 — CVE-ID mismatch, see Notes)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>misc&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>pdf, exploit-generator, prototype-pollution, sandbox-escape, evasion, persistence, malware-generator, farmed-repo-suspected&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Adobe Acrobat / Acrobat Reader (DC Continuous and 2024 Classic tracks)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Acrobat/Reader DC &amp;lt;= 26.001.21367; Acrobat 2024 &amp;lt;= 24.001.30356 (per repo&amp;rsquo;s own claims, unverified against the actual CVE-2026-3462 record)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 generator producing a malicious PDF targeting Windows/macOS&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (requires victim to open the generated PDF)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No (local file execution; optional staged-payload download requires network)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>This repository is titled and described as a PoC for &amp;ldquo;Acrobat Reader Improperly Controlled Modification of Object Prototype Attributes (Prototype Pollution)&amp;rdquo; under CVE-2026-3462, but the actual shipped code (&lt;code>poc.py&lt;/code> / &lt;code>cve_2026_34621_advanced.py&lt;/code>, both identical) is a generic, banner-branded &amp;ldquo;Advanced Cross-Platform Exploit Generator&amp;rdquo; for a different, self-assigned identifier (CVE-2026-34621). Rather than a narrow, scoped reproduction of a specific parser bug, the script is a full malicious-PDF builder: it auto-detects the victim OS, embeds OS-specific command execution (cmd.exe/PowerShell/WScript.Shell on Windows, Terminal.app/osascript on macOS), supports staged second-stage payload downloads, installs persistence (registry Run key / LaunchAgent), offers three levels of JavaScript obfuscation, supports lure-PDF merging to disguise the payload as a legitimate document, and generates HTML/TXT/JSON &amp;ldquo;campaign&amp;rdquo; reports. This is weaponized offensive tooling rather than a minimal vulnerability-scoped PoC, and the CVE-ID mismatch between the repo&amp;rsquo;s title (3462) and its own code/README (34621) suggests a templated or farmed exploit repo rather than an original disclosure.&lt;/p></description></item><item><title>iOS App Intents Path Traversal — CVE-2026-28995</title><link>https://poc.intelseclab.com/pocs/misc/2026-07-05_cve-2026-28995-ios-appintents-path-traversal/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/misc/2026-07-05_cve-2026-28995-ios-appintents-path-traversal/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Robertmak2014-sudow&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-28995&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>misc&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>ios, app-intents, path-traversal, sandbox-escape, swift, file-disclosure, mobile&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Apple App Intents framework (iOS)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>iOS 26.4.2 and below (patched in iOS 26.5, May 11 2026)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Swift, iOS app / App Intents framework&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Local-only (requires the malicious app to be installed and its intent invoked)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Apple&amp;rsquo;s App Intents framework insufficiently validates file paths supplied to an intent&amp;rsquo;s handler, allowing a malicious app to read arbitrary files outside its normal app sandbox. The PoC defines an &lt;code>AppIntent&lt;/code> whose &lt;code>readCve(path:)&lt;/code> function prepends a long directory-traversal prefix (&lt;code>../../../../../../../../../../../../../&lt;/code>) to an attacker-supplied path and passes the resolved path directly to &lt;code>FileManager&lt;/code> file/directory reads, with no sandbox boundary enforcement. Invoking the intent with a path like &lt;code>/etc/passwd&lt;/code> or a preferences plist under &lt;code>/var/mobile/Library/Preferences/&lt;/code> returns the file&amp;rsquo;s contents (or a directory listing) to the calling app. An accompanying SwiftUI example app demonstrates triggering the read from a simple text field and button.&lt;/p></description></item><item><title>Jinjava Server-Side Template Injection to RCE via Jackson ObjectMapper (CVE-2026-25526)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-25526-jinjava-ssti-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-25526-jinjava-ssti-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-02&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>av4nth1ka&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-25526&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>ssti, jinjava, java, jackson, objectmapper, sandbox-escape, rce, deserialization&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Jinjava (HubSpot&amp;rsquo;s Java Jinja-like template engine)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>2.8.2 and earlier (fixed in 2.8.3)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Java 17 / Maven exploit harness&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (assumes attacker can influence a rendered template string)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Depends on host application (typically yes, if templates are rendered from user input in a web app)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-25526 is a sandbox-escape vulnerability in Jinjava, the Java template engine used by many JVM web applications for user-influenced templating. The PoC shows that Jinjava&amp;rsquo;s rendering context exposes an internal interpreter object (&lt;code>____int3rpr3t3r____&lt;/code>) whose configuration includes a live Jackson &lt;code>ObjectMapper&lt;/code>. By walking from the template context to &lt;code>config.objectMapper&lt;/code>, an attacker can call methods like &lt;code>convertValue()&lt;/code> and &lt;code>readValue()&lt;/code> to construct arbitrary Java objects — first &lt;code>java.io.File&lt;/code> handles for arbitrary file reads and directory listings, then (via &lt;code>enableDefaultTyping()&lt;/code> and &lt;code>ProcessBuilder&lt;/code>) fully-instantiated OS processes for remote code execution. The repo includes a staged exploit harness (&lt;code>ExploitHarness&lt;/code>, &lt;code>ExploitFinal&lt;/code>, &lt;code>ExploitFileRead&lt;/code>) demonstrating file read, information disclosure, and RCE chains, plus a &lt;code>PatchVerification&lt;/code> class confirming the chain is blocked once the library is bumped to 2.8.3.&lt;/p></description></item><item><title>LiteLLM Guardrail Custom-Code Sandbox Escape to Root RCE (CVE-2026-40217)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-40217-litellm-guardrail-sandbox-escape/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-40217-litellm-guardrail-sandbox-escape/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Markus Vervier (X41 D-Sec GmbH); PoC packaged by learner202649&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-40217 (X41-2026-001, GHSA-3926-2jvf-fg29)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>8.8 (CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H, per source advisory)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>litellm, llm-proxy, sandbox-escape, bytecode-manipulation, cwe-913, docker, root-rce, authenticated&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>LiteLLM (open-source LLM proxy/gateway), &lt;code>POST /guardrails/test_custom_code&lt;/code> endpoint&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>LiteLLM through the 2026-04-08 build (pre-v1.83.11); fixed in v1.83.11+&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 exploit against the LiteLLM proxy&amp;rsquo;s HTTP API, targeting its default Docker deployment (runs as root)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (a valid LiteLLM API/master key with access to the guardrail-testing endpoint)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>LiteLLM&amp;rsquo;s guardrail-testing endpoint lets authenticated users submit custom Python code that is checked with a regex-based source-code filter meant to block dangerous identifiers such as &lt;code>__globals__&lt;/code>, &lt;code>__builtins__&lt;/code>, and &lt;code>__import__&lt;/code>. Because the filter only inspects source text and not runtime behavior, an attacker can build the blocked identifiers via string concatenation and then use CPython&amp;rsquo;s &lt;code>code.replace()&lt;/code>/&lt;code>object.__setattr__()&lt;/code> to rewrite a generator function&amp;rsquo;s bytecode name table (&lt;code>co_names&lt;/code>) at runtime, recovering access to real builtins and &lt;code>__import__&lt;/code> without the blocked strings ever appearing literally in the submitted code. This bypass lets the submitted &amp;ldquo;guardrail&amp;rdquo; code execute arbitrary OS commands inside the proxy process, which in LiteLLM&amp;rsquo;s default Docker image runs as root, giving full container compromise from what is nominally a code-testing sandbox.&lt;/p></description></item><item><title>n8n HTTP Request Node Pagination Prototype Pollution → Remote Code Execution (CVE-2026-44789)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-44789-n8n-prototype-pollution-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-44789-n8n-prototype-pollution-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Caio Fabrício (BiiTts)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-44789 / GHSA-c8xv-5998-g76h&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.4 (CVSS 4.0)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>n8n, prototype-pollution, rce, node-options, sandbox-escape, task-runner, workflow-automation&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>n8n (workflow automation platform)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&lt;code>&amp;lt; 1.123.43&lt;/code>, &lt;code>2.0.0-rc.0 … &amp;lt; 2.20.7&lt;/code>, &lt;code>2.21.0 … &amp;lt; 2.22.1&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Node.js / TypeScript (target), Python 3 (PoC)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (workflow create/modify permission)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The n8n HTTP Request node&amp;rsquo;s pagination feature (&lt;code>updateAParameterInEachRequest&lt;/code> mode) allows an attacker-controlled &lt;code>parameter.type&lt;/code> value of &lt;code>__proto__&lt;/code>, causing &lt;code>paginationData.request[parameter.type][parameterName] = parameterValue&lt;/code> to write directly onto &lt;code>Object.prototype&lt;/code> — a global prototype pollution in the n8n server process. This repository documents and automates a concrete, verified escalation from that pollution primitive to full remote code execution: polluting &lt;code>Object.prototype.NODE_OPTIONS&lt;/code> leaks into the environment of the child &lt;code>node&lt;/code> process n8n spawns for its task runner (via Node&amp;rsquo;s &lt;code>for...in&lt;/code>-based environment enumeration in &lt;code>normalizeSpawnArguments&lt;/code>), letting the attacker &lt;code>--require&lt;/code> an arbitrary local JS file at runner startup and escape the Code-node sandbox entirely.&lt;/p></description></item><item><title>Typebot Unauthenticated Preview-Chat SSRF — CVE-2026-33712</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-33712-typebot-ssrf/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-33712-typebot-ssrf/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>portbuster1337&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-33712&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>ssrf, typebot, isolated-vm, sandbox-escape, cloud-metadata, node-js, unauthenticated, chatbot&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Typebot (open-source chatbot builder), preview chat endpoint&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 3.15.2 (fixed in 3.16.0)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Node.js / TypeScript backend, exploited via Python PoC script&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Typebot&amp;rsquo;s preview-chat feature lets a caller submit an arbitrary typebot definition, including server-side &amp;ldquo;Code&amp;rdquo; blocks that execute inside an &lt;code>isolated-vm&lt;/code> sandbox. In vulnerable versions, the &lt;code>fetch()&lt;/code> function exposed to that sandbox called Node&amp;rsquo;s native &lt;code>fetch&lt;/code> directly, without running it through Typebot&amp;rsquo;s &lt;code>validateHttpReqUrl()&lt;/code> SSRF guard that protects the normal HTTP Request block type. Because the preview endpoint (&lt;code>POST /api/v1/typebots/{typebotId}/preview/startChat&lt;/code>) requires no authentication, any unauthenticated attacker can submit a crafted typebot payload whose Code block issues arbitrary HTTP requests from the server. The included Python exploit builds such a payload, sends it to a target instance, and exfiltrates the response of the SSRF&amp;rsquo;d request to an attacker-controlled webhook.&lt;/p></description></item><item><title>Ladybird Browser WebAssembly ESM Host-Function Use-After-Free RCE</title><link>https://poc.intelseclab.com/pocs/web/2026-07-03_ladybird-wasm-esm-host-function-rce/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-03_ladybird-wasm-esm-host-function-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

@@ -1,4 +1,89 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Authorization-Bypass on PoC Archive</title><link>https://poc.intelseclab.com/tags/authorization-bypass/</link><description>Recent content in Authorization-Bypass on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Fri, 03 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/authorization-bypass/index.xml" rel="self" type="application/rss+xml"/><item><title>Discourse Scoped API Key Pre-Route Authorization Bypass</title><link>https://poc.intelseclab.com/pocs/web/2026-07-03_discourse-scoped-api-key-route-bypass/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-03_discourse-scoped-api-key-route-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Authorization-Bypass on PoC Archive</title><link>https://poc.intelseclab.com/tags/authorization-bypass/</link><description>Recent content in Authorization-Bypass on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/authorization-bypass/index.xml" rel="self" type="application/rss+xml"/><item><title>gRPC-Go RBAC Authorization Bypass via Missing Leading Slash in `:path` (CVE-2026-33186)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-33186-grpc-go-rbac-authz-bypass/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-33186-grpc-go-rbac-authz-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>JohannesLks&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-33186 (GHSA-p77j-4mvh-x3m3)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>grpc, grpc-go, rbac, authorization-bypass, http2, path-normalization, golang, access-control&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>&lt;code>google.golang.org/grpc&lt;/code> (grpc-go) &lt;code>authz&lt;/code> package (SDK-level RBAC)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>grpc-go &amp;lt; v1.79.3 (fixed in v1.79.3, PR #8981)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3.8+ PoC using raw HTTP/2 frames against a Go gRPC server&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>gRPC-Go&amp;rsquo;s &lt;code>authz&lt;/code> package implements RBAC using deny/allow rules matched against the HTTP/2 &lt;code>:path&lt;/code> pseudo-header (e.g. &lt;code>/Service/Method&lt;/code>). The HTTP/2 server transport stores the raw, pre-normalization &lt;code>:path&lt;/code> value in context, but the routing layer (&lt;code>handleStream&lt;/code>) normalizes the path (adding a leading slash) before dispatch. Because the RBAC engine reads the value via &lt;code>grpc.Method(ctx)&lt;/code> — the pre-normalization form — a deny rule written as &lt;code>/Service/Method&lt;/code> fails to match a request sent with &lt;code>:path = &amp;quot;Service/Method&amp;quot;&lt;/code> (no leading slash), since the comparison mismatches on the first character. The default allow policy then fires and the protected method executes. Any server using &lt;code>authz.NewStatic()&lt;/code> or &lt;code>authz.NewFileWatcher()&lt;/code> with deny rules is affected, and exploitation only requires a raw HTTP/2 client capable of sending a custom &lt;code>:path&lt;/code> value.&lt;/p></description></item><item><title>Discourse Scoped API Key Pre-Route Authorization Bypass</title><link>https://poc.intelseclab.com/pocs/web/2026-07-03_discourse-scoped-api-key-route-bypass/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-03_discourse-scoped-api-key-route-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

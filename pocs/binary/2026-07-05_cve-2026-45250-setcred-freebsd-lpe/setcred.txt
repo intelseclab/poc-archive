@@ -1,0 +1,390 @@
+------------------------------------------------------------------------
+SUMMARY
+------------------------------------------------------------------------
+
+A kernel stack buffer overflow exists in the setcred(2) system call
+introduced in FreeBSD 14.x.  The overflow occurs before any privilege
+check, allowing any unprivileged local user to trigger arbitrary
+behaviour ranging from a kernel panic to full local privilege
+escalation (LPE).  Working LPE exploits against an amd64 GENERIC
+kernel both without SMAP/SMEP and with SMAP/SMEP enabled have been
+developed and are described below.  The SMAP/SMEP-safe variant
+requires only that the zfs.ko module be loaded -- the case on
+every FreeBSD installation with a ZFS pool. The root cause is
+a sizeof type error in kern_setcred_copyin_supp_groups()
+(sys/kern/kern_prot.c).
+
+The bug was silently fixed in the main branch on 2025-11-27 (commit
+000d5b52c19ff3858a6f0cbb405d47713c4267a4) as a side effect of a
+broader function refactoring.  The fix has NOT been backported to
+stable/14 or releng/14.4.  FreeBSD 14.4-RELEASE remains vulnerable.
+
+FreeBSD 15.0 still carries the sizeof(*groups) typo and is therefore
+vulnerable, but the surrounding code differs enough from 14.4 that
+the chain primitives developed here do not lift the overflow into a
+working LPE on that branch.  On 15.0 the bug remains a kernel panic
+triggered by any unprivileged user.
+
+------------------------------------------------------------------------
+AFFECTED VERSIONS
+------------------------------------------------------------------------
+
+  Vulnerable + exploitable:
+                FreeBSD 14.4-RELEASE (confirmed)
+                FreeBSD stable/14 as of the date of this report
+
+  Vulnerable, not known to be exploitable:
+                FreeBSD 15.0 (the sizeof(*groups) typo is still
+                present in sys/kern/kern_prot.c, but the surrounding
+                code differs enough from 14.4 that none of the chain
+                primitives developed here lift the overflow into a
+                working LPE on 15.0 GENERIC.  The bug remains a
+                kernel panic / DoS on this branch.)
+
+  Not affected: FreeBSD main (fixed in commit 000d5b5, 2025-11-27)
+  Not affected: FreeBSD 13.x and earlier (setcred(2) not present)
+
+------------------------------------------------------------------------
+VULNERABILITY DETAILS
+------------------------------------------------------------------------
+
+File:     sys/kern/kern_prot.c
+Function: kern_setcred_copyin_supp_groups()
+Lines:    528-533
+
+The function signature uses a double pointer for the groups argument:
+
+  static int
+  kern_setcred_copyin_supp_groups(struct setcred *const wcred,
+      const u_int flags, gid_t *const smallgroups, gid_t **const groups)
+
+Because groups has type gid_t **, the expression sizeof(*groups)
+evaluates to sizeof(gid_t *) == 8 on LP64, rather than the intended
+sizeof(gid_t) == 4.  This sizeof expression is used in two places:
+
+Line 528-530 (allocation):
+
+  *groups = wcred->sc_supp_groups_nb < CRED_SMALLGROUPS_NB ?
+      smallgroups : malloc((wcred->sc_supp_groups_nb + 1) *
+      sizeof(*groups), M_TEMP, M_WAITOK);      /* sizeof(*groups) == 8 */
+
+Line 532-533 (copyin):
+
+  error = copyin(wcred->sc_supp_groups, *groups + 1,
+      wcred->sc_supp_groups_nb * sizeof(*groups)); /* sizeof(*groups) == 8 */
+
+The allocation on the heap path (line 529-530) is 2x oversized, which
+is safe.  However, for the stack path (when sc_supp_groups_nb <
+CRED_SMALLGROUPS_NB == 16), *groups is set to smallgroups, a
+gid_t[CRED_SMALLGROUPS_NB] array declared as a local variable in the
+caller user_setcred() (sys/kern/kern_prot.c:555):
+
+  gid_t smallgroups[CRED_SMALLGROUPS_NB];   /* 16 * 4 = 64 bytes */
+
+The copyin destination is *groups + 1 == &smallgroups[1], which leaves
+(CRED_SMALLGROUPS_NB - 1) * sizeof(gid_t) == 15 * 4 == 60 bytes of
+usable space.  The copyin copies sc_supp_groups_nb * sizeof(*groups) ==
+sc_supp_groups_nb * 8 bytes.  With the maximum stack-path value of
+sc_supp_groups_nb == 15:
+
+  Bytes written:    15 * 8  = 120
+  Buffer capacity:  15 * 4  =  60
+  Overflow:                    60 bytes past the end of smallgroups[]
+
+The overflow is written with fully attacker-controlled data from
+user space (wcred->sc_supp_groups points to an attacker-supplied
+buffer).
+
+------------------------------------------------------------------------
+TRIGGER PATH AND PRIVILEGE CHECK ORDERING
+------------------------------------------------------------------------
+
+The overflow happens in kern_setcred_copyin_supp_groups(), which is
+called from user_setcred() at line 604 -- BEFORE the privilege check.
+The privilege check (priv_check_cred(PRIV_CRED_SETCRED)) does not
+occur until kern_setcred() is called at line 623, and within that
+function at line 813.  Any local user can trigger the overflow by issuing:
+
+  setcred(SETCREDF_SUPP_GROUPS, &wcred, sizeof(wcred))
+
+with wcred.sc_supp_groups_nb == 15 and wcred.sc_supp_groups pointing
+to a 15 * 8 == 120-byte user-space buffer.
+
+------------------------------------------------------------------------
+LPE TECHNIQUE (no SMAP, no SMEP)
+------------------------------------------------------------------------
+
+The 60-byte overflow corrupts every callee-saved register slot in
+user_setcred()'s prologue except saved RBP.  Compiler ordering on
+14.4 GENERIC places the corruption window at:
+
+  [rbp - 0x40 .. -0x05]
+
+mapping input bytes to memory as:
+
+  buf[60..67]   mac.m_buflen
+  buf[68..75]   mac.m_string
+  buf[76..83]   td pointer spill        <- controls kern_setcred(td=...)
+  buf[84..91]   saved rbx
+  buf[92..99]   saved r12               <- !!! propagates up the stack
+  buf[100..107] saved r13
+  buf[108..115] saved r14
+  buf[116..119] low 32 bits of saved r15
+
+The crucial observation is that sys_setcred()'s prologue only saves
+rbp/r14/rbx -- it does NOT save r12.  Therefore the corrupted r12
+popped by user_setcred()'s epilogue propagates unchanged through
+sys_setcred() up to amd64_syscall().  At amd64_syscall+0x155 the
+kernel uses r12 as if it were the live td_proc pointer:
+
+  ffffffff8105b6e5: mov  rcx, [r12 + 0x3f8]   ; r12 fully controlled
+  ffffffff8105b6ed: mov  rdi, rbx              ; rdi = real curthread
+  ffffffff8105b6f0: mov  esi, eax              ; esi = setcred retval
+  ffffffff8105b6f2: call [rcx + 0xc8]         ; INDIRECT CALL
+
+This is a two-level indirect call entirely controlled by the attacker:
+*(r12+0x3f8) supplies rcx, and *(rcx+0xc8) is the call target.
+
+Without SMAP, the kernel happily dereferences user-mode pointers, so
+both indirections can be satisfied by fake structures placed in user
+memory.  Without SMEP, the indirect call may target user-space code.
+
+The published exploit constructs:
+
+  fake_td        : td_proc = &fake_proc
+  fake_proc      : p_ucred = &fake_oldcred,
+                   p_mtx.mtx_lock = 0  (so PROC_LOCK cmpxchg succeeds),
+                   p_sysent (offset 0x3f8) = &fake_sysentvec
+  fake_oldcred   : cr_uid = 0, cr_prison = &prison0 (kernel-static),
+                   cr_uidinfo/cr_ruidinfo = &fake_uidinfo,
+                   cr_loginclass = &fake_loginclas,
+                   cr_ngroups = 1 (avoids qsort underflow in
+                     groups_normalize() inside crsetgroups()),
+                   cr_groups -> 1-element gid_t buffer
+  fake_uidinfo   : ui_ref >= 0 (atomic_add target for uihold)
+  fake_loginclas : lc_refcount >= 0
+  fake_sysentvec : sv_set_syscall_retval (offset 0xc8) = &shellcode
+
+Key structure offsets used by the exploit (DWARF on 14.4 GENERIC):
+
+  struct ucred        size 0x100   cr_mtx@0  cr_ref@0x20  cr_users@0x28
+                                   cr_uid@0x60     cr_uidinfo@0x78
+                                   cr_ruidinfo@0x80 cr_prison@0x88
+                                   cr_loginclass@0x90  cr_groups@0xb0
+                                   cr_agroups@0xb8  cr_smallgroups@0xbc
+  struct proc         size 0x560   p_ucred@0x40   p_mtx@0x128
+                                   p_sysent@0x3f8 p_cowgen@0x214
+  struct thread       size 0x6f0   td_proc@0x8    td_realucred@0x178
+                                   td_ucred@0x180 td_frame@0x4b8
+  struct mtx          size 0x20    lock_object@0  mtx_lock@0x18
+  struct uidinfo                   ui_ref@0x4c
+  struct loginclass                lc_refcount@0x34
+
+Kernel symbols on 14.4-RELEASE GENERIC (no kernel ASLR on FreeBSD,
+the kernel base is fixed by the linker script):
+
+  user_setcred       0xffffffff80b50fa0
+  kern_setcred       0xffffffff80b51100
+  amd64_syscall+0x155 0xffffffff8105b6e5  <- the hijack point
+  prison0            0xffffffff818c7390   <- needed to pass jailed()
+
+
+------------------------------------------------------------------------
+LPE TECHNIQUE (with SMAP+SMEP via zfs.ko ZSTD gadget, no info-leak)
+------------------------------------------------------------------------
+
+This path makes one key observation: the chain primitive at
+amd64_syscall+0x162 reaches its target with `rcx = K1` (an
+attacker-chosen 8-byte value).  If the target gadget writes `rcx + 1`
+to `td->td_ucred`, we have set the current thread's credential
+pointer to any address we choose -- and if that address happens to
+lie inside a kernel buffer we control (a heap-resident pargs slab),
+the fake credential we planted there immediately takes effect.
+
+1.  The gadget: ZSTD_initCStream_advanced in zfs.ko
+    -------------------------------------------------
+
+    Disassembly of the function's prologue:
+
+        push rbp
+        mov  rbp, rsp
+        push r15; push r14; push rbx
+        sub  rsp, 0x38
+        mov  rbx, rdx
+        mov  r14, rsi
+        mov  r15, rdi                 ; r15 = arg1 = real_td (from chain)
+        mov  rax, [rip + __stack_chk_guard]
+        mov  [rbp - 0x20], rax        ; canary spill
+        xor  eax, eax
+        cmp  dword ptr [rbp + 0x2c], 0
+        lea  rdx, [rcx + 1]           ; rdx = K1 + 1
+        cmovne rax, rdx
+        test rcx, rcx
+        mov  dword ptr [rdi + 0x430], 0
+        cmovne rax, rdx               ; rcx != 0 (always) -> rax = K1 + 1
+        mov  qword ptr [rdi + 0x180], rax  ; *** td->td_ucred = K1+1 ***
+
+    The two cmovne instructions both fire whenever rcx != 0 (i.e.,
+    whenever K1 is any non-NULL value, which is always for our use).
+    The function continues with stores into td+0x10..0x3c which
+    corrupt TAILQ_ENTRY scheduler-link fields with garbage drawn
+    from amd64_syscall's stack frame, then performs its canary
+    check and returns.  Empirically the corruption is survivable
+    until the thread next reaches the scheduler.
+
+2.  Fake ucred placement (parent's pargs slab)
+    --------------------------------------------
+
+    Setproctitle(2) is exposed to unprivileged users; the kernel
+    allocates a 256-byte slot in the PARGS UMA zone and copies up to
+    244 user bytes verbatim into the `ar_args' field.  The slab's
+    first 8 bytes hold `ar_ref' and `ar_length' (not directly
+    controllable) but the offsets at which we need ucred fields lie
+    at slot+0x18 and beyond, all inside the user-controlled range.
+
+    Parent process's pargs slab P_base becomes our fake_ucred:
+
+        slot offset  field         value
+        +0x20        cr_ref        0x7fffffff (high; defeats crfree)
+        +0x28        cr_users      0x7fffffff
+        +0x2c        cr_flags      0
+        +0x60        cr_uid        0
+        +0x64        cr_ruid       0
+        +0x68        cr_svuid      0
+        +0x6c        cr_ngroups    1
+        +0x88        cr_prison     &prison0 (real kernel symbol)
+        +0xb0        cr_groups     &prison0 (TRICK: see note)
+        +0xb8        cr_agroups    1
+        +0xc7        (call target) ZSTD_initCStream_advanced
+
+    The cr_groups trick: setting cr_groups = &prison0 makes
+    cred->cr_groups[0] read the first 4 bytes of struct prison
+    which is pr_id = 0 = wheel gid.  This lets the in-kernel
+    groupmember(0, cred) check inside the VFS chmod path return 1
+    without a NULL dereference.  Without this we panic in
+    groupmember when later operations test wheel membership.
+
+    The bytes at slot+0xc7..+0xce hold the function pointer the
+    chain primitive will use as its call target -- see step 4.
+
+3.  K1 placement (child's pargs slab)
+    -----------------------------------
+
+    The chain primitive reads K1 via `mov rcx, [r12 + 0x3f8]`.
+    r12 is fully attacker-controlled via the setcred overflow.
+    For K1 to equal `P_base - 1` (so that K1+1 = P_base = our
+    fake_ucred), the qword `P_base - 1` must be readable at a
+    kernel address.  We cannot write it into the parent's slab
+    (which already contains fake_ucred fields), and we cannot
+    use the td_name trick from the previous section because
+    UMA-heap addresses always have a NUL byte at byte offset 4
+    of `P_base - 1`, truncating thr_set_name's strlcpy().
+
+    Solution: fork a CHILD process that does its own setproctitle
+    with the qword `P_base - 1` placed at offset 0xd0 of its own
+    pargs.  The chain then sets r12 = C_base + 0xd0 - 0x3f8, so
+    that [r12 + 0x3f8] = qword at (C_base + 0xd0) = our planted K1.
+
+    The parent must not exit and must not setproctitle again
+    before the child triggers the chain -- otherwise pargs is freed
+    and P_base may be reused.
+
+4.  Triggering the chain
+    ----------------------
+
+    Setcred overflow as in the no-SMAP path:
+
+        bytes 76..83 -> spilled td (= real_td)
+        bytes 92..99 -> saved r12 (= C_base + 0xd0 - 0x3f8)
+
+    amd64_syscall+0x155 then executes:
+
+        mov rcx, [r12 + 0x3f8]    ; rcx = K1 = P_base - 1
+        mov rdi, rbx              ; rdi = real_td
+        mov esi, eax              ; esi = setcred retval (small int)
+        call [rcx + 0xc8]         ; -> [P_base + 0xc7] = ZSTD_addr
+
+    ZSTD_initCStream_advanced runs, writes td_ucred = K1 + 1 = P_base.
+    The subsequent corruption of td+0x10..0x3c is survived; the
+    function ret's cleanly, amd64_syscall returns to user-space, and
+    the calling thread now has cr_uid=0 as its effective credential.
+
+5.  Post-exploit
+    --------------
+
+    The thread has effective root for VFS operations (open, chmod,
+    chown, etc.).  setuid(0) cannot be called because uifind()
+    dereferences our fake cr_uidinfo, which is NULL; this would
+    panic.  Instead the exploit installs a setuid-root wrapper at
+    /tmp/rsh via chown(2)+chmod(2) and exits. 
+
+6.  Self-resolving gadget address
+    -------------------------------
+
+    The exploit calls kldnext(2)+kldsym(2) in a loop (both available
+    to unprivileged users) to resolve ZSTD_initCStream_advanced.
+    The kernel image itself contains a different ZSTD library with
+    incompatible struct offsets, so we skip fileid=1 (kernel) and
+    pick the symbol from a loaded module (zfs.ko on a typical
+    server).  Once located, the gadget address is used as the call
+    target inside the parent's pargs slab.
+
+------------------------------------------------------------------------
+PROOF OF CONCEPT
+------------------------------------------------------------------------
+
+Working PoC sources are shipped alongside this write-up:
+
+  exploits/poc_dos.c                    Minimal DoS PoC.  Any user
+                                        triggers a kernel panic.
+
+  exploits/exp2_lpe_no_smap.c           Full LPE on a 14.4 GENERIC
+                                        kernel without SMAP/SMEP.
+                                        Single setcred(2) call yields
+                                        uid=0 without panic.
+
+  exploits/exp_setcred_smap_zfs.c       SMAP/SMEP-safe LPE via the
+  exploits/wrapper.c                    zfs.ko ZSTD gadget.  Installs
+  exploits/Makefile.setcred_smap_zfs    a setuid-root wrapper at
+  exploits/README_setcred_smap_zfs.md   /tmp/rsh.  No info-leak.
+
+See setcred/README.md for the recommended build + run sequence inside
+the lab guest.
+
+------------------------------------------------------------------------
+FIX STATUS
+------------------------------------------------------------------------
+
+The vulnerability was inadvertently fixed in the main branch on
+2025-11-27 by commit 000d5b52c19ff3858a6f0cbb405d47713c4267a4
+("setcred(2): Fix a panic on too many groups from latest commit").
+The commit refactored kern_setcred_copyin_supp_groups() into
+user_setcred_copyin_supp_groups() changing the groups argument from
+gid_t ** to a local gid_t *, and replacing both sizeof(*groups)
+occurrences with sizeof(gid_t).  The commit message does not mention
+the stack overflow; the fix appears to be an unintentional side effect
+of the refactoring.
+
+The fix has NOT been merged into stable/14 or releng/14.4.
+FreeBSD 14.4-RELEASE and the current stable/14 branch remain
+vulnerable as of the date of this report.
+
+------------------------------------------------------------------------
+TIMELINE
+------------------------------------------------------------------------
+
+* 2026-05-13 - secteam@freebsd.org notified
+* 2026-05-13 - secteam responds:
+ > at first glance, it appears to be a duplicate issue that we are already working on
+* 2026-05-16 - working LPE PoC developed against 14.4-RELEASE GENERIC
+               amd64 without SMAP/SMEP; technique documented above
+               under "LPE TECHNIQUE".  Impact upgraded from local DoS
+               to full local privilege escalation.
+* 2026-05-19 - SMAP/SMEP-safe LPE achieved without any kernel
+               info-leak via the ZSTD_initCStream_advanced gadget in
+               zfs.ko; chain primitive writes td_ucred = K1+1 to a
+               fake credential in a kernel-heap pargs slab.  Verified
+               end-to-end on qemu64 with +smap,+smep enabled.
+               Impact: single-shot, no-info-leak LPE on any FreeBSD
+               14.4 GENERIC system with zfs.ko loaded (typical server
+               configuration).

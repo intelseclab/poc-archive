@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Android-Tooling on PoC Archive</title><link>https://poc.intelseclab.com/tags/android-tooling/</link><description>Recent content in Android-Tooling on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/android-tooling/index.xml" rel="self" type="application/rss+xml"/><item><title>Apktool Resource Table Path Traversal — Malicious APK Builder (CVE-2026-39973)</title><link>https://poc.intelseclab.com/pocs/misc/2026-07-05_cve-2026-39973-apktool-path-traversal/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/misc/2026-07-05_cve-2026-39973-apktool-path-traversal/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>frawlaboy (with credit to OnlyToxi)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-39973&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>misc&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>apktool, path-traversal, resources-arsc, apk, decompilation, arbitrary-file-write, android-tooling&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>iBotPeaches/Apktool (Android APK decompiler/rebuilder)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Apktool 3.0.1&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C# (.NET) builder tool that crafts a malicious &lt;code>resources.arsc&lt;/code>/APK, targeting the Apktool decompiler&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (victim runs &lt;code>apktool d&lt;/code> on an attacker-supplied APK)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Apktool decodes an APK&amp;rsquo;s &lt;code>resources.arsc&lt;/code> to reconstruct resource file paths during decompilation, and a security regression (commit &lt;code>e10a045&lt;/code>, PR #4041) removed the &lt;code>BrutIO.detectPossibleDirectoryTraversal()&lt;/code> check that previously validated the fully-built output path. While the resource &lt;em>entry name&lt;/em> is still validated, the resource &lt;em>type name&lt;/em> is not, so a crafted &lt;code>resources.arsc&lt;/code> can set a type name containing &lt;code>..\&lt;/code> sequences to escape the intended output directory. This PoC is a small C# builder that hand-crafts a &lt;code>resources.arsc&lt;/code> (writing a &lt;code>ResTable&lt;/code>/&lt;code>ResPackage&lt;/code>/&lt;code>ResType&lt;/code> with a traversal sequence baked into the type name) packaged inside an APK, so that running &lt;code>apktool d&lt;/code> on the file writes an attacker-chosen payload to an arbitrary path such as a user&amp;rsquo;s &lt;code>~/.bashrc&lt;/code> or the Windows Startup folder.&lt;/p></description></item></channel></rss>

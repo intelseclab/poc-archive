@@ -1,4 +1,89 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>LDAP on PoC Archive</title><link>https://poc.intelseclab.com/tags/ldap/</link><description>Recent content in LDAP on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Fri, 15 May 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/ldap/index.xml" rel="self" type="application/rss+xml"/><item><title>LDAP Nightmare — Windows LDAP Client RCE/DoS (CVE-2024-49113)</title><link>https://poc.intelseclab.com/pocs/network/2026-05-15_ldap-nightmare-cve-2024-49113/</link><pubDate>Fri, 15 May 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-05-15_ldap-nightmare-cve-2024-49113/</guid><description>&lt;!-- 
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Ldap on PoC Archive</title><link>https://poc.intelseclab.com/tags/ldap/</link><description>Recent content in Ldap on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/ldap/index.xml" rel="self" type="application/rss+xml"/><item><title>YAMCS LdapAuthModule LDAP Injection Authentication Bypass (CVE-2026-42568)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-42568-yamcs-ldap-injection/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-42568-yamcs-ldap-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Daniel Miranda Barcelona (ex-cal1bur)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-42568 / GHSA-cqh3-jg8p-336j&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Medium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>ldap-injection, authentication-bypass, yamcs, ldap, python, cwe-90&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>YAMCS (&lt;code>org.yamcs.security.LdapAuthModule&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>yamcs-core &amp;lt; 5.12.7, only when &lt;code>LdapAuthModule&lt;/code> is configured&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Java (target); Python (PoC)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (this vulnerability is itself an auth bypass)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — HTTP access to the YAMCS &lt;code>/auth/token&lt;/code> endpoint, with YAMCS backed by an LDAP directory&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>YAMCS&amp;rsquo;s &lt;code>LdapAuthModule&lt;/code> builds LDAP search filters by directly substituting the user-supplied username into a filter template (e.g. &lt;code>(uid={0})&lt;/code>) without RFC 4515 escaping. An attacker can supply LDAP metacharacters in the username field to alter the filter&amp;rsquo;s logical structure, producing a universal match and bypassing authentication entirely — logging in as an arbitrary (including administrative) user without knowing any valid password.&lt;/p></description></item><item><title>LDAP Nightmare — Windows LDAP Client RCE/DoS (CVE-2024-49113)</title><link>https://poc.intelseclab.com/pocs/network/2026-05-15_ldap-nightmare-cve-2024-49113/</link><pubDate>Fri, 15 May 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-05-15_ldap-nightmare-cve-2024-49113/</guid><description>&lt;!-- 
  File: 2026-05-15_ldap-nightmare-cve-2024-49113.md
  Location: pocs/network/
 -->

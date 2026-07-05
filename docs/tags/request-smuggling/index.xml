@@ -1,4 +1,174 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Request-Smuggling on PoC Archive</title><link>https://poc.intelseclab.com/tags/request-smuggling/</link><description>Recent content in Request-Smuggling on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Fri, 03 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/request-smuggling/index.xml" rel="self" type="application/rss+xml"/><item><title>nghttpx HTTP/1.1 Upgrade Request Body Response Queue Poisoning</title><link>https://poc.intelseclab.com/pocs/network/2026-07-03_nghttpx-http-upgrade-queue-poisoning/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-03_nghttpx-http-upgrade-queue-poisoning/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Request-Smuggling on PoC Archive</title><link>https://poc.intelseclab.com/tags/request-smuggling/</link><description>Recent content in Request-Smuggling on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/request-smuggling/index.xml" rel="self" type="application/rss+xml"/><item><title>HAProxy HTTP/3 (QUIC) Standalone FIN Body Validation Bypass Leading to Request Smuggling — CVE-2026-33555</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-33555-haproxy-h3-request-smuggling/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-33555-haproxy-h3-request-smuggling/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>r3verii&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-33555&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>haproxy, http3, quic, request-smuggling, http-reuse, content-length, reverse-proxy, cross-user&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>HAProxy with HTTP/3 (QUIC) support built (&lt;code>USE_QUIC=1&lt;/code>); tested on HAProxy 3.0.18&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>HAProxy 3.0.18 (QUIC-enabled builds); requires &lt;code>http-reuse always&lt;/code> backend configuration&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PoC client in Python (aioquic); target is HAProxy + nginx backend, run via Docker Compose&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>HAProxy&amp;rsquo;s HTTP/3 frontend does not validate that a request&amp;rsquo;s declared &lt;code>Content-Length&lt;/code> matches the number of body bytes actually delivered over the QUIC stream before the stream is closed (a &amp;ldquo;standalone FIN&amp;rdquo;). When HAProxy translates such a malformed HTTP/3 request into HTTP/1.1 for the backend, it forwards the (incorrect) &lt;code>Content-Length&lt;/code> header while transmitting zero actual body bytes. If the backend answers early (e.g. with a 301 redirect) and then drains the declared-but-missing body bytes from the pooled TCP connection — a pattern enabled by the non-default but common &lt;code>http-reuse always&lt;/code> setting — it inadvertently consumes bytes belonging to the next, unrelated HTTP request queued on that same reused connection. Because HAProxy pools backend connections across different client requests, this effectively smuggles one user&amp;rsquo;s request into another user&amp;rsquo;s response, a classic cross-user HTTP request smuggling condition. The PoC ships a full Docker Compose lab (HAProxy H3/QUIC frontend, stock nginx backend, and a Python/aioquic attacker client) that continuously sends malformed &amp;ldquo;poison&amp;rdquo; requests and demonstrates that a legitimate victim on a separate QUIC connection receives corrupted (400) responses while the attack is running.&lt;/p></description></item><item><title>NGINX HTTP/2 Frame Injection via Vulnerable Upstream Proxying (CVE-2026-42926)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-42926-nginx-http2-frame-injection/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-42926-nginx-http2-frame-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>ikarolaborda&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-42926&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>nginx, http2, frame-injection, reverse-proxy, request-smuggling, docker-lab&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>NGINX (HTTP/2 upstream proxying)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>1.29.4 through 1.30.0 (fixed in 1.30.1+ / 1.31.0+)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C (NGINX core), PHP/Python lab tooling&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP access to the vulnerable proxy location)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-42926 is an HTTP/2 frame injection issue in NGINX that occurs when a specific vulnerable proxy configuration is used — proxying to an upstream over HTTP/2 (&lt;code>proxy_http_version 2&lt;/code>) while forwarding a client-controlled request body via a variable (&lt;code>proxy_set_body $request_body&lt;/code>) with a large &lt;code>client_max_body_size&lt;/code>. Under this configuration, attacker-controlled bytes in the client request body can be interpreted as raw HTTP/2 frame data by the upstream connection, allowing frame-level injection into the proxied HTTP/2 stream. The lab in this repository builds NGINX from source (vulnerable and patched versions), runs a controlled raw HTTP/2 &amp;ldquo;upstream logger&amp;rdquo; to capture what the upstream actually receives, and provides a PHP validation harness that issues a crafted request and inspects the upstream logs for injected-frame evidence, comparing vulnerable vs. patched behavior.&lt;/p></description></item><item><title>nghttpx HTTP/1.1 Upgrade Request Body Response Queue Poisoning</title><link>https://poc.intelseclab.com/pocs/network/2026-07-03_nghttpx-http-upgrade-queue-poisoning/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-03_nghttpx-http-upgrade-queue-poisoning/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

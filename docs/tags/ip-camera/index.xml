@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Ip-Camera on PoC Archive</title><link>https://poc.intelseclab.com/tags/ip-camera/</link><description>Recent content in Ip-Camera on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/ip-camera/index.xml" rel="self" type="application/rss+xml"/><item><title>TP-Link Tapo C260 Unauthenticated-to-Root RCE Chain — CVE-2026-0651</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-0651-tapo-c260-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-0651-tapo-c260-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>l0lsec (chain implementation); vulnerability research by Eugene Lim / Spaceraccoon&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-0651 (chained with CVE-2026-0652, CVE-2026-0653)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>iot, ip-camera, tp-link, tapo, path-traversal, command-injection, privilege-escalation, exploit-chain&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>TP-Link Tapo C260 IP camera (pre-patch firmware, shared &lt;code>/bin/main&lt;/code> omnibus binary across models)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Tapo C260 pre-patch firmware; potentially other Tapo models sharing the same binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3.8+, targeting embedded Linux camera firmware over HTTP/cloud API&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Local-only (guest-level credentials sufficient for full chain)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (local network for LFD, or TP-Link cloud API with valid cloud auth token for full RCE)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>This PoC chains three vulnerabilities in the TP-Link Tapo C260 camera to go from unauthenticated (or guest-level) access to root command execution. First, a path traversal flaw in the HTTP GET handler allows arbitrary local file disclosure. Second, a guest-level user can abuse JSON key manipulation in the cloud API to write attacker-controlled data into arbitrary configuration paths on the device, including the &lt;code>dev_name&lt;/code> field. Third, the device&amp;rsquo;s &lt;code>set_region_code_handle&lt;/code> reads that &lt;code>dev_name&lt;/code> value and passes it unsanitized into a &lt;code>popen()&lt;/code> call, so a poisoned &lt;code>dev_name&lt;/code> containing shell metacharacters results in command injection when the region-code handler is triggered. The &lt;code>exploit.py&lt;/code> script automates poisoning the config and triggering the handler to obtain a reverse shell or arbitrary command execution.&lt;/p></description></item></channel></rss>

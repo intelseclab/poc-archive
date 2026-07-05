@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Rop-Chain on PoC Archive</title><link>https://poc.intelseclab.com/tags/rop-chain/</link><description>Recent content in Rop-Chain on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/rop-chain/index.xml" rel="self" type="application/rss+xml"/><item><title>Windows ikeext.dll IKEv2 Double-Free Remote Kernel Exploit — CVE-2026-33824</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-33824-ikev2-ikeext-double-free-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-33824-ikev2-ikeext-double-free-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>EpSiLoNPoInTOrI&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-33824&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>ikev2, windows-kernel, double-free, ikeext, rop-chain, heap-grooming, reverse-shell, anti-debug, packet-fragmentation&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Windows IKEv2 IPsec driver (&lt;code>ikeext.dll&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Windows builds where &lt;code>ikeext.dll&lt;/code> matches the exploit&amp;rsquo;s hardcoded offsets (build-specific; not dynamically resolved in this PoC)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C/C++, targeting Windows kernel-mode IKEv2 service over UDP/500&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>This repository is an in-progress C/C++ exploit prototype targeting a double-free vulnerability in Windows&amp;rsquo; &lt;code>ikeext.dll&lt;/code>, the kernel driver that handles IKEv2 IPsec negotiation over UDP port 500. The exploit constructs and sends fragmented (SKF) IKEv2 packets to trigger the double-free, then performs multi-threaded heap grooming to gain control over freed memory, builds a ROP chain from gadgets scanned out of loaded modules, and stages a payload intended to obtain arbitrary read/write and ultimately code execution, with a reverse-shell listener on port 4444 as the intended final payload delivery mechanism. The author&amp;rsquo;s own README explicitly states the project is unfinished and not fully functional — several referenced functions (AMSI/Defender/ETW bypass, environment checks, shell listener start/stop) may be incomplete, offsets are hardcoded to a specific Windows build with no dynamic resolution, and the ROP chain/shellcode staging is not fully wired together. The codebase also includes a heavy, self-described obfuscation layer (a custom bytecode VM, control-flow mangling, anti-debug thread, fake PE section signatures for VMProtect/Denuvo/etc., dynamic API resolution) that is part of the exploit&amp;rsquo;s own anti-analysis design rather than anything hidden or injected — the repo&amp;rsquo;s included &lt;code>correct_code.py&lt;/code>/&lt;code>corriger.txt&lt;/code> are the author&amp;rsquo;s own notes/scripts for fixing compilation issues and adding missing constants (e.g. &lt;code>OBFUSCATION_KEY3&lt;/code>) in this obfuscation layer.&lt;/p></description></item></channel></rss>

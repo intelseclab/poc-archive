@@ -1,4 +1,344 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>PostgreSQL on PoC Archive</title><link>https://poc.intelseclab.com/tags/postgresql/</link><description>Recent content in PostgreSQL on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sat, 04 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/postgresql/index.xml" rel="self" type="application/rss+xml"/><item><title>PostgreSQL Referential-Integrity Owner-Switched Implicit Cast RCE</title><link>https://poc.intelseclab.com/pocs/network/2026-07-04_postgres-ri-owner-switched-cast-rce/</link><pubDate>Sat, 04 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-04_postgres-ri-owner-switched-cast-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Postgresql on PoC Archive</title><link>https://poc.intelseclab.com/tags/postgresql/</link><description>Recent content in Postgresql on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/postgresql/index.xml" rel="self" type="application/rss+xml"/><item><title>Apache Superset Authenticated SQL Injection via sqlExpression/where Bypass — CVE-2026-23980</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-23980-superset-sqli/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-23980-superset-sqli/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>oscar-mine&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-23980&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Medium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>6.5 (CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>apache-superset, sql-injection, error-based-sqli, postgresql, authenticated, api, python, cwe-89&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Apache Superset&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt; 6.0.0&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python (PoC), Superset backend (Flask/PostgreSQL)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (read-access user)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Apache Superset versions before 6.0.0 are vulnerable to an authenticated, error-based SQL injection reachable through the &lt;code>sqlExpression&lt;/code> (adhoc column) or &lt;code>extras.where&lt;/code> parameters of the &lt;code>/api/v1/chart/data&lt;/code> REST endpoint. Superset&amp;rsquo;s &lt;code>validate_adhoc_subquery()&lt;/code> filter tries to block subqueries by scanning for &lt;code>FROM&lt;/code>/&lt;code>JOIN&lt;/code> keywords, but this can be bypassed by wrapping the injected SQL inside PostgreSQL&amp;rsquo;s &lt;code>query_to_xml()&lt;/code> function, which hides the &lt;code>FROM&lt;/code> clause from the tokenizer while still executing it server-side. The PoC forces PostgreSQL type-cast errors (e.g. &lt;code>CAST((SELECT version()) AS INT)&lt;/code>) so that query results are leaked back to the client inside the API&amp;rsquo;s error message. The included &lt;code>exploit.py&lt;/code> automates recon, injectability testing, the XML-function bypass, single-value extraction, and multi-row dumping.&lt;/p></description></item><item><title>Percona PMM Authenticated RCE via PostgreSQL COPY TO PROGRAM (CVE-2026-25212)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-25212-percona-pmm-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-25212-percona-pmm-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>5170 (5170Temp)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-25212&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.9&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>rce, percona-pmm, postgresql, copy-to-program, grafana, privilege-escalation, command-execution&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Percona Monitoring and Management (PMM)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>PMM &amp;lt; 3.7&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (PoC), targets PMM&amp;rsquo;s bundled Grafana web interface&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (low-privilege &lt;code>pmm-admin&lt;/code> account)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-25212 arises because PMM&amp;rsquo;s internal PostgreSQL user retains &lt;code>SUPERUSER&lt;/code> privileges instead of being restricted. An attacker authenticated with only &lt;code>pmm-admin&lt;/code> rights can use Grafana&amp;rsquo;s &amp;ldquo;Add data source&amp;rdquo; feature to register an arbitrary PostgreSQL data source pointed back at PMM&amp;rsquo;s own database, then submit a query via Grafana&amp;rsquo;s datasource-query API. Because the internal user is a superuser, the attacker can execute &lt;code>COPY (...) TO PROGRAM '&amp;lt;command&amp;gt;'&lt;/code>, which runs arbitrary OS commands on the PMM server and writes the output to a temp file that is then read back via a second &lt;code>COPY ... FROM&lt;/code> query. This escalates a low-privileged authenticated web session directly to full server-side command execution.&lt;/p></description></item><item><title>PgBouncer SASL Length Field Integer Overflow Crash — CVE-2026-6664</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-6664-pgbouncer-integer-overflow/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-6664-pgbouncer-integer-overflow/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>nicolasjulian (repo notes PoC assistance from an AI model)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-6664&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>pgbouncer, postgresql, integer-overflow, sasl, scram, dos, cwe-190&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>PgBouncer (PostgreSQL connection pooler)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 1.25.1 (fixed in 1.25.2, commit &lt;code>ddc63c2175825bca9ef3c0a528280acaad76dbaa&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C (PgBouncer server), PoC written in Python 3 using raw sockets&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No — the bug triggers during the SASL/SCRAM authentication handshake itself, before authentication completes&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>PgBouncer&amp;rsquo;s &lt;code>mbuf_get_bytes()&lt;/code> bounds check (&lt;code>lib/usual/mbuf.h&lt;/code>) computes &lt;code>buf-&amp;gt;read_pos + len &amp;gt; buf-&amp;gt;write_pos&lt;/code> using 32-bit unsigned arithmetic, which wraps around when a client supplies a very large &lt;code>length&lt;/code> value in a SASLInitialResponse (&amp;lsquo;p&amp;rsquo;) message, silently bypassing the bounds check. A second integer overflow then occurs in &lt;code>scram_client_first()&lt;/code>, where &lt;code>malloc(datalen + 1)&lt;/code> wraps &lt;code>0xFFFFFFFF + 1&lt;/code> to &lt;code>0&lt;/code>, producing a small but non-NULL allocation, followed by a &lt;code>memcpy&lt;/code> that attempts to copy the full (attacker-declared) 4GB length from a tiny actual buffer, crashing the process with SIGSEGV. The included PoC connects to a SCRAM-SHA-256-configured PgBouncer instance and sends a crafted SASL initial response with a &lt;code>length&lt;/code> field of &lt;code>0xFFFFFFFF&lt;/code> to trigger the crash, causing denial of service against the connection pooler.&lt;/p></description></item><item><title>PostgreSQL pgcrypto PGP Heap Overflow to Superuser Escalation — CVE-2026-2005</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-2005-postgresql-pgcrypto-heapoverflow/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-2005-postgresql-pgcrypto-heapoverflow/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>var77&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-2005&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>postgresql, pgcrypto, heap-overflow, aslr-bypass, privilege-escalation, pgp, memory-corruption&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>PostgreSQL &lt;code>pgcrypto&lt;/code> extension (PGP session-key parsing)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Builds at/around PostgreSQL commit &lt;code>4b324845ba5d24682b9b3708a769f00d160afbd7&lt;/code> with &lt;code>pgcrypto&lt;/code> enabled (per source repository)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3.10+ (exploit), targeting the native PostgreSQL server binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — any authenticated low-privileged database user&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The &lt;code>pgcrypto&lt;/code> extension&amp;rsquo;s PGP session-key parsing contains a heap-based buffer overflow that corrupts &lt;code>MBuf&lt;/code> structure headers used internally to track ciphertext/plaintext buffers. By crafting malicious PGP messages passed to &lt;code>pgcrypto&lt;/code> decryption functions, a low-privileged authenticated database user can leak heap pointers, achieve an arbitrary memory read primitive, and ultimately an arbitrary memory write primitive within the PostgreSQL server process. The included PoC chains these primitives to defeat ASLR by voting on candidate PIE base addresses against known ELF symbol offsets, then overwrites the in-memory &lt;code>CurrentUserId&lt;/code> variable with the bootstrap superuser OID (10), allowing the attacker to execute arbitrary OS commands via &lt;code>COPY FROM PROGRAM&lt;/code> as the PostgreSQL system user.&lt;/p></description></item><item><title>PostgreSQL Referential-Integrity Owner-Switched Implicit Cast RCE</title><link>https://poc.intelseclab.com/pocs/network/2026-07-04_postgres-ri-owner-switched-cast-rce/</link><pubDate>Sat, 04 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-04_postgres-ri-owner-switched-cast-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

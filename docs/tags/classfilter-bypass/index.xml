@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Classfilter-Bypass on PoC Archive</title><link>https://poc.intelseclab.com/tags/classfilter-bypass/</link><description>Recent content in Classfilter-Bypass on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/classfilter-bypass/index.xml" rel="self" type="application/rss+xml"/><item><title>Jenkins ClassFilter Deserialization Bypass → Arbitrary File Read — CVE-2026-53435</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-53435-jenkins-deser-file-read/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-53435-jenkins-deser-file-read/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>AmesianX (built interactively with Claude Code / Anthropic models per repo README)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-53435 (Jenkins SECURITY-3707)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High (advisory also describes user impersonation and Script Console RCE via the same primitive; this PoC demonstrates file-read impact only)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not disclosed in source (repo references &amp;ldquo;CVSS 9.1/8.8&amp;rdquo; as talking points but does not cite the authoritative advisory score)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>jenkins, deserialization, classfilter-bypass, xstream, config-xml, stapler, arbitrary-file-read, docker-lab, cwe-502&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Jenkins (core), View configuration (&lt;code>config.xml&lt;/code>) deserialization path&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Jenkins weekly ≤ 2.567, LTS ≤ 2.555.2. Fixed in weekly 2.568 / LTS 2.555.3.&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (&lt;code>requests&lt;/code>) exploit; Docker/Groovy lab running Jenkins LTS&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — low-privilege account with &lt;code>View/Configure&lt;/code> (or &lt;code>Item/Configure&lt;/code>) permission plus &lt;code>Overall/Read&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Jenkins restricts deserialization via a custom &lt;code>ClassFilter&lt;/code> that only allows types defined in Jenkins core or installed plugins. CVE-2026-53435 shows this whitelist is insufficient: an attacker who can POST a view&amp;rsquo;s &lt;code>config.xml&lt;/code> can get Jenkins to deserialize a legitimate core type (&lt;code>hudson.Plugin$DummyImpl&lt;/code>) into a context that never expected it — specifically into a &lt;code>ListView&lt;/code>&amp;rsquo;s &lt;code>&amp;lt;properties&amp;gt;&lt;/code> list, a &lt;code>DescribableList&amp;lt;ViewProperty&amp;gt;&lt;/code> that, pre-patch, does not enforce its element type. The planted object carries &lt;code>baseResourceURL=file:/&lt;/code>, and routing an HTTP request to it via Stapler then serves arbitrary files straight from the controller&amp;rsquo;s filesystem. The included Python exploit automates creating (or overwriting) a view with the malicious XML and then requesting the planted gadget&amp;rsquo;s route to read a target file such as &lt;code>/etc/passwd&lt;/code>.&lt;/p></description></item></channel></rss>

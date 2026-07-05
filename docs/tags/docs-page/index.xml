@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Docs-Page on PoC Archive</title><link>https://poc.intelseclab.com/tags/docs-page/</link><description>Recent content in Docs-Page on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/docs-page/index.xml" rel="self" type="application/rss+xml"/><item><title>oRPC OpenAPI Reference Plugin Stored XSS via Unescaped Spec Embedding (CVE-2026-33331)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-33331-orpc-openapi-stored-xss/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-33331-orpc-openapi-stored-xss/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Abhay Kumar (GitHub: abhayclasher)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-33331 (GHSA-7f6v-3gx7-27q8)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>xss, stored-xss, orpc, openapi, cwe-79, javascript, nodejs, docs-page&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>&lt;code>middleapi/orpc&lt;/code> — OpenAPI documentation reference plugin (&lt;code>packages/openapi/src/plugins/openapi-reference.ts&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>All versions prior to v1.13.9 (fixed in v1.13.9)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>JavaScript/TypeScript (Node.js 18+), browser-rendered docs page&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (any party able to influence the OpenAPI spec, e.g. via router definitions)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>oRPC&amp;rsquo;s OpenAPI reference plugin renders the generated API docs page by embedding the OpenAPI spec directly into an inline &lt;code>&amp;lt;script id=&amp;quot;spec&amp;quot; type=&amp;quot;application/json&amp;quot;&amp;gt;&lt;/code> block using &lt;code>JSON.stringify(spec)&lt;/code>, with no HTML-context encoding. Because &lt;code>JSON.stringify()&lt;/code> does not escape &lt;code>&amp;lt;&lt;/code> or &lt;code>&amp;gt;&lt;/code>, a value under attacker influence — such as &lt;code>info.description&lt;/code> — can contain a literal &lt;code>&amp;lt;/script&amp;gt;&lt;/code> sequence that closes the block early; anything that follows is then parsed by the browser as a new, executable &lt;code>&amp;lt;script&amp;gt;&lt;/code> element. The bundled lab spins up both a vulnerable and a patched (v1.13.9-equivalent) docs server so the stored XSS can be triggered and compared side by side, plus a minimal standalone PoC that reproduces the same bug without the full application context.&lt;/p></description></item></channel></rss>

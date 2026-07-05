@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Arbitrary-File-Delete on PoC Archive</title><link>https://poc.intelseclab.com/tags/arbitrary-file-delete/</link><description>Recent content in Arbitrary-File-Delete on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/arbitrary-file-delete/index.xml" rel="self" type="application/rss+xml"/><item><title>Joomla Novarain Framework (nrframework) Unauthenticated Arbitrary File Inclusion — CVE-2026-21627</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-21627-joomla-nrframework-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-21627-joomla-nrframework-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-02&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Yallasec — Arcangelo Saracino (@arkango)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-21627&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.5 (Critical)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>joomla, nrframework, file-inclusion, unauthenticated, arbitrary-file-upload, arbitrary-file-delete, php, cms&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>&lt;code>plg_system_nrframework&lt;/code> (Tassos/Novarain Framework) Joomla plugin, bundled with Convert Forms, Engage Box, Google Structured Data, and other Tassos.gr extensions&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>4.10.14 through 6.0.37 (fixed in 6.0.38)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3.7+ PoC against Joomla 3.x/4.x/5.x (PHP backend)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The &lt;code>ajaxTaskInclude()&lt;/code> method of the nrframework Joomla plugin is explicitly whitelisted for unauthenticated frontend AJAX access and accepts attacker-controlled &lt;code>path&lt;/code>, &lt;code>file&lt;/code>, and &lt;code>class&lt;/code> parameters. The &lt;code>path&lt;/code> parameter uses Joomla&amp;rsquo;s &lt;code>RAW&lt;/code> input filter (no sanitization), and the concatenated path is passed directly into &lt;code>@include_once&lt;/code>, giving an unauthenticated attacker arbitrary PHP file inclusion, after which the specified class is instantiated and its &lt;code>onAJAX()&lt;/code> method invoked. By including the bundled &lt;code>JFormFieldNRInlineFileUpload&lt;/code> gadget class, an attacker can reach its &lt;code>onUpload()&lt;/code> and &lt;code>onRemove()&lt;/code> methods to achieve arbitrary file upload and arbitrary file delete respectively, with an upload-response path disclosure as a bonus. The included Python tool implements five modes (&lt;code>verify&lt;/code>, &lt;code>upload&lt;/code>, &lt;code>delete&lt;/code>, &lt;code>rce&lt;/code>, &lt;code>info&lt;/code>) to demonstrate the full impact chain, including uploading a web shell and attempting command execution end to end.&lt;/p></description></item></channel></rss>

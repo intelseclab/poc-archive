@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Apache-Airflow on PoC Archive</title><link>https://poc.intelseclab.com/tags/apache-airflow/</link><description>Recent content in Apache-Airflow on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/apache-airflow/index.xml" rel="self" type="application/rss+xml"/><item><title>Apache Airflow AWS Auth Manager SAML Host Header Injection (CVE-2026-25604)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-25604-airflow-saml-host-header-injection/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-25604-airflow-saml-host-header-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Sungwuk Jung (PoC repository: John-Jung)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-25604&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>saml, host-header-injection, authentication-bypass, apache-airflow, aws-iam-identity-center, cwe-346, origin-validation, token-replay&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Apache Airflow — &lt;code>apache-airflow-providers-amazon&lt;/code> (AWS Auth Manager)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>8.0.0 - 9.21.x (fixed in 9.22.0)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python (Flask mock server for PoC); target is a Python web application&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (attacker abuses the pre-authentication login redirect flow)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-25604 is a CWE-346 origin validation error in Apache Airflow&amp;rsquo;s AWS Auth Manager. When building the SAML &lt;code>AssertionConsumerService&lt;/code> (ACS) callback URL for a login request, the code reads the HTTP &lt;code>Host&lt;/code> header directly from the incoming request instead of using the configured instance base URL. An attacker who can influence the &lt;code>Host&lt;/code> header seen by Airflow (e.g. via a reverse proxy misconfiguration, phishing link, or direct request) can cause the SAML &lt;code>AuthnRequest&lt;/code> to instruct the identity provider (AWS IAM Identity Center) to deliver the signed SAML response to an attacker-controlled host. The attacker then replays the captured SAML response against the legitimate Airflow instance to authenticate as the victim, or reuses a response across multiple Airflow instances that share the IdP but have different access controls. The included PoC is a mock vulnerable Airflow SAML endpoint (Flask + &lt;code>python3-saml&lt;/code>) that reproduces the vulnerable &lt;code>_prepare_flask_request()&lt;/code> logic for demonstration against a real AWS IAM Identity Center SAML app.&lt;/p></description></item></channel></rss>

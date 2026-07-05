@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Can-Bus on PoC Archive</title><link>https://poc.intelseclab.com/tags/can-bus/</link><description>Recent content in Can-Bus on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/can-bus/index.xml" rel="self" type="application/rss+xml"/><item><title>PX4-Autopilot tattu_can Driver — CAN Bus Stack Buffer Overflow DoS (CVE-2026-32707)</title><link>https://poc.intelseclab.com/pocs/hardware/2026-07-05_cve-2026-32707-px4-tattu-can-buffer-overflow/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/hardware/2026-07-05_cve-2026-32707-px4-tattu-can-buffer-overflow/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Mohammed Idrees Banyamer (mbanyamer / @banyamer_security)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-32707 (GHSA-wxwm-xmx9-hr32, CWE-121)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>hardware&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>7.5 (High, CVSS 3.1 AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>px4, autopilot, can-bus, socketcan, stack-buffer-overflow, drone, uav, denial-of-service&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>PX4-Autopilot flight controller firmware, &lt;code>tattu_can&lt;/code> driver&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 1.17.0-rc1 (fixed in 1.17.0-rc2, commit &lt;code>3f04b7a&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (&lt;code>python-can&lt;/code>) targeting a Linux SocketCAN interface (physical &lt;code>can0&lt;/code> or virtual &lt;code>vcan0&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (any node able to inject frames on the shared CAN bus)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No (physical/CAN bus access required, not IP network)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The &lt;code>tattu_can&lt;/code> driver in PX4-Autopilot reassembles multi-frame &lt;code>Tattu12SBatteryMessage&lt;/code> telemetry from the battery&amp;rsquo;s CAN bus into a fixed 48-byte stack buffer, but performs the per-frame &lt;code>memcpy()&lt;/code> without checking the cumulative write offset against the buffer size. An attacker able to inject frames onto the same CAN bus — such as a rogue node, a compromised peripheral, or physical bus access — can send a start-of-transfer frame followed by a sequence of oversized continuation frames to drive the offset past the buffer boundary, corrupting the stack and crashing the PX4 process. The included PoC is a &lt;code>python-can&lt;/code> script that emits the exact frame sequence (marked start frame + overflow frames) needed to trigger the crash on a real or virtual CAN interface.&lt;/p></description></item></channel></rss>

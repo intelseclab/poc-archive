@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Cwe-915 on PoC Archive</title><link>https://poc.intelseclab.com/tags/cwe-915/</link><description>Recent content in Cwe-915 on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/cwe-915/index.xml" rel="self" type="application/rss+xml"/><item><title>Apache Camel camel-coap Header Injection to Remote Code Execution (CVE-2026-33453)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-33453-apache-camel-coap-header-injection-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-33453-apache-camel-coap-header-injection-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>dinosn&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-33453&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per source assessment)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>apache-camel, coap, header-injection, rce, cwe-915, camel-exec, unauthenticated, udp&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Apache Camel — &lt;code>camel-coap&lt;/code> component (&lt;code>CamelCoapResource&lt;/code>), routes forwarding to &lt;code>camel-exec&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Apache Camel 4.18.0 (and other versions sharing the same &lt;code>CamelCoapResource&lt;/code> code path prior to the fix); fixed in 4.18.1 / 4.14.6&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Java (Apache Camel route), exploit written in Python 3.8+ sending raw CoAP/UDP requests&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Apache Camel&amp;rsquo;s &lt;code>camel-coap&lt;/code> component maps CoAP URI query parameters directly into Camel Exchange headers via &lt;code>setHeader()&lt;/code> inside &lt;code>CamelCoapResource.handleRequest()&lt;/code>, without applying any &lt;code>HeaderFilterStrategy&lt;/code>. Because &lt;code>CoAPEndpoint&lt;/code> extends &lt;code>DefaultEndpoint&lt;/code> rather than &lt;code>DefaultHeaderFilterStrategyEndpoint&lt;/code>, internal &lt;code>Camel*&lt;/code>-prefixed headers — which are normally reserved for framework-internal use — can be injected by any unauthenticated CoAP client simply by adding query parameters to the request. When a Camel route forwards the exchange to a &lt;code>camel-exec&lt;/code> endpoint, an attacker-controlled &lt;code>CamelExecCommandExecutable&lt;/code> header (and optionally &lt;code>CamelExecCommandArgs&lt;/code>) overrides the route&amp;rsquo;s configured command, letting a single crafted UDP packet execute an arbitrary command on the host. The bundled PoC exploits this against a Dockerized vulnerable Camel CoAP+exec route and returns command output directly in the CoAP response.&lt;/p></description></item></channel></rss>

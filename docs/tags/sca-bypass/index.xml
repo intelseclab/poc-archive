@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Sca-Bypass on PoC Archive</title><link>https://poc.intelseclab.com/tags/sca-bypass/</link><description>Recent content in Sca-Bypass on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/sca-bypass/index.xml" rel="self" type="application/rss+xml"/><item><title>Next.js Vendored picomatch Vulnerable Dependency — CVE-2026-33671</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-33671-nextjs-vendored-picomatch-dep/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-33671-nextjs-vendored-picomatch-dep/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>BeLazy167&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-33671&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source (README labels underlying picomatch flaw &amp;ldquo;HIGH&amp;rdquo;)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>nextjs, picomatch, vendored-dependency, supply-chain, sca-bypass, trivy, nodejs, dependency-scanning&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Next.js 16.2.4 (bundles picomatch 4.0.3 at &lt;code>node_modules/next/dist/compiled/picomatch/&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Next.js versions bundling picomatch &amp;lt; 4.0.4&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Node.js / TypeScript, Next.js App Router&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No (local build/dependency-scanning issue, not a remotely exploitable network vuln)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Next.js 16.2.4 vendors a copy of the &lt;code>picomatch&lt;/code> glob-matching library inside its own compiled output at &lt;code>node_modules/next/dist/compiled/picomatch/&lt;/code>, pinned to version 4.0.3, which is affected by CVE-2026-33671. Because the vendored copy has its &lt;code>package.json&lt;/code> version field stripped and lives inside Next&amp;rsquo;s own bundled code rather than as a normal top-level dependency, standard remediation via npm &lt;code>overrides&lt;/code> cannot reach it — only the directly-installed &lt;code>picomatch&lt;/code> gets bumped, while the vendored copy silently remains vulnerable. This repo is a minimal Next.js app used to demonstrate the problem: install, build, containerize, and scan with Trivy to show the CVE is still flagged in the image even after applying an &lt;code>overrides&lt;/code> entry. It is a supply-chain/dependency-hygiene repro rather than a functional remote exploit — it proves detection tooling still surfaces the risk and that consumers cannot silence it themselves.&lt;/p></description></item></channel></rss>

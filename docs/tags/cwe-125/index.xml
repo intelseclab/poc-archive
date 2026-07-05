@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Cwe-125 on PoC Archive</title><link>https://poc.intelseclab.com/tags/cwe-125/</link><description>Recent content in Cwe-125 on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/cwe-125/index.xml" rel="self" type="application/rss+xml"/><item><title>KVM SEV-SNP Page State Change (PSC) Heap Out-of-Bounds — CVE-2026-53360</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-53360-kvm-sev-snp-psc-heap-oob/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-53360-kvm-sev-snp-psc-heap-oob/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>0xCyberstan (writeup: cyberstan.co.uk)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-53360&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High (guest-to-host host kernel heap corruption / info leak)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not disclosed&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>kvm, sev-snp, kernel, heap-oob, kasan, guest-escape, slab, kmalloc-cg, linux-kernel, cwe-125, cwe-787&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Linux KVM host, SEV-SNP support (&lt;code>arch/x86/kvm/svm/sev.c&lt;/code>, &lt;code>snp_begin_psc()&lt;/code> / &lt;code>setup_vmgexit_scratch()&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Introduced in commit &lt;code>9b54e248d264&lt;/code> (~v6.10, first KVM SNP PSC handling); fixed by commit &lt;code>db3f219&lt;/code> (mainline, tagged &lt;code>Fixes: 4af663c&lt;/code>, backported to stable). Tested vulnerable on host kernel 6.11.11.&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C — Linux kernel module (&lt;code>trigger.c&lt;/code>) run inside an SEV-SNP guest, attacking the KVM host via GHCB VMGEXIT requests&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (any code running inside an SEV-SNP guest, including as a kernel module the guest owner loads)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No (local guest-to-hypervisor channel via GHCB, not network-based)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>KVM&amp;rsquo;s SEV-SNP Page State Change (PSC) handler trusts a guest-supplied entry count against a fixed protocol constant (&lt;code>VMGEXIT_PSC_MAX_COUNT&lt;/code> = 253) instead of validating it against the actual size of the buffer the host allocated for the request. When a guest points its GHCB scratch area outside the shared GHCB buffer, the host allocates a &lt;code>kmalloc-cg&lt;/code>-backed buffer sized exactly to the guest-supplied length, but still permits the guest to specify an end index up to 253 entries. This lets a malicious SEV-SNP guest walk past the end of a small (e.g. 32-byte) slab allocation, reading and partially overwriting adjacent kernel heap objects on repeated requests. The included PoC is a guest kernel module that, on load, runs four escalating stages (heap-layout disclosure, persistence-of-write verification, extended OOB read, and a KASAN-triggering sweep) purely by crafting malformed PSC requests from inside the guest.&lt;/p></description></item><item><title>LibRaw pana8.cpp GetDBit() Out-of-Bounds Array Read (CVE-2026-36834)</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-36834-libraw-oob-read/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-36834-libraw-oob-read/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>kpatsakis&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-36834&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Medium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>~6.5 (CVSSv3.1: AV:L/AC:L/PR:N/UI:R/S:U/C:L/I:N/A:H)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>libraw, out-of-bounds-read, rw2, huffman, image-parsing, cwe-125, cwe-129&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>LibRaw — src/decoders/pana8.cpp&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Prior to commit 777f20ae21c611a78021bd051fbbf1e71eae78f2&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python PoC (RW2 file mutator)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (local file processing)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>LibRaw&amp;rsquo;s &lt;code>GetDBit()&lt;/code> function, used when decoding Panasonic RW2 raw image files, can return the value 17 when no Huffman table match is found. However, the &lt;code>huff_coeff[]&lt;/code> array is declared with only 17 elements (valid indices 0-16), so this out-of-bounds return value causes &lt;code>huff_coeff[17]&lt;/code> to be accessed — undefined behavior confirmed via UBSan and AddressSanitizer. Applications processing untrusted RW2 files (image editors, photo managers using LibRaw) could crash or leak process memory.&lt;/p></description></item></channel></rss>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Php-Type-Juggling on PoC Archive</title><link>https://poc.intelseclab.com/tags/php-type-juggling/</link><description>Recent content in Php-Type-Juggling on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/php-type-juggling/index.xml" rel="self" type="application/rss+xml"/><item><title>EGroupware Nextmatch Filter Authenticated SQL Injection (CVE-2026-22243)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-22243-egroupware-sqli/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-22243-egroupware-sqli/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Łukasz Rybak (GitHub: lukasz-rybak)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-22243&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source (advisory lists severity as HIGH)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>sql-injection, egroupware, php-type-juggling, authenticated, error-based-sqli, nextmatch, json&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>EGroupware (groupware/collaboration suite)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt; 23.1.20260113; &amp;gt;= 26.0.20251208 and &amp;lt; 26.0.20260113&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP (application), Python (PoC exploit script)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (any authenticated, low-privileged user)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-22243 is a critical authenticated SQL injection in EGroupware&amp;rsquo;s &lt;code>Nextmatch&lt;/code> widget filter processing (used across modules such as InfoLog and Address Book). The application&amp;rsquo;s database layer (&lt;code>Api\Db&lt;/code>, &lt;code>Api\Storage\Base&lt;/code>, &lt;code>infolog_so&lt;/code>) treats array keys of the &lt;code>col_filter&lt;/code> parameter as trusted raw SQL fragments whenever &lt;code>is_int($key)&lt;/code> returns true. Because PHP&amp;rsquo;s &lt;code>json_decode()&lt;/code> automatically converts numeric string keys (e.g., &lt;code>&amp;quot;0&amp;quot;&lt;/code>) into native integers, an attacker can submit a JSON POST body whose &lt;code>col_filter&lt;/code> map has numeric-string keys, causing the application to treat the corresponding values as safe and concatenate them directly into the SQL &lt;code>WHERE&lt;/code> clause. The included Python PoC logs in, extracts a required &lt;code>exec_id&lt;/code> token from the address book UI, and performs error-based SQL injection (via &lt;code>EXTRACTVALUE&lt;/code>) against the &lt;code>Nextmatch::ajax_get_rows&lt;/code> JSON endpoint to exfiltrate the database version, name, current user, and stored account credentials.&lt;/p></description></item></channel></rss>

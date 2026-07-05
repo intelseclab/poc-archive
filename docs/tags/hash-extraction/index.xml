@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hash-Extraction on PoC Archive</title><link>https://poc.intelseclab.com/tags/hash-extraction/</link><description>Recent content in Hash-Extraction on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/hash-extraction/index.xml" rel="self" type="application/rss+xml"/><item><title>SonicWall SMA 8200v Cross-Parameter Blind SQL Injection to Root (CVE-2026-4112)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-4112-sonicwall-sma-sqli-hash-extraction/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-4112-sonicwall-sma-sqli-hash-extraction/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Hann1bl3L3ct3r&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-4112 (SonicWall Advisory SNWLID-2026-0003)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>7.2 (High) — AV:N/AC:L/PR:H/UI:N/S:U/C:H/I:H/A:H (as stated in source)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>sonicwall, sma, sql-injection, blind-sqli, privilege-escalation, load-file, hash-extraction, appliance&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>SonicWall SMA 8200v management console (Jetty + Struts 2, port 8443)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Firmware 12.5.0-02283 confirmed; likely all 12.x&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 PoC against a Java (Struts 2) web management console&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (any valid management console credential, including read-only accounts)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The SonicWall SMA 8200v management console contains a post-authentication blind SQL injection in the &lt;code>/activeUsers.action&lt;/code> endpoint, reachable by any authenticated user regardless of role — including a read-only monitoring account. The application&amp;rsquo;s &lt;code>safeParam()&lt;/code> sanitizer escapes quotes but not backslashes, so a trailing backslash in the &lt;code>realmFilter&lt;/code> parameter escapes the closing quote the application appends, letting the adjacent &lt;code>communityFilter&lt;/code> parameter inject arbitrary SQL across the string-literal boundary. Because the backing MariaDB account (&lt;code>DbAdmin&lt;/code>) holds the &lt;code>FILE&lt;/code> privilege and &lt;code>LOAD_FILE()&lt;/code> reads are not blocked by &lt;code>secure_file_priv=NULL&lt;/code>, the injection is used to blind-extract the appliance&amp;rsquo;s &lt;code>avconfig.xml&lt;/code> configuration file character-by-character via time-based (&lt;code>SLEEP&lt;/code>) conditions, recovering the primary administrator&amp;rsquo;s SHA-512 crypt password hash. Since SonicWall uses the same credential for both the console admin and the underlying OS root account, cracking this hash yields full root access to the appliance — turning a low-privilege read-only login into complete device takeover.&lt;/p></description></item></channel></rss>

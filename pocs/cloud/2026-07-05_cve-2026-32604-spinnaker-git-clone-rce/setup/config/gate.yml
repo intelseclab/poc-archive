@@ -1,0 +1,60 @@
+server:
+  port: 8084
+
+services:
+  clouddriver:
+    baseUrl: http://clouddriver:7002
+  orca:
+    baseUrl: http://orca:8083
+  front50:
+    baseUrl: http://front50:8080
+    canaryConfigStore: false
+  rosco:
+    enabled: false
+  echo:
+    baseUrl: http://echo:8089
+    enabled: true
+  fiat:
+    enabled: true
+    baseUrl: http://fiat:7003
+  keel:
+    enabled: false
+  igor:
+    enabled: false
+  kayenta:
+    enabled: false
+
+redis:
+  connection: redis://redis:6379
+
+spring:
+  session:
+    store-type: redis
+  jackson:
+    mapper:
+      SORT_PROPERTIES_ALPHABETICALLY: true
+    serialization:
+      ORDER_MAP_ENTRIES_BY_KEYS: true
+  mvc:
+    pathmatch:
+      matching-strategy: ANT_PATH_MATCHER
+
+# LDAP authentication — users defined in OpenLDAP container
+ldap:
+  enabled: true
+  url: ldap://ldap:389/dc=spinnaker,dc=test
+  managerDn: cn=admin,dc=spinnaker,dc=test
+  managerPassword: ldapadmin
+  groupSearchBase: ou=groups
+  userDnPattern: uid={0},ou=users
+
+spinnaker:
+  extensibility:
+    plugins:
+      spinnaker.healthcheck:
+        enabled: true
+    plugins-root-path: /opt/plugins
+
+swagger:
+  enabled: true
+  title: Spinnaker API

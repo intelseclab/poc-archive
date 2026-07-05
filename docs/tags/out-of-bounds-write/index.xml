@@ -1,4 +1,174 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Out-of-Bounds-Write on PoC Archive</title><link>https://poc.intelseclab.com/tags/out-of-bounds-write/</link><description>Recent content in Out-of-Bounds-Write on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Fri, 03 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/out-of-bounds-write/index.xml" rel="self" type="application/rss+xml"/><item><title>objdump DLX ELF Backend Out-of-Bounds Write (Crash-to-Calc)</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-03_objdump-dlx-elf-backend-oob/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-03_objdump-dlx-elf-backend-oob/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Out-of-Bounds-Write on PoC Archive</title><link>https://poc.intelseclab.com/tags/out-of-bounds-write/</link><description>Recent content in Out-of-Bounds-Write on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/out-of-bounds-write/index.xml" rel="self" type="application/rss+xml"/><item><title>Marlin Firmware M421 G-code Handler Out-of-Bounds Write — CVE-2026-56111</title><link>https://poc.intelseclab.com/pocs/hardware/2026-07-05_cve-2026-56111-marlin-m421-oob-write/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/hardware/2026-07-05_cve-2026-56111-marlin-m421-oob-write/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>Unknown&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Christ Bouchuen (github.com/Christbowel)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-56111&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>hardware&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>8.3&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>marlin, 3d-printer, firmware, g-code, out-of-bounds-write, mesh-bed-leveling, denial-of-service, embedded&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Marlin Firmware (3D printer firmware), builds compiled with &lt;code>MESH_BED_LEVELING&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 2.1.2.7 (fixed in commit &lt;code>1f255d1&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Embedded C/C++ firmware (AVR/ARM microcontrollers); PoC written in C&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (G-code interfaces on serial/telnet typically have no authentication)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No — reachable via USB serial connection or, for network-exposed printers, TCP/telnet G-code interface&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Marlin&amp;rsquo;s &lt;code>M421&lt;/code> G-code handler, used to set Mesh Bed Leveling (MBL) grid points, validates only that the supplied &lt;code>I&lt;/code>/&lt;code>J&lt;/code> grid indices are non-negative and never checks the upper bound against the actual mesh grid size. The underlying &lt;code>set_z()&lt;/code> function then writes the supplied Z float value directly to &lt;code>z_values[ix][iy]&lt;/code> with no bounds check, allowing an out-of-range index to write a controlled 32-bit float value to memory beyond the &lt;code>z_values&lt;/code> array — into adjacent firmware state such as &lt;code>z_offset&lt;/code> or the G-code parser object. The included PoC sends raw &lt;code>M421&lt;/code> commands over serial or TCP to demonstrate both a targeted, constrained write (e.g. corrupting the bed Z offset) and a reliable denial-of-service crash via a NaN value.&lt;/p></description></item><item><title>Samsung SveService Native Out-of-Bounds Write (CVE-2026-21018)</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-21018-samsung-sveservice-oob-write-lpe/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-21018-samsung-sveservice-oob-write-lpe/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Filipemendonca1978&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-21018 (Samsung SVE-2026-0478, SMR May 2026)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>android, samsung, binder, native, out-of-bounds-write, jni, lpe, memcpy, memset&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Samsung &lt;code>SveService&lt;/code> (&lt;code>com.sec.sve&lt;/code>) system service and its &lt;code>libsvejni.so&lt;/code> native library&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Android 14, 15, 16 on Samsung devices prior to SMR May 2026 Release 1 (tested on Galaxy A17 LTE, SM-A175F)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Java (Binder client PoC); native ARM64 library is the vulnerable component&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Local-only (no special permission; reachable as &lt;code>shell&lt;/code> UID via Binder)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-21018 is an out-of-bounds write in the Samsung system service &lt;code>SveService&lt;/code>, which runs as &lt;code>system&lt;/code> (UID 1000) and is registered directly via &lt;code>ServiceManager.addService()&lt;/code> — bypassing Android&amp;rsquo;s normal &lt;code>signatureOrSystem&lt;/code> permission enforcement, so it is reachable without any special permission. The exposed &lt;code>sveSetCodecInfo&lt;/code> Binder transaction (code 38) passes three caller-controlled length parameters straight into the native function &lt;code>sveJNISVE_SetCodecInfo&lt;/code> in &lt;code>libsvejni.so&lt;/code>, which uses them unchecked as arguments to &lt;code>memset&lt;/code>, a stack &lt;code>alloca&lt;/code>, and &lt;code>memcpy&lt;/code>. Unlike sibling functions in the same library that validate their length arguments against a 30-byte cap, &lt;code>SetCodecInfo&lt;/code> performs no validation at all, so a caller-supplied value of &lt;code>-1&lt;/code> (&lt;code>0xFFFFFFFF&lt;/code>) causes the service to attempt to zero/copy gigabytes-to-exabytes of memory, corrupting the stack and crashing the service. The PoC drives this transaction directly via reflection-based &lt;code>ServiceManager&lt;/code>/&lt;code>Parcel&lt;/code> calls from an &lt;code>app_process&lt;/code> shell.&lt;/p></description></item><item><title>objdump DLX ELF Backend Out-of-Bounds Write (Crash-to-Calc)</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-03_objdump-dlx-elf-backend-oob/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-03_objdump-dlx-elf-backend-oob/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

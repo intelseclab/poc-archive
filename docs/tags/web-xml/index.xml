@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Web-Xml on PoC Archive</title><link>https://poc.intelseclab.com/tags/web-xml/</link><description>Recent content in Web-Xml on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/web-xml/index.xml" rel="self" type="application/rss+xml"/><item><title>Apache Tomcat Split-Collection Security Constraint Bypass (CVE-2026-43515)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-43515-tomcat-constraint-bypass/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-43515-tomcat-constraint-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>covepseng&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-43515&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>N/A (not published by upstream source reviewed; authentication/authorization bypass on a subset of configurations)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>apache-tomcat, java, security-constraint, auth-bypass, realm-base, servlet, web-xml, access-control&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Apache Tomcat — &lt;code>org.apache.catalina.realm.RealmBase.findSecurityConstraints()&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>7.0.0–7.0.109 (fixed 7.0.110), 8.5.0–8.5.100 (fixed 8.5.101), 9.0.0.M1–9.0.117 (fixed 9.0.118), 10.1.0.M1–10.1.54 (fixed 10.1.55), 11.0.0.M1–11.0.21 (fixed 11.0.22)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Java (Tomcat internals); Go (PoC exploit client)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No — the bypass allows an unauthenticated request to reach a resource that should require authentication&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — HTTP access to the Tomcat instance&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-43515 is a security constraint evaluation bug in Apache Tomcat&amp;rsquo;s &lt;code>RealmBase.findSecurityConstraints()&lt;/code>. When a single &lt;code>&amp;lt;security-constraint&amp;gt;&lt;/code> defines multiple &lt;code>&amp;lt;web-resource-collection&amp;gt;&lt;/code> blocks that share the same URL pattern (e.g. &lt;code>*.html&lt;/code>) but each declare a different HTTP method, Tomcat only enforces the constraint for the method declared in the first matching collection; subsequent collections targeting the same URL pattern with a different method are silently never evaluated. This allows requests using the &amp;ldquo;second&amp;rdquo; HTTP method (e.g. POST, when GET was declared first) to bypass authentication entirely. The bug requires an uncommon but spec-valid &lt;code>web.xml&lt;/code> shape to be present.&lt;/p></description></item></channel></rss>

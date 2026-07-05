@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Bird2 on PoC Archive</title><link>https://poc.intelseclab.com/tags/bird2/</link><description>Recent content in Bird2 on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/bird2/index.xml" rel="self" type="application/rss+xml"/><item><title>BIRD/BIRD2 BGP AS_PATH Mask Matching Stack Buffer Overflow (CVE-2026-49943)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-49943-bird-bgp-aspath-stack-overflow/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-49943-bird-bgp-aspath-stack-overflow/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Bakabaka_9 (9Bakabaka)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-49943&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:N/I:N/A:H (suggested by researcher; not an official vendor score)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>bird, bird2, bgp, as-path, stack-buffer-overflow, denial-of-service, routing, dos&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>BIRD Internet Routing Daemon (BGP implementation)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Confirmed: BIRD 2.18; potentially other BIRD 2.x versions containing the fixed-size &lt;code>pm_pos pos[2048 + 1]&lt;/code> stack buffer in &lt;code>as_path_match()&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C (BIRD daemon), Python 3 PoC client&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — attacker must be an established, authenticated BGP peer of the target&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>This repository documents a stack-based buffer overflow in BIRD&amp;rsquo;s BGP AS_PATH mask matching code (&lt;code>as_path_match()&lt;/code> in &lt;code>nest/a-path.c&lt;/code>). The function uses a fixed-size stack array of &lt;code>2048 + 1&lt;/code> &lt;code>pm_pos&lt;/code> entries, but &lt;code>parse_path()&lt;/code> expands AS_PATH segments from a received BGP UPDATE message without enforcing a matching capacity limit. When a BGP peer sends an UPDATE containing an AS_PATH longer than 2048 ASNs while the target evaluates an AS path mask filter (e.g. &lt;code>bgp_path ~ [= ... =]&lt;/code>) with BGP Extended Messages enabled, the matcher writes past the end of the stack buffer, crashing the daemon. The included &lt;code>poc.py&lt;/code> establishes a minimal BGP session with the target and sends a single UPDATE containing an AS_PATH of 2295 ASNs to trigger the crash.&lt;/p></description></item></channel></rss>

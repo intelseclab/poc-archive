@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Kv-Store on PoC Archive</title><link>https://poc.intelseclab.com/tags/kv-store/</link><description>Recent content in Kv-Store on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/kv-store/index.xml" rel="self" type="application/rss+xml"/><item><title>Splunk Secure Gateway jsonpickle Deserialization RCE (CVE-2026-20251)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-20251-splunk-jsonpickle-deserialization/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-20251-splunk-jsonpickle-deserialization/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Fady Oueslati (ReactiveZero Security Research)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-20251&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>8.8 (CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>splunk, deserialization, jsonpickle, rce, kv-store, python, validator-bypass, spacebridge&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Splunk Secure Gateway (SSG) app on Splunk Enterprise&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>SSG 3.9.x &amp;lt; 3.9.20, 3.10.x &amp;lt; 3.10.6, 3.8.x &amp;lt; 3.8.67 (tested on SSG 3.9.19 / Splunk Enterprise 10.0.6)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python (jsonpickle), Splunk app backend&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (any low-privileged authenticated Splunk user)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Splunk Secure Gateway lets mobile clients fetch alert data that is stored in the App Key Value Store and later reconstructed into Python objects using the &lt;code>jsonpickle&lt;/code> library. A low-privileged authenticated user can write a crafted document to the &lt;code>mobile_alerts&lt;/code> KV Store collection that, once read back by SSG, is deserialized via &lt;code>jsonpickle.decode(..., safe=True)&lt;/code>. The &lt;code>safe=True&lt;/code> flag only blocks the legacy &lt;code>py/repr&lt;/code> eval path and does nothing to stop &lt;code>py/reduce&lt;/code>, &lt;code>py/object&lt;/code>, &lt;code>py/type&lt;/code>, &lt;code>py/function&lt;/code>, or &lt;code>py/module&lt;/code> tags from instantiating arbitrary classes and invoking arbitrary callables. A companion validator meant to catch dangerous tags returns as soon as it sees a permitted &lt;code>py/object&lt;/code> key as the first key in the document, so a &lt;code>py/reduce&lt;/code> gadget placed in a sibling field is never inspected. The included PoC demonstrates both halves of the chain — the validator bypass and the unsafe jsonpickle execution — using a benign &lt;code>uname -a&lt;/code> payload rather than a weaponized one.&lt;/p></description></item></channel></rss>

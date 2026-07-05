@@ -1,4 +1,344 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>WebSocket on PoC Archive</title><link>https://poc.intelseclab.com/tags/websocket/</link><description>Recent content in WebSocket on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 17 May 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/websocket/index.xml" rel="self" type="application/rss+xml"/><item><title>Next.js WebSocket Upgrade SSRF (Self-Hosted) (CVE-2026-44578)</title><link>https://poc.intelseclab.com/pocs/web/2026-05-17_nextjs-websocket-upgrade-ssrf-self-hosted/</link><pubDate>Sun, 17 May 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-05-17_nextjs-websocket-upgrade-ssrf-self-hosted/</guid><description>&lt;!-- 
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Websocket on PoC Archive</title><link>https://poc.intelseclab.com/tags/websocket/</link><description>Recent content in Websocket on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/websocket/index.xml" rel="self" type="application/rss+xml"/><item><title>GitLab WebSocket GraphqlChannel Unauthorized Method Enumeration — CVE-2026-5173</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-5173-gitlab-websocket-graphql-bypass/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-5173-gitlab-websocket-graphql-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>0xBlackash (GitHub)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-5173&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not disclosed in repo (advisory references GHSA-5gj7-3j23-w2h2)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>gitlab, websocket, graphql, actioncable, graphqlchannel, information-disclosure, broken-access-control&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>GitLab CE/EE, ActionCable WebSocket endpoint (&lt;code>/-/cable&lt;/code>), &lt;code>GraphqlChannel&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>GitLab CE/EE 16.9.6 through 18.8.8; 18.9 before 18.9.5; 18.10 before 18.10.3 (patched in 18.8.9, 18.9.5, 18.10.3)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3.8+ (&lt;code>websockets&lt;/code> library)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Low-privileged authenticated user (a valid session/token is expected; PoC also supports an optional Personal Access Token)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — direct network access to the target GitLab instance&amp;rsquo;s WebSocket endpoint&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-5173 allows a low-privileged authenticated GitLab user to invoke backend GraphQL methods over the &lt;code>/-/cable&lt;/code> ActionCable WebSocket endpoint via the &lt;code>GraphqlChannel&lt;/code>, methods that should otherwise be gated by normal GraphQL authorization checks. The PoC connects to the target&amp;rsquo;s WebSocket endpoint, subscribes to &lt;code>GraphqlChannel&lt;/code>, and then sends a series of GraphQL queries for sensitive fields/resolvers (&lt;code>currentUser&lt;/code>, &lt;code>users&lt;/code>, &lt;code>projects&lt;/code>, &lt;code>namespaces&lt;/code>, &lt;code>admin&lt;/code>, &lt;code>instanceStatistics&lt;/code>, etc.), reporting which ones return data the caller should not otherwise be authorized to see — including other users&amp;rsquo; details (potentially admins) and private project listings.&lt;/p></description></item><item><title>OpenClaw Gateway WebSocket Authentication Bypass RCE — CVE-2026-28466</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-28466-openclaw-gateway-websocket-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-28466-openclaw-gateway-websocket-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Orioning&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-28466&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>openclaw, websocket, rce, gateway, auth-bypass, node-invoke, command-injection&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>OpenClaw gateway&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt; 2026.2.14&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (PoC), targets a Node.js/Go-style WebSocket control gateway&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (token is accepted without proper origin/scope validation)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>OpenClaw exposes a WebSocket control-plane gateway (&lt;code>/ws&lt;/code>) used to manage connected nodes/agents. The gateway&amp;rsquo;s connect handshake accepts a client-supplied auth token and role/scope set without properly validating that the presented token is bound to the claimed operator role, allowing a remote, unauthenticated-in-practice client to complete the &lt;code>connect&lt;/code> handshake with full &lt;code>operator.admin&lt;/code> scopes. Once connected as an operator, the client can issue a &lt;code>node.invoke&lt;/code> request calling the &lt;code>system.run&lt;/code> command against a target node, which executes an arbitrary OS command and returns stdout/stderr/exit code over the same socket. The PoC automates the full chain: connect, solve the challenge/nonce, authenticate, and invoke &lt;code>system.run&lt;/code> with an attacker-supplied command string.&lt;/p></description></item><item><title>Red Hat Cockpit `logsJournal.jsx` Shell Injection RCE (CVE-2026-4802)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-4802-cockpit-logsjournal-shell-injection/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-4802-cockpit-logsjournal-shell-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>hakaioffsec (Hakai Security / QuimeraX Intelligence)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-4802&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>cockpit, redhat, shell-injection, command-injection, rce, websocket, systemd, journalctl&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Red Hat Cockpit — the web-based Linux system administration console (cockpit-project.org), specifically &lt;code>pkg/systemd/logsJournal.jsx&lt;/code>. &lt;strong>Not&lt;/strong> to be confused with the headless &amp;ldquo;Cockpit CMS&amp;rdquo;.&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Unpatched Cockpit versions containing the vulnerable &lt;code>loadServiceFilters()&lt;/code> logic in &lt;code>pkg/systemd/logsJournal.jsx&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Cockpit frontend in JavaScript/JSX driving server-side shell execution over the Cockpit WebSocket protocol; PoC written in Python (asyncio + websockets)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (a low-privileged authenticated user, e.g. &lt;code>viewer&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Cockpit&amp;rsquo;s systemd logs page builds a &lt;code>journalctl&lt;/code> invocation from URL-fragment-derived filter parameters (such as &lt;code>--since=&lt;/code>) inside &lt;code>loadServiceFilters()&lt;/code>. The resulting argument array is joined into a single shell string with only whitespace escaping and then executed via &lt;code>/bin/bash -ec&lt;/code>, so shell metacharacters — notably command substitution &lt;code>$(...)&lt;/code> — are not neutralized. Any authenticated user who can reach the logs page (even a low-privileged &lt;code>viewer&lt;/code> account) can inject and execute arbitrary shell commands on the Cockpit host through this path.&lt;/p></description></item><item><title>WebSocket Authentication Brute-Force via Missing Rate Limiting (CVE-2026-27778)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-27778-websocket-auth-bruteforce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-27778-websocket-auth-bruteforce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>KimJ6&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-27778&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Medium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>websocket, brute-force, cwe-307, rate-limiting, authentication, nodejs, simulator&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Generic Node.js/Express + &lt;code>ws&lt;/code> WebSocket authentication server (demonstration/simulator app)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Simulated reference implementation — pattern applies to any WebSocket auth endpoint lacking rate limiting&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>JavaScript (Node.js, browser WebSocket client)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>This repository is a hands-on simulator for CVE-2026-27778 (CWE-307: Improper Restriction of Excessive Authentication Attempts) built around a small Node.js/Express server that accepts WebSocket &lt;code>AUTH_REQ&lt;/code> messages containing a password guess and replies with success/failure. Because the server (mode 1) never throttles or locks out repeated authentication attempts on the same connection, a client can flood it with password guesses at a fixed interval until the correct password is found. The included &lt;code>attack.js&lt;/code> browser/Node script opens a WebSocket connection and fires an incrementing password guess every 50ms in a tight loop, logging the elapsed time once the server confirms a match. &lt;code>server.js&lt;/code> and &lt;code>run.js&lt;/code> provide two variants of the vulnerable backend (one with an optional lockout &amp;ldquo;mode 2&amp;rdquo; for comparison, one broadcasting auth results to all connected monitoring clients), letting a user directly observe the difference between rate-limited and unprotected configurations.&lt;/p></description></item><item><title>Next.js WebSocket Upgrade SSRF (Self-Hosted) (CVE-2026-44578)</title><link>https://poc.intelseclab.com/pocs/web/2026-05-17_nextjs-websocket-upgrade-ssrf-self-hosted/</link><pubDate>Sun, 17 May 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-05-17_nextjs-websocket-upgrade-ssrf-self-hosted/</guid><description>&lt;!-- 
  File: 2026-05-17_nextjs-websocket-upgrade-ssrf-self-hosted.md
  Location: pocs/&lt;category>/
 -->

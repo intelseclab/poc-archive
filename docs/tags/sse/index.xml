@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Sse on PoC Archive</title><link>https://poc.intelseclab.com/tags/sse/</link><description>Recent content in Sse on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/sse/index.xml" rel="self" type="application/rss+xml"/><item><title>Sliver C2 MCP Server Unauthenticated CORS/Preflight Bypass (CVE-2026-34227)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-34227-sliver-mcp-cors-bypass/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-34227-sliver-mcp-cors-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>skoveit&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-34227 (GHSA-6fpf-248c-m7wm)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>sliver, c2, mcp, cors, csrf, sse, cross-origin, data-exfiltration&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Sliver C2 framework — MCP (Model Context Protocol) server interface&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Sliver builds exposing the MCP SSE server (per GHSA-6fpf-248c-m7wm)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Browser-based PoC (HTML/JavaScript) targeting a local Sliver MCP HTTP/SSE endpoint&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (localhost/loopback reachable by the operator&amp;rsquo;s browser)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Sliver&amp;rsquo;s MCP server exposes an unauthenticated Server-Sent Events (SSE) interface on &lt;code>127.0.0.1:8080&lt;/code> and responds to every request with &lt;code>Access-Control-Allow-Origin: *&lt;/code>. Because the underlying &lt;code>mcp-go&lt;/code> library does not validate the request&amp;rsquo;s &lt;code>Content-Type&lt;/code>, a cross-origin POST sent as a CORS &amp;ldquo;simple request&amp;rdquo; (&lt;code>text/plain&lt;/code>) skips the browser&amp;rsquo;s preflight &lt;code>OPTIONS&lt;/code> check entirely, so no CORS block and no authentication stand between a malicious web page and the operator&amp;rsquo;s local C2 console. The PoC is a self-contained HTML/JS page that opens an &lt;code>EventSource&lt;/code> connection to the MCP SSE endpoint, captures the session ID from the &lt;code>endpoint&lt;/code> event, then fires a &lt;code>no-cors&lt;/code> JSON-RPC &lt;code>tools/call&lt;/code> request (&lt;code>list_sessions_and_beacons&lt;/code>) to exfiltrate active C2 session/beacon data back through the SSE stream.&lt;/p></description></item></channel></rss>

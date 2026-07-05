@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Esbuild on PoC Archive</title><link>https://poc.intelseclab.com/tags/esbuild/</link><description>Recent content in Esbuild on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/esbuild/index.xml" rel="self" type="application/rss+xml"/><item><title>Supply Chain Command Injection in AWS CDK's NodejsFunction — CVE-2026-11417</title><link>https://poc.intelseclab.com/pocs/cloud/2026-07-05_cve-2026-11417-aws-cdk-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/cloud/2026-07-05_cve-2026-11417-aws-cdk-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Hesham Ashraf (HeshamASH)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-11417&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>cloud&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>CVSSv3.1: 7.3, CVSSv4: 7.0&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>aws, cdk, supply-chain, command-injection, esbuild, nodejs, ci-cd, rce&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>&lt;code>aws-cdk-lib&lt;/code> (npm package), &lt;code>NodejsFunction&lt;/code> L2 construct&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>All versions prior to 2.245.0&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>TypeScript/Node.js, runs on any machine executing &lt;code>cdk synth&lt;/code> (dev workstations, CI/CD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No (local build-time execution, though impact is typically delivered via a supply-chain vector)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The AWS CDK &lt;code>NodejsFunction&lt;/code> construct bundles Lambda handlers with esbuild during &lt;code>cdk synth&lt;/code>, and prior to 2.245.0 it built the esbuild invocation by directly interpolating several user/construct-controlled properties (&lt;code>externalModules&lt;/code>, &lt;code>loader&lt;/code>, &lt;code>define&lt;/code>, &lt;code>inject&lt;/code>, &lt;code>esbuildArgs&lt;/code>) into a single shell command string that was then executed via &lt;code>bash -c&lt;/code> / &lt;code>cmd /c&lt;/code>. Because none of these properties were sanitized for shell metacharacters, a value such as &lt;code>foo &amp;amp; echo PWNED &amp;gt; pwned.txt&lt;/code> placed in &lt;code>externalModules&lt;/code> would split the command and execute the attacker&amp;rsquo;s payload as a second, independent shell command. This made it possible for a malicious or compromised third-party CDK construct (published to npm or submitted via PR) to achieve arbitrary command execution on any machine that ran &lt;code>cdk synth&lt;/code>, entirely bypassing install-time defenses like &lt;code>npm audit&lt;/code> or &lt;code>--ignore-scripts&lt;/code> since the injection fires at synthesis time rather than install time. The included PoC is a minimal CDK app that sets a poisoned &lt;code>externalModules&lt;/code> entry and confirms RCE by checking for a marker file written by the injected command.&lt;/p></description></item></channel></rss>

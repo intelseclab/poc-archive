@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Spn-Spoofing on PoC Archive</title><link>https://poc.intelseclab.com/tags/spn-spoofing/</link><description>Recent content in Spn-Spoofing on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/spn-spoofing/index.xml" rel="self" type="application/rss+xml"/><item><title>Windows Kerberos Reflection via Unicode SPN Normalization Bypass (CVE-2026-26128)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-26128-adcs-kerberos-relay-unicode-spn/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-26128-adcs-kerberos-relay-unicode-spn/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Jarno van den Brink (PoC tool); Guillaume André / Synacktiv (underlying research)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-26128&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>kerberos-relay, active-directory, adcs, unicode-normalization, spn-spoofing, ntlm-relay, dns-spoofing, privilege-escalation&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Windows Active Directory (DnsCache SPN resolution / Kerberos authentication)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Windows AD environments prior to the March 2026 Patch Tuesday update (SMB relay path patched then; ADCS web enrollment and MSSQL relay paths still exploitable per PoC)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3.8+&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (valid low-privileged domain credentials)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (must reach a Domain Controller&amp;rsquo;s LDAP/DNS and be able to coerce/observe authentication)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2026-26128 is a Kerberos relay vulnerability rooted in a mismatch between how two different Windows components normalize Unicode characters when resolving Service Principal Names. The client-side &lt;code>DnsCache&lt;/code> service uses &lt;code>CompareStringW&lt;/code> with &lt;code>NORM_IGNORECASE&lt;/code>, which fails to equate visually-similar &amp;ldquo;fullwidth&amp;rdquo;/circled Unicode characters (e.g. &lt;code>ⓢⓡⓥ1.ⓐⓓ.ⓛⓞⓒⓐⓛ&lt;/code>) with the real ASCII hostname, while the Domain Controller uses &lt;code>LCMapStringEx&lt;/code> with different normalization flags that do treat them as equivalent. By registering a DNS record for the Unicode look-alike hostname pointing at an attacker-controlled machine, an attacker can trick a victim service into issuing an AP-REQ that Kerberos will still validate as targeting the real host, letting it be relayed. This builds on prior Windows authentication-reflection mitigation research by Synacktiv. The PoC is a full Python relay toolkit (DNS record injection, SMB/HTTP relay servers, coercion helpers) supporting relay to ADCS web enrollment and MSSQL, ultimately netting a certificate usable to request a TGT via PKINIT.&lt;/p></description></item></channel></rss>

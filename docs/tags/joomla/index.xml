@@ -1,4 +1,344 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Joomla on PoC Archive</title><link>https://poc.intelseclab.com/tags/joomla/</link><description>Recent content in Joomla on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Tue, 30 Jun 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/joomla/index.xml" rel="self" type="application/rss+xml"/><item><title>Unauthenticated RCE in Joomla Content Editor (JCE) Profile Import (CVE-2026-48907)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-01_cve-2026-48907-joomla-jce-unauth-rce/</link><pubDate>Wed, 01 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-01_cve-2026-48907-joomla-jce-unauth-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Joomla on PoC Archive</title><link>https://poc.intelseclab.com/tags/joomla/</link><description>Recent content in Joomla on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/joomla/index.xml" rel="self" type="application/rss+xml"/><item><title>JoomCCK Unauthenticated SQL Injection via `tags.save` (CVE-2026-49048)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-49048-joomcck-sqli/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-49048-joomcck-sqli/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Kamil Soltanov (KARA-git)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-49048 (Advisory ID JOOMCCK-2026-001)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>8.7 (CVSS 3.1: AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>joomla, joomcck, com_joomcck, sql-injection, cwe-89, missing-authorization, cwe-862, unauthenticated, blind-sqli, union-based&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>JoomCCK (&lt;code>com_joomcck&lt;/code>) — Content Construction Kit extension for Joomla, by JoomCoder&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>6.4.0 (latest at time of discovery; earlier 6.x presumed affected); no fixed version at time of writing&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP / Joomla CMS 4/5/6&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>JoomCCK&amp;rsquo;s custom MVC dispatcher (&lt;code>MControllerBase::execute()&lt;/code>) invokes controller tasks without any CSRF token check or ACL/authorization check — its &lt;code>authorise()&lt;/code> method is a no-op that always returns &lt;code>true&lt;/code>. This makes the &lt;code>tags.save&lt;/code> task, whose model method &lt;code>_saveTag()&lt;/code> concatenates the user-supplied &lt;code>tag&lt;/code> parameter directly into raw SQL (both a &lt;code>SELECT&lt;/code> and an &lt;code>UPDATE&lt;/code> statement) without escaping, reachable by a completely unauthenticated remote attacker. Joomla&amp;rsquo;s &lt;code>STRING&lt;/code> input filter strips HTML but does not strip double quotes, which are the string delimiter used in the vulnerable query, allowing straightforward quote-breakout SQL injection (both UNION-based and time-based blind). The repository includes a PHP PoC (&lt;code>poc/poc.php&lt;/code>) that loads the genuine Joomla &lt;code>Input&lt;/code>/filter framework classes and runs the exact &lt;code>_saveTag()&lt;/code> query against a live MariaDB instance to demonstrate quote breakout, UNION exfiltration of user password hashes, and time-based blind injection, along with a captured evidence transcript and a disclosure timeline showing the finding was reported to and acknowledged by the Joomla Security Strike Team.&lt;/p></description></item><item><title>Joomla Novarain Framework (nrframework) Unauthenticated Arbitrary File Inclusion — CVE-2026-21627</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-21627-joomla-nrframework-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-21627-joomla-nrframework-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-02&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Yallasec — Arcangelo Saracino (@arkango)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-21627&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.5 (Critical)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>joomla, nrframework, file-inclusion, unauthenticated, arbitrary-file-upload, arbitrary-file-delete, php, cms&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>&lt;code>plg_system_nrframework&lt;/code> (Tassos/Novarain Framework) Joomla plugin, bundled with Convert Forms, Engage Box, Google Structured Data, and other Tassos.gr extensions&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>4.10.14 through 6.0.37 (fixed in 6.0.38)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3.7+ PoC against Joomla 3.x/4.x/5.x (PHP backend)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The &lt;code>ajaxTaskInclude()&lt;/code> method of the nrframework Joomla plugin is explicitly whitelisted for unauthenticated frontend AJAX access and accepts attacker-controlled &lt;code>path&lt;/code>, &lt;code>file&lt;/code>, and &lt;code>class&lt;/code> parameters. The &lt;code>path&lt;/code> parameter uses Joomla&amp;rsquo;s &lt;code>RAW&lt;/code> input filter (no sanitization), and the concatenated path is passed directly into &lt;code>@include_once&lt;/code>, giving an unauthenticated attacker arbitrary PHP file inclusion, after which the specified class is instantiated and its &lt;code>onAJAX()&lt;/code> method invoked. By including the bundled &lt;code>JFormFieldNRInlineFileUpload&lt;/code> gadget class, an attacker can reach its &lt;code>onUpload()&lt;/code> and &lt;code>onRemove()&lt;/code> methods to achieve arbitrary file upload and arbitrary file delete respectively, with an upload-response path disclosure as a bonus. The included Python tool implements five modes (&lt;code>verify&lt;/code>, &lt;code>upload&lt;/code>, &lt;code>delete&lt;/code>, &lt;code>rce&lt;/code>, &lt;code>info&lt;/code>) to demonstrate the full impact chain, including uploading a web shell and attempting command execution end to end.&lt;/p></description></item><item><title>Joomla Page Builder CK Unauthenticated Arbitrary File Upload RCE — CVE-2026-56290</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-56290-joomla-pagebuilderck-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-56290-joomla-pagebuilderck-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>shinthink — &lt;a href="https://github.com/shinthink">github.com/shinthink&lt;/a>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-56290&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per source repository, for the unauthenticated file upload vector)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>joomla, page-builder-ck, com_pagebuilderck, file-upload, unauth-rce, csrf, cms&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Page Builder CK (&lt;code>com_pagebuilderck&lt;/code>) — Joomla extension&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>3.1.1 and below (confirmed); per source repository extended range up to 3.5.10 and below is treated as potentially vulnerable; versions above 3.5.10 possibly patched&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP (target extension); PoC client in Python 3.8+&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No — the &lt;code>browse.ajaxAddPicture&lt;/code> controller performs no authentication check; only a publicly-obtainable CSRF token is required&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The Joomla extension Page Builder CK exposes a controller method, &lt;code>browse.ajaxAddPicture&lt;/code>, that accepts file uploads with a user-controlled destination path parameter (&lt;code>path&lt;/code>) that is only passed through &lt;code>trim()&lt;/code> — no whitelist, extension check, or directory-traversal validation, and no authentication gate. Combined with the fact that Joomla&amp;rsquo;s CSRF token is present and readable on every page (including the public homepage), an unauthenticated attacker can harvest a valid token and upload a PHP web shell into a web-accessible extension directory, achieving remote code execution. The PoC is a mass-exploitation/validation framework that performs reconnaissance, CSRF harvesting, endpoint/extension-bypass brute-forcing, shell deployment with token-based validation, and automatic cleanup.&lt;/p></description></item><item><title>SP LMS PHP Object Injection → Unauthenticated RCE (CVE-2026-48909)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-48909-sp-lms-joomla-phpobjectinjection-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-48909-sp-lms-joomla-phpobjectinjection-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Amin İsayev / Proxima Cyber Security (Is4yev)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-48909 (GHSA-gf8c-xmwj-whrh)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.5 (CVSS 4.0: AV:N/AC:L/AT:P/PR:N/UI:N)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>joomla, sp-lms, com_splms, php-object-injection, cwe-502, deserialization, unauthenticated-rce, gadget-chain&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>JoomShaper SP LMS (&lt;code>com_splms&lt;/code>) Joomla Learning Management System extension&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>1.0.0 - 4.1.3 (fixed in 4.1.4); RCE additionally requires Joomla core &amp;lt; 5.2.2&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP / Joomla CMS, PoC written in Python 3.10+&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>SP LMS&amp;rsquo;s cart model (&lt;code>components/com_splms/models/cart.php&lt;/code>) reads the &lt;code>lmsOrders&lt;/code> cookie, base64-decodes it, and passes the result directly to PHP&amp;rsquo;s &lt;code>unserialize()&lt;/code> with no validation, giving an unauthenticated attacker full control over the deserialized object graph. On Joomla versions before 5.2.2, this chains into Joomla&amp;rsquo;s &lt;code>FormattedtextLogger&lt;/code> gadget: the object&amp;rsquo;s &lt;code>__destruct()&lt;/code> writes attacker-controlled bytes to an attacker-chosen file path via &lt;code>File::write()&lt;/code>, allowing a PHP webshell to be dropped on disk. The repo ships a detection-only script (&lt;code>CVE-2026-48909.py&lt;/code>) that fingerprints the vulnerable &lt;code>unserialize()&lt;/code> behavior via response-status/timing differentials, and a full exploit script (&lt;code>CVE-2026-48909_exploit.py&lt;/code>) that builds a filter-safe serialized payload and writes a webshell to a specified server path.&lt;/p></description></item><item><title>Unauthenticated RCE in Joomla Content Editor (JCE) Profile Import (CVE-2026-48907)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-01_cve-2026-48907-joomla-jce-unauth-rce/</link><pubDate>Wed, 01 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-01_cve-2026-48907-joomla-jce-unauth-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

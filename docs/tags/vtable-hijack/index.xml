@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Vtable-Hijack on PoC Archive</title><link>https://poc.intelseclab.com/tags/vtable-hijack/</link><description>Recent content in Vtable-Hijack on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/vtable-hijack/index.xml" rel="self" type="application/rss+xml"/><item><title>gdk-pixbuf JPEG Loader Heap Buffer Overflow — CVE-2026-5201</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-5201-gdk-pixbuf-jpeg-heap-overflow/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-5201-gdk-pixbuf-jpeg-heap-overflow/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Kağan Çapar (GitHub: kagancapar) — acknowledged by Red Hat&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-5201&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Important&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>7.5 (AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H, as stated in source repository / Red Hat advisory)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>gdk-pixbuf, jpeg, libjpeg, heap-overflow, gnome, gtk, linux-desktop, cwe-122, vtable-hijack&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2017-2862 (same bug class, prior gdk-pixbuf JPEG &lt;code>null_convert&lt;/code> overflow)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>gdk-pixbuf (GNOME image loading library), JPEG loader (&lt;code>io-jpeg.c&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>All gdk-pixbuf versions prior to commit &lt;code>6cce9311e70b969cbcc6e3e1e74ae1756ed02d5b&lt;/code> (fixed in 2.44.6); confirmed vulnerable on gdk-pixbuf 2.42.10 (Ubuntu 24.04 LTS) and 2.44.5&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python (JPEG reproducer generator), C (crash/exploitation PoCs, ASan); target is native C (gdk-pixbuf/libjpeg) on Linux&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No (local file processing); Red Hat&amp;rsquo;s CVSS vector marks AV:N/UI:N reflecting automated/server-side image processing scenarios&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>gdk-pixbuf&amp;rsquo;s direct JPEG loading path (&lt;code>gdk_pixbuf__jpeg_image_load&lt;/code> / &lt;code>gdk_pixbuf__real_jpeg_image_load&lt;/code> in &lt;code>io-jpeg.c&lt;/code>) allocates the output pixel buffer based on the expected number of color components (3 for RGB, 4 for CMYK) without validating that libjpeg&amp;rsquo;s actual &lt;code>output_components&lt;/code> value matches. A crafted 122-byte JPEG that declares 9 components in its SOF10 header but only scans 3 in the SOS marker causes libjpeg to decode 9 bytes per pixel into a buffer sized for 3, an approximately 49KB heap overflow for the PoC&amp;rsquo;s dimensions. This repository includes a Python reproducer that generates the malicious JPEG, C crash-test/AddressSanitizer harnesses that demonstrate the overflow and resulting corruption of adjacent GObject vtable pointers, and detailed bilingual (English/Turkish) writeups covering root cause, exploitation primitives (including a demonstrated 32-bit RCE via &lt;code>dispose()&lt;/code> function-pointer hijack and an ASLR-bypass technique), and the official upstream fix.&lt;/p></description></item><item><title>Linux BPF Verifier Scalar-Forking Soundness Bug to Container Escape — CVE-2026-31413</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-31413-bpf-verifier-container-escape/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-31413-bpf-verifier-container-escape/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Rat5ak&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-31413&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>linux-kernel, ebpf, bpf-verifier, container-escape, modprobe-path, gke, lpe, vtable-hijack&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Linux kernel — BPF verifier (&lt;code>maybe_fork_scalars()&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>6.12.75+ (stable backport &lt;code>dea9989a3f&lt;/code>) through 7.0-rc4; introduced by &lt;code>bffacdb80b93&lt;/code> (Linux 7.0-rc1), fixed by &lt;code>c845894ebd6f&lt;/code> (Linux 7.0-rc5)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C, Linux kernel (eBPF), container runtimes (tested against GKE nodes)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Local-only (requires &lt;code>CAP_BPF&lt;/code> + &lt;code>CAP_PERFMON&lt;/code> + &lt;code>CAP_NET_ADMIN&lt;/code>, e.g. inside an unprivileged-but-capable container)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The Linux BPF verifier&amp;rsquo;s &lt;code>maybe_fork_scalars()&lt;/code> forks verifier state when it sees an &lt;code>ARSH&lt;/code> followed by &lt;code>AND&lt;/code>/&lt;code>OR&lt;/code> with a constant. The forked (&amp;ldquo;pushed&amp;rdquo;) path is generated via &lt;code>push_stack(env, env-&amp;gt;insn_idx + 1, ...)&lt;/code>, which skips the ALU instruction on that path and assumes the destination register is &lt;code>0&lt;/code>. This assumption is correct for &lt;code>AND&lt;/code> (&lt;code>0 &amp;amp; K == 0&lt;/code>) but wrong for &lt;code>OR&lt;/code> (&lt;code>0 | K == K&lt;/code>) — so the verifier believes a register holds &lt;code>0&lt;/code> while the CPU actually computes &lt;code>K&lt;/code>. This register-value divergence lets a BPF program with &lt;code>CAP_BPF&lt;/code>/&lt;code>CAP_PERFMON&lt;/code>/&lt;code>CAP_NET_ADMIN&lt;/code> pass verifier bounds checks it should not pass, yielding an out-of-bounds read/write primitive against a BPF map. The included exploit chain leaks the map&amp;rsquo;s kernel address, forges a fake &lt;code>bpf_map_ops&lt;/code> vtable, redirects a map operation to achieve arbitrary write, and overwrites &lt;code>modprobe_path&lt;/code> to execute an attacker script as root when the kernel handles an unknown binary format — achieving full container-to-host escape.&lt;/p></description></item></channel></rss>

@@ -1,4 +1,344 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Prototype-Pollution on PoC Archive</title><link>https://poc.intelseclab.com/tags/prototype-pollution/</link><description>Recent content in Prototype-Pollution on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sat, 16 May 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/prototype-pollution/index.xml" rel="self" type="application/rss+xml"/><item><title>React2Shell - Next.js RSC Unauthenticated RCE</title><link>https://poc.intelseclab.com/pocs/web/2026-05-17_react2shell-rce/</link><pubDate>Sun, 17 May 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-05-17_react2shell-rce/</guid><description>&lt;!-- 
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Prototype-Pollution on PoC Archive</title><link>https://poc.intelseclab.com/tags/prototype-pollution/</link><description>Recent content in Prototype-Pollution on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/prototype-pollution/index.xml" rel="self" type="application/rss+xml"/><item><title>Adobe Acrobat/Reader PDF Exploit Generator — Claimed Prototype Pollution (CVE-2026-3462)</title><link>https://poc.intelseclab.com/pocs/misc/2026-07-05_cve-2026-3462-acrobat-pdf-exploit-generator/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/misc/2026-07-05_cve-2026-3462-acrobat-pdf-exploit-generator/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>NULL200OK (NABEEL)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-3462 (repo internally references CVE-2026-34621 — CVE-ID mismatch, see Notes)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>misc&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>pdf, exploit-generator, prototype-pollution, sandbox-escape, evasion, persistence, malware-generator, farmed-repo-suspected&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Adobe Acrobat / Acrobat Reader (DC Continuous and 2024 Classic tracks)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Acrobat/Reader DC &amp;lt;= 26.001.21367; Acrobat 2024 &amp;lt;= 24.001.30356 (per repo&amp;rsquo;s own claims, unverified against the actual CVE-2026-3462 record)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 generator producing a malicious PDF targeting Windows/macOS&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (requires victim to open the generated PDF)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No (local file execution; optional staged-payload download requires network)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>This repository is titled and described as a PoC for &amp;ldquo;Acrobat Reader Improperly Controlled Modification of Object Prototype Attributes (Prototype Pollution)&amp;rdquo; under CVE-2026-3462, but the actual shipped code (&lt;code>poc.py&lt;/code> / &lt;code>cve_2026_34621_advanced.py&lt;/code>, both identical) is a generic, banner-branded &amp;ldquo;Advanced Cross-Platform Exploit Generator&amp;rdquo; for a different, self-assigned identifier (CVE-2026-34621). Rather than a narrow, scoped reproduction of a specific parser bug, the script is a full malicious-PDF builder: it auto-detects the victim OS, embeds OS-specific command execution (cmd.exe/PowerShell/WScript.Shell on Windows, Terminal.app/osascript on macOS), supports staged second-stage payload downloads, installs persistence (registry Run key / LaunchAgent), offers three levels of JavaScript obfuscation, supports lure-PDF merging to disguise the payload as a legitimate document, and generates HTML/TXT/JSON &amp;ldquo;campaign&amp;rdquo; reports. This is weaponized offensive tooling rather than a minimal vulnerability-scoped PoC, and the CVE-ID mismatch between the repo&amp;rsquo;s title (3462) and its own code/README (34621) suggests a templated or farmed exploit repo rather than an original disclosure.&lt;/p></description></item><item><title>Ghost CMS Theme JSONPath Remote Code Execution — CVE-2026-29053</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-29053-ghost-cms-jsonpath-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-29053-ghost-cms-jsonpath-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-04&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>AC8999&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-29053 (GHSA-cgc2-rcrh-qr5x)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>ghost-cms, rce, jsonpath, static-eval, handlebars, theme-upload, prototype-pollution, nodejs&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Ghost CMS&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 6.19.0 (fixed in 6.19.1)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Node.js server-side (Handlebars templates), Python build tooling&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (Ghost Admin access required to upload a theme)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Ghost CMS uses the &lt;code>jsonpath&lt;/code> package, which internally relies on &lt;code>static-eval&lt;/code> to interpret JSONPath filter expressions embedded in Handlebars theme templates. &lt;code>static-eval&lt;/code> is explicitly documented upstream as unsafe for untrusted input, yet Ghost passes attacker-influenced theme template content straight into it. A malicious theme can embed a crafted &lt;code>{{#get}}&lt;/code> helper filter expression that walks the JavaScript prototype chain (via &lt;code>__proto__&lt;/code> bracket-notation tricks) to reach the &lt;code>Function&lt;/code> constructor and execute arbitrary Node.js code in the context of the Ghost server process. The PoC builds a full working Ghost theme package containing the malicious template and a helper script to generate a ready-to-upload theme zip pointed at an attacker-controlled callback address.&lt;/p></description></item><item><title>Multiparty Denial of Service via Prototype-Pollution Field Name (CVE-2026-8161)</title><link>https://poc.intelseclab.com/pocs/misc/2026-07-05_cve-2026-8161-multiparty-prototype-pollution-dos/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/misc/2026-07-05_cve-2026-8161-multiparty-prototype-pollution-dos/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Reported to pillarjs/multiparty maintainers (coordinated disclosure)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-8161 / GHSA-qxch-whhj-8956&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>misc&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Medium&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>multiparty, nodejs, prototype-pollution, denial-of-service, cwe-1321, uncaught-exception, multipart-parser&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>multiparty (npm package, multipart/form-data parser)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>multiparty &amp;lt;= 4.2.3 (fixed in 4.3.0)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Node.js&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (any HTTP service accepting multipart uploads via a vulnerable multiparty version)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>&lt;code>multiparty@4.2.3&lt;/code> and earlier store parsed multipart field names and files in plain JavaScript objects and rely on ordinary property lookup (&lt;code>fields[name]&lt;/code>, &lt;code>files[name]&lt;/code>) to detect whether a field has been seen before. Because plain-object lookups traverse the prototype chain, a multipart field literally named &lt;code>__proto__&lt;/code> resolves to the inherited &lt;code>Object.prototype&lt;/code> value instead of &lt;code>undefined&lt;/code>. Since that inherited value is truthy, the parser&amp;rsquo;s fallback array-initialization is skipped, and a later &lt;code>.push()&lt;/code> call on the non-array value throws an uncaught &lt;code>TypeError&lt;/code> inside multiparty&amp;rsquo;s async parsing flow — crashing the Node.js process handling the upload.&lt;/p></description></item><item><title>n8n HTTP Request Node Pagination Prototype Pollution → Remote Code Execution (CVE-2026-44789)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-44789-n8n-prototype-pollution-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-44789-n8n-prototype-pollution-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Caio Fabrício (BiiTts)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-44789 / GHSA-c8xv-5998-g76h&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.4 (CVSS 4.0)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>n8n, prototype-pollution, rce, node-options, sandbox-escape, task-runner, workflow-automation&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>n8n (workflow automation platform)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&lt;code>&amp;lt; 1.123.43&lt;/code>, &lt;code>2.0.0-rc.0 … &amp;lt; 2.20.7&lt;/code>, &lt;code>2.21.0 … &amp;lt; 2.22.1&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Node.js / TypeScript (target), Python 3 (PoC)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (workflow create/modify permission)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The n8n HTTP Request node&amp;rsquo;s pagination feature (&lt;code>updateAParameterInEachRequest&lt;/code> mode) allows an attacker-controlled &lt;code>parameter.type&lt;/code> value of &lt;code>__proto__&lt;/code>, causing &lt;code>paginationData.request[parameter.type][parameterName] = parameterValue&lt;/code> to write directly onto &lt;code>Object.prototype&lt;/code> — a global prototype pollution in the n8n server process. This repository documents and automates a concrete, verified escalation from that pollution primitive to full remote code execution: polluting &lt;code>Object.prototype.NODE_OPTIONS&lt;/code> leaks into the environment of the child &lt;code>node&lt;/code> process n8n spawns for its task runner (via Node&amp;rsquo;s &lt;code>for...in&lt;/code>-based environment enumeration in &lt;code>normalizeSpawnArguments&lt;/code>), letting the attacker &lt;code>--require&lt;/code> an arbitrary local JS file at runner startup and escape the Code-node sandbox entirely.&lt;/p></description></item><item><title>React2Shell - Next.js RSC Unauthenticated RCE</title><link>https://poc.intelseclab.com/pocs/web/2026-05-17_react2shell-rce/</link><pubDate>Sun, 17 May 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-05-17_react2shell-rce/</guid><description>&lt;!-- 
  File: 2026-05-17_react2shell-rce.md
  Location: pocs/web/
 -->

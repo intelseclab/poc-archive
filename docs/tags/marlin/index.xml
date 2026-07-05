@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Marlin on PoC Archive</title><link>https://poc.intelseclab.com/tags/marlin/</link><description>Recent content in Marlin on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/marlin/index.xml" rel="self" type="application/rss+xml"/><item><title>Marlin Firmware M421 G-code Handler Out-of-Bounds Write — CVE-2026-56111</title><link>https://poc.intelseclab.com/pocs/hardware/2026-07-05_cve-2026-56111-marlin-m421-oob-write/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/hardware/2026-07-05_cve-2026-56111-marlin-m421-oob-write/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>Unknown&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Christ Bouchuen (github.com/Christbowel)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-56111&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>hardware&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>8.3&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>marlin, 3d-printer, firmware, g-code, out-of-bounds-write, mesh-bed-leveling, denial-of-service, embedded&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Marlin Firmware (3D printer firmware), builds compiled with &lt;code>MESH_BED_LEVELING&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 2.1.2.7 (fixed in commit &lt;code>1f255d1&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Embedded C/C++ firmware (AVR/ARM microcontrollers); PoC written in C&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (G-code interfaces on serial/telnet typically have no authentication)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No — reachable via USB serial connection or, for network-exposed printers, TCP/telnet G-code interface&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Marlin&amp;rsquo;s &lt;code>M421&lt;/code> G-code handler, used to set Mesh Bed Leveling (MBL) grid points, validates only that the supplied &lt;code>I&lt;/code>/&lt;code>J&lt;/code> grid indices are non-negative and never checks the upper bound against the actual mesh grid size. The underlying &lt;code>set_z()&lt;/code> function then writes the supplied Z float value directly to &lt;code>z_values[ix][iy]&lt;/code> with no bounds check, allowing an out-of-range index to write a controlled 32-bit float value to memory beyond the &lt;code>z_values&lt;/code> array — into adjacent firmware state such as &lt;code>z_offset&lt;/code> or the G-code parser object. The included PoC sends raw &lt;code>M421&lt;/code> commands over serial or TCP to demonstrate both a targeted, constrained write (e.g. corrupting the bed Z offset) and a reliable denial-of-service crash via a NaN value.&lt;/p></description></item></channel></rss>
