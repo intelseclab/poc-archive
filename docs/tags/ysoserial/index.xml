@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Ysoserial on PoC Archive</title><link>https://poc.intelseclab.com/tags/ysoserial/</link><description>Recent content in Ysoserial on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/ysoserial/index.xml" rel="self" type="application/rss+xml"/><item><title>Apache Camel `camel-consul` ConsulRegistry Deserialization RCE (CVE-2026-27172)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2026-27172-camel-consul-registry-deserialization/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2026-27172-camel-consul-registry-deserialization/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>oscerd (Andrea Cosentino)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-27172&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per Apache Camel security advisory)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Patched&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>apache-camel, camel-consul, consulregistry, java-deserialization, rce, cwe-502, gadget-chain, ysoserial, spring-boot&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2024-22369, CVE-2024-23114, CVE-2026-25747&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Apache Camel &lt;code>camel-consul&lt;/code> component (&lt;code>org.apache.camel.component.consul.ConsulRegistry&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>From 3.0.0 before 4.14.6, and from 4.15.0 before 4.18.1&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Java 17+, Spring Boot, Apache Camel, HashiCorp Consul (KV store)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (requires write access to the backing Consul KV store)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Apache Camel&amp;rsquo;s &lt;code>camel-consul&lt;/code> component uses a Consul key/value store as a Camel bean registry (&lt;code>ConsulRegistry&lt;/code>). When a bean is looked up by name, &lt;code>ConsulRegistryUtils.deserialize()&lt;/code> Base64-decodes the stored KV value and deserializes it with a raw &lt;code>ObjectInputStream&lt;/code> and, in affected versions, &lt;strong>no &lt;code>ObjectInputFilter&lt;/code>&lt;/strong>. Any principal able to write to the Consul KV path used by the registry can plant a Java gadget-chain payload (e.g. via &lt;code>commons-collections&lt;/code>) that executes arbitrary code the next time Camel resolves that bean — through &lt;code>lookupByName()&lt;/code>, &lt;code>lookupByNameAndType()&lt;/code>, &lt;code>findByTypeWithName()&lt;/code>, or &lt;code>findByType()&lt;/code>. This is the same root-cause class of bug as CVE-2024-22369 (Cassandra-backed registry) and CVE-2024-23114 / CVE-2026-25747 (LevelDB-backed registry), which were overlooked when &lt;code>camel-consul&lt;/code> was audited during those earlier fixes.&lt;/p></description></item></channel></rss>

@@ -1,4 +1,259 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Rce on PoC Archive</title><link>https://poc.intelseclab.com/tags/rce/</link><description>Recent content in Rce on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/rce/index.xml" rel="self" type="application/rss+xml"/><item><title>AdonisJS bodyparser Path Traversal to Arbitrary File Write (CVE-2026-21440)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-21440-adonisjs-bodyparser-path-traversal/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-21440-adonisjs-bodyparser-path-traversal/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Rce on PoC Archive</title><link>https://poc.intelseclab.com/tags/rce/</link><description>Recent content in Rce on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/rce/index.xml" rel="self" type="application/rss+xml"/><item><title>Apache Camel `camel-consul` ConsulRegistry Deserialization RCE (CVE-2026-27172)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2026-27172-camel-consul-registry-deserialization/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2026-27172-camel-consul-registry-deserialization/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>oscerd (Andrea Cosentino)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-27172&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per Apache Camel security advisory)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Patched&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>apache-camel, camel-consul, consulregistry, java-deserialization, rce, cwe-502, gadget-chain, ysoserial, spring-boot&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2024-22369, CVE-2024-23114, CVE-2026-25747&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Apache Camel &lt;code>camel-consul&lt;/code> component (&lt;code>org.apache.camel.component.consul.ConsulRegistry&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>From 3.0.0 before 4.14.6, and from 4.15.0 before 4.18.1&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Java 17+, Spring Boot, Apache Camel, HashiCorp Consul (KV store)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (requires write access to the backing Consul KV store)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Apache Camel&amp;rsquo;s &lt;code>camel-consul&lt;/code> component uses a Consul key/value store as a Camel bean registry (&lt;code>ConsulRegistry&lt;/code>). When a bean is looked up by name, &lt;code>ConsulRegistryUtils.deserialize()&lt;/code> Base64-decodes the stored KV value and deserializes it with a raw &lt;code>ObjectInputStream&lt;/code> and, in affected versions, &lt;strong>no &lt;code>ObjectInputFilter&lt;/code>&lt;/strong>. Any principal able to write to the Consul KV path used by the registry can plant a Java gadget-chain payload (e.g. via &lt;code>commons-collections&lt;/code>) that executes arbitrary code the next time Camel resolves that bean — through &lt;code>lookupByName()&lt;/code>, &lt;code>lookupByNameAndType()&lt;/code>, &lt;code>findByTypeWithName()&lt;/code>, or &lt;code>findByType()&lt;/code>. This is the same root-cause class of bug as CVE-2024-22369 (Cassandra-backed registry) and CVE-2024-23114 / CVE-2026-25747 (LevelDB-backed registry), which were overlooked when &lt;code>camel-consul&lt;/code> was audited during those earlier fixes.&lt;/p></description></item><item><title>camel-coap Header Injection → RCE Self-Contained Reproducer (CVE-2026-33453)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2026-33453-camel-coap-header-injection-reproducer/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2026-33453-camel-coap-header-injection-reproducer/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>oscerd (Andrea Cosentino)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-33453&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per Apache Camel security advisory)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Patched&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>apache-camel, camel-coap, coap, header-injection, rce, cwe-915, camel-exec, unauthenticated, udp, spring-boot&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Apache Camel &lt;code>camel-coap&lt;/code> component (&lt;code>org.apache.camel.coap.CamelCoapResource&lt;/code>), routes forwarding to &lt;code>camel-exec&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>From 4.14.0 before 4.14.6, and from 4.15.0 before 4.18.1&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Java 17+, Spring Boot, Apache Camel&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (single unauthenticated CoAP/UDP datagram to port 5683)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Apache Camel&amp;rsquo;s &lt;code>camel-coap&lt;/code> component copies CoAP request URI query parameters directly into Camel Exchange headers inside &lt;code>CamelCoapResource.handleRequest()&lt;/code>, without applying any &lt;code>HeaderFilterStrategy&lt;/code>. Because &lt;code>CoAPEndpoint&lt;/code> extends &lt;code>DefaultEndpoint&lt;/code> (not &lt;code>DefaultHeaderFilterStrategyEndpoint&lt;/code>) and &lt;code>CoAPComponent&lt;/code> does not implement &lt;code>HeaderFilterStrategyComponent&lt;/code>, internal &lt;code>Camel*&lt;/code>-prefixed control headers can be injected by any unauthenticated CoAP client simply by adding query parameters to the request URI. When the route forwards to a header-sensitive producer such as &lt;code>camel-exec&lt;/code>, an attacker-controlled &lt;code>CamelExecCommandExecutable&lt;/code>/&lt;code>CamelExecCommandArgs&lt;/code> header overrides the configured command, giving unauthenticated remote code execution from a single UDP datagram. This is a self-contained Spring Boot reproducer bundling both the vulnerable victim route (&lt;code>coap://.../run&lt;/code> → &lt;code>exec:echo&lt;/code>) and an attacker CoAP client, so no external target or Docker container is required to reproduce the bug.&lt;/p></description></item><item><title>Langflow Pre-Auth RCE Mass Scanner (CVE-2026-27966)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2026-27966-langflow-mass-scanner/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2026-27966-langflow-mass-scanner/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>shinthink&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-27966 (GHSA-3645-fxcv-hqr4)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per GitHub Security Advisory)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Patched&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>langflow, rce, pre-auth, route-injection, vertex-injection, csv-agent, prompt-injection, python, mass-scanner, ai-security&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-0770, CVE-2026-33017, CVE-2025-3248&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Langflow (langflow-ai)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt; 1.8.0&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python (Langflow server), Python 3.8+ (PoC scanner)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Langflow versions prior to 1.8.0 hardcode &lt;code>allow_dangerous_code=True&lt;/code> in the CSV Agent component, exposing LangChain&amp;rsquo;s &lt;code>python_repl_ast&lt;/code> tool to prompt injection. Independently, several Langflow REST API endpoints (&lt;code>custom_component&lt;/code>, &lt;code>build/{uuid}/vertices&lt;/code>, &lt;code>flows/basic_examples&lt;/code>) lack authentication entirely, allowing an unauthenticated attacker to register a backdoor route or inject a malicious flow vertex and have it executed server-side. This PoC is a standalone mass scanner/exploit tool implementing three independent exploitation chains (route injection with &lt;code>auto_login&lt;/code>, direct route injection without an API key, and no-auth build/vertex injection) to detect and exploit vulnerable instances at scale, reported to yield root code execution inside the Langflow Docker container.&lt;/p></description></item><item><title>AdonisJS bodyparser Path Traversal to Arbitrary File Write (CVE-2026-21440)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-21440-adonisjs-bodyparser-path-traversal/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-21440-adonisjs-bodyparser-path-traversal/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>
