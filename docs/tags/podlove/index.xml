@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Podlove on PoC Archive</title><link>https://poc.intelseclab.com/tags/podlove/</link><description>Recent content in Podlove on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/podlove/index.xml" rel="self" type="application/rss+xml"/><item><title>Podlove Podcast Publisher &lt;= 4.2.6 - Unauthenticated Arbitrary File Upload RCE (CVE-2025-10147)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-10147-podlove-podcast-publisher-file-upload-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-10147-podlove-podcast-publisher-file-upload-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>GHOSTPEL-SEC (PoC); Arkadiusz Hydzik (original discovery)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-10147&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, podlove, podcast-publisher, unauthenticated-file-upload, rce, cwe-434, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Podlove Podcast Publisher (WordPress plugin)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 4.2.6&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (exploit); PHP / WordPress (target)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The Podlove Podcast Publisher plugin for WordPress is vulnerable to arbitrary file upload due to missing file type validation in the &lt;code>move_as_original_file&lt;/code> function, present in all versions up to and including 4.2.6. The plugin&amp;rsquo;s image-caching route accepts an externally hosted URL as a parameter and fetches/caches it locally under &lt;code>wp-content/cache/podlove/&lt;/code> without verifying that the fetched content is actually an image, so a remote PHP file disguised behind an arbitrary URL/extension gets written to a web-accessible cache path. The included PoC (&lt;code>ghostpelsec.py&lt;/code>) hex-encodes an attacker-controlled &amp;ldquo;shell&amp;rdquo; URL, requests it through Podlove&amp;rsquo;s &lt;code>/podlove/image/&amp;lt;hex&amp;gt;/100/100/0/&amp;lt;filename&amp;gt;&lt;/code> endpoint to trigger the fetch-and-cache, then brute-forces the resulting MD5-hash-derived cache subdirectory/filename to locate and confirm the uploaded PHP shell, finally testing command execution via a &lt;code>?cmd=&lt;/code> parameter.&lt;/p></description></item></channel></rss>

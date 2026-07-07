@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Wpams on PoC Archive</title><link>https://poc.intelseclab.com/tags/wpams/</link><description>Recent content in Wpams on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/wpams/index.xml" rel="self" type="application/rss+xml"/><item><title>WordPress WPAMS Plugin Arbitrary File Upload to RCE (CVE-2025-39401)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-39401-wpams-arbitrary-file-upload-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-39401-wpams-arbitrary-file-upload-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Nxploited (Khaled Alenazi)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-39401&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, wpams, mojoomla, arbitrary-file-upload, webshell, rce, unauthenticated, python, multithreaded, cwe-434&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>WPAMS (WordPress Apartment/Property Management System) plugin by mojoomla&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>From n/a through 44.0 (17-08-2023)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3.7+ (&lt;code>requests&lt;/code>, &lt;code>rich&lt;/code>), targets WordPress/PHP sites&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No — the exploit posts to the public member-registration form with no login&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP/HTTPS to the target WordPress site)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The WPAMS WordPress plugin (&amp;lt;= 44.0) contains an Unrestricted Upload of File with Dangerous Type vulnerability (CWE-434): its public &amp;ldquo;apartment management member registration&amp;rdquo; form accepts an avatar/upload field (&lt;code>amgt_user_avatar&lt;/code>) without validating the file&amp;rsquo;s type or extension, allowing a &lt;code>.php&lt;/code> web shell to be stored under &lt;code>wp-content/uploads/apartment_assets/&lt;/code>. The root cause is that the plugin trusts the client-supplied filename/extension and does not enforce an image-only allow-list on this unauthenticated endpoint. Because the plugin renames the uploaded file using a predictable pattern (&lt;code>{unix_timestamp}-pimg-in.{ext}&lt;/code>), the PoC uploads a PHP web shell and then brute-forces a small window of timestamps around the upload time to locate and confirm the shell is live, across many targets concurrently via threading. Successful exploitation gives an unauthenticated attacker a web shell and full remote code execution on the underlying WordPress server.&lt;/p></description></item></channel></rss>

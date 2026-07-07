@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Forgot-Password on PoC Archive</title><link>https://poc.intelseclab.com/tags/forgot-password/</link><description>Recent content in Forgot-Password on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/forgot-password/index.xml" rel="self" type="application/rss+xml"/><item><title>FlowiseAI Account-Takeover via Forgot-Password Token Leak (CVE-2025-58434)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-58434-flowise-auth-bypass/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-58434-flowise-auth-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>00lucasm&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-58434&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>flowiseai, auth-bypass, account-takeover, forgot-password, reset-password, api, python, cwe-640&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>FlowiseAI (&lt;code>/api/v1/account/forgot-password&lt;/code> and &lt;code>/api/v1/account/reset-password&lt;/code> endpoints)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Per source repository — unpatched FlowiseAI deployments exposing the account API&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (&lt;code>requests&lt;/code>) targeting FlowiseAI&amp;rsquo;s Node.js/Express-based REST API&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP/HTTPS access to the FlowiseAI API)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-58434 is an authentication-bypass vulnerability in FlowiseAI&amp;rsquo;s password-reset flow: the &lt;code>forgot-password&lt;/code> endpoint returns the password-reset &lt;code>tempToken&lt;/code> directly in its JSON response body instead of only delivering it out-of-band (e.g., via email), and the &lt;code>reset-password&lt;/code> endpoint accepts that token to set a new password for any account with no further verification of ownership. An attacker who merely knows a victim&amp;rsquo;s email address can call &lt;code>forgot-password&lt;/code> to obtain the reset token straight from the API response, then immediately submit it to &lt;code>reset-password&lt;/code> to overwrite the victim&amp;rsquo;s password, fully hijacking the account without ever needing access to their inbox. The PoC is a small, self-contained Python script (&lt;code>exploit.py&lt;/code>) that chains these two calls end-to-end and prints the newly-set credentials.&lt;/p></description></item></channel></rss>

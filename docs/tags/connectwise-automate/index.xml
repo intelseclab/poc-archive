@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Connectwise-Automate on PoC Archive</title><link>https://poc.intelseclab.com/tags/connectwise-automate/</link><description>Recent content in Connectwise-Automate on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/connectwise-automate/index.xml" rel="self" type="application/rss+xml"/><item><title>ConnectWise Automate Adversary-in-the-Middle Remote Code Execution (CVE-2025-11492)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-11492-connectwise-automate-aitm-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-11492-connectwise-automate-aitm-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>synap5e&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-11492&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.6 (per NVD, CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>connectwise-automate, labtech, rmm, aitm, mitm, plugin-hijack, unencrypted-http, des3, privilege-escalation, python, csharp, dnspy, dotnet&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-11493&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>ConnectWise Automate (LabTech) RMM Agent&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Tested on version string &lt;code>250.252&lt;/code> (latest as of August 2025); fixed in &lt;code>2025.9&lt;/code> (released 2025-10-16)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python (fake C2 server / mitmproxy script), C# (.NET plugin DLL patched with dnSpy); target is the Windows ConnectWise Automate agent service&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (attacker needs network position, not credentials)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — requires an Adversary-in-the-Middle (AiTM) position on the network path between agent and server, or physical/local access to bridge the device onto an attacker-controlled network&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The ConnectWise Automate RMM agent can be configured with an &lt;code>http://&lt;/code> fallback &lt;code>Server Address&lt;/code> (observed as default/common configuration at multiple MSPs); an attacker with AiTM network position can force a fallback from HTTPS to HTTP, then serve a forged plugin-dependency manifest with a mismatched checksum to coerce the agent into downloading and loading a malicious .NET plugin DLL. The root cause is that Automate&amp;rsquo;s dependency-check/download protocol (&lt;code>Agent.aspx?DEPS&lt;/code> / &lt;code>DepCheck=1&lt;/code>) and its secondary &lt;code>cmdGetPlugins&lt;/code> validation are unauthenticated, unencrypted, and unsigned, so an attacker-controlled server can simply lie about expected checksums. The malicious plugin (built by patching the legitimate &lt;code>ScreenConnectRemotePlugin.dll&lt;/code> with dnSpy) uses .NET reflection to read the agent&amp;rsquo;s decrypted &lt;code>system&lt;/code>/&lt;code>computer&lt;/code> passwords from memory and exfiltrates them to the fake server, which then derives the correct DES3 key/IV to send arbitrary signed &amp;ldquo;Remote Commands&amp;rdquo; (e.g. &lt;code>Execute cmd.exe&lt;/code>) back over the standard RMM channel — achieving SYSTEM-level remote code execution and, by rewriting the registry &lt;code>Server Address&lt;/code>, stealthy long-term C2 persistence.&lt;/p></description></item></channel></rss>

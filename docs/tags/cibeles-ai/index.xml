@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Cibeles-Ai on PoC Archive</title><link>https://poc.intelseclab.com/tags/cibeles-ai/</link><description>Recent content in Cibeles-Ai on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/cibeles-ai/index.xml" rel="self" type="application/rss+xml"/><item><title>Cibeles AI `actualizador_git.php` Unauthenticated Arbitrary File Upload / RCE (CVE-2025-13595)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-13595-cibeles-ai-file-upload-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-13595-cibeles-ai-file-upload-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Ryan Kozak (d0n601)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-13595&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, cibeles-ai, unauthenticated-file-upload, github-mirror-abuse, webshell, python, cwe-434, cwe-306&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-13597&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Cibeles AI (WordPress plugin)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 1.10.8&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 exploit targeting a PHP/WordPress plugin&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The Cibeles AI plugin ships a debug/update helper, &lt;code>actualizador_git.php&lt;/code>, directly inside its plugin directory. The file is missing the standard WordPress &lt;code>ABSPATH&lt;/code> guard, so it is reachable over plain HTTP without any authentication, and it implements a &amp;ldquo;GitHub repository mirror&amp;rdquo; feature: it reads &lt;code>owner&lt;/code>, &lt;code>repo&lt;/code>, &lt;code>ref&lt;/code>, and &lt;code>token&lt;/code> straight from &lt;code>$_GET&lt;/code>, downloads the corresponding GitHub repo zipball via the GitHub API, extracts it, and recursively copies/overwrites every file in the plugin&amp;rsquo;s own directory to match the downloaded repo — deleting any local file not present in the attacker-supplied repo. An unauthenticated attacker who owns (or has push access to) any public/private GitHub repo can point this endpoint at their own repository containing a PHP webshell, and the plugin will dutifully install it inside &lt;code>wp-content/plugins/cibeles-ai/&lt;/code>.&lt;/p></description></item></channel></rss>

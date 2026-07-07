@@ -1,4 +1,1194 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Cwe-434 on PoC Archive</title><link>https://poc.intelseclab.com/tags/cwe-434/</link><description>Recent content in Cwe-434 on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/cwe-434/index.xml" rel="self" type="application/rss+xml"/><item><title>Bludit CMS API Unrestricted File Upload to RCE (CVE-2026-25099)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-25099-bludit-webshell-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-25099-bludit-webshell-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Cwe-434 on PoC Archive</title><link>https://poc.intelseclab.com/tags/cwe-434/</link><description>Recent content in Cwe-434 on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/cwe-434/index.xml" rel="self" type="application/rss+xml"/><item><title>Adobe Magento "SessionReaper" Unauthenticated File Upload / LFI (CVE-2025-54236)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-54236-magento-sessionreaper-lfi/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-54236-magento-sessionreaper-lfi/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Dx3iZ&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-54236&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.1 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>magento, adobe-commerce, sessionreaper, file-upload, lfi, customer-address, form-key, cwe-434, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Adobe Commerce / Magento Open Source — &lt;code>customer/address_file/upload&lt;/code> endpoint (dubbed &amp;ldquo;SessionReaper&amp;rdquo;)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Magento 2.4.9-alpha2, 2.4.8-p2, 2.4.7-p7, 2.4.6-p12, 2.4.5-p14, 2.4.4-p15, and earlier vulnerable releases (per repository README)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3.x (&lt;code>requests&lt;/code>, &lt;code>urllib3&lt;/code>) targeting a PHP/Magento e-commerce application&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Magento&amp;rsquo;s customer address form exposes a file-upload field (&lt;code>custom_attributes[country_id]&lt;/code>) at &lt;code>customer/address_file/upload&lt;/code> that is intended to accept a small file attachment (e.g. a document tied to a custom address attribute), guarded only by a per-request &lt;code>form_key&lt;/code> value that the client itself generates and submits — no authenticated session is actually required to reach the endpoint. The PoC script generates a random &lt;code>form_key&lt;/code>, uploads an arbitrary local file to this endpoint using multipart form data, and the server responds with the storage path of the uploaded file under Magento&amp;rsquo;s public &lt;code>media/customer_address/&lt;/code> directory. Because uploaded files are not adequately validated (there is no server-side extension/type allowlist tied to the request source) and land in a web-accessible media directory, an attacker can plant a file (e.g. a PHP web shell or other malicious payload) and directly retrieve/execute it from its published URL, achieving unauthenticated file upload that can escalate to remote code execution or information disclosure depending on the uploaded content and server configuration.&lt;/p></description></item><item><title>AI Feeds `actualizador_git.php` Unauthenticated Arbitrary File Upload / RCE (CVE-2025-13597)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-13597-ai-feeds-file-upload-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-13597-ai-feeds-file-upload-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Ryan Kozak (d0n601)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-13597&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, ai-feeds, unauthenticated-file-upload, github-mirror-abuse, webshell, python, cwe-434, cwe-306&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-13595&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>AI Feeds (WordPress plugin)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 1.0.11&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 exploit targeting a PHP/WordPress plugin&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>AI Feeds ships the same vulnerable &lt;code>actualizador_git.php&lt;/code> &amp;ldquo;GitHub mirror updater&amp;rdquo; helper found in the vendor&amp;rsquo;s other plugin, Cibeles AI (CVE-2025-13595) — it is directly reachable over HTTP (no &lt;code>ABSPATH&lt;/code> guard, no authentication) and blindly downloads and mirrors a GitHub repository into its own plugin directory based on attacker-controlled &lt;code>owner&lt;/code>/&lt;code>repo&lt;/code>/&lt;code>ref&lt;/code>/&lt;code>token&lt;/code> query parameters, deleting any local files not present in the attacker&amp;rsquo;s repo. An unauthenticated attacker can point the endpoint at their own GitHub repo containing a PHP webshell to have it planted and made instantly executable inside &lt;code>wp-content/plugins/ai-feeds/&lt;/code>.&lt;/p></description></item><item><title>Cibeles AI `actualizador_git.php` Unauthenticated Arbitrary File Upload / RCE (CVE-2025-13595)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-13595-cibeles-ai-file-upload-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-13595-cibeles-ai-file-upload-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Ryan Kozak (d0n601)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-13595&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, cibeles-ai, unauthenticated-file-upload, github-mirror-abuse, webshell, python, cwe-434, cwe-306&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-13597&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Cibeles AI (WordPress plugin)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 1.10.8&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 exploit targeting a PHP/WordPress plugin&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The Cibeles AI plugin ships a debug/update helper, &lt;code>actualizador_git.php&lt;/code>, directly inside its plugin directory. The file is missing the standard WordPress &lt;code>ABSPATH&lt;/code> guard, so it is reachable over plain HTTP without any authentication, and it implements a &amp;ldquo;GitHub repository mirror&amp;rdquo; feature: it reads &lt;code>owner&lt;/code>, &lt;code>repo&lt;/code>, &lt;code>ref&lt;/code>, and &lt;code>token&lt;/code> straight from &lt;code>$_GET&lt;/code>, downloads the corresponding GitHub repo zipball via the GitHub API, extracts it, and recursively copies/overwrites every file in the plugin&amp;rsquo;s own directory to match the downloaded repo — deleting any local file not present in the attacker-supplied repo. An unauthenticated attacker who owns (or has push access to) any public/private GitHub repo can point this endpoint at their own repository containing a PHP webshell, and the plugin will dutifully install it inside &lt;code>wp-content/plugins/cibeles-ai/&lt;/code>.&lt;/p></description></item><item><title>Flozen WordPress Theme Unauthenticated Arbitrary File Upload (CVE-2025-49071)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-49071-flozen-theme-arbitrary-file-upload/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-49071-flozen-theme-arbitrary-file-upload/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>xShadow-Here (Friska); original vulnerability discovered by Phat RiO - BlueRock (Wordfence)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-49071&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD/Wordfence)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, flozen-theme, arbitrary-file-upload, unauthenticated, webshell, zip-upload, rce, cwe-434, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Flozen Theme for WordPress&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt; 1.5.1&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 PoC targeting a PHP/WordPress site&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP to target WordPress site)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The Flozen Theme for WordPress (versions up to and including 1.5.1) registers a &lt;code>wp_handle_upload&lt;/code>-routed AJAX action (backed by the theme&amp;rsquo;s &lt;code>flozen_add_new_custom_font()&lt;/code> function) that accepts a ZIP file upload without checking authentication or validating its contents. The theme automatically extracts the uploaded ZIP into &lt;code>wp-content/uploads/nasa-custom-fonts/&lt;/code>, so an attacker can package a PHP web shell inside a ZIP disguised as a &amp;ldquo;custom font&amp;rdquo; package. Because &lt;code>.htaccess&lt;/code> in the payload allows PHP execution and the extracted files land in a public, web-accessible directory, this results in full unauthenticated remote code execution.&lt;/p></description></item><item><title>Monsta FTP Pre-Authentication Remote Code Execution via Arbitrary File Upload (CVE-2025-34299)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-34299-monsta-ftp-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-34299-monsta-ftp-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>KrE80r&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-34299&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>monsta-ftp, rce, pre-auth, unrestricted-file-upload, cwe-434, php, ftp, docker, nuclei, kev&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Monsta FTP (web-based FTP manager)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 2.11.2 (lab uses 2.10.4; patched in 2.11.3)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP web application; lab built with Docker/Docker Compose (php:7.4-apache base image)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (pre-authentication)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Monsta FTP versions up to and including 2.11.2 contain a pre-authentication, unrestricted arbitrary file upload vulnerability (CWE-434) in the &lt;code>downloadFile&lt;/code> action of its &lt;code>/mftp/application/api/api.php&lt;/code> endpoint. The endpoint accepts a user-supplied FTP connection configuration and a remote/local path pair without requiring the caller to be authenticated and without adequately restricting where the &amp;ldquo;downloaded&amp;rdquo; file is written on the local filesystem. An attacker can point Monsta FTP at an FTP server they control, direct it to fetch a malicious file (e.g. a PHP webshell), and specify a &lt;code>localPath&lt;/code> inside the web root, resulting in remote code execution with the privileges of the web server. This repository is a Docker-based lab (not a raw exploit script) that stands up a real, vulnerable Monsta FTP 2.10.4 instance for hands-on reproduction, plus a manual &lt;code>curl&lt;/code> PoC that reaches the vulnerable code path and a reference to a nuclei detection template.&lt;/p></description></item><item><title>Podlove Podcast Publisher &lt;= 4.2.6 - Unauthenticated Arbitrary File Upload RCE (CVE-2025-10147)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-10147-podlove-podcast-publisher-file-upload-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-10147-podlove-podcast-publisher-file-upload-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>GHOSTPEL-SEC (PoC); Arkadiusz Hydzik (original discovery)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-10147&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, podlove, podcast-publisher, unauthenticated-file-upload, rce, cwe-434, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Podlove Podcast Publisher (WordPress plugin)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 4.2.6&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (exploit); PHP / WordPress (target)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The Podlove Podcast Publisher plugin for WordPress is vulnerable to arbitrary file upload due to missing file type validation in the &lt;code>move_as_original_file&lt;/code> function, present in all versions up to and including 4.2.6. The plugin&amp;rsquo;s image-caching route accepts an externally hosted URL as a parameter and fetches/caches it locally under &lt;code>wp-content/cache/podlove/&lt;/code> without verifying that the fetched content is actually an image, so a remote PHP file disguised behind an arbitrary URL/extension gets written to a web-accessible cache path. The included PoC (&lt;code>ghostpelsec.py&lt;/code>) hex-encodes an attacker-controlled &amp;ldquo;shell&amp;rdquo; URL, requests it through Podlove&amp;rsquo;s &lt;code>/podlove/image/&amp;lt;hex&amp;gt;/100/100/0/&amp;lt;filename&amp;gt;&lt;/code> endpoint to trigger the fetch-and-cache, then brute-forces the resulting MD5-hash-derived cache subdirectory/filename to locate and confirm the uploaded PHP shell, finally testing command execution via a &lt;code>?cmd=&lt;/code> parameter.&lt;/p></description></item><item><title>Samsung MagicINFO 9 Server Unauthenticated Path Traversal to RCE (CVE-2025-4632)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-4632-magicinfo-path-traversal-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-4632-magicinfo-path-traversal-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>digitalsurgn (script author); original discovery/template by s4e-io (ProjectDiscovery Nuclei community)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-4632&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>samsung, magicinfo, path-traversal, arbitrary-file-upload, unauthenticated-rce, jsp-webshell, cwe-22, cwe-434, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Samsung MagicINFO 9 Server (digital signage content management server), &lt;code>SWUpdateFileUploader&lt;/code> servlet&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Prior to 21.1052&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (exploit); Java/JSP servlet (target, runs with SYSTEM authority on Windows)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Samsung MagicINFO 9 Server&amp;rsquo;s &lt;code>SWUpdateFileUploader&lt;/code> servlet, which handles firmware/content update uploads from signage devices, fails to properly sanitize the &lt;code>fileName&lt;/code> parameter, allowing directory traversal sequences (&lt;code>../../&lt;/code>) to break out of the intended upload directory. An unauthenticated attacker can supply a crafted &lt;code>fileName&lt;/code> to write an arbitrary file — including a &lt;code>.jsp&lt;/code> web shell — directly into the web root, which the server then executes with &lt;code>SYSTEM&lt;/code> privileges upon request. The included PoC (&lt;code>exploit_magicinfo.py&lt;/code>) automates a two-step attack: it POSTs the traversal payload with attacker-controlled content to the vulnerable servlet, then GETs the resulting file path to confirm the write/execution succeeded. The README also documents several JSP payload variants (plain confirmation page, plain &lt;code>cmd.exe&lt;/code> shell, reflection-obfuscated shell, and Base64-wrapped shell for WAF/URI-filter evasion), demonstrating full unauthenticated remote code execution.&lt;/p></description></item><item><title>SAP NetWeaver Visual Composer Unrestricted File Upload RCE (CVE-2025-31324)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-31324-sap-netweaver-visual-composer-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-31324-sap-netweaver-visual-composer-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>aristois913 (repo attributes original exploitation to &amp;ldquo;ShinyHunters&amp;rdquo; / &amp;ldquo;Scattered LAPSUS$ Hunters&amp;rdquo;)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-31324&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>sap-netweaver, visual-composer, metadatauploader, unrestricted-file-upload, java-deserialization, jsp-webshell, rce, cwe-434, cwe-502, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-42999&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>SAP NetWeaver Application Server (AS) Java — Visual Composer component (&lt;code>VCFRAMEWORK&lt;/code>), specifically the Metadata Uploader servlet&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>SAP NetWeaver AS Java instances with the Visual Composer Development Server component (VCFRAMEWORK) installed and exposed; per source repository (includes a version-7.5-specific code path)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (attacker-side exploit), targeting a Java EE application server (SAP NetWeaver AS Java)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-31324 is an unrestricted file upload vulnerability in the Metadata Uploader servlet of SAP NetWeaver Visual Composer (&lt;code>VCFRAMEWORK&lt;/code>), which is exposed unauthenticated on the &lt;code>/developmentserver/metadatauploader&lt;/code> endpoint. The root cause is that this endpoint accepts attacker-supplied ZIP archives containing a &lt;code>.properties&lt;/code> file and deserializes/parses their content without verifying the caller&amp;rsquo;s identity or the destination path, allowing an attacker to write arbitrary files — including JSP web shells — directly into the server&amp;rsquo;s deployed web root. The PoC in this repository (&lt;code>main.py&lt;/code>) crafts a raw Java serialized object stream (a &lt;code>java.util.Properties&lt;/code>/SDO gadget chain terminating in either direct &lt;code>Runtime.exec()&lt;/code> or an XSLTC/&lt;code>TemplatesImpl&lt;/code>-style gadget) inside the zipped &lt;code>.properties&lt;/code> payload, POSTs it to the metadata uploader, and can either execute an arbitrary OS command directly or drop a persistent JSP web shell at a predictable path under &lt;code>/irj/&lt;/code>. Successful exploitation yields remote code execution with the privileges of the SAP service user (typically &lt;code>sidadm&lt;/code>), i.e. full compromise of the SAP application server.&lt;/p></description></item><item><title>StoreKeeper for WooCommerce Unauthenticated Arbitrary File Upload (CVE-2025-48148)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-48148-storekeeper-woocommerce-webshell-upload/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-48148-storekeeper-woocommerce-webshell-upload/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Nxploited (Khaled Alenazi)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-48148&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, woocommerce, storekeeper, arbitrary-file-upload, unauthenticated, webshell, rce, cwe-434, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>StoreKeeper for WooCommerce (WordPress plugin)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 14.4.4&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 PoC targeting a PHP/WordPress site&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP to target WordPress site)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The StoreKeeper for WooCommerce plugin exposes an &lt;code>admin-ajax.php&lt;/code> action (&lt;code>upload_product_image&lt;/code>) that fails to validate the type/extension of uploaded files, in all versions up to and including 14.4.4. An unauthenticated attacker can extract a public AJAX &lt;code>nonce&lt;/code> from the target site and then upload a file named &lt;code>shell.php&lt;/code> (disguised with a PNG magic-byte header and an &lt;code>image/png&lt;/code> MIME type) directly to the WordPress uploads directory. Because the server does not enforce that uploaded &amp;ldquo;product images&amp;rdquo; are actually images, the uploaded PHP file is stored and directly executable, giving the attacker unauthenticated remote code execution.&lt;/p></description></item><item><title>StoryChief WordPress Plugin Unauthenticated Arbitrary File Upload via Webhook (CVE-2025-7441)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-7441-storychief-webhook-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-7441-storychief-webhook-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Pwdnx1337&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-7441&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>storychief, wordpress, wordpress-plugin, arbitrary-file-upload, ssrf, remote-code-execution, unauthenticated, webhook, hmac, cwe-434, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>StoryChief WordPress plugin&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>1.0.42 (per source repository)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 PoC targeting a PHP/WordPress plugin backend&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The StoryChief WordPress plugin exposes an unauthenticated REST webhook endpoint (&lt;code>/wp-json/storychief/webhook&lt;/code>) that accepts a JSON payload describing a &amp;ldquo;published&amp;rdquo; story, including a &lt;code>data.featured_image.data.sizes.full&lt;/code> field containing a URL. The plugin performs a server-side HTTP GET on that attacker-supplied URL and persists the fetched content directly into the public WordPress uploads directory without validating the source domain, MIME type, or file extension. Because the endpoint only checks an HMAC signature over the payload (computed with an empty/known key in the reference implementation) rather than requiring real authentication, an unauthenticated attacker can plant an arbitrary file — including a &lt;code>.php&lt;/code> webshell — at a predictable path (&lt;code>wp-content/uploads/&amp;lt;YEAR&amp;gt;/&amp;lt;MM&amp;gt;/&amp;lt;filename&amp;gt;&lt;/code>). If the hosting environment executes PHP inside the uploads directory, this results in unauthenticated remote code execution and full site compromise.&lt;/p></description></item><item><title>Webkul Medical Prescription Attachment for WooCommerce — Unrestricted File Upload to Web Shell (CVE-2025-29009)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-29009-woocommerce-medical-prescription-file-upload/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-29009-woocommerce-medical-prescription-file-upload/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Nxploited&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-29009&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, woocommerce, medical-prescription-attachment, unrestricted-file-upload, webshell, cwe-434, unauthenticated, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Webkul &amp;ldquo;Medical Prescription Attachment Plugin for WooCommerce&amp;rdquo; (WordPress plugin)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 1.2.3 (fixed in 1.2.4, per repository README)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3.8+ exploit script targeting PHP/WordPress + WooCommerce sites&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The Webkul Medical Prescription Attachment plugin for WooCommerce exposes an AJAX action, &lt;code>wkwcpa_handle_prescription_session&lt;/code>, that lets storefront visitors upload a &amp;ldquo;prescription&amp;rdquo; file attachment without validating the uploaded file&amp;rsquo;s extension or MIME type on the server side. Because the endpoint is reachable pre-authentication (it only requires a WordPress nonce that is itself embedded in the public storefront&amp;rsquo;s page source), any unauthenticated visitor can upload a PHP web shell disguised as a prescription attachment and have it stored in a web-accessible uploads directory. The PoC script scrapes the nonce from the public shop/product pages, uploads a signed PHP shell via the vulnerable AJAX handler, parses the returned attachment URL from the JSON response, and verifies remote code execution by requesting the shell and checking for a unique signature string. Successful exploitation gives the attacker arbitrary PHP execution on the WordPress host, i.e. full compromise of the site and, depending on hosting configuration, the underlying server.&lt;/p></description></item><item><title>WooCommerce Dynamic Pricing &amp; Discounts (WC Designer Pro) Unauthenticated File Upload RCE (CVE-2025-6440)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-6440-woocommerce-dynamic-pricing-file-upload-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-6440-woocommerce-dynamic-pricing-file-upload-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>sahmsec&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-6440&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (CVSSv3.1: AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, woocommerce, wc-designer-pro, dynamic-pricing, file-upload, rce, unauthenticated, wp-ajax, cwe-434, nuclei&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>WordPress WooCommerce Dynamic Pricing &amp;amp; Discounts plugin (&lt;code>wc-designer-pro&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Not pinned by the PoC (dork-identified installs of the plugin)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP / WordPress plugin (AJAX handler)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The WooCommerce Dynamic Pricing &amp;amp; Discounts plugin (installed under the &lt;code>wc-designer-pro&lt;/code> plugin folder) exposes an unauthenticated AJAX action, &lt;code>wcdp_save_canvas_design_ajax&lt;/code>, used by its product &amp;ldquo;canvas design&amp;rdquo; feature to save user-uploaded artwork. The handler accepts a &lt;code>files&lt;/code> parameter describing the file&amp;rsquo;s name/extension and writes the uploaded content to a predictable, publicly accessible path under &lt;code>wp-content/uploads/wcdp-uploads/temp/&amp;lt;uniq&amp;gt;/&lt;/code> without validating or restricting the file extension. Because no authentication is required and the extension is attacker-controlled, an unauthenticated attacker can upload a &lt;code>.php&lt;/code> file disguised with an image-like request and have it saved directly in the web root, achieving remote code execution once the file is requested.&lt;/p></description></item><item><title>WordPress WPAMS Plugin Arbitrary File Upload to RCE (CVE-2025-39401)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-39401-wpams-arbitrary-file-upload-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-39401-wpams-arbitrary-file-upload-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Nxploited (Khaled Alenazi)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-39401&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, wpams, mojoomla, arbitrary-file-upload, webshell, rce, unauthenticated, python, multithreaded, cwe-434&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>WPAMS (WordPress Apartment/Property Management System) plugin by mojoomla&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>From n/a through 44.0 (17-08-2023)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3.7+ (&lt;code>requests&lt;/code>, &lt;code>rich&lt;/code>), targets WordPress/PHP sites&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No — the exploit posts to the public member-registration form with no login&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP/HTTPS to the target WordPress site)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The WPAMS WordPress plugin (&amp;lt;= 44.0) contains an Unrestricted Upload of File with Dangerous Type vulnerability (CWE-434): its public &amp;ldquo;apartment management member registration&amp;rdquo; form accepts an avatar/upload field (&lt;code>amgt_user_avatar&lt;/code>) without validating the file&amp;rsquo;s type or extension, allowing a &lt;code>.php&lt;/code> web shell to be stored under &lt;code>wp-content/uploads/apartment_assets/&lt;/code>. The root cause is that the plugin trusts the client-supplied filename/extension and does not enforce an image-only allow-list on this unauthenticated endpoint. Because the plugin renames the uploaded file using a predictable pattern (&lt;code>{unix_timestamp}-pimg-in.{ext}&lt;/code>), the PoC uploads a PHP web shell and then brute-forces a small window of timestamps around the upload time to locate and confirm the shell is live, across many targets concurrently via threading. Successful exploitation gives an unauthenticated attacker a web shell and full remote code execution on the underlying WordPress server.&lt;/p></description></item><item><title>WP移行専用プラグイン for CPI &lt;= 1.0.2 - Unauthenticated Arbitrary File Upload RCE (CVE-2025-11170)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-11170-cpi-plugin-file-upload-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-11170-cpi-plugin-file-upload-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Nxploited (Khaled Alenazi)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-11170&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, cpi-wp-migration, unauthenticated-file-upload, rce, admin-ajax, cwe-434, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>WP移行専用プラグイン for CPI (&lt;code>cpi-wp-migration&lt;/code>, a CPI/site-migration import plugin for WordPress)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 1.0.2&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (exploit); PHP / WordPress (target)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The &amp;ldquo;WP移行専用プラグイン for CPI&amp;rdquo; WordPress plugin is vulnerable to unauthenticated arbitrary file upload due to missing file type validation in the &lt;code>Cpiwm_Import_Controller::import&lt;/code> function, present in all versions up to and including 1.0.2. The plugin registers an unauthenticated &lt;code>wp_ajax_nopriv&lt;/code> action (&lt;code>cpiwm_import&lt;/code>) that accepts a filename and base64-encoded file content and writes it directly to a predictable, web-accessible plugin storage directory. The included PoC (&lt;code>CVE-2025-11170.py&lt;/code>) is a 142-line script with retry/backoff logic that POSTs a base64-encoded &lt;code>shell.php&lt;/code> payload to &lt;code>wp-admin/admin-ajax.php&lt;/code> and reports the resulting shell path on success, enabling unauthenticated remote code execution.&lt;/p></description></item><item><title>Bludit CMS API Unrestricted File Upload to RCE (CVE-2026-25099)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-25099-bludit-webshell-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-25099-bludit-webshell-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

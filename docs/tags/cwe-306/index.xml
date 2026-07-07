@@ -1,4 +1,429 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Cwe-306 on PoC Archive</title><link>https://poc.intelseclab.com/tags/cwe-306/</link><description>Recent content in Cwe-306 on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/cwe-306/index.xml" rel="self" type="application/rss+xml"/><item><title>Chamilo LMS Unauthenticated install.ajax.php SSRF + Open Mail Relay — CVE-2026-33715</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-33715-chamilo-lms-ssrf-mail-relay/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-33715-chamilo-lms-ssrf-mail-relay/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Cwe-306 on PoC Archive</title><link>https://poc.intelseclab.com/tags/cwe-306/</link><description>Recent content in Cwe-306 on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/cwe-306/index.xml" rel="self" type="application/rss+xml"/><item><title>AI Feeds `actualizador_git.php` Unauthenticated Arbitrary File Upload / RCE (CVE-2025-13597)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-13597-ai-feeds-file-upload-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-13597-ai-feeds-file-upload-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Ryan Kozak (d0n601)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-13597&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, ai-feeds, unauthenticated-file-upload, github-mirror-abuse, webshell, python, cwe-434, cwe-306&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-13595&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>AI Feeds (WordPress plugin)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 1.0.11&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 exploit targeting a PHP/WordPress plugin&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>AI Feeds ships the same vulnerable &lt;code>actualizador_git.php&lt;/code> &amp;ldquo;GitHub mirror updater&amp;rdquo; helper found in the vendor&amp;rsquo;s other plugin, Cibeles AI (CVE-2025-13595) — it is directly reachable over HTTP (no &lt;code>ABSPATH&lt;/code> guard, no authentication) and blindly downloads and mirrors a GitHub repository into its own plugin directory based on attacker-controlled &lt;code>owner&lt;/code>/&lt;code>repo&lt;/code>/&lt;code>ref&lt;/code>/&lt;code>token&lt;/code> query parameters, deleting any local files not present in the attacker&amp;rsquo;s repo. An unauthenticated attacker can point the endpoint at their own GitHub repo containing a PHP webshell to have it planted and made instantly executable inside &lt;code>wp-content/plugins/ai-feeds/&lt;/code>.&lt;/p></description></item><item><title>Cibeles AI `actualizador_git.php` Unauthenticated Arbitrary File Upload / RCE (CVE-2025-13595)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-13595-cibeles-ai-file-upload-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-13595-cibeles-ai-file-upload-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Ryan Kozak (d0n601)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-13595&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, cibeles-ai, unauthenticated-file-upload, github-mirror-abuse, webshell, python, cwe-434, cwe-306&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-13597&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Cibeles AI (WordPress plugin)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 1.10.8&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 exploit targeting a PHP/WordPress plugin&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The Cibeles AI plugin ships a debug/update helper, &lt;code>actualizador_git.php&lt;/code>, directly inside its plugin directory. The file is missing the standard WordPress &lt;code>ABSPATH&lt;/code> guard, so it is reachable over plain HTTP without any authentication, and it implements a &amp;ldquo;GitHub repository mirror&amp;rdquo; feature: it reads &lt;code>owner&lt;/code>, &lt;code>repo&lt;/code>, &lt;code>ref&lt;/code>, and &lt;code>token&lt;/code> straight from &lt;code>$_GET&lt;/code>, downloads the corresponding GitHub repo zipball via the GitHub API, extracts it, and recursively copies/overwrites every file in the plugin&amp;rsquo;s own directory to match the downloaded repo — deleting any local file not present in the attacker-supplied repo. An unauthenticated attacker who owns (or has push access to) any public/private GitHub repo can point this endpoint at their own repository containing a PHP webshell, and the plugin will dutifully install it inside &lt;code>wp-content/plugins/cibeles-ai/&lt;/code>.&lt;/p></description></item><item><title>CrushFTP AS2 Header Authentication Bypass (CVE-2025-54309)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-54309-crushftp-as2-auth-bypass/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-54309-crushftp-as2-auth-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>SmileyFace101&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-54309&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.0 (per NVD; researcher estimates 9.8 in source)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Patched&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>crushftp, as2, authentication-bypass, cwe-287, cwe-306, cwe-807, session-hijacking, shell, ftp-server&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>CrushFTP server, AS2 (Applicability Statement 2) authentication module / web admin interface&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>CrushFTP 10.x (tested 10.5.x-10.6.9) and 11.x (tested 11.0.x-11.1.9) with AS2 support enabled; patched in 10.7.0+ / 11.2.0+ (November 2025)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Bash/curl exploit scripts against a Java-based CrushFTP web server&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CrushFTP&amp;rsquo;s web interface trusts the presence of the HTTP headers &lt;code>X-DMZ-Proxy: disabled&lt;/code> and &lt;code>X-AS2-Version: 1.0&lt;/code> (plus a matching &lt;code>User-Agent&lt;/code>) as proof that a request originates from an already-authenticated AS2 (Applicability Statement 2 / EDI-over-HTTP) proxy path, and grants administrative access without validating any credentials. The root cause is that the server performs no cryptographic or origin verification of these headers — merely sending them from an arbitrary client is sufficient to reach &lt;code>/WebInterface/admin/*&lt;/code>. The researcher further reverse-engineered CrushFTP&amp;rsquo;s session cookie scheme, finding that the &lt;code>currentAuth&lt;/code> cookie is deterministically the last four characters of the &lt;code>CrushAuth&lt;/code> session ID, making full session establishment 100% reproducible once the header bypass grants initial access. The repository ships three shell-based PoC scripts, Snort/Suricata detection rules, and a detailed technical writeup. The author explicitly notes this is independent research and that the exact mapping to CVE-2025-54309 is speculative, since CrushFTP silently patched the issue without a detailed public advisory.&lt;/p></description></item><item><title>RustFS Hardcoded gRPC Authentication Token Leading to Full Node Compromise (CVE-2025-68926)</title><link>https://poc.intelseclab.com/pocs/cloud/2026-07-06_cve-2025-68926-rustfs-grpc-token-bypass/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/cloud/2026-07-06_cve-2025-68926-rustfs-grpc-token-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>materaj2&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-68926&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>cloud&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>rustfs, grpc, hardcoded-credentials, authentication-bypass, object-storage, s3-compatible, information-disclosure, credential-theft, data-destruction, cwe-798, cwe-306&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>RustFS (Rust-based S3-compatible distributed object storage) — internal node-to-node gRPC service&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt; 1.0.0-alpha.78&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Bash (PoC using &lt;code>grpcurl&lt;/code>); target is a Rust gRPC service (&lt;code>node_service.NodeService&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (the &amp;ldquo;authentication&amp;rdquo; token is a hardcoded, publicly known constant)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (direct network access to the RustFS internal gRPC port, default 9000-range)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>RustFS&amp;rsquo;s internal cluster/node gRPC service (&lt;code>node_service.NodeService&lt;/code>) authenticates peer-to-peer RPC calls using a fixed, hardcoded bearer token — the literal string &lt;code>&amp;quot;rustfs rpc&amp;quot;&lt;/code> — which is compiled into every RustFS build and cannot be rotated or configured by operators. Any network-reachable attacker who can supply this well-known string as the &lt;code>authorization&lt;/code> gRPC metadata header is treated as a fully trusted internal cluster node, bypassing authentication entirely. The included PoC uses &lt;code>grpcurl&lt;/code> against the real &lt;code>node.proto&lt;/code> service definition to demonstrate that an unauthenticated caller can invoke any of the 70+ privileged &lt;code>NodeService&lt;/code> RPCs — including server/system information disclosure, credential and service-account theft, bucket/volume deletion, and cluster reconfiguration/service control — resulting in complete compromise of the storage cluster.&lt;/p></description></item><item><title>Xiongmai XM530 IP Camera ONVIF Authentication Bypass (CVE-2025-65856)</title><link>https://poc.intelseclab.com/pocs/hardware/2026-07-06_cve-2025-65856-onvif-camera-auth-bypass/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/hardware/2026-07-06_cve-2025-65856-onvif-camera-auth-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>KostasEreksonas&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-65856&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>hardware&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>xiongmai, xm530, onvif, ip-camera, iot, auth-bypass, access-control, information-disclosure, rtsp, cwe-306, cwe-287, python, bash, curl&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Xiongmai XM530-based IP camera ONVIF service (tested on model &lt;code>XM530_50X50-WG_8M&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Firmware &lt;code>V5.00.R02.00030747.10010.349f17&lt;/code>; per source repository, other XM530-based devices sharing the same ONVIF stack are likely affected&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PoC written in Python 3 (using the &lt;code>onvif&lt;/code> / &lt;code>ONVIFCamera&lt;/code> library) and POSIX shell + &lt;code>curl&lt;/code>; target is embedded Linux firmware on the camera exposing ONVIF over HTTP on TCP/8899&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP access to the camera&amp;rsquo;s ONVIF service, typically &lt;code>http://&amp;lt;ip&amp;gt;:8899/onvif/...&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-65856 is a critical authentication bypass in the ONVIF implementation shipped on Xiongmai XM530-based IP cameras. The device&amp;rsquo;s &lt;code>device_service&lt;/code> and &lt;code>media_service&lt;/code> ONVIF SOAP endpoints accept and fully process requests such as &lt;code>GetDeviceInformation&lt;/code>, &lt;code>GetCapabilities&lt;/code>, &lt;code>GetProfiles&lt;/code>, and &lt;code>GetStreamUri&lt;/code> without requiring or validating any WS-Security &lt;code>UsernameToken&lt;/code> / digest authentication, even though ONVIF&amp;rsquo;s specification mandates authenticated access to these operations. The root cause is that the camera&amp;rsquo;s ONVIF service does not enforce authentication on its SOAP handlers at all — any client that can reach the exposed port can query device metadata and obtain live RTSP stream URIs. The included PoCs (raw &lt;code>curl&lt;/code>/SOAP shell scripts and a Python script built on the &lt;code>onvif&lt;/code> library) demonstrate unauthenticated retrieval of device information, media profiles, and playable RTSP stream URIs, giving an unauthenticated network attacker full read access to the camera&amp;rsquo;s live video feed and device configuration.&lt;/p></description></item><item><title>Chamilo LMS Unauthenticated install.ajax.php SSRF + Open Mail Relay — CVE-2026-33715</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-33715-chamilo-lms-ssrf-mail-relay/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-33715-chamilo-lms-ssrf-mail-relay/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

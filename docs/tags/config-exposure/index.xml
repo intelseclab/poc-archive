@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Config-Exposure on PoC Archive</title><link>https://poc.intelseclab.com/tags/config-exposure/</link><description>Recent content in Config-Exposure on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/config-exposure/index.xml" rel="self" type="application/rss+xml"/><item><title>Pterodactyl Panel Unauthenticated Path Traversal via locale.json Leaking Database Credentials (CVE-2025-49132)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-49132-pterodactyl-locale-path-traversal/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-49132-pterodactyl-locale-path-traversal/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>vimmwy&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-49132&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>pterodactyl, path-traversal, unauthenticated, information-disclosure, credential-leak, database, php, config-exposure, cwe-22&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Pterodactyl Panel (game server management panel)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Prior to 1.11.11&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (requests, colorama) PoC targeting a PHP/Laravel web application&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP/HTTPS to the Pterodactyl Panel instance)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Pterodactyl Panel prior to version 1.11.11 exposes a &lt;code>/locales/locale.json&lt;/code> endpoint that accepts attacker-controlled &lt;code>locale&lt;/code> and &lt;code>namespace&lt;/code> query parameters without a required integrity/hash check, allowing an unauthenticated attacker to traverse outside the intended locale-file directory and force the panel to load and reflect the contents of arbitrary PHP configuration files as JSON. By pointing &lt;code>locale&lt;/code> at a relative path traversal sequence (e.g. &lt;code>../../../pterodactyl&lt;/code>) and &lt;code>namespace&lt;/code> at &lt;code>config/database&lt;/code>, the attacker causes the panel&amp;rsquo;s PHP config array for &lt;code>config/database.php&lt;/code> to be returned in the JSON response, leaking the live MySQL host, port, database name, username, and password. The included PoC sends this request and parses the leaked credentials directly out of the JSON response. With direct database access (or access to phpMyAdmin), an attacker can insert a row into the &lt;code>users&lt;/code> table to create an administrator account and gain full control of the panel and every game server it manages.&lt;/p></description></item></channel></rss>

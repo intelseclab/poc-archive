@@ -1,4 +1,344 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Cwe-89 on PoC Archive</title><link>https://poc.intelseclab.com/tags/cwe-89/</link><description>Recent content in Cwe-89 on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/cwe-89/index.xml" rel="self" type="application/rss+xml"/><item><title>Apache Superset Authenticated SQL Injection via sqlExpression/where Bypass — CVE-2026-23980</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-23980-superset-sqli/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-23980-superset-sqli/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Cwe-89 on PoC Archive</title><link>https://poc.intelseclab.com/tags/cwe-89/</link><description>Recent content in Cwe-89 on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/cwe-89/index.xml" rel="self" type="application/rss+xml"/><item><title>"Grocery" PHP Application `search_products_itname.php` `sitem_name` Boolean-Based SQL Injection (CVE-2025-65354)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-65354-grocery-sitem-name-sqli/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-65354-grocery-sitem-name-sqli/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>EarthAngel666&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-65354&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>php, sql-injection, boolean-based-blind-sqli, cwe-89, grocery, unauthenticated, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>PHP-based &amp;ldquo;Grocery&amp;rdquo; web application, &lt;code>Grocery/search_products_itname.php&lt;/code> endpoint&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Per source repository (specific product/version not stated in the PoC beyond the endpoint path and vulnerable parameter)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PoC written in Python 3 (&lt;code>requests&lt;/code>); target is a PHP web application&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The target is a PHP &amp;ldquo;Grocery&amp;rdquo; web application whose product-search endpoint, &lt;code>Grocery/search_products_itname.php&lt;/code>, takes a &lt;code>sitem_name&lt;/code> parameter that is concatenated into a backend SQL query without parameterization or escaping. This allows classic boolean-based blind SQL injection: an attacker sends paired requests with a true condition (&lt;code>-1' OR 5*5=25 --&lt;/code>) and a false condition (&lt;code>-1' OR 5*5=26 --&lt;/code>), plus a compound boolean payload (&lt;code>-1' OR 231=6 AND 000648=000648 --&lt;/code>), and compares the responses to infer database contents one condition at a time. The included PoC script is thin and, as shipped, contains two functional bugs that keep it from working unmodified: it sends the SQLi payload as an HTTP header (&lt;code>sitem_name&lt;/code>) rather than as the actual GET/POST form parameter the vulnerable PHP script reads, and its &amp;ldquo;random User-Agent&amp;rdquo; logic calls &lt;code>random.choice(&amp;quot;user-agents.txt&amp;quot;)&lt;/code>, which picks a random character from the literal filename string instead of loading a line from the wordlist file. The underlying SQL injection payloads and the identified vulnerable endpoint/parameter are genuine; the delivery mechanism in the script needs to be corrected to actually reach the vulnerable parameter.&lt;/p></description></item><item><title>Django QuerySet/Q Object SQL Injection via `_connector` Kwarg (CVE-2025-64459)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-64459-django-queryset-connector-sqli/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-64459-django-queryset-connector-sqli/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Joshua Lent (joshualent)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-64459&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.1 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>django, python, sql-injection, queryset, q-object, orm, cwe-89, data-exposure, sqlite&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Django ORM (&lt;code>QuerySet.filter()&lt;/code> / &lt;code>Q&lt;/code> object construction)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Multiple Django versions prior to the official security-patch release (per source repository); this demo pins &lt;code>django==5.2.7&lt;/code> to reproduce the issue&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python / Django 5.2, demo blog app served via &lt;code>manage.py runserver&lt;/code> or Gunicorn&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (standard HTTP access to the vulnerable route)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>This is a SQL injection vulnerability in Django&amp;rsquo;s &lt;code>QuerySet&lt;/code>/&lt;code>Q&lt;/code> object construction: when application code builds a &lt;code>Q(**kwargs)&lt;/code> filter directly from user-controlled input (such as a raw &lt;code>request.GET&lt;/code> &lt;code>QueryDict&lt;/code>) without allow-listing keys, an attacker can supply the reserved &lt;code>_connector&lt;/code> (and &lt;code>_negated&lt;/code>) keyword that Django&amp;rsquo;s &lt;code>Q&lt;/code> constructor uses internally to choose the raw SQL boolean join operator (&lt;code>AND&lt;/code>/&lt;code>OR&lt;/code>) between conditions. Because that value is spliced into the compiled SQL as a literal keyword rather than being validated against &lt;code>AND&lt;/code>/&lt;code>OR&lt;/code>/&lt;code>XOR&lt;/code>, an attacker-supplied string is inserted verbatim into the &lt;code>WHERE&lt;/code> clause. The bundled demo app is a small Django blog whose &lt;code>post_list&lt;/code> view builds its filter dict straight from &lt;code>request.GET&lt;/code>, blocking only a handful of named fields (&lt;code>status&lt;/code>, &lt;code>is_archived&lt;/code>, &lt;code>id&lt;/code>, &lt;code>pk&lt;/code>) — leaving &lt;code>_connector&lt;/code> open. Visiting the home route with &lt;code>?_connector=OR 1=1 OR&lt;/code> turns the intended &amp;ldquo;published, non-archived posts only&amp;rdquo; filter into an always-true condition, exposing draft and archived posts that should not be publicly visible, and demonstrates a general primitive for SQL fragment injection through the ORM.&lt;/p></description></item><item><title>FreePBX Unauthenticated SQL Injection to RCE (CVE-2025-57819)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-57819-freepbx-sqli-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-57819-freepbx-sqli-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>K3ysTr0K3R&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-57819&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>freepbx, sangoma, sqli, unauthenticated, ajax-php, cron-jobs, reverse-shell, voip, asterisk, cwe-89&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Sangoma FreePBX administrator web UI (&lt;code>admin/ajax.php&lt;/code>, &lt;code>endpoint&lt;/code> module)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>FreePBX 15.x, 16.x, and 17.x prior to 15.0.66 / 16.0.89 / 17.0.3 (per source repository)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (&lt;code>requests&lt;/code>, &lt;code>rich&lt;/code>) targeting PHP-based FreePBX on Linux/Asterisk hosts&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP/HTTPS access to the FreePBX admin interface)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-57819 is an unauthenticated SQL injection in FreePBX&amp;rsquo;s &lt;code>admin/ajax.php&lt;/code> endpoint handler for the &lt;code>endpoint&lt;/code> module, where the &lt;code>brand&lt;/code> parameter is concatenated into a backend SQL query without sanitization. The PoC first confirms the injection with an &lt;code>EXTRACTVALUE&lt;/code>-based error-based SQLi payload that leaks &lt;code>SELECT USER()&lt;/code> output through a MySQL XPATH syntax error, then weaponizes the same injection point to &lt;code>INSERT&lt;/code> a malicious row directly into FreePBX&amp;rsquo;s &lt;code>cron_jobs&lt;/code> table. The injected cron entry contains a base64-encoded, hex-embedded reverse-shell one-liner disguised as a legitimate scheduled task, which FreePBX&amp;rsquo;s own cron execution mechanism runs automatically within ~60-90 seconds, giving the attacker a fully interactive shell on the underlying host with no authentication and no user interaction required.&lt;/p></description></item><item><title>PPOM for WooCommerce &lt;= 33.0.15 - Unauthenticated Time-Based Blind SQL Injection (CVE-2025-11391)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-11391-ppom-woocommerce-blind-sqli/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-11391-ppom-woocommerce-blind-sqli/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>aritlhq&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-11391&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Patched&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, woocommerce, ppom, product-addon, sql-injection, blind-sqli, time-based, cwe-89, python, php&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>PPOM for WooCommerce (&lt;code>woocommerce-product-addon&lt;/code> plugin)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 33.0.15 (patched in 33.0.16)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (exploit); PHP / WordPress / WooCommerce (target)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The &amp;ldquo;PPOM for WooCommerce&amp;rdquo; plugin (WooCommerce Product Addon / PPOM Fields) is vulnerable to an unauthenticated time-based blind SQL injection in its &lt;code>get_product_meta()&lt;/code> function, present in versions up to and including 33.0.15. The function concatenates a user-supplied &lt;code>$meta_id&lt;/code> parameter directly into a raw SQL query instead of using a prepared statement, and this code path is reachable pre-authentication through the WooCommerce &amp;ldquo;add to cart&amp;rdquo; flow when the plugin&amp;rsquo;s &amp;ldquo;Enable Legacy Price Calculations&amp;rdquo; option is active. The included PoC (&lt;code>exploit.py&lt;/code>) submits a crafted &lt;code>ppom[fields][id]&lt;/code> value containing a &lt;code>SLEEP()&lt;/code>-based payload during an add-to-cart POST request and confirms the vulnerability by observing that the server&amp;rsquo;s response is delayed (and times out) by the injected sleep duration, allowing an attacker to eventually exfiltrate database contents via blind boolean/time-based techniques.&lt;/p></description></item><item><title>Apache Superset Authenticated SQL Injection via sqlExpression/where Bypass — CVE-2026-23980</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-23980-superset-sqli/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-23980-superset-sqli/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Livewire on PoC Archive</title><link>https://poc.intelseclab.com/tags/livewire/</link><description>Recent content in Livewire on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/livewire/index.xml" rel="self" type="application/rss+xml"/><item><title>Laravel Livewire Remote Code Execution via Known APP_KEY (CVE-2025-54068)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-54068-livewire-appkey-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-54068-livewire-appkey-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>haxorstars (recode of original research by Synacktiv / Livepyre)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-54068&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>laravel, livewire, php, deserialization, app-key, hmac-forgery, gadget-chain, rce, cwe-502, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Laravel Livewire (versions prior to v3.6.4)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Livewire &amp;lt; v3.6.4 (per repository&amp;rsquo;s bundled &lt;code>versions.json&lt;/code> version-hash fingerprinting)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 exploit client targeting a PHP/Laravel + Livewire web application&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No application session required, but the attacker must know (or have leaked/brute-forced) the target&amp;rsquo;s Laravel &lt;code>APP_KEY&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Laravel Livewire serializes component state into a &lt;code>wire:snapshot&lt;/code> HTML attribute and protects it with an HMAC-SHA256 checksum keyed on the application&amp;rsquo;s &lt;code>APP_KEY&lt;/code>. If an attacker obtains the &lt;code>APP_KEY&lt;/code> (leaked &lt;code>.env&lt;/code>, default/demo key, weak secret, etc.), they can craft an arbitrary snapshot payload, sign it with a correctly computed checksum, and submit it to Livewire&amp;rsquo;s component-update endpoint. Because Livewire trusts any snapshot whose checksum matches, a forged snapshot containing nested serialized PHP objects (&lt;code>Illuminate\Broadcasting\BroadcastEvent&lt;/code>, &lt;code>Illuminate\Validation\Validator&lt;/code>, &lt;code>Laravel\SerializableClosure\Serializers\Signed&lt;/code>, &lt;code>GuzzleHttp\Psr7\FnStream&lt;/code>, etc.) reaches a PHP-object-injection gadget chain that invokes an arbitrary PHP function (e.g. &lt;code>system&lt;/code>, &lt;code>shell_exec&lt;/code>, or &lt;code>unserialize&lt;/code> of a further attacker-supplied payload) with attacker-controlled arguments, yielding remote code execution. This repository (a Python recode of Synacktiv&amp;rsquo;s original &amp;ldquo;Livepyre&amp;rdquo; PoC) automates the whole chain: locating the Livewire snapshot and CSRF token on a page, rebuilding a malicious snapshot with the injected gadget, HMAC-signing it using the supplied &lt;code>APP_KEY&lt;/code>, and POSTing it to the discovered Livewire update URI.&lt;/p></description></item></channel></rss>

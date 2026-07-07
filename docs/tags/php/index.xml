@@ -1,4 +1,1024 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Php on PoC Archive</title><link>https://poc.intelseclab.com/tags/php/</link><description>Recent content in Php on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/php/index.xml" rel="self" type="application/rss+xml"/><item><title>AdminPanel 4.0 CSRF File Deletion / Setup-Mode Reset — CVE-2026-30498</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-30498-adminpanel-csrf/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-30498-adminpanel-csrf/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Php on PoC Archive</title><link>https://poc.intelseclab.com/tags/php/</link><description>Recent content in Php on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/php/index.xml" rel="self" type="application/rss+xml"/><item><title>"Grocery" PHP Application `search_products_itname.php` `sitem_name` Boolean-Based SQL Injection (CVE-2025-65354)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-65354-grocery-sitem-name-sqli/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-65354-grocery-sitem-name-sqli/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>EarthAngel666&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-65354&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>php, sql-injection, boolean-based-blind-sqli, cwe-89, grocery, unauthenticated, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>PHP-based &amp;ldquo;Grocery&amp;rdquo; web application, &lt;code>Grocery/search_products_itname.php&lt;/code> endpoint&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Per source repository (specific product/version not stated in the PoC beyond the endpoint path and vulnerable parameter)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PoC written in Python 3 (&lt;code>requests&lt;/code>); target is a PHP web application&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The target is a PHP &amp;ldquo;Grocery&amp;rdquo; web application whose product-search endpoint, &lt;code>Grocery/search_products_itname.php&lt;/code>, takes a &lt;code>sitem_name&lt;/code> parameter that is concatenated into a backend SQL query without parameterization or escaping. This allows classic boolean-based blind SQL injection: an attacker sends paired requests with a true condition (&lt;code>-1' OR 5*5=25 --&lt;/code>) and a false condition (&lt;code>-1' OR 5*5=26 --&lt;/code>), plus a compound boolean payload (&lt;code>-1' OR 231=6 AND 000648=000648 --&lt;/code>), and compares the responses to infer database contents one condition at a time. The included PoC script is thin and, as shipped, contains two functional bugs that keep it from working unmodified: it sends the SQLi payload as an HTTP header (&lt;code>sitem_name&lt;/code>) rather than as the actual GET/POST form parameter the vulnerable PHP script reads, and its &amp;ldquo;random User-Agent&amp;rdquo; logic calls &lt;code>random.choice(&amp;quot;user-agents.txt&amp;quot;)&lt;/code>, which picks a random character from the literal filename string instead of loading a line from the wordlist file. The underlying SQL injection payloads and the identified vulnerable endpoint/parameter are genuine; the delivery mechanism in the script needs to be corrected to actually reach the vulnerable parameter.&lt;/p></description></item><item><title>GiveWP Unauthenticated PHP Object Injection via Weak Serialized-Data Regex Check (CVE-2025-22777)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-22777-givewp-php-object-injection/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-22777-givewp-php-object-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>SevDMG&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-22777&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>givewp, wordpress, wordpress-plugin, php-object-injection, deserialization, unserialize, gadget-chain, cwe-502, php, unauthenticated&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>GiveWP – Donation Plugin and Fundraising Platform (WordPress plugin, 100,000+ active installs)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 3.19.3 (patched in 3.19.4)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP (target plugin), Python (PoC/exploit tooling) on WordPress&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP access to the donation form / &lt;code>admin-ajax.php&lt;/code> endpoint)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-22777 is an unauthenticated PHP Object Injection (CWE-502, Deserialization of Untrusted Data) vulnerability in the GiveWP WordPress donation plugin. GiveWP stores certain donor-supplied form field values as serialized PHP meta in the database and runs a regex check meant to confirm the value &amp;ldquo;looks like&amp;rdquo; a safe serialized string before it is later passed to PHP&amp;rsquo;s &lt;code>unserialize()&lt;/code>; that regex check is weak and can be defeated by padding the payload with junk/gibberish characters, letting a crafted serialized object slip through and get deserialized. If a suitable gadget chain (a class with an exploitable magic method such as &lt;code>__destruct()&lt;/code>/&lt;code>__wakeup()&lt;/code>) is reachable in GiveWP or a co-installed plugin/theme, this results in arbitrary PHP object instantiation and potentially remote code execution, arbitrary file write/deletion, or other high-impact side effects — with no authentication required. This mirrored repository is an independent researcher&amp;rsquo;s work-in-progress PoC that builds a serialized &amp;ldquo;gadget&amp;rdquo; object (a &lt;code>FinalGadget&lt;/code>/&lt;code>ChainGadget&lt;/code> class chain targeting a &lt;code>filename&lt;/code> property, injected via the donation form&amp;rsquo;s &lt;code>give_company&lt;/code> field to &lt;code>admin-ajax.php?action=give_process_donation&lt;/code>), but the actual HTTP exploit driver (&lt;code>exploit_cve2025-22777.py&lt;/code>) ships with an empty &lt;code>payload = {}&lt;/code> and no request is ever sent, and the more developed &lt;code>exploit_struct.py&lt;/code> script&amp;rsquo;s &lt;code>exploit()&lt;/code> function is truncated before it issues any HTTP request. As shipped, neither script performs a working end-to-end attack.&lt;/p></description></item><item><title>Invision Community Theme Editor Template Injection Unauthenticated RCE (CVE-2025-47916)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-47916-invision-community-template-injection-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-47916-invision-community-template-injection-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Egidio Romano (vulnerability discovery); Web3-Serializer (this PoC client)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-47916&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>invision-community, ssti, template-injection, theme-editor, unauthenticated-rce, php, cwe-94, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Invision Community, &lt;code>themeeditor&lt;/code> front controller (&lt;code>IPS\core\modules\front\system\themeeditor::customCss()&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>5.0.0 through 5.0.6 (fixed in 5.0.7)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (exploit client); PHP (target, Invision Community)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Invision Community&amp;rsquo;s theme editor exposes a &lt;code>customCss()&lt;/code> action on the front-end &lt;code>themeeditor&lt;/code> controller (&lt;code>/applications/core/modules/front/system/themeeditor.php&lt;/code>) that is reachable without authentication and passes the attacker-supplied &lt;code>content&lt;/code> request parameter into &lt;code>Theme::makeProcessFunction()&lt;/code>, which processes it as a template expression. Because template expressions can invoke PHP functions, an attacker can craft a &lt;code>content&lt;/code> value that evaluates to arbitrary PHP code execution, resulting in unauthenticated remote code execution against the Invision Community forum/community platform. The included PoC (&lt;code>main.py&lt;/code>) is a small client that base64-encodes a shell command, wraps it in a template expression calling &lt;code>system()&lt;/code>/&lt;code>base64_decode()&lt;/code> wrapped with a &lt;code>die()&lt;/code> and a unique marker string, POSTs it to the vulnerable &lt;code>customCss&lt;/code> action, and extracts the command output from the response — offering single-command execution, a non-intrusive vulnerability test mode, and an interactive pseudo-shell.&lt;/p></description></item><item><title>Kubio AI Page Builder &lt;= 2.5.1 Unauthenticated Local File Inclusion (CVE-2025-2294)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-2294-kubio-lfi/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-2294-kubio-lfi/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>fumioryoto (Nahidul Islam / &amp;ldquo;Nahid&amp;rdquo;)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-2294&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, kubio, page-builder, lfi, local-file-inclusion, unauthenticated, php, python, cwe-98&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Kubio AI Page Builder (WordPress plugin)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 2.5.1&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Exploit written in Python 3 (requests); target is a PHP/WordPress plugin&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The Kubio AI Page Builder plugin for WordPress, in all versions up to and including 2.5.1, is vulnerable to Local File Inclusion via the &lt;code>kubio_hybrid_theme_load_template&lt;/code> function. The root cause is that a template path supplied through a query-string parameter is passed into a file-include operation without adequate path sanitization or an allow-list, letting an unauthenticated attacker traverse the filesystem. The included repo script (&lt;code>exploit.py&lt;/code>) first fetches the plugin&amp;rsquo;s &lt;code>readme.txt&lt;/code> to fingerprint the installed version, and if it is &lt;code>&amp;lt;= 2.5.1&lt;/code>, sends a crafted request to the WordPress front end that abuses the Kubio site-edit iframe preview parameters to include and render an arbitrary file path. Impact ranges from disclosure of sensitive local files (e.g. &lt;code>/etc/passwd&lt;/code>, config files) to remote code execution if an attacker can first plant PHP content in an includable location (e.g. via file upload).&lt;/p></description></item><item><title>Laravel `files.*` Wildcard Validation Bypass via Polyglot JPEG+PHP Upload (CVE-2025-27515)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-27515-laravel-polyglot-upload-bypass/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-27515-laravel-polyglot-upload-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Guaxinim (joaovicdev)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-27515&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>laravel, php, file-upload, validation-bypass, polyglot, jpeg, wildcard-validation, cwe-20, rce, web-shell&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Laravel Framework (file upload validation using &lt;code>files.*&lt;/code> wildcard rules)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>≤ 12.0.0 (per source repository)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP / Laravel 12 web application; PoC client written in Python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-27515 is a file upload validation bypass (CWE-20: Improper Input Validation) affecting Laravel applications that validate array-based file uploads with wildcard rules such as &lt;code>files.*&lt;/code>. The root cause is that Laravel&amp;rsquo;s &lt;code>mimes:&lt;/code> validation rule inspects file content/extension heuristics that can be satisfied simultaneously by a single polyglot file, so an attacker can craft one file that is both a technically valid JPEG and a valid PHP script. The bundled PoC ships a minimal Laravel 12 app with an &lt;code>/upload&lt;/code> endpoint using exactly this &lt;code>files.*&lt;/code> + &lt;code>mimes:jpg,png,pdf&lt;/code> validation pattern, and a Python &lt;code>exploit.py&lt;/code> client that uploads a polyglot file (JPEG magic bytes followed by an embedded PHP payload) through the multipart &lt;code>files[]&lt;/code> field. If the resulting file is stored under a web-accessible path and the server can be induced to execute &lt;code>.php&lt;/code>-adjacent content (e.g. via extension confusion, &lt;code>.htaccess&lt;/code> misconfiguration, or a secondary LFI/inclusion vector), the payload yields remote code execution.&lt;/p></description></item><item><title>Laravel Livewire Remote Code Execution via Known APP_KEY (CVE-2025-54068)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-54068-livewire-appkey-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-54068-livewire-appkey-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>haxorstars (recode of original research by Synacktiv / Livepyre)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-54068&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>laravel, livewire, php, deserialization, app-key, hmac-forgery, gadget-chain, rce, cwe-502, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Laravel Livewire (versions prior to v3.6.4)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Livewire &amp;lt; v3.6.4 (per repository&amp;rsquo;s bundled &lt;code>versions.json&lt;/code> version-hash fingerprinting)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 exploit client targeting a PHP/Laravel + Livewire web application&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No application session required, but the attacker must know (or have leaked/brute-forced) the target&amp;rsquo;s Laravel &lt;code>APP_KEY&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Laravel Livewire serializes component state into a &lt;code>wire:snapshot&lt;/code> HTML attribute and protects it with an HMAC-SHA256 checksum keyed on the application&amp;rsquo;s &lt;code>APP_KEY&lt;/code>. If an attacker obtains the &lt;code>APP_KEY&lt;/code> (leaked &lt;code>.env&lt;/code>, default/demo key, weak secret, etc.), they can craft an arbitrary snapshot payload, sign it with a correctly computed checksum, and submit it to Livewire&amp;rsquo;s component-update endpoint. Because Livewire trusts any snapshot whose checksum matches, a forged snapshot containing nested serialized PHP objects (&lt;code>Illuminate\Broadcasting\BroadcastEvent&lt;/code>, &lt;code>Illuminate\Validation\Validator&lt;/code>, &lt;code>Laravel\SerializableClosure\Serializers\Signed&lt;/code>, &lt;code>GuzzleHttp\Psr7\FnStream&lt;/code>, etc.) reaches a PHP-object-injection gadget chain that invokes an arbitrary PHP function (e.g. &lt;code>system&lt;/code>, &lt;code>shell_exec&lt;/code>, or &lt;code>unserialize&lt;/code> of a further attacker-supplied payload) with attacker-controlled arguments, yielding remote code execution. This repository (a Python recode of Synacktiv&amp;rsquo;s original &amp;ldquo;Livepyre&amp;rdquo; PoC) automates the whole chain: locating the Livewire snapshot and CSRF token on a page, rebuilding a malicious snapshot with the injected gadget, HMAC-signing it using the supplied &lt;code>APP_KEY&lt;/code>, and POSTing it to the discovered Livewire update URI.&lt;/p></description></item><item><title>Monsta FTP Pre-Authentication Remote Code Execution via Arbitrary File Upload (CVE-2025-34299)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-34299-monsta-ftp-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-34299-monsta-ftp-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>KrE80r&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-34299&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>monsta-ftp, rce, pre-auth, unrestricted-file-upload, cwe-434, php, ftp, docker, nuclei, kev&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Monsta FTP (web-based FTP manager)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 2.11.2 (lab uses 2.10.4; patched in 2.11.3)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP web application; lab built with Docker/Docker Compose (php:7.4-apache base image)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (pre-authentication)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Monsta FTP versions up to and including 2.11.2 contain a pre-authentication, unrestricted arbitrary file upload vulnerability (CWE-434) in the &lt;code>downloadFile&lt;/code> action of its &lt;code>/mftp/application/api/api.php&lt;/code> endpoint. The endpoint accepts a user-supplied FTP connection configuration and a remote/local path pair without requiring the caller to be authenticated and without adequately restricting where the &amp;ldquo;downloaded&amp;rdquo; file is written on the local filesystem. An attacker can point Monsta FTP at an FTP server they control, direct it to fetch a malicious file (e.g. a PHP webshell), and specify a &lt;code>localPath&lt;/code> inside the web root, resulting in remote code execution with the privileges of the web server. This repository is a Docker-based lab (not a raw exploit script) that stands up a real, vulnerable Monsta FTP 2.10.4 instance for hands-on reproduction, plus a manual &lt;code>curl&lt;/code> PoC that reaches the vulnerable code path and a reference to a nuclei detection template.&lt;/p></description></item><item><title>PPOM for WooCommerce &lt;= 33.0.15 - Unauthenticated Time-Based Blind SQL Injection (CVE-2025-11391)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-11391-ppom-woocommerce-blind-sqli/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-11391-ppom-woocommerce-blind-sqli/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>aritlhq&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-11391&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Patched&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, woocommerce, ppom, product-addon, sql-injection, blind-sqli, time-based, cwe-89, python, php&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>PPOM for WooCommerce (&lt;code>woocommerce-product-addon&lt;/code> plugin)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 33.0.15 (patched in 33.0.16)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (exploit); PHP / WordPress / WooCommerce (target)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The &amp;ldquo;PPOM for WooCommerce&amp;rdquo; plugin (WooCommerce Product Addon / PPOM Fields) is vulnerable to an unauthenticated time-based blind SQL injection in its &lt;code>get_product_meta()&lt;/code> function, present in versions up to and including 33.0.15. The function concatenates a user-supplied &lt;code>$meta_id&lt;/code> parameter directly into a raw SQL query instead of using a prepared statement, and this code path is reachable pre-authentication through the WooCommerce &amp;ldquo;add to cart&amp;rdquo; flow when the plugin&amp;rsquo;s &amp;ldquo;Enable Legacy Price Calculations&amp;rdquo; option is active. The included PoC (&lt;code>exploit.py&lt;/code>) submits a crafted &lt;code>ppom[fields][id]&lt;/code> value containing a &lt;code>SLEEP()&lt;/code>-based payload during an add-to-cart POST request and confirms the vulnerability by observing that the server&amp;rsquo;s response is delayed (and times out) by the injected sleep duration, allowing an attacker to eventually exfiltrate database contents via blind boolean/time-based techniques.&lt;/p></description></item><item><title>Pterodactyl Panel Unauthenticated Path Traversal via locale.json Leaking Database Credentials (CVE-2025-49132)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-49132-pterodactyl-locale-path-traversal/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-49132-pterodactyl-locale-path-traversal/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>vimmwy&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-49132&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>pterodactyl, path-traversal, unauthenticated, information-disclosure, credential-leak, database, php, config-exposure, cwe-22&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Pterodactyl Panel (game server management panel)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Prior to 1.11.11&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (requests, colorama) PoC targeting a PHP/Laravel web application&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP/HTTPS to the Pterodactyl Panel instance)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Pterodactyl Panel prior to version 1.11.11 exposes a &lt;code>/locales/locale.json&lt;/code> endpoint that accepts attacker-controlled &lt;code>locale&lt;/code> and &lt;code>namespace&lt;/code> query parameters without a required integrity/hash check, allowing an unauthenticated attacker to traverse outside the intended locale-file directory and force the panel to load and reflect the contents of arbitrary PHP configuration files as JSON. By pointing &lt;code>locale&lt;/code> at a relative path traversal sequence (e.g. &lt;code>../../../pterodactyl&lt;/code>) and &lt;code>namespace&lt;/code> at &lt;code>config/database&lt;/code>, the attacker causes the panel&amp;rsquo;s PHP config array for &lt;code>config/database.php&lt;/code> to be returned in the JSON response, leaking the live MySQL host, port, database name, username, and password. The included PoC sends this request and parses the leaked credentials directly out of the JSON response. With direct database access (or access to phpMyAdmin), an attacker can insert a row into the &lt;code>users&lt;/code> table to create an administrator account and gain full control of the panel and every game server it manages.&lt;/p></description></item><item><title>Roundcube Webmail Post-Auth RCE via PHP Object Deserialization (CVE-2025-49113)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-49113-roundcube-php-object-deserialization-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-49113-roundcube-php-object-deserialization-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>rippsec&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-49113&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.9 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>roundcube, webmail, php, deserialization, object-injection, gadget-chain, rce, post-auth, cwe-502&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Roundcube Webmail&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>≤ 1.6.10&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (stdlib only) PoC targeting a PHP web application&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (any valid Roundcube user account)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP/HTTPS to the Roundcube instance)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Roundcube Webmail versions up to and including 1.6.10 are vulnerable to a post-authentication PHP object deserialization vulnerability in the file upload handler, which passes a client-supplied attachment filename through a deserialization path without validation. The root cause is that the &lt;code>Crypt_GPG_Engine&lt;/code> class (present in Roundcube&amp;rsquo;s dependency chain) acts as a usable gadget chain: its &lt;code>_gpgconf&lt;/code> property is invoked in a system-level call during object handling. An authenticated attacker can craft a serialized &lt;code>Crypt_GPG_Engine&lt;/code> object as the filename of an uploaded attachment, causing the server to instantiate it and execute an attacker-controlled OS command as the webserver user. The included Python PoC logs into Roundcube, then uploads a multipart file whose filename field contains the malicious serialized payload (with the command Base32-encoded to survive the filename field&amp;rsquo;s character restrictions), achieving full remote command execution.&lt;/p></description></item><item><title>ThinkPHP 5.0.24 File Inclusion Leading to Remote Code Execution (CVE-2025-63888)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-63888-thinkphp-file-inclusion-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-63888-thinkphp-file-inclusion-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>AN5I&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-63888&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (CVSSv3.1: AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>thinkphp, php, file-inclusion, lfi, rce, log-poisoning, webshell, cwe-98, cwe-22&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>ThinkPHP (top10.org / TopThink PHP framework)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>5.0.24 (exact version)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP web framework&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (direct HTTP(S) access to the target application)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>ThinkPHP 5.0.24&amp;rsquo;s &lt;code>read()&lt;/code> method in &lt;code>thinkphp/library/think/template/driver/File.php&lt;/code> fails to validate the template path derived from user-controlled input passed to the framework&amp;rsquo;s &lt;code>view()&lt;/code> function. By submitting a crafted &lt;code>template&lt;/code> parameter (e.g. a path-traversal sequence such as &lt;code>../../../etc/passwd&lt;/code>) to a controller endpoint that renders a view, an attacker can force the application to include arbitrary files from the filesystem. Because ThinkPHP writes attacker-influenced data into its own runtime log files, an attacker can combine the file-inclusion primitive with log-file poisoning: inject a PHP payload (e.g. &lt;code>&amp;lt;?php system($_GET[...]); ?&amp;gt;&lt;/code>) into a request so it is logged verbatim, then use the same file-inclusion flaw to include the resulting log file as a PHP template — causing the PHP interpreter to execute the injected code and yielding remote code execution.&lt;/p></description></item><item><title>WavePlayer Unauthenticated Arbitrary File Upload to RCE (CVE-2025-12057)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-12057-waveplayer-webshell-upload/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-12057-waveplayer-webshell-upload/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>DeadExpl0it&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-12057&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, waveplayer, arbitrary-file-upload, unauthenticated, rce, webshell, ajax, nonce, php, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>WavePlayer (WordPress plugin)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt; 3.8.0&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (PoC scanner/exploiter), PHP (target plugin), targets WordPress installations&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>WavePlayer, a WordPress audio player plugin, exposes an AJAX action (&lt;code>wvpl-ajax=create_local_copy&lt;/code>) that lets an unauthenticated visitor instruct the server to fetch a remote URL and save it as a local &amp;ldquo;track&amp;rdquo; file inside the uploads directory, without validating that the fetched content is actually audio. The only guard is a WordPress AJAX nonce, which is trivially harvested from the plugin&amp;rsquo;s own public-facing pages since it is not tied to a privileged session. By pointing the fetched URL at an attacker-controlled PHP file served with a &lt;code>Content-Type: application/x-httpd-php&lt;/code> header (to defeat basic content sniffing), the exploit causes WavePlayer to copy the payload into &lt;code>wp-content/uploads/peaks/external/&amp;lt;random&amp;gt;.php&lt;/code>, a web-accessible path where PHP execution is not blocked. The included PoC (&lt;code>wave.py&lt;/code>) is a multi-threaded scanner that reads a list of target sites, extracts the nonce, fires the &lt;code>create_local_copy&lt;/code> AJAX request with an attacker-hosted payload URL, and logs the resulting webshell path to &lt;code>shells.txt&lt;/code>.&lt;/p></description></item><item><title>AdminPanel 4.0 CSRF File Deletion / Setup-Mode Reset — CVE-2026-30498</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-30498-adminpanel-csrf/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-30498-adminpanel-csrf/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

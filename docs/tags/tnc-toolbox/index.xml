@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Tnc-Toolbox on PoC Archive</title><link>https://poc.intelseclab.com/tags/tnc-toolbox/</link><description>Recent content in Tnc-Toolbox on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/tnc-toolbox/index.xml" rel="self" type="application/rss+xml"/><item><title>TNC Toolbox: Web Performance Unauthenticated cPanel Credential Exposure (CVE-2025-12539)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-12539-tnc-toolbox-cpanel-creds-exposure/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-12539-tnc-toolbox-cpanel-creds-exposure/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Nxploited (Khaled Alenazi)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-12539&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, tnc-toolbox, sensitive-information-exposure, unauthenticated, cpanel, credential-theft, privilege-escalation, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>TNC Toolbox: Web Performance (WordPress plugin)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 1.4.2&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3.7+ (PoC), PHP (target plugin), targets WordPress installations&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>TNC Toolbox: Web Performance is a WordPress plugin that integrates with cPanel to manage caching/performance settings, and stores the cPanel API credentials (hostname, username, API key) it needs for that integration in plaintext files under a predictable, web-accessible path inside &lt;code>wp-content&lt;/code>. The plugin&amp;rsquo;s &lt;code>Tnc_Wp_Toolbox_Settings::save_settings&lt;/code> function writes these files without any access controls (no &lt;code>.htaccess&lt;/code> deny, no &lt;code>index.php&lt;/code> guard, no authentication check on the files themselves), so anyone who can reach the site over HTTP can simply request the files directly. The included PoC (&lt;code>CVE-2025-12539.py&lt;/code>) fingerprints the plugin&amp;rsquo;s version via its &lt;code>readme.txt&lt;/code>, and if the version is &lt;code>&amp;lt;= 1.4.2&lt;/code>, fetches the three credential files and reports the extracted cPanel username, API key, and hostname. With those credentials, an attacker can log into cPanel and, from there, upload files or otherwise gain remote code execution on the underlying hosting account.&lt;/p></description></item></channel></rss>

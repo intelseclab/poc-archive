@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Visual-Composer on PoC Archive</title><link>https://poc.intelseclab.com/tags/visual-composer/</link><description>Recent content in Visual-Composer on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/visual-composer/index.xml" rel="self" type="application/rss+xml"/><item><title>SAP NetWeaver Visual Composer Unrestricted File Upload RCE (CVE-2025-31324)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-31324-sap-netweaver-visual-composer-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-31324-sap-netweaver-visual-composer-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>aristois913 (repo attributes original exploitation to &amp;ldquo;ShinyHunters&amp;rdquo; / &amp;ldquo;Scattered LAPSUS$ Hunters&amp;rdquo;)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-31324&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>sap-netweaver, visual-composer, metadatauploader, unrestricted-file-upload, java-deserialization, jsp-webshell, rce, cwe-434, cwe-502, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-42999&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>SAP NetWeaver Application Server (AS) Java — Visual Composer component (&lt;code>VCFRAMEWORK&lt;/code>), specifically the Metadata Uploader servlet&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>SAP NetWeaver AS Java instances with the Visual Composer Development Server component (VCFRAMEWORK) installed and exposed; per source repository (includes a version-7.5-specific code path)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (attacker-side exploit), targeting a Java EE application server (SAP NetWeaver AS Java)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-31324 is an unrestricted file upload vulnerability in the Metadata Uploader servlet of SAP NetWeaver Visual Composer (&lt;code>VCFRAMEWORK&lt;/code>), which is exposed unauthenticated on the &lt;code>/developmentserver/metadatauploader&lt;/code> endpoint. The root cause is that this endpoint accepts attacker-supplied ZIP archives containing a &lt;code>.properties&lt;/code> file and deserializes/parses their content without verifying the caller&amp;rsquo;s identity or the destination path, allowing an attacker to write arbitrary files — including JSP web shells — directly into the server&amp;rsquo;s deployed web root. The PoC in this repository (&lt;code>main.py&lt;/code>) crafts a raw Java serialized object stream (a &lt;code>java.util.Properties&lt;/code>/SDO gadget chain terminating in either direct &lt;code>Runtime.exec()&lt;/code> or an XSLTC/&lt;code>TemplatesImpl&lt;/code>-style gadget) inside the zipped &lt;code>.properties&lt;/code> payload, POSTs it to the metadata uploader, and can either execute an arbitrary OS command directly or drop a persistent JSP web shell at a predictable path under &lt;code>/irj/&lt;/code>. Successful exploitation yields remote code execution with the privileges of the SAP service user (typically &lt;code>sidadm&lt;/code>), i.e. full compromise of the SAP application server.&lt;/p></description></item></channel></rss>

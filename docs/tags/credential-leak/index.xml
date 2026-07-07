@@ -1,4 +1,174 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Credential-Leak on PoC Archive</title><link>https://poc.intelseclab.com/tags/credential-leak/</link><description>Recent content in Credential-Leak on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/credential-leak/index.xml" rel="self" type="application/rss+xml"/><item><title>ZTE ZXHN H188A Unauthenticated Wizard Handler Credential Disclosure / Auth Bypass (CVE-2026-34472)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-34472-zte-h188a-auth-bypass/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-34472-zte-h188a-auth-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Credential-Leak on PoC Archive</title><link>https://poc.intelseclab.com/tags/credential-leak/</link><description>Recent content in Credential-Leak on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/credential-leak/index.xml" rel="self" type="application/rss+xml"/><item><title>Pterodactyl Panel Unauthenticated Path Traversal via locale.json Leaking Database Credentials (CVE-2025-49132)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-49132-pterodactyl-locale-path-traversal/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-49132-pterodactyl-locale-path-traversal/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>vimmwy&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-49132&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>pterodactyl, path-traversal, unauthenticated, information-disclosure, credential-leak, database, php, config-exposure, cwe-22&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Pterodactyl Panel (game server management panel)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Prior to 1.11.11&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (requests, colorama) PoC targeting a PHP/Laravel web application&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP/HTTPS to the Pterodactyl Panel instance)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Pterodactyl Panel prior to version 1.11.11 exposes a &lt;code>/locales/locale.json&lt;/code> endpoint that accepts attacker-controlled &lt;code>locale&lt;/code> and &lt;code>namespace&lt;/code> query parameters without a required integrity/hash check, allowing an unauthenticated attacker to traverse outside the intended locale-file directory and force the panel to load and reflect the contents of arbitrary PHP configuration files as JSON. By pointing &lt;code>locale&lt;/code> at a relative path traversal sequence (e.g. &lt;code>../../../pterodactyl&lt;/code>) and &lt;code>namespace&lt;/code> at &lt;code>config/database&lt;/code>, the attacker causes the panel&amp;rsquo;s PHP config array for &lt;code>config/database.php&lt;/code> to be returned in the JSON response, leaking the live MySQL host, port, database name, username, and password. The included PoC sends this request and parses the leaked credentials directly out of the JSON response. With direct database access (or access to phpMyAdmin), an attacker can insert a row into the &lt;code>users&lt;/code> table to create an administrator account and gain full control of the panel and every game server it manages.&lt;/p></description></item><item><title>Twonky Server 8.5.2 Unauthenticated `/nmc/rpc/` Auth Bypass &amp; Admin Credential Log Leak (CVE-2025-13315)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-13315-twonky-server-auth-bypass/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-13315-twonky-server-auth-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>0xBlackash (PoC/template); vulnerability discovered by Rapid7&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-13315&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD; the source repo cites CVSS v4.0 9.3 — see Notes)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>twonky-server, dlna, upnp, media-server, auth-bypass, access-control, information-disclosure, credential-leak, cwe-284, unauthenticated, nuclei&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-13316 (hardcoded Blowfish encryption key used to decrypt the leaked password)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Twonky Server (Lynx Technology), a DLNA/UPnP media server&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>8.5.2 (Linux &amp;amp; Windows builds); per source repository, no official patch is available&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PoC written in Python 3 (&lt;code>requests&lt;/code>) plus a Nuclei YAML template; target itself is a native Twonky Server binary on Linux/Windows&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP access to the Twonky Server management interface)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-13315 is a critical access-control flaw in Twonky Server 8.5.2 discovered by Rapid7: an earlier fix restricted unauthenticated access to the &lt;code>/rpc/&lt;/code> endpoint prefix, but the equivalent &lt;code>/nmc/rpc/&lt;/code> routing path was left unprotected, so privileged RPC methods remain reachable without authentication through that alternate path. In particular, &lt;code>GET /nmc/rpc/log_getfile&lt;/code> returns the full application log, which contains the administrator&amp;rsquo;s username and Blowfish-encrypted password (&lt;code>accessuser=&lt;/code>/&lt;code>accesspwd=&lt;/code> lines). Combined with CVE-2025-13316 (hardcoded Blowfish encryption keys), an attacker can decrypt these credentials and obtain full administrative control of the media server, including all stored media and the ability to reconfigure or shut down the device. The vendor has stated no patch is currently available.&lt;/p></description></item><item><title>ZTE ZXHN H188A Unauthenticated Wizard Handler Credential Disclosure / Auth Bypass (CVE-2026-34472)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-34472-zte-h188a-auth-bypass/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-34472-zte-h188a-auth-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

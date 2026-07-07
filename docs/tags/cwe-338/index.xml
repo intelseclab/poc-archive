@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Cwe-338 on PoC Archive</title><link>https://poc.intelseclab.com/tags/cwe-338/</link><description>Recent content in Cwe-338 on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/cwe-338/index.xml" rel="self" type="application/rss+xml"/><item><title>Apache Druid Kerberos Cookie-Signing Secret Recovery via ThreadLocalRandom Seed Inversion (CVE-2025-59390)</title><link>https://poc.intelseclab.com/pocs/crypto/2026-07-06_cve-2025-59390-druid-kerberos-threadlocalrandom-seed-recovery/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/crypto/2026-07-06_cve-2025-59390-druid-kerberos-threadlocalrandom-seed-recovery/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Daeda1usUK&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-59390&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>crypto&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (CVSSv3.1: AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>apache-druid, kerberos, threadlocalrandom, prng, seed-recovery, cookie-forgery, authentication-bypass, cwe-338&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Apache Druid — Kerberos authenticator (&lt;code>druid.auth.authenticator.kerberos&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Through 34.0.0 (fixed in 35.0.0)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C++ (PoC seed-recovery tool); target is Java (JDK 8+ &lt;code>ThreadLocalRandom&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (attacker only needs observable cookie-signature outputs)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes, to obtain signed Kerberos authentication cookies from a target Druid deployment&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>When Apache Druid&amp;rsquo;s Kerberos authenticator is deployed without an explicit &lt;code>druid.auth.authenticator.kerberos.cookieSignatureSecret&lt;/code>, Druid falls back to generating that secret using Java&amp;rsquo;s &lt;code>ThreadLocalRandom&lt;/code>, which is not cryptographically secure. Because &lt;code>ThreadLocalRandom&lt;/code>&amp;rsquo;s internal 64-bit seed advances by a fixed additive constant (&lt;code>GAMMA = 0x9e3779b97f4a7c15&lt;/code>) each call and is squashed through a reversible 64-bit &amp;ldquo;mix&amp;rdquo; (splitmix64-style) finalizer before being truncated to a 32-bit output, an attacker who observes a handful of successive 32-bit outputs from the same generator instance can mathematically invert the finalizer and recover the generator&amp;rsquo;s internal seed. Once the seed (and therefore the entire output stream, forwards and backwards) is known, the attacker can reconstruct or predict the fallback cookie-signing secret and forge valid Kerberos authentication cookies, enabling authentication bypass. The included PoC is a from-scratch demonstration of the seed-recovery mathematics, not a network exploit against a live Druid instance.&lt;/p></description></item></channel></rss>

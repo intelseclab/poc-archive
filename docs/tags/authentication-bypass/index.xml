@@ -1,4 +1,1449 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Authentication-Bypass on PoC Archive</title><link>https://poc.intelseclab.com/tags/authentication-bypass/</link><description>Recent content in Authentication-Bypass on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/authentication-bypass/index.xml" rel="self" type="application/rss+xml"/><item><title>AdForest WordPress Theme OTP Login Authentication Bypass — CVE-2026-1729</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-1729-adforest-wp-auth-bypass/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-1729-adforest-wp-auth-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Authentication-Bypass on PoC Archive</title><link>https://poc.intelseclab.com/tags/authentication-bypass/</link><description>Recent content in Authentication-Bypass on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/authentication-bypass/index.xml" rel="self" type="application/rss+xml"/><item><title>Apache Druid Kerberos Cookie-Signing Secret Recovery via ThreadLocalRandom Seed Inversion (CVE-2025-59390)</title><link>https://poc.intelseclab.com/pocs/crypto/2026-07-06_cve-2025-59390-druid-kerberos-threadlocalrandom-seed-recovery/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/crypto/2026-07-06_cve-2025-59390-druid-kerberos-threadlocalrandom-seed-recovery/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Daeda1usUK&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-59390&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>crypto&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (CVSSv3.1: AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>apache-druid, kerberos, threadlocalrandom, prng, seed-recovery, cookie-forgery, authentication-bypass, cwe-338&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Apache Druid — Kerberos authenticator (&lt;code>druid.auth.authenticator.kerberos&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Through 34.0.0 (fixed in 35.0.0)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C++ (PoC seed-recovery tool); target is Java (JDK 8+ &lt;code>ThreadLocalRandom&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (attacker only needs observable cookie-signature outputs)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes, to obtain signed Kerberos authentication cookies from a target Druid deployment&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>When Apache Druid&amp;rsquo;s Kerberos authenticator is deployed without an explicit &lt;code>druid.auth.authenticator.kerberos.cookieSignatureSecret&lt;/code>, Druid falls back to generating that secret using Java&amp;rsquo;s &lt;code>ThreadLocalRandom&lt;/code>, which is not cryptographically secure. Because &lt;code>ThreadLocalRandom&lt;/code>&amp;rsquo;s internal 64-bit seed advances by a fixed additive constant (&lt;code>GAMMA = 0x9e3779b97f4a7c15&lt;/code>) each call and is squashed through a reversible 64-bit &amp;ldquo;mix&amp;rdquo; (splitmix64-style) finalizer before being truncated to a 32-bit output, an attacker who observes a handful of successive 32-bit outputs from the same generator instance can mathematically invert the finalizer and recover the generator&amp;rsquo;s internal seed. Once the seed (and therefore the entire output stream, forwards and backwards) is known, the attacker can reconstruct or predict the fallback cookie-signing secret and forge valid Kerberos authentication cookies, enabling authentication bypass. The included PoC is a from-scratch demonstration of the seed-recovery mathematics, not a network exploit against a live Druid instance.&lt;/p></description></item><item><title>Apache mod_ssl TLS 1.3 Session Resumption Client Certificate Bypass (CVE-2025-23048)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-23048-apache-tls13-session-resumption-client-cert-bypass/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-23048-apache-tls13-session-resumption-client-cert-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>absholi7ly&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-23048&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.1 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>apache, mod_ssl, httpd, tls1.3, session-resumption, client-certificate, authentication-bypass, cwe-295, openssl&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Apache HTTP Server (mod_ssl)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>2.4.35 – 2.4.62 (per source repository; tested against 2.4.57 Win64)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PoC uses Bash/OpenSSL CLI commands against Apache HTTP Server on Windows (applies to any OS build of the affected versions)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (attacker needs a valid client certificate issued by a CA trusted by at least one virtual host)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-23048 is a client certificate authentication bypass in Apache HTTP Server&amp;rsquo;s &lt;code>mod_ssl&lt;/code> that occurs when TLS 1.3 session resumption (session tickets/PSK) is used across virtual hosts configured with different &lt;code>SSLCACertificateFile&lt;/code> directives. The root cause is that &lt;code>mod_ssl&lt;/code> does not re-validate the client certificate&amp;rsquo;s issuing CA against the resuming virtual host&amp;rsquo;s trust store when a TLS 1.3 session ticket is presented, allowing a session established (and a certificate validated) on one vhost to be resumed on a different vhost that trusts a distinct CA. The PoC demonstrates this by performing a full TLS 1.3 handshake with a client certificate signed by &lt;code>CA1&lt;/code> against &lt;code>vhost1&lt;/code>, saving the session ticket, and then resuming that saved session against &lt;code>vhost2&lt;/code> (which only trusts &lt;code>CA2&lt;/code>) to reach a &lt;code>Require valid-user&lt;/code> protected path without ever presenting a certificate trusted by &lt;code>CA2&lt;/code>. Impact is unauthorized access to certificate-protected resources on any co-hosted vhost sharing the TLS stack/session cache, effectively bypassing mutual-TLS access controls.&lt;/p></description></item><item><title>CrushFTP AS2 Header Authentication Bypass (CVE-2025-54309)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-54309-crushftp-as2-auth-bypass/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-54309-crushftp-as2-auth-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>SmileyFace101&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-54309&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.0 (per NVD; researcher estimates 9.8 in source)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Patched&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>crushftp, as2, authentication-bypass, cwe-287, cwe-306, cwe-807, session-hijacking, shell, ftp-server&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>CrushFTP server, AS2 (Applicability Statement 2) authentication module / web admin interface&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>CrushFTP 10.x (tested 10.5.x-10.6.9) and 11.x (tested 11.0.x-11.1.9) with AS2 support enabled; patched in 10.7.0+ / 11.2.0+ (November 2025)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Bash/curl exploit scripts against a Java-based CrushFTP web server&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CrushFTP&amp;rsquo;s web interface trusts the presence of the HTTP headers &lt;code>X-DMZ-Proxy: disabled&lt;/code> and &lt;code>X-AS2-Version: 1.0&lt;/code> (plus a matching &lt;code>User-Agent&lt;/code>) as proof that a request originates from an already-authenticated AS2 (Applicability Statement 2 / EDI-over-HTTP) proxy path, and grants administrative access without validating any credentials. The root cause is that the server performs no cryptographic or origin verification of these headers — merely sending them from an arbitrary client is sufficient to reach &lt;code>/WebInterface/admin/*&lt;/code>. The researcher further reverse-engineered CrushFTP&amp;rsquo;s session cookie scheme, finding that the &lt;code>currentAuth&lt;/code> cookie is deterministically the last four characters of the &lt;code>CrushAuth&lt;/code> session ID, making full session establishment 100% reproducible once the header bypass grants initial access. The repository ships three shell-based PoC scripts, Snort/Suricata detection rules, and a detailed technical writeup. The author explicitly notes this is independent research and that the exact mapping to CVE-2025-54309 is speculative, since CrushFTP silently patched the issue without a detailed public advisory.&lt;/p></description></item><item><title>FortiOS/FortiProxy/FortiSwitchManager/FortiWeb FortiCloud SSO Authentication Bypass Detection Tool (CVE-2025-59718)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-59718-fortios-version-detection-scanner/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-59718-fortios-version-detection-scanner/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Francisco Santibañez (m10sec / moften)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-59718 (Fortinet advisory FG-IR-25-647; related: CVE-2025-59719)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>fortinet, fortios, fortiproxy, fortiswitchmanager, fortiweb, forticloud-sso, authentication-bypass, version-detection, ssh, scanner, cwe-347&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Fortinet FortiOS, FortiProxy, FortiSwitchManager, FortiWeb&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>FortiOS 7.0.0–7.0.17, 7.2.0–7.2.11, 7.4.0–7.4.8, 7.6.0–7.6.3; FortiProxy 7.0.0–7.0.21, 7.2.0–7.2.14, 7.4.0–7.4.10, 7.6.0–7.6.3; FortiSwitchManager 7.0.0–7.0.5, 7.2.0–7.2.6; FortiWeb 7.4.0–7.4.9, 7.6.0–7.6.4, 8.0.0 (see tool&amp;rsquo;s built-in ranges, per Fortinet advisory FG-IR-25-647)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (uses &lt;code>paramiko&lt;/code> for SSH, stdlib &lt;code>http.client&lt;/code>/&lt;code>ssl&lt;/code> for HTTPS)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No for passive/active-test detection modes; SSH admin credentials required for the most reliable &lt;code>ssh&lt;/code> mode&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTPS management interface and/or SSH access to the target device)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-59718 is an improper verification of a cryptographic signature in Fortinet&amp;rsquo;s FortiCloud SSO admin-login flow across FortiOS, FortiProxy, FortiSwitchManager, and FortiWeb, allowing authentication bypass when &lt;code>admin-forticloud-sso-login&lt;/code> is enabled on a vulnerable firmware version. This repository is not an exploit for the bypass itself; it is a detection/triage tool that identifies whether a given Fortinet device is running a vulnerable firmware version and whether FortiCloud SSO login is enabled — the precondition combination that Fortinet&amp;rsquo;s advisory flags as exploitable and reportedly targeted in the wild. It supports three detection strategies: authenticated SSH version/config checks (most reliable), passive HTTPS fingerprinting of the management portal, and an optional set of non-destructive active HTTP probes against known FortiCloud SSO endpoints.&lt;/p></description></item><item><title>FortiWeb `cgi-bin/fwbcgi` Path Traversal Authentication Bypass Leading to Rogue Admin Creation (CVE-2025-64446)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-64446-fortiweb-cgiinfo-auth-bypass/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-64446-fortiweb-cgiinfo-auth-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>litndat&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-64446&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>fortiweb, fortinet, waf, authentication-bypass, path-traversal, cgiinfo, cwe-22, cwe-288, admin-account-creation, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-58034 (post-auth OS command injection via SAML user CLI, chained after this bypass)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Fortinet FortiWeb (Web Application Firewall appliance)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>8.0.0 – 8.0.1, 7.6.0 – 7.6.4, 7.4.0 – 7.4.9, 7.2.0 – 7.2.11, 7.0.0 – 7.0.11 (per source repository)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 exploit client targeting FortiWeb&amp;rsquo;s HTTPS management/API interface&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No — this is the authentication-bypass step itself&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTPS access to the FortiWeb admin/API port, typically 443)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>FortiWeb exposes an internal CGI handler (&lt;code>cgi-bin/fwbcgi&lt;/code>) that is reachable through the authenticated &lt;code>cmdb&lt;/code> REST API path by appending a relative path-traversal sequence (&lt;code>../&lt;/code>) after a request to a nonexistent object (&lt;code>admin%3f&lt;/code>). Because path handling for the internal CGI target happens outside the access-control check tied to the &lt;code>/api/v2.0/cmdb/...&lt;/code> prefix, the traversal routes the request to the internal CGI handler while bypassing the authentication gate that would normally apply to it. The handler additionally trusts a &lt;code>CGIINFO&lt;/code> HTTP header — a base64-encoded JSON blob asserting an authenticated admin identity — without independently verifying a valid session. The PoC combines both bugs to submit an unauthenticated &amp;ldquo;add local user&amp;rdquo; request that creates a brand-new, fully privileged local administrator account with no source-IP restriction (&lt;code>trusthostv4&lt;/code>/&lt;code>trusthostv6&lt;/code> = &lt;code>0.0.0.0/0&lt;/code> / &lt;code>::/0&lt;/code>). Once this rogue admin account exists, an attacker can log in normally and, per the repository&amp;rsquo;s documentation, chain into CVE-2025-58034 (an authenticated OS command injection in the SAML user CLI configuration flow) for full device compromise.&lt;/p></description></item><item><title>FreePBX Framework Module Authentication Bypass via Forged Authorization Header (CVE-2025-66039)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-66039-freepbx-auth-bypass/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-66039-freepbx-auth-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Virendra Kumar (Cyber Leelawat); Nuclei template author &lt;code>rxerium&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-66039&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD; the source repository Nuclei template cites CVSS v3.1 9.3)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>freepbx, sangoma, voip, telephony, authentication-bypass, access-control, authtype, webserver-auth, cwe-287, cwe-863, nuclei, version-fingerprinting&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-61675 (FreePBX endpoint module authenticated SQLi), CVE-2025-61678 (FreePBX endpoint module authenticated arbitrary file upload)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>FreePBX (Sangoma) framework module — web-based administration panel for Asterisk-based VoIP/PBX systems&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>FreePBX 16 &amp;lt; 16.0.44 (patched in 16.0.44); FreePBX 17 &amp;lt; 17.0.23 (patched in 17.0.23)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Detection PoC written as a Nuclei YAML template (HTTP protocol); target is the FreePBX web administration panel (PHP/Apache)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (the vulnerability itself is a pre-auth bypass; the mirrored PoC only performs unauthenticated version fingerprinting)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP access to the FreePBX Administrator Control Panel, typically &lt;code>/admin/config.php&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-66039 is a critical authentication bypass in the FreePBX framework module that occurs when the system&amp;rsquo;s &amp;ldquo;Authorization Type&amp;rdquo; (&lt;code>AUTHTYPE&lt;/code>) is configured to &lt;code>webserver&lt;/code> — in this mode FreePBX trusts an externally-supplied &lt;code>Authorization&lt;/code> header (intended for web-server-level HTTP auth delegation) to determine the logged-in identity, and an attacker can forge that header to log in to the Administrator Control Panel without valid credentials. The root cause is that FreePBX&amp;rsquo;s &lt;code>webserver&lt;/code> auth mode implicitly trusts client-supplied identity data instead of independently verifying it against FreePBX&amp;rsquo;s own credential store. This mirrored repository does &lt;strong>not&lt;/strong> contain working exploitation code for the bypass itself — it only ships a Nuclei detection template that fingerprints the FreePBX version string from the admin login page and flags instances running versions vulnerable to CVE-2025-66039 (alongside two sibling CVEs in the endpoint module). Successful exploitation of the underlying bug grants full administrative control over the PBX, including call routing, extensions, and voicemail, on unpatched systems.&lt;/p></description></item><item><title>Gladinet CentreStack / Triofox Hardcoded AES Key Access-Ticket Forgery to Arbitrary File Read (CVE-2025-14611)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-14611-centrestack-triofox-file-read/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-14611-centrestack-triofox-file-read/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>pl4tyz&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-14611&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per repository)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>gladinet, centrestack, triofox, hardcoded-key, aes-256-cbc, access-ticket-forgery, arbitrary-file-read, authentication-bypass, iis-app-pool, python, cwe-798, cwe-321&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-30406&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Gladinet CentreStack and Triofox (&lt;code>GladCtrl64.dll&lt;/code> / &lt;code>filesvr.dn&lt;/code> file-download handler)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>All versions prior to 16.12.10420.56791&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Windows/IIS server (.NET), Python 3 PoC (pycryptodome)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (empty username/password triggers a fallback to the IIS Application Pool Identity)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CentreStack and Triofox protect file-download &amp;ldquo;access tickets&amp;rdquo; with AES-256-CBC, but the encryption key and IV are not generated per-installation — they are static byte strings hardcoded in &lt;code>GladCtrl64.dll&lt;/code>&amp;rsquo;s &lt;code>.data&lt;/code> section and returned verbatim by the misleadingly-named &lt;code>GenerateSecKey&lt;/code>/&lt;code>GenerateSecKey1&lt;/code> functions. Because the same key/IV are baked into every deployment, anyone who reverse-engineers the DLL once can decrypt and forge tickets for any CentreStack/Triofox instance in the world. A forged ticket with an empty username/password causes the &lt;code>filesvr.dn&lt;/code> handler to fall back to the IIS Application Pool Identity, and a timestamp of year 9999 makes the ticket never expire — together giving an unauthenticated attacker a persistent, universal arbitrary-file-read primitive (e.g. to steal &lt;code>web.config&lt;/code>, whose &lt;code>machineKey&lt;/code> values can then be used to chain into CVE-2025-30406 ViewState deserialization RCE).&lt;/p></description></item><item><title>JAY Login &amp; Register "Switch Back" Cookie Authentication Bypass (CVE-2025-14440)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-14440-jay-login-register-auth-bypass/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-14440-jay-login-register-auth-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Nxploited (Khaled Alenazi)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-14440&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, jay-login-register, authentication-bypass, cookie-manipulation, unauthenticated, python, cwe-287, cwe-290&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>JAY Login &amp;amp; Register (WordPress plugin)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 2.4.01&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 exploit targeting a PHP/WordPress plugin&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The JAY Login &amp;amp; Register plugin implements a &amp;ldquo;switch back&amp;rdquo; feature — presumably intended for admins who impersonate another user to later switch back to their own account — via the &lt;code>jay_login_register_process_switch_back&lt;/code> handler. This handler trusts the client-supplied &lt;code>jay_login_register_switched_from_user&lt;/code> cookie to determine which user session to restore, without adequately validating that the requester was actually the legitimate original session holder. By setting this cookie to an arbitrary value and calling the &lt;code>jay_login_register_switch_back&lt;/code> action with a target &lt;code>id&lt;/code> parameter (plus a nonce scraped from the page), an unauthenticated attacker can cause the plugin to authenticate them as any existing user, including administrators, so long as the user ID is known or guessable.&lt;/p></description></item><item><title>Mitel MiCollab Path Normalization Bypass to Internal Endpoints (CVE-2025-52913)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-52913-mitel-micollab-path-traversal/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-52913-mitel-micollab-path-traversal/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>pgaSUS99 (PoC), vulnerability discovered by Dahmani Toumi&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-52913&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>mitel, micollab, path-traversal, path-normalization, access-control-bypass, authentication-bypass, cwe-22, axis2, python, unified-communications&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Mitel MiCollab (unified communications appliance)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Per source repository (not pinned in PoC; affects vulnerable MiCollab NPM/Axis2 web components)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 PoC (uses &lt;code>requests&lt;/code>); targets Mitel MiCollab&amp;rsquo;s Java-based NPM/Axis2 web application stack&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP/HTTPS to the MiCollab appliance)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Mitel MiCollab fails to properly normalize URL paths before applying access-control checks on its NPM (Network Protocol Manager) web endpoints. By appending crafted traversal sequences such as &lt;code>..;/..;/&lt;/code> after seemingly-legitimate, unauthenticated-facing JSP/servlet paths (e.g. &lt;code>loginForm.jsp/&lt;/code>), an attacker can cause the server to resolve the request into a different, normally-protected internal path — reaching the Axis2 web-services console (&lt;code>axis2-web/HappyAxis.jsp&lt;/code>) or internal user-search endpoints (&lt;code>usp/searchUsers.do&lt;/code>) without ever authenticating. The included PoC is an unauthenticated scanner that walks a small set of known base paths combined with traversal suffixes and flags responses that return HTTP 200 with content indicative of successful access to the internal endpoint. Impact ranges from information disclosure (server/environment details via Axis2&amp;rsquo;s Happy Axis diagnostic page) to exposure of internal user-management functionality that could support further reconnaissance or account enumeration.&lt;/p></description></item><item><title>Oracle Identity Manager `;.wadl` Authentication Bypass + Groovy Script RCE (CVE-2025-61757)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-61757-oracle-identity-manager-auth-bypass-groovy-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-61757-oracle-identity-manager-auth-bypass-groovy-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Jinxia62 (金夏安全)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-61757&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>oracle, identity-manager, oim, authentication-bypass, rce, groovy, wadl, security-filter, cwe-287, cwe-94&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Oracle Identity Manager (OIM) — &lt;code>applicationmanagement&lt;/code> REST API&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Oracle Identity Manager instances exposing the &lt;code>/iam/governance/applicationmanagement/api/v1/applications/groovyscriptstatus&lt;/code> endpoint (unpatched)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Java / WebLogic-hosted REST API, Groovy scripting engine&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>None (bypassed)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP/HTTPS access to the OIM management port, typically 7001)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Oracle Identity Manager&amp;rsquo;s &lt;code>SecurityFilter&lt;/code> fails to correctly normalize request URIs before applying its authentication check. By appending a &lt;code>;.wadl&lt;/code> matrix-parameter suffix to the path of the &lt;code>groovyscriptstatus&lt;/code> endpoint, an unauthenticated attacker can bypass &lt;code>SecurityFilter&lt;/code> entirely and reach the underlying servlet directly. That servlet accepts a JSON body containing a &lt;code>script&lt;/code> field and a &lt;code>compile: true&lt;/code> flag, compiles the supplied Groovy source, and executes it server-side — because Groovy&amp;rsquo;s &lt;code>String.execute()&lt;/code> spawns an OS process, this yields unauthenticated remote code execution as the OIM/WebLogic service account.&lt;/p></description></item><item><title>RestroPress WordPress Plugin Unauthenticated Information Exposure Leading to JWT Forgery / Account Takeover (CVE-2025-9209)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-9209-restropress-jwt-forgery/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-9209-restropress-jwt-forgery/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Nxploited (Khaled Alenazi)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-9209&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>restropress, wordpress, wordpress-plugin, information-exposure, jwt, authentication-bypass, account-takeover, rest-api, mass-scanner, cwe-200, cwe-287, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>RestroPress – Online Food Ordering System (WordPress plugin)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>3.0.0 - 3.1.9.2&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 PoC targeting a WordPress/PHP REST API backend&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>RestroPress, a WordPress food-ordering plugin, exposes user account metadata through the default &lt;code>wp-json/wp/v2/users&lt;/code> REST endpoint, including private fields such as &lt;code>_rp_api_user_private_key&lt;/code>, &lt;code>_rp_api_user_public_key&lt;/code>, and &lt;code>_rp_api_user_token_key&lt;/code>. These values are sensitive per-user API credentials/JWT material that should never be reachable by unauthenticated requests. An attacker who reads them can forge or replay valid JWT/API-key pairs and call authenticated RestroPress REST routes (e.g. &lt;code>/wp-json/rp/v1/customers&lt;/code>) as any exposed user, including administrators, without ever presenting valid credentials of their own — a full authentication bypass. The PoC is a multi-threaded scanner that requests the users endpoint across a list of sites, parses the response for the leaked key/token fields, optionally verifies the recovered token+key pair against the customer API, and logs exposures, tokens, cookies, and mass-exploited sites to separate output files.&lt;/p></description></item><item><title>RustFS Hardcoded gRPC Authentication Token Leading to Full Node Compromise (CVE-2025-68926)</title><link>https://poc.intelseclab.com/pocs/cloud/2026-07-06_cve-2025-68926-rustfs-grpc-token-bypass/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/cloud/2026-07-06_cve-2025-68926-rustfs-grpc-token-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>materaj2&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-68926&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>cloud&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>rustfs, grpc, hardcoded-credentials, authentication-bypass, object-storage, s3-compatible, information-disclosure, credential-theft, data-destruction, cwe-798, cwe-306&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>RustFS (Rust-based S3-compatible distributed object storage) — internal node-to-node gRPC service&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt; 1.0.0-alpha.78&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Bash (PoC using &lt;code>grpcurl&lt;/code>); target is a Rust gRPC service (&lt;code>node_service.NodeService&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (the &amp;ldquo;authentication&amp;rdquo; token is a hardcoded, publicly known constant)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (direct network access to the RustFS internal gRPC port, default 9000-range)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>RustFS&amp;rsquo;s internal cluster/node gRPC service (&lt;code>node_service.NodeService&lt;/code>) authenticates peer-to-peer RPC calls using a fixed, hardcoded bearer token — the literal string &lt;code>&amp;quot;rustfs rpc&amp;quot;&lt;/code> — which is compiled into every RustFS build and cannot be rotated or configured by operators. Any network-reachable attacker who can supply this well-known string as the &lt;code>authorization&lt;/code> gRPC metadata header is treated as a fully trusted internal cluster node, bypassing authentication entirely. The included PoC uses &lt;code>grpcurl&lt;/code> against the real &lt;code>node.proto&lt;/code> service definition to demonstrate that an unauthenticated caller can invoke any of the 70+ privileged &lt;code>NodeService&lt;/code> RPCs — including server/system information disclosure, credential and service-account theft, bucket/volume deletion, and cluster reconfiguration/service control — resulting in complete compromise of the storage cluster.&lt;/p></description></item><item><title>SmarterMail Auth Bypass via Password Reset to Pre-Auth RCE (CVE-2025-52691 / WT-2026-0001)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-52691-smartermail-auth-bypass-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-52691-smartermail-auth-bypass-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>ninjazan420 (chained with watchTowr Labs&amp;rsquo; original CVE-2025-52691 / WT-2026-0001 research)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-52691&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>smartermail, smartertools, webmail, authentication-bypass, password-reset, rce, volume-mounts, pre-auth, watchtowr, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>WT-2026-0001 (SmarterMail authentication bypass via password reset, no CVE assigned)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>SmarterMail (SmarterTools webmail/mail server)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Build 9406 and earlier / Build 16.3.6989.16341 and earlier (CVE-2025-52691, fixed in Build 9413); auth-bypass component (WT-2026-0001) affects builds up to 9510, fixed in Build 9511&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 PoC targeting a Windows-hosted SmarterMail web/API service&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (pre-authentication chain)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP/HTTPS to the SmarterMail management API, default port 9998)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>This PoC chains two SmarterMail vulnerabilities into a single pre-authentication-to-RCE exploit. First (WT-2026-0001), the &lt;code>/api/v1/auth/force-reset-password&lt;/code> endpoint accepts a password-reset request that sets a new password for an arbitrary (including sysadmin) account without validating the caller&amp;rsquo;s identity or the supplied &lt;code>OldPassword&lt;/code> — the endpoint trusts client-supplied &lt;code>IsSysAdmin&lt;/code>/&lt;code>Username&lt;/code> fields rather than verifying an authenticated session or a legitimate reset token. Second (CVE-2025-52691), once authenticated as admin, SmarterMail&amp;rsquo;s &amp;ldquo;Volume Mounts&amp;rdquo; settings feature lets an admin register an arbitrary OS command to run under the service&amp;rsquo;s (SYSTEM) privileges, providing direct remote code execution. The PoC (&lt;code>exploit.py&lt;/code>) automates all three steps: reset the admin password, log in with it, and create a malicious volume mount containing a PowerShell reverse-shell command, yielding a SYSTEM shell on the target.&lt;/p></description></item><item><title>WordPress Mobile Builder Plugin JWT Authentication Bypass to Admin Account Creation (CVE-2025-68860)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-68860-wp-jwt-admin-forge/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-68860-wp-jwt-admin-forge/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Nxploited (Khaled Alenazi)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-68860&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD, AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, mobile-builder, jwt, authentication-bypass, hardcoded-secret, privilege-escalation, rest-api, python, cwe-288&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>WordPress &amp;ldquo;Mobile Builder&amp;rdquo; plugin&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 1.4.2&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3.7+ (PoC client) targeting a PHP/WordPress REST API server&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP/HTTPS access to the target WordPress site&amp;rsquo;s REST API)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The WordPress &amp;ldquo;Mobile Builder&amp;rdquo; plugin (&amp;lt;= 1.4.2) implements its own JWT-based authentication scheme for its REST API integration but signs/validates tokens using a static, publicly known secret (&lt;code>example_key&lt;/code>) rather than a per-site secret. Because the signing key is a hardcoded default that was never required to be rotated or randomized, any remote, unauthenticated attacker can forge a valid JWT asserting &lt;code>user_id=1&lt;/code> (WordPress&amp;rsquo;s default administrator account ID) and present it to the standard &lt;code>/wp-json/wp/v2/&lt;/code> REST endpoints. The included PoC forges such a token, confirms admin-level access via &lt;code>/wp-json/wp/v2/users/me&lt;/code>, and then uses the forged session to create a brand-new administrator account through &lt;code>/wp-json/wp/v2/users&lt;/code>, resulting in full site takeover.&lt;/p></description></item><item><title>WordPress Service Finder Bookings ≤ 6.0 Authentication Bypass via `original_user_id` Cookie (CVE-2025-5947)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-5947-servicefinder-bookings-cookie-auth-bypass/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-5947-servicefinder-bookings-cookie-auth-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>xxconi&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-5947&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (CVSSv3.1: AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, service-finder-bookings, sf-booking, authentication-bypass, cookie-forgery, privilege-escalation, cwe-639&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>WordPress plugin &amp;ldquo;Service Finder Bookings&amp;rdquo; (&lt;code>sf-booking&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>≤ 6.0&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP / WordPress (target); Python 3.6+ (PoC exploit)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No — unauthenticated&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP/HTTPS access to &lt;code>wp-admin/admin-ajax.php&lt;/code> on the target)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The Service Finder Bookings WordPress plugin implements a &amp;ldquo;switch back to original user&amp;rdquo; feature (intended for admin-to-user account switching) via the &lt;code>service_finder_switch_back()&lt;/code> AJAX handler, registered under the &lt;code>service_finder_switch_back&lt;/code> action. This handler trusts a client-supplied &lt;code>original_user_id&lt;/code> cookie and calls &lt;code>wp_set_current_user($user_id)&lt;/code> using that value directly, with no verification that the requesting session actually has the right to switch to (or from) that account. Any unauthenticated attacker can send a single request with &lt;code>Cookie: original_user_id=1&lt;/code> and be logged in as user ID 1 (typically the first administrator account), achieving full authentication bypass and, from there, complete site takeover (CWE-639, Authorization Bypass Through User-Controlled Key).&lt;/p></description></item><item><title>WordPress Simple Link Directory Unauthenticated Password Reset to Admin Takeover (CVE-2025-49901)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-49901-simple-link-directory-password-reset-bypass/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-49901-simple-link-directory-password-reset-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Nxploited (Khaled Alenazi)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-49901&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, wordpress-plugin, simple-link-directory, qc-opd, authentication-bypass, password-reset, broken-authentication, cwe-288, username-enumeration, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>WordPress &amp;ldquo;Simple Link Directory&amp;rdquo; plugin (&lt;code>qc-simple-link-directory&lt;/code> by quantumcloud)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt; 14.8.1 (fixed in 14.8.1)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 PoC targeting PHP/WordPress sites&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP/HTTPS to the target WordPress site)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The Simple Link Directory plugin&amp;rsquo;s &lt;code>qc-opd&lt;/code> (password reset) AJAX/form handler accepts a username and a new password and applies it to the corresponding WordPress account without verifying the requester&amp;rsquo;s identity via any token tied to the user, email confirmation, or capability check — only a generic page nonce is required, which the plugin itself hands out to any anonymous visitor. As a result, any unauthenticated attacker who can load a page containing the SLD reset form can harvest that nonce, enumerate valid WordPress usernames, and reset any account&amp;rsquo;s password (including the administrator&amp;rsquo;s) to an attacker-chosen value, then log in directly. The included PoC automates the entire chain — nonce discovery, username enumeration, mass password reset, and dual-mode (session/password) verification of the resulting admin access — across lists of target sites.&lt;/p></description></item><item><title>WP Directory Kit Auto-Login Authentication Bypass to Full Site Takeover (CVE-2025-13390)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-13390-wp-directory-kit-auth-bypass/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-13390-wp-directory-kit-auth-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Nxploited (Khaled ALenazi)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-13390&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, wp-directory-kit, authentication-bypass, predictable-token, account-takeover, webshell-upload, python, cwe-287&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>WP Directory Kit (WordPress plugin)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 1.4.4&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 exploit targeting a PHP/WordPress plugin&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>WP Directory Kit implements a one-click &amp;ldquo;auto-login&amp;rdquo; feature via &lt;code>wdk_generate_auto_login_link()&lt;/code> that mints a login token from weak, predictable inputs (derived from the target user ID) rather than a cryptographically random secret. Because the token can be reproduced by an attacker for any known/guessed user ID (typically ID 1 = the site administrator), an unauthenticated attacker can request &lt;code>/?auto-login=1&amp;amp;user_id=&amp;lt;id&amp;gt;&amp;amp;token=&amp;lt;predictable&amp;gt;&lt;/code> and receive valid &lt;code>wordpress_logged_in_*&lt;/code> session cookies for that account. The included PoC automates this across a target list, harvests the resulting admin cookies, then uses them to install a malicious &amp;ldquo;plugin&amp;rdquo; ZIP through the standard WordPress plugin-upload flow, dropping a PHP webshell for full remote code execution.&lt;/p></description></item><item><title>AdForest WordPress Theme OTP Login Authentication Bypass — CVE-2026-1729</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-1729-adforest-wp-auth-bypass/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-1729-adforest-wp-auth-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

@@ -1,4 +1,344 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Ssrf on PoC Archive</title><link>https://poc.intelseclab.com/tags/ssrf/</link><description>Recent content in Ssrf on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/ssrf/index.xml" rel="self" type="application/rss+xml"/><item><title>@haxtheweb/open-apis Credential Exposure via SSRF in cacheAddress Endpoint (CVE-2026-46391)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-46391-haxtheweb-open-apis-ssrf/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-46391-haxtheweb-open-apis-ssrf/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Ssrf on PoC Archive</title><link>https://poc.intelseclab.com/tags/ssrf/</link><description>Recent content in Ssrf on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/ssrf/index.xml" rel="self" type="application/rss+xml"/><item><title>Apache Parquet-Avro Schema Deserialization RCE/SSRF — Incomplete-Fix Bypass (CVE-2025-30065)</title><link>https://poc.intelseclab.com/pocs/misc/2026-07-06_cve-2025-30065-parquet-avro-schema-deserialization-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/misc/2026-07-06_cve-2025-30065-parquet-avro-schema-deserialization-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>micrictor&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-30065&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>misc&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>rce, ssrf, unsafe-deserialization, parquet-avro, avro-schema, java-class, jvm, cwe-502, cwe-20, incomplete-fix, java&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Apache Parquet Java (&lt;code>parquet-avro&lt;/code> module)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&lt;code>parquet-avro&lt;/code> &amp;lt; 1.15.1 fully vulnerable (Vector A, &lt;code>java-class&lt;/code> STRING fields); &lt;code>parquet-avro&lt;/code> 1.15.1 and later remain vulnerable to a lower-severity bypass (Vector B, record name/namespace resolution) that the official fix does not cover&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Java 17, Maven, JVM-based data pipelines (Spark/Flink/Hadoop-style consumers using &lt;code>AvroParquetReader&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (attacker must get a crafted Parquet file into a victim ingestion path; SSRF variant requires attacker-reachable callback listener)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-30065 is an unsafe class-instantiation vulnerability in Apache Parquet Java&amp;rsquo;s &lt;code>parquet-avro&lt;/code> module: crafted Avro schema metadata embedded in a Parquet file can force the reading JVM to load and instantiate attacker-named classes. The official 1.15.1 patch introduced &lt;code>ReflectClassValidator&lt;/code> to block the most dangerous vector (&lt;code>java-class&lt;/code> on STRING fields, which allows single-argument &lt;code>String&lt;/code> constructors such as &lt;code>javax.swing.JEditorPane(String url)&lt;/code> to be called with attacker-controlled input, yielding confirmed SSRF). This PoC repository shows that fix is incomplete: a second vector — setting the Avro record&amp;rsquo;s &lt;code>name&lt;/code>/&lt;code>namespace&lt;/code> to the target class&amp;rsquo;s fully-qualified name — still causes &lt;code>SpecificData.getClass(schema)&lt;/code> to call &lt;code>Class.forName()&lt;/code> and invoke a no-arg constructor on every version including patched 1.15.1, because &lt;code>ReflectClassValidator&lt;/code> is never consulted on that code path. The repository includes working demos for both vectors plus an honest write-up concluding the bypass is real but, absent a known no-arg-constructor gadget with dangerous side effects, its practical impact is more limited (DoS/file-write/environment-dependent JNDI) than the original CVSS 10.0 rating for the pre-fix vulnerability would suggest.&lt;/p></description></item><item><title>ASP.NET Core Kestrel HTTP Request Smuggling (CVE-2025-55315)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-55315-kestrel-http-request-smuggling/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-55315-kestrel-http-request-smuggling/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>ZemarKhos&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-55315&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.9 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>aspnet-core, kestrel, http-request-smuggling, chunked-transfer-encoding, dotnet, python, cwe-444, ssrf, cache-poisoning, webshell-upload&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>ASP.NET Core Kestrel web server (&lt;code>Microsoft.AspNetCore.Server.Kestrel&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>.NET Core 3.0 through .NET 9.0.9; fixed in .NET 8.0.21+, 9.0.10+, and 10.0.0-rc2+ (per source repository)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3.7+ (standard library only, no external dependencies) targeting any Kestrel-fronted ASP.NET Core application&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (direct TCP/TLS access to the Kestrel listener, typically 80/443)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-55315 is an HTTP request-smuggling vulnerability in the Kestrel web server used by ASP.NET Core, caused by Kestrel&amp;rsquo;s chunked-transfer-encoding parser accepting a lone &lt;code>\n&lt;/code> in a chunk-size line where the HTTP/1.1 spec requires &lt;code>\r\n&lt;/code>. When Kestrel sits behind a reverse proxy or load balancer that parses chunk framing strictly (or differently), the two components disagree on where one request ends and the next begins, letting an attacker smuggle a second, attacker-controlled request into the same TCP connection so it gets processed in a different (often more privileged) request context. This PoC is a 787-line, dependency-free Python tool (&lt;code>cve_2025_55315_PoC.py&lt;/code>) that opens a raw socket/TLS connection to the target, sends a crafted chunked body containing a malformed chunk-size line followed by a fully-formed smuggled &lt;code>GET&lt;/code>/&lt;code>PUT&lt;/code> request, and inspects the response stream for evidence of two distinct HTTP responses coming back on one request (the smuggling tell). Beyond detection, the tool can auto-discover common ASP.NET Core endpoints, attempt to exfiltrate &lt;code>web.config&lt;/code> via the same smuggling primitive, and optionally upload an &lt;code>.aspx&lt;/code> webshell for full RCE demonstration, gating destructive actions behind explicit confirmation prompts.&lt;/p></description></item><item><title>StoryChief WordPress Plugin Unauthenticated Arbitrary File Upload via Webhook (CVE-2025-7441)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-7441-storychief-webhook-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-7441-storychief-webhook-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Pwdnx1337&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-7441&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>storychief, wordpress, wordpress-plugin, arbitrary-file-upload, ssrf, remote-code-execution, unauthenticated, webhook, hmac, cwe-434, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>StoryChief WordPress plugin&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>1.0.42 (per source repository)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 PoC targeting a PHP/WordPress plugin backend&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The StoryChief WordPress plugin exposes an unauthenticated REST webhook endpoint (&lt;code>/wp-json/storychief/webhook&lt;/code>) that accepts a JSON payload describing a &amp;ldquo;published&amp;rdquo; story, including a &lt;code>data.featured_image.data.sizes.full&lt;/code> field containing a URL. The plugin performs a server-side HTTP GET on that attacker-supplied URL and persists the fetched content directly into the public WordPress uploads directory without validating the source domain, MIME type, or file extension. Because the endpoint only checks an HMAC signature over the payload (computed with an empty/known key in the reference implementation) rather than requiring real authentication, an unauthenticated attacker can plant an arbitrary file — including a &lt;code>.php&lt;/code> webshell — at a predictable path (&lt;code>wp-content/uploads/&amp;lt;YEAR&amp;gt;/&amp;lt;MM&amp;gt;/&amp;lt;filename&amp;gt;&lt;/code>). If the hosting environment executes PHP inside the uploads directory, this results in unauthenticated remote code execution and full site compromise.&lt;/p></description></item><item><title>ThingsBoard IoT Platform SSRF via SVG Image Upload (CVE-2025-34282)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-34282-thingsboard-ssrf-svg-upload/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-34282-thingsboard-ssrf-svg-upload/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Tamil Mathi T. (mathitam)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-34282&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.1 (per NVD); 6.9 Medium per the original disclosure README&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>thingsboard, ssrf, cwe-918, svg, image-upload, iot, python, widget-library, tenant-admin&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>ThingsBoard IoT Platform (Image Upload Gallery / Widget Library)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt; 4.2.1 (tested on 4.2.0; fixed in 4.2.1)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (exploit script), SVG/XML (payload); targets a Java-based ThingsBoard server&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (Tenant Admin bearer token)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>ThingsBoard versions before 4.2.1 are vulnerable to Server-Side Request Forgery (CWE-918) through its Image Upload Gallery feature. A Tenant Admin can upload a crafted SVG file whose &lt;code>&amp;lt;image xlink:href=&amp;quot;...&amp;quot;&amp;gt;&lt;/code> (or &lt;code>&amp;lt;pattern&amp;gt;&lt;/code>/&lt;code>&amp;lt;image&amp;gt;&lt;/code>) element references an arbitrary internal or attacker-controlled URL. When the server later processes/renders that SVG — either at upload time or when the resulting public link is embedded in a custom dashboard widget via an &lt;code>&amp;lt;object&amp;gt;&lt;/code> tag — ThingsBoard&amp;rsquo;s backend issues an outbound HTTP request to the attacker-supplied URL. This allows a Tenant Admin (a role below System Admin) to make the server reach internal-only services (e.g. metadata endpoints, internal admin panels, other tenants&amp;rsquo; infrastructure) that are not otherwise exposed to the network. The included Python PoC automates the full attack chain: uploading the malicious SVG, extracting its &lt;code>publicLink&lt;/code>, and creating a custom widget that embeds that link so the SSRF fires whenever the widget is rendered.&lt;/p></description></item><item><title>@haxtheweb/open-apis Credential Exposure via SSRF in cacheAddress Endpoint (CVE-2026-46391)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-46391-haxtheweb-open-apis-ssrf/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-46391-haxtheweb-open-apis-ssrf/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

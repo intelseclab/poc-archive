@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Theme-Editor on PoC Archive</title><link>https://poc.intelseclab.com/tags/theme-editor/</link><description>Recent content in Theme-Editor on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/theme-editor/index.xml" rel="self" type="application/rss+xml"/><item><title>Invision Community Theme Editor Template Injection Unauthenticated RCE (CVE-2025-47916)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-47916-invision-community-template-injection-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-47916-invision-community-template-injection-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Egidio Romano (vulnerability discovery); Web3-Serializer (this PoC client)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-47916&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>invision-community, ssti, template-injection, theme-editor, unauthenticated-rce, php, cwe-94, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Invision Community, &lt;code>themeeditor&lt;/code> front controller (&lt;code>IPS\core\modules\front\system\themeeditor::customCss()&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>5.0.0 through 5.0.6 (fixed in 5.0.7)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (exploit client); PHP (target, Invision Community)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Invision Community&amp;rsquo;s theme editor exposes a &lt;code>customCss()&lt;/code> action on the front-end &lt;code>themeeditor&lt;/code> controller (&lt;code>/applications/core/modules/front/system/themeeditor.php&lt;/code>) that is reachable without authentication and passes the attacker-supplied &lt;code>content&lt;/code> request parameter into &lt;code>Theme::makeProcessFunction()&lt;/code>, which processes it as a template expression. Because template expressions can invoke PHP functions, an attacker can craft a &lt;code>content&lt;/code> value that evaluates to arbitrary PHP code execution, resulting in unauthenticated remote code execution against the Invision Community forum/community platform. The included PoC (&lt;code>main.py&lt;/code>) is a small client that base64-encodes a shell command, wraps it in a template expression calling &lt;code>system()&lt;/code>/&lt;code>base64_decode()&lt;/code> wrapped with a &lt;code>die()&lt;/code> and a unique marker string, POSTs it to the vulnerable &lt;code>customCss&lt;/code> action, and extracts the command output from the response — offering single-command execution, a non-intrusive vulnerability test mode, and an interactive pseudo-shell.&lt;/p></description></item></channel></rss>

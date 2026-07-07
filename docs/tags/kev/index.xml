@@ -1,4 +1,89 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>KEV on PoC Archive</title><link>https://poc.intelseclab.com/tags/kev/</link><description>Recent content in KEV on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 17 May 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/kev/index.xml" rel="self" type="application/rss+xml"/><item><title>Fortinet FortiManager FortiJump Unauthenticated RCE (CVE-2024-47575)</title><link>https://poc.intelseclab.com/pocs/network/2026-05-17_fortimanager-fortijump-rce-cve-2024-47575/</link><pubDate>Sun, 17 May 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-05-17_fortimanager-fortijump-rce-cve-2024-47575/</guid><description>&lt;!-- 
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>KEV on PoC Archive</title><link>https://poc.intelseclab.com/tags/kev/</link><description>Recent content in KEV on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/kev/index.xml" rel="self" type="application/rss+xml"/><item><title>Monsta FTP Pre-Authentication Remote Code Execution via Arbitrary File Upload (CVE-2025-34299)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-34299-monsta-ftp-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-34299-monsta-ftp-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>KrE80r&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-34299&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>monsta-ftp, rce, pre-auth, unrestricted-file-upload, cwe-434, php, ftp, docker, nuclei, kev&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Monsta FTP (web-based FTP manager)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 2.11.2 (lab uses 2.10.4; patched in 2.11.3)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP web application; lab built with Docker/Docker Compose (php:7.4-apache base image)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (pre-authentication)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Monsta FTP versions up to and including 2.11.2 contain a pre-authentication, unrestricted arbitrary file upload vulnerability (CWE-434) in the &lt;code>downloadFile&lt;/code> action of its &lt;code>/mftp/application/api/api.php&lt;/code> endpoint. The endpoint accepts a user-supplied FTP connection configuration and a remote/local path pair without requiring the caller to be authenticated and without adequately restricting where the &amp;ldquo;downloaded&amp;rdquo; file is written on the local filesystem. An attacker can point Monsta FTP at an FTP server they control, direct it to fetch a malicious file (e.g. a PHP webshell), and specify a &lt;code>localPath&lt;/code> inside the web root, resulting in remote code execution with the privileges of the web server. This repository is a Docker-based lab (not a raw exploit script) that stands up a real, vulnerable Monsta FTP 2.10.4 instance for hands-on reproduction, plus a manual &lt;code>curl&lt;/code> PoC that reaches the vulnerable code path and a reference to a nuclei detection template.&lt;/p></description></item><item><title>Fortinet FortiManager FortiJump Unauthenticated RCE (CVE-2024-47575)</title><link>https://poc.intelseclab.com/pocs/network/2026-05-17_fortimanager-fortijump-rce-cve-2024-47575/</link><pubDate>Sun, 17 May 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-05-17_fortimanager-fortijump-rce-cve-2024-47575/</guid><description>&lt;!-- 
  File: 2026-05-17_fortimanager-fortijump-rce-cve-2024-47575.md
  Location: pocs/network/
 -->

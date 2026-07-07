@@ -1,4 +1,599 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Command-Injection on PoC Archive</title><link>https://poc.intelseclab.com/tags/command-injection/</link><description>Recent content in Command-Injection on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/command-injection/index.xml" rel="self" type="application/rss+xml"/><item><title>Cacti Authenticated OS Command Injection via Host Notes Variable (CVE-2026-39949)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-39949-cacti-host-variable-command-injection/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-39949-cacti-host-variable-command-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Command-Injection on PoC Archive</title><link>https://poc.intelseclab.com/tags/command-injection/</link><description>Recent content in Command-Injection on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/command-injection/index.xml" rel="self" type="application/rss+xml"/><item><title>D-Link AX1500 SetDeviceSettings `DeviceName` OS Command Injection (CVE-2025-60854)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-60854-dlink-ax1500-devicename-command-injection/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-60854-dlink-ax1500-devicename-command-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>K0n9-log&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-60854&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>d-link, ax1500, router, command-injection, os-command-injection, hnap, soap, telnetd, cwe-78, iot&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>D-Link AX1500 router firmware (HNAP/DHMAPI web management SOAP interface)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Firmware 1.20.01 and below&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Embedded MIPS Linux firmware (native C), browser-side JavaScript trigger&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Session context on the router&amp;rsquo;s web admin interface (SOAP calls are signed with API-AUTH/API-CONTENT from an active admin session in the browser)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (LAN/management access to the router&amp;rsquo;s HTTP(S) admin interface, e.g. &lt;code>192.168.100.1&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The D-Link AX1500 web management interface exposes a &lt;code>SetDeviceSettings&lt;/code> SOAP action (reached via the &lt;code>/DHMAPI/&lt;/code> HNAP-style endpoint) that lets a client update the router&amp;rsquo;s &lt;code>DeviceName&lt;/code>. The vulnerable firmware function (identified in the binary as &lt;code>save_CSID_SetDeviceSettings&lt;/code>, IDA name &lt;code>sub_46AE00&lt;/code>) passes the raw &lt;code>DeviceName&lt;/code> value into a command line that is executed via &lt;code>exec_cmd&lt;/code>/&lt;code>event_notifier&lt;/code>. Before doing so it calls a filtering routine (&lt;code>sub_415D74&lt;/code>) that percent-encodes a fixed set of characters (&lt;code>!#$&amp;amp;'()*+,/:;=?@[]%&lt;/code>) but never touches the shell metacharacters &lt;code>|&lt;/code>, &lt;code>`&lt;/code>, or &lt;code>&amp;quot;&lt;/code>. Because the value is embedded inside a double-quoted format string (&lt;code>&amp;quot;U=0&amp;amp;Y=261&amp;amp;I=0&amp;amp;D=%s&amp;quot;&lt;/code>), an attacker-controlled &lt;code>DeviceName&lt;/code> containing a &lt;code>&amp;quot;&lt;/code> can close the quoted string early and a following &lt;code>|&lt;/code> can chain arbitrary shell commands, which are executed with the privileges of the firmware&amp;rsquo;s event/service process — in the published PoC, spawning a &lt;code>telnetd&lt;/code> root shell on a chosen port.&lt;/p></description></item><item><title>Hoverfly Middleware Command Injection to RCE (CVE-2025-54123)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-54123-hoverfly-middleware-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-54123-hoverfly-middleware-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>0xk4rth1&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-54123&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>hoverfly, command-injection, middleware, api, token-auth, rce, cwe-78, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>SpectoLabs Hoverfly (HTTP/API service virtualization tool) — admin API, &lt;code>&amp;lt;= v1.11.3&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Hoverfly &amp;lt;= v1.11.3 (per repository README)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3.8+ (&lt;code>requests&lt;/code>) targeting the Hoverfly REST admin API (default port 8888)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — either dashboard username/password credentials or an existing bearer token&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Hoverfly exposes a middleware configuration API (&lt;code>/api/v2/hoverfly/middleware&lt;/code>) that lets an authenticated admin register an external &amp;ldquo;middleware&amp;rdquo; process to pre/post-process simulated HTTP traffic, specified as a &lt;code>binary&lt;/code> (interpreter/executable) plus a &lt;code>script&lt;/code> string. Hoverfly does not adequately restrict or sanitize the &lt;code>script&lt;/code>/&lt;code>binary&lt;/code> values before invoking them, so an authenticated user can register a middleware whose &lt;code>binary&lt;/code> is &lt;code>/bin/bash&lt;/code> and whose &lt;code>script&lt;/code> is an arbitrary shell command; when Hoverfly processes traffic through this middleware, it executes the attacker-controlled command and returns its output (including in error responses). The PoC script authenticates to Hoverfly&amp;rsquo;s &lt;code>/api/token-auth&lt;/code> endpoint (or accepts a pre-obtained bearer token), then issues an authenticated PUT to &lt;code>/api/v2/hoverfly/middleware&lt;/code> with a malicious &lt;code>binary&lt;/code>/&lt;code>script&lt;/code> pair, extracts the command&amp;rsquo;s STDOUT from the resulting error response, and prints it — demonstrating full command execution as the Hoverfly process user.&lt;/p></description></item><item><title>HPE OneView `id-pools/executeCommand` OS Command Injection (CVE-2025-37164)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-37164-hpe-oneview-command-injection/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-37164-hpe-oneview-command-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>LACHHAB-Anas&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-37164&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>hpe-oneview, command-injection, os-command-execution, rce, rest-api, python, cwe-78&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>HPE OneView (infrastructure management appliance) REST API&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Per source repository (not explicitly pinned in PoC README; see NVD/AttackerKB references)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (&lt;code>requests&lt;/code>), targets the HPE OneView REST management interface&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No — the PoC sends no &lt;code>Authorization&lt;/code>/session token and the request succeeds against the raw endpoint&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP access to the OneView REST API, default port 80)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>HPE OneView exposes a REST endpoint, &lt;code>/rest/id-pools/executeCommand&lt;/code>, that accepts a JSON body containing a &lt;code>cmd&lt;/code> field and executes it as an OS command on the appliance. The root cause is that the endpoint passes attacker-supplied input from the &lt;code>cmd&lt;/code> field directly to a command execution routine without sanitization or an allow-list, and the PoC demonstrates this requires no authentication headers to reach. The included script sends a single crafted &lt;code>PUT&lt;/code> request with &lt;code>cmd&lt;/code> set to an arbitrary shell command and prints the raw HTTP response, giving an attacker with network access to the management interface full arbitrary command execution on the OneView host. Given the CVSS 10.0 rating, this is a critical, network-reachable, unauthenticated pre-auth RCE against a privileged infrastructure-management appliance.&lt;/p></description></item><item><title>Mongoose `populate()` Match `$where` Bypass Command Injection (CVE-2025-23061)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-23061-mongoose-command-injection/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-23061-mongoose-command-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>dajneem23&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-23061&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>mongoose, nodejs, nosql-injection, mongodb, populate, where-operator, command-injection, rce, cwe-943, cwe-94, express&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2024-53900&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Mongoose (Node.js MongoDB ODM)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt; 6.13.6, &amp;gt;= 7.0.0 &amp;lt; 7.8.4, &amp;gt;= 8.0.0 &amp;lt; 8.9.5&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>JavaScript / Node.js + Express + MongoDB&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-23061 is an incomplete-fix bypass of CVE-2024-53900, a NoSQL/command injection vulnerability in the Mongoose ODM for Node.js. The original fix blocked &lt;code>$where&lt;/code> operators submitted directly inside a &lt;code>populate()&lt;/code> &lt;code>match&lt;/code> filter, but failed to sanitize &lt;code>$where&lt;/code> when it is nested inside logical operators such as &lt;code>$and&lt;/code> and &lt;code>$or&lt;/code>, allowing attacker-controlled JavaScript to be executed inside MongoDB&amp;rsquo;s (or, via &lt;code>mongo-eval&lt;/code>-style constructor abuse, the Node.js process&amp;rsquo;s) execution context. The included PoC ships an Express + Mongoose server with endpoints that pass unsanitized, user-supplied JSON straight into &lt;code>populate({ match })&lt;/code>, plus an &lt;code>exploit.js&lt;/code> client demonstrating information disclosure, authentication bypass, denial-of-service (infinite loops/sleeps), and remote code execution via &lt;code>this.constructor.constructor(...)&lt;/code> / &lt;code>global.process.mainModule.require(...)&lt;/code> sandbox-escape tricks. Impact ranges from silent data exfiltration to full RCE on the application/database host.&lt;/p></description></item><item><title>pgAdmin 4 Restore Feature Regex-Bypass Command Injection RCE (CVE-2025-13780)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-13780-pgadmin4-regex-bypass-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-13780-pgadmin4-regex-bypass-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>ThemeHackers&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-13780&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.1 (per repository)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>pgadmin4, postgresql, regex-bypass, command-injection, psql-meta-command, utf8-bom, crlf-injection, rce, python, cwe-77, cwe-88&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>pgAdmin 4&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 8.14&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 scanner/exploit against a Flask/Python web application (pgAdmin 4)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Partially — Restore endpoint reachability varies; exploitation typically requires (or benefits from) a pgAdmin session, but the regex bypass itself is an application-logic flaw&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>pgAdmin 4&amp;rsquo;s database &lt;strong>Restore&lt;/strong> feature attempts to block dangerous &lt;code>psql&lt;/code> meta-commands — which begin with a backslash (&lt;code>\&lt;/code>) and can execute arbitrary shell commands via &lt;code>\!&lt;/code> — using the regular expression &lt;code>(^|\n)[ \t]*\\&lt;/code>. This regex only matches a backslash that appears at the very start of the input or immediately after a newline. By prefixing the payload with a UTF-8 byte-order-mark (&lt;code>\xef\xbb\xbf&lt;/code>) or by inserting a CRLF (&lt;code>\n\r&lt;/code>) instead of a bare &lt;code>\n&lt;/code> before the backslash, the leading-anchor assumption is violated and the check silently fails to flag the line as dangerous, allowing a &lt;code>\! &amp;lt;command&amp;gt;&lt;/code> meta-command to reach &lt;code>psql&lt;/code> and execute on the underlying host. The included tool is a scanner/exploit combo: it fingerprints the pgAdmin version, tests both bypass variants against the security check logic, scores confidence, and (via &lt;code>--exploit&lt;/code>) can drive an actual restore-triggered reverse shell.&lt;/p></description></item><item><title>React Native Community CLI Metro Dev Server `/open-url` OS Command Injection (CVE-2025-11953)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-11953-react-native-metro-command-injection/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-11953-react-native-metro-command-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>boroeurnprach&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-11953&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>react-native, metro, dev-server, cli-server-api, open-url, command-injection, cwe-78, unauthenticated, node.js, python, windows, cross-platform&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>&lt;code>@react-native-community/cli&lt;/code> / &lt;code>@react-native-community/cli-server-api&lt;/code> (Metro Development Server, &lt;code>openURLMiddleware&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&lt;code>@react-native-community/cli&lt;/code> 4.8.0 – 20.0.0-alpha.2 (fixed in 20.0.0)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>JavaScript/Node.js (Metro dev server, target); Python 3 (PoC exploit client)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The Metro Development Server started by the React Native Community CLI binds to external network interfaces by default and exposes an &lt;code>/open-url&lt;/code> HTTP endpoint (implemented by &lt;code>openURLMiddleware&lt;/code> in &lt;code>@react-native-community/cli-server-api&lt;/code>) that is intended to open a URL/deep-link in a browser or simulator during development. The root cause is that the &lt;code>url&lt;/code> field from the client&amp;rsquo;s JSON POST body is passed through to the OS&amp;rsquo;s &amp;ldquo;open&amp;rdquo; mechanism without validating that it is actually a URL or sanitizing it against shell metacharacters, so the value is effectively executed as an OS command/executable. Because the dev server requires no authentication and listens on all interfaces, any network-adjacent attacker who can reach port 8081 can submit a crafted &lt;code>url&lt;/code> value to have the developer&amp;rsquo;s machine execute arbitrary programs — on Windows this is demonstrated by submitting &lt;code>calc.exe&lt;/code> directly as the &amp;ldquo;URL&amp;rdquo;, launching Calculator, and the same code path extends to arbitrary shell command injection.&lt;/p></description></item><item><title>tj-actions/branch-names GitHub Actions Command Injection (CVE-2025-54416)</title><link>https://poc.intelseclab.com/pocs/cloud/2026-07-06_cve-2025-54416-tj-actions-branch-names-command-injection/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/cloud/2026-07-06_cve-2025-54416-tj-actions-branch-names-command-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>DeAngelo Monette (HexborneStudio)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-54416&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>cloud&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.1 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>github-actions, ci-cd, command-injection, supply-chain, tj-actions, branch-names, secrets-exfiltration, shell-injection&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>&lt;code>tj-actions/branch-names&lt;/code> GitHub Action&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= v8.2.1 (per GitHub Advisory GHSA-gq52-6phf-x2r6)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Bash / GitHub Actions (Node-based composite action), any workflow consuming its outputs&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (attacker only needs push/branch-create access, or a PR from a fork depending on workflow trigger)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No — attack executes inside the CI runner via workflow triggers&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-54416 is a command injection vulnerability in &lt;code>tj-actions/branch-names&lt;/code>, a popular GitHub Action used to extract branch/tag names into workflow outputs, affecting over 5,000 public repositories. The root cause is the action&amp;rsquo;s internal use of &lt;code>eval printf &amp;quot;%s&amp;quot; &amp;quot;$BASE_REF&amp;quot;&lt;/code> to emit the branch name to &lt;code>$GITHUB_OUTPUT&lt;/code>, which reintroduces shell evaluation of attacker-controlled input even though a previous fix had attempted to sanitize it. An attacker who can create a branch (or otherwise control the ref name reaching the action, e.g. via a PR) can name it with an embedded &lt;code>$(...)&lt;/code> command substitution; when a downstream workflow step interpolates the action&amp;rsquo;s &lt;code>current_branch&lt;/code> output into a shell &lt;code>run:&lt;/code> block, the substitution executes with the CI runner&amp;rsquo;s privileges. This PoC repository ships a complete, runnable GitHub Actions workflow (&lt;code>.github/workflows/vulnerable-demo.yml&lt;/code>) that reproduces the vulnerable pattern end-to-end, showing secrets such as &lt;code>GITHUB_TOKEN&lt;/code> and AWS credentials being reachable for exfiltration.&lt;/p></description></item><item><title>Cacti Authenticated OS Command Injection via Host Notes Variable (CVE-2026-39949)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-39949-cacti-host-variable-command-injection/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-39949-cacti-host-variable-command-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

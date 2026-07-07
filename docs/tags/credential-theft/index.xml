@@ -1,4 +1,174 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Credential-Theft on PoC Archive</title><link>https://poc.intelseclab.com/tags/credential-theft/</link><description>Recent content in Credential-Theft on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/credential-theft/index.xml" rel="self" type="application/rss+xml"/><item><title>Nhost Local MCP Server Unauthenticated CORS Bypass Leading to Full Project Takeover (CVE-2026-34200)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-34200-nhost-mcp-cors-takeover/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-34200-nhost-mcp-cors-takeover/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Credential-Theft on PoC Archive</title><link>https://poc.intelseclab.com/tags/credential-theft/</link><description>Recent content in Credential-Theft on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/credential-theft/index.xml" rel="self" type="application/rss+xml"/><item><title>RustFS Hardcoded gRPC Authentication Token Leading to Full Node Compromise (CVE-2025-68926)</title><link>https://poc.intelseclab.com/pocs/cloud/2026-07-06_cve-2025-68926-rustfs-grpc-token-bypass/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/cloud/2026-07-06_cve-2025-68926-rustfs-grpc-token-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>materaj2&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-68926&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>cloud&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>rustfs, grpc, hardcoded-credentials, authentication-bypass, object-storage, s3-compatible, information-disclosure, credential-theft, data-destruction, cwe-798, cwe-306&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>RustFS (Rust-based S3-compatible distributed object storage) — internal node-to-node gRPC service&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt; 1.0.0-alpha.78&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Bash (PoC using &lt;code>grpcurl&lt;/code>); target is a Rust gRPC service (&lt;code>node_service.NodeService&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (the &amp;ldquo;authentication&amp;rdquo; token is a hardcoded, publicly known constant)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (direct network access to the RustFS internal gRPC port, default 9000-range)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>RustFS&amp;rsquo;s internal cluster/node gRPC service (&lt;code>node_service.NodeService&lt;/code>) authenticates peer-to-peer RPC calls using a fixed, hardcoded bearer token — the literal string &lt;code>&amp;quot;rustfs rpc&amp;quot;&lt;/code> — which is compiled into every RustFS build and cannot be rotated or configured by operators. Any network-reachable attacker who can supply this well-known string as the &lt;code>authorization&lt;/code> gRPC metadata header is treated as a fully trusted internal cluster node, bypassing authentication entirely. The included PoC uses &lt;code>grpcurl&lt;/code> against the real &lt;code>node.proto&lt;/code> service definition to demonstrate that an unauthenticated caller can invoke any of the 70+ privileged &lt;code>NodeService&lt;/code> RPCs — including server/system information disclosure, credential and service-account theft, bucket/volume deletion, and cluster reconfiguration/service control — resulting in complete compromise of the storage cluster.&lt;/p></description></item><item><title>TNC Toolbox: Web Performance Unauthenticated cPanel Credential Exposure (CVE-2025-12539)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-12539-tnc-toolbox-cpanel-creds-exposure/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-12539-tnc-toolbox-cpanel-creds-exposure/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Nxploited (Khaled Alenazi)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-12539&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, tnc-toolbox, sensitive-information-exposure, unauthenticated, cpanel, credential-theft, privilege-escalation, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>TNC Toolbox: Web Performance (WordPress plugin)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 1.4.2&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3.7+ (PoC), PHP (target plugin), targets WordPress installations&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>TNC Toolbox: Web Performance is a WordPress plugin that integrates with cPanel to manage caching/performance settings, and stores the cPanel API credentials (hostname, username, API key) it needs for that integration in plaintext files under a predictable, web-accessible path inside &lt;code>wp-content&lt;/code>. The plugin&amp;rsquo;s &lt;code>Tnc_Wp_Toolbox_Settings::save_settings&lt;/code> function writes these files without any access controls (no &lt;code>.htaccess&lt;/code> deny, no &lt;code>index.php&lt;/code> guard, no authentication check on the files themselves), so anyone who can reach the site over HTTP can simply request the files directly. The included PoC (&lt;code>CVE-2025-12539.py&lt;/code>) fingerprints the plugin&amp;rsquo;s version via its &lt;code>readme.txt&lt;/code>, and if the version is &lt;code>&amp;lt;= 1.4.2&lt;/code>, fetches the three credential files and reports the extracted cPanel username, API key, and hostname. With those credentials, an attacker can log into cPanel and, from there, upload files or otherwise gain remote code execution on the underlying hosting account.&lt;/p></description></item><item><title>Nhost Local MCP Server Unauthenticated CORS Bypass Leading to Full Project Takeover (CVE-2026-34200)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-34200-nhost-mcp-cors-takeover/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-34200-nhost-mcp-cors-takeover/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

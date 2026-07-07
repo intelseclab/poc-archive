@@ -1,4 +1,259 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Unrestricted-File-Upload on PoC Archive</title><link>https://poc.intelseclab.com/tags/unrestricted-file-upload/</link><description>Recent content in Unrestricted-File-Upload on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/unrestricted-file-upload/index.xml" rel="self" type="application/rss+xml"/><item><title>Krayin CRM — TinyMCE Upload Unrestricted File Upload to RCE (CVE-2026-38526)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-38526-krayin-crm-file-upload-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-38526-krayin-crm-file-upload-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Unrestricted-File-Upload on PoC Archive</title><link>https://poc.intelseclab.com/tags/unrestricted-file-upload/</link><description>Recent content in Unrestricted-File-Upload on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/unrestricted-file-upload/index.xml" rel="self" type="application/rss+xml"/><item><title>Monsta FTP Pre-Authentication Remote Code Execution via Arbitrary File Upload (CVE-2025-34299)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-34299-monsta-ftp-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-34299-monsta-ftp-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>KrE80r&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-34299&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>monsta-ftp, rce, pre-auth, unrestricted-file-upload, cwe-434, php, ftp, docker, nuclei, kev&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Monsta FTP (web-based FTP manager)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 2.11.2 (lab uses 2.10.4; patched in 2.11.3)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP web application; lab built with Docker/Docker Compose (php:7.4-apache base image)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (pre-authentication)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Monsta FTP versions up to and including 2.11.2 contain a pre-authentication, unrestricted arbitrary file upload vulnerability (CWE-434) in the &lt;code>downloadFile&lt;/code> action of its &lt;code>/mftp/application/api/api.php&lt;/code> endpoint. The endpoint accepts a user-supplied FTP connection configuration and a remote/local path pair without requiring the caller to be authenticated and without adequately restricting where the &amp;ldquo;downloaded&amp;rdquo; file is written on the local filesystem. An attacker can point Monsta FTP at an FTP server they control, direct it to fetch a malicious file (e.g. a PHP webshell), and specify a &lt;code>localPath&lt;/code> inside the web root, resulting in remote code execution with the privileges of the web server. This repository is a Docker-based lab (not a raw exploit script) that stands up a real, vulnerable Monsta FTP 2.10.4 instance for hands-on reproduction, plus a manual &lt;code>curl&lt;/code> PoC that reaches the vulnerable code path and a reference to a nuclei detection template.&lt;/p></description></item><item><title>SAP NetWeaver Visual Composer Unrestricted File Upload RCE (CVE-2025-31324)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-31324-sap-netweaver-visual-composer-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-31324-sap-netweaver-visual-composer-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>aristois913 (repo attributes original exploitation to &amp;ldquo;ShinyHunters&amp;rdquo; / &amp;ldquo;Scattered LAPSUS$ Hunters&amp;rdquo;)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-31324&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>sap-netweaver, visual-composer, metadatauploader, unrestricted-file-upload, java-deserialization, jsp-webshell, rce, cwe-434, cwe-502, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-42999&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>SAP NetWeaver Application Server (AS) Java — Visual Composer component (&lt;code>VCFRAMEWORK&lt;/code>), specifically the Metadata Uploader servlet&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>SAP NetWeaver AS Java instances with the Visual Composer Development Server component (VCFRAMEWORK) installed and exposed; per source repository (includes a version-7.5-specific code path)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (attacker-side exploit), targeting a Java EE application server (SAP NetWeaver AS Java)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-31324 is an unrestricted file upload vulnerability in the Metadata Uploader servlet of SAP NetWeaver Visual Composer (&lt;code>VCFRAMEWORK&lt;/code>), which is exposed unauthenticated on the &lt;code>/developmentserver/metadatauploader&lt;/code> endpoint. The root cause is that this endpoint accepts attacker-supplied ZIP archives containing a &lt;code>.properties&lt;/code> file and deserializes/parses their content without verifying the caller&amp;rsquo;s identity or the destination path, allowing an attacker to write arbitrary files — including JSP web shells — directly into the server&amp;rsquo;s deployed web root. The PoC in this repository (&lt;code>main.py&lt;/code>) crafts a raw Java serialized object stream (a &lt;code>java.util.Properties&lt;/code>/SDO gadget chain terminating in either direct &lt;code>Runtime.exec()&lt;/code> or an XSLTC/&lt;code>TemplatesImpl&lt;/code>-style gadget) inside the zipped &lt;code>.properties&lt;/code> payload, POSTs it to the metadata uploader, and can either execute an arbitrary OS command directly or drop a persistent JSP web shell at a predictable path under &lt;code>/irj/&lt;/code>. Successful exploitation yields remote code execution with the privileges of the SAP service user (typically &lt;code>sidadm&lt;/code>), i.e. full compromise of the SAP application server.&lt;/p></description></item><item><title>Webkul Medical Prescription Attachment for WooCommerce — Unrestricted File Upload to Web Shell (CVE-2025-29009)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-29009-woocommerce-medical-prescription-file-upload/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-29009-woocommerce-medical-prescription-file-upload/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Nxploited&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-29009&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, woocommerce, medical-prescription-attachment, unrestricted-file-upload, webshell, cwe-434, unauthenticated, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Webkul &amp;ldquo;Medical Prescription Attachment Plugin for WooCommerce&amp;rdquo; (WordPress plugin)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 1.2.3 (fixed in 1.2.4, per repository README)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3.8+ exploit script targeting PHP/WordPress + WooCommerce sites&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The Webkul Medical Prescription Attachment plugin for WooCommerce exposes an AJAX action, &lt;code>wkwcpa_handle_prescription_session&lt;/code>, that lets storefront visitors upload a &amp;ldquo;prescription&amp;rdquo; file attachment without validating the uploaded file&amp;rsquo;s extension or MIME type on the server side. Because the endpoint is reachable pre-authentication (it only requires a WordPress nonce that is itself embedded in the public storefront&amp;rsquo;s page source), any unauthenticated visitor can upload a PHP web shell disguised as a prescription attachment and have it stored in a web-accessible uploads directory. The PoC script scrapes the nonce from the public shop/product pages, uploads a signed PHP shell via the vulnerable AJAX handler, parses the returned attachment URL from the JSON response, and verifies remote code execution by requesting the shell and checking for a unique signature string. Successful exploitation gives the attacker arbitrary PHP execution on the WordPress host, i.e. full compromise of the site and, depending on hosting configuration, the underlying server.&lt;/p></description></item><item><title>Krayin CRM — TinyMCE Upload Unrestricted File Upload to RCE (CVE-2026-38526)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-38526-krayin-crm-file-upload-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-38526-krayin-crm-file-upload-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

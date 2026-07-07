@@ -1,4 +1,429 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Docker on PoC Archive</title><link>https://poc.intelseclab.com/tags/docker/</link><description>Recent content in Docker on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/docker/index.xml" rel="self" type="application/rss+xml"/><item><title>Coolify Authenticated Remote Command Injection via Deployment Config (CVE-2026-34038)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-34038-coolify-command-injection/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-34038-coolify-command-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Docker on PoC Archive</title><link>https://poc.intelseclab.com/tags/docker/</link><description>Recent content in Docker on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/docker/index.xml" rel="self" type="application/rss+xml"/><item><title>Grafana Enterprise SCIM User ID Collision / Impersonation (CVE-2025-41115)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-41115-grafana-scim-user-impersonation/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-41115-grafana-scim-user-impersonation/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>I3r1h0n&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-41115&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>grafana, grafana-enterprise, scim, user-impersonation, privilege-escalation, id-collision, python, docker, cwe-287&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Grafana Enterprise / Grafana Cloud, SCIM provisioning component (&lt;code>/api/scim/v2/Users&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Grafana 12.x+ with SCIM provisioning configured (&lt;code>enableSCIM&lt;/code> feature flag + &lt;code>user_sync_enabled&lt;/code> set); fixed by upstream commit &lt;code>ca5d89812015ef2db3acc62826f73650450b331e&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python (exploit script, using &lt;code>uv&lt;/code>/&lt;code>toml&lt;/code>/&lt;code>requests&lt;/code>); target is Go-based Grafana Enterprise, test stand via Docker Compose&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — requires a valid Grafana service-account Bearer token with SCIM API access&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP/HTTPS to the Grafana Enterprise SCIM API)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Grafana Enterprise/Cloud&amp;rsquo;s SCIM provisioning feature (enabled via the &lt;code>enableSCIM&lt;/code> feature flag together with &lt;code>user_sync_enabled&lt;/code>) fails to properly validate the &lt;code>externalId&lt;/code> supplied when a SCIM client creates a user via &lt;code>POST /api/scim/v2/Users&lt;/code>. This lets a caller with SCIM API access overwrite or collide with the internal ID of an existing Grafana user, effectively allowing the newly-provisioned SCIM identity to take over/impersonate that internal user — leading to privilege escalation (e.g. impersonating an existing Admin account). The repository ships a Docker Compose &amp;ldquo;stand&amp;rdquo; that spins up a real Grafana Enterprise instance with SCIM enabled (requiring a valid Enterprise license) plus a small Python exploit that posts a crafted SCIM user-creation payload with a chosen &lt;code>externalId&lt;/code> targeting the victim&amp;rsquo;s internal user ID. The upstream fix adds explicit checks preventing this ID collision during SCIM user provisioning.&lt;/p></description></item><item><title>IngressNightmare: Kubernetes ingress-nginx Admission Controller Shared-Library Injection RCE (CVE-2025-1974)</title><link>https://poc.intelseclab.com/pocs/cloud/2026-07-06_cve-2025-1974-ingressnightmare-nginx-admission-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/cloud/2026-07-06_cve-2025-1974-ingressnightmare-nginx-admission-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>BoianEduard&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-1974&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>cloud&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>kubernetes, ingress-nginx, ingressnightmare, admission-controller, nginx, ssl-engine, shared-library-injection, cluster-secrets, docker, python, c, cwe-94&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Kubernetes &lt;code>ingress-nginx&lt;/code> admission controller&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>All versions &amp;lt; 1.11.5, 1.11.0-1.11.4, and 1.12.0&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Kubernetes cluster (any provider), C (malicious &lt;code>.so&lt;/code> payload), Python 3 (trigger script)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (unauthenticated access to the in-cluster admission webhook is sufficient — &amp;ldquo;IngressNightmare&amp;rdquo;)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (network access to the ingress-nginx controller pod&amp;rsquo;s admission webhook port, typically reachable from within the cluster or via a misconfigured exposure)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The ingress-nginx admission controller validates incoming &lt;code>Ingress&lt;/code> objects by rendering a temporary NGINX configuration and running &lt;code>nginx -t&lt;/code> against it — but the validation webhook itself has no authentication and accepts attacker-controlled configuration snippet annotations. By injecting the annotation &lt;code>nginx.ingress.kubernetes.io/configuration-snippet&lt;/code> with content that breaks out of its intended NGINX config context and adds an &lt;code>ssl_engine /path/to/payload.so;&lt;/code> directive, an attacker can make &lt;code>nginx -t&lt;/code> load an arbitrary shared library from a path they control (uploaded beforehand via a separate write primitive to the controller pod, e.g. &lt;code>/tmp/exploit.so&lt;/code>). Because shared libraries execute constructor code as soon as they are mapped into memory, this achieves arbitrary code execution inside the ingress-nginx controller pod — which, under default RBAC, has read access to all Secrets in the cluster, making this a path to full cluster compromise. Publicly disclosed by Wiz Research as &amp;ldquo;IngressNightmare.&amp;rdquo;&lt;/p></description></item><item><title>Monsta FTP Pre-Authentication Remote Code Execution via Arbitrary File Upload (CVE-2025-34299)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-34299-monsta-ftp-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-34299-monsta-ftp-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>KrE80r&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-34299&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>monsta-ftp, rce, pre-auth, unrestricted-file-upload, cwe-434, php, ftp, docker, nuclei, kev&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Monsta FTP (web-based FTP manager)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 2.11.2 (lab uses 2.10.4; patched in 2.11.3)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP web application; lab built with Docker/Docker Compose (php:7.4-apache base image)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (pre-authentication)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Monsta FTP versions up to and including 2.11.2 contain a pre-authentication, unrestricted arbitrary file upload vulnerability (CWE-434) in the &lt;code>downloadFile&lt;/code> action of its &lt;code>/mftp/application/api/api.php&lt;/code> endpoint. The endpoint accepts a user-supplied FTP connection configuration and a remote/local path pair without requiring the caller to be authenticated and without adequately restricting where the &amp;ldquo;downloaded&amp;rdquo; file is written on the local filesystem. An attacker can point Monsta FTP at an FTP server they control, direct it to fetch a malicious file (e.g. a PHP webshell), and specify a &lt;code>localPath&lt;/code> inside the web root, resulting in remote code execution with the privileges of the web server. This repository is a Docker-based lab (not a raw exploit script) that stands up a real, vulnerable Monsta FTP 2.10.4 instance for hands-on reproduction, plus a manual &lt;code>curl&lt;/code> PoC that reaches the vulnerable code path and a reference to a nuclei detection template.&lt;/p></description></item><item><title>RediShell: Redis Lua Scripting Use-After-Free Leading to JOP-Chained Remote Code Execution (CVE-2025-49844)</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-06_cve-2025-49844-redis-lua-uaf-jop-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-06_cve-2025-49844-redis-lua-uaf-jop-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>cc3305&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-49844&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.9 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>redis, lua, use-after-free, uaf, memory-corruption, jop, jump-oriented-programming, shellcode, iced-x86, docker, cwe-416, rce&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Redis (embedded Lua scripting engine)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>6.2 before 6.2.20; 7.2 before 7.2.11; 7.4 before 7.4.6; 8.0 before 8.0.4; 8.2 before 8.2.2&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (redis, iced-x86) PoC targeting Redis server on Linux x86-64 (specific Docker builds)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (a user/connection with access to run Lua scripts via &lt;code>EVAL&lt;/code>/&lt;code>EVALSHA&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (TCP to the Redis port, default 6379)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-49844 (&amp;ldquo;RediShell&amp;rdquo;) is a use-after-free vulnerability in Redis&amp;rsquo;s embedded Lua scripting engine: a crafted Lua script can manipulate the Lua garbage collector so that a &lt;code>Proto&lt;/code> (function prototype) object is freed while a reference to it is still reachable, allowing the attacker to control freed memory and leak heap pointers. The included PoC exploits this precisely: it uploads carefully constructed Lua scripts via &lt;code>EVAL&lt;/code> to trigger the UAF and leak a stable heap address, uses that leak to compute the Redis process&amp;rsquo;s PIE base address and the location of the Lua allocator/state, forges a fake &lt;code>CClosure&lt;/code> object with a jump-oriented-programming (JOP) gadget chain (built with the &lt;code>iced-x86&lt;/code> disassembler/encoder library) that calls &lt;code>mprotect&lt;/code> to mark an attacker-controlled Lua string page executable, and finally pivots execution into hand-assembled x86-64 shellcode that forks and execs &lt;code>/bin/sh -c &amp;lt;command&amp;gt;&lt;/code> — achieving remote code execution as the Redis process user, entirely outside the Lua sandbox.&lt;/p></description></item><item><title>Spring Cloud Gateway Actuator RCE — Vulnerable Environment Lab (CVE-2025-41243)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-41243-spring-cloud-gateway-actuator-rce-lab/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-41243-spring-cloud-gateway-actuator-rce-lab/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>SFN233 — &lt;a href="https://github.com/SFN233">github.com/SFN233&lt;/a>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-41243&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>spring-cloud-gateway, actuator, spel-injection, rce, java, docker, lab-environment&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Spring Cloud Gateway (&lt;code>spring-cloud-starter-gateway&lt;/code> 4.1.0 on &lt;code>spring-boot-starter-parent&lt;/code> 3.3.0), with Actuator&amp;rsquo;s &lt;code>gateway&lt;/code> endpoint exposed&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Per source repository&amp;rsquo;s &lt;code>pox.xml&lt;/code> (sic, actually a Maven &lt;code>pom.xml&lt;/code>): &lt;code>spring-cloud-starter-gateway&lt;/code> 4.1.0 with &lt;code>spring-boot-starter-actuator&lt;/code> and &lt;code>management.endpoints.web.exposure.include=gateway&lt;/code> enabled&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Java / Spring Boot (declared target); the container actually shipped in this repo runs Python 3&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No — the Actuator &lt;code>gateway&lt;/code> endpoints are unauthenticated when exposed with the given &lt;code>application.properties&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — reach the exposed Actuator/gateway HTTP endpoint (e.g. &lt;code>/actuator/gateway/routes&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-41243 concerns a SpEL (Spring Expression Language) injection vulnerability in Spring Cloud Gateway that leads to remote code execution when the Actuator &lt;code>gateway&lt;/code> management endpoint is exposed. The root cause is that Actuator&amp;rsquo;s gateway routes API allows submitting SpEL-backed route predicates/filters that are evaluated server-side without adequate sandboxing, letting an authenticated-to-the-endpoint (here, unauthenticated-by-config) attacker inject expressions that execute arbitrary code in the context of the JVM. This particular repository, however, is &lt;strong>not a working exploit&lt;/strong> — it is a minimal Docker Compose &amp;ldquo;lab&amp;rdquo; scaffold: a &lt;code>pom.xml&lt;/code> (checked in as &lt;code>pox.xml&lt;/code>) and &lt;code>application.properties&lt;/code> describe the intended vulnerable Spring Cloud Gateway configuration, but the actual &lt;code>Dockerfile&lt;/code> that gets built does not compile or run that Spring application at all. It installs Python 3 on Alpine and runs an inline Python HTTP server that simply returns a static, hardcoded JSON blob (&lt;code>{&amp;quot;status&amp;quot;:&amp;quot;UP&amp;quot;,&amp;quot;CVE&amp;quot;:&amp;quot;2025-41243&amp;quot;,&amp;quot;routes&amp;quot;:[&amp;quot;hack_route&amp;quot;]}&lt;/code>) on any GET request to port 8080. There is no real Spring Cloud Gateway instance, no Actuator, and no SpEL evaluation happening anywhere in this repo — it is a mock/simulated response, not a reproducible vulnerable target.&lt;/p></description></item><item><title>Coolify Authenticated Remote Command Injection via Deployment Config (CVE-2026-34038)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-34038-coolify-command-injection/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-34038-coolify-command-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

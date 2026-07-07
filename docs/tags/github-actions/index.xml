@@ -1,4 +1,89 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Github-Actions on PoC Archive</title><link>https://poc.intelseclab.com/tags/github-actions/</link><description>Recent content in Github-Actions on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/github-actions/index.xml" rel="self" type="application/rss+xml"/><item><title>psf/black GitHub Action RCE via Insecure Regex Version Validation — CVE-2026-31900</title><link>https://poc.intelseclab.com/pocs/misc/2026-07-05_cve-2026-31900-psf-black-action-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/misc/2026-07-05_cve-2026-31900-psf-black-action-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Github-Actions on PoC Archive</title><link>https://poc.intelseclab.com/tags/github-actions/</link><description>Recent content in Github-Actions on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/github-actions/index.xml" rel="self" type="application/rss+xml"/><item><title>tj-actions/branch-names GitHub Actions Command Injection (CVE-2025-54416)</title><link>https://poc.intelseclab.com/pocs/cloud/2026-07-06_cve-2025-54416-tj-actions-branch-names-command-injection/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/cloud/2026-07-06_cve-2025-54416-tj-actions-branch-names-command-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>DeAngelo Monette (HexborneStudio)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-54416&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>cloud&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.1 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>github-actions, ci-cd, command-injection, supply-chain, tj-actions, branch-names, secrets-exfiltration, shell-injection&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>&lt;code>tj-actions/branch-names&lt;/code> GitHub Action&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= v8.2.1 (per GitHub Advisory GHSA-gq52-6phf-x2r6)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Bash / GitHub Actions (Node-based composite action), any workflow consuming its outputs&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (attacker only needs push/branch-create access, or a PR from a fork depending on workflow trigger)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No — attack executes inside the CI runner via workflow triggers&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-54416 is a command injection vulnerability in &lt;code>tj-actions/branch-names&lt;/code>, a popular GitHub Action used to extract branch/tag names into workflow outputs, affecting over 5,000 public repositories. The root cause is the action&amp;rsquo;s internal use of &lt;code>eval printf &amp;quot;%s&amp;quot; &amp;quot;$BASE_REF&amp;quot;&lt;/code> to emit the branch name to &lt;code>$GITHUB_OUTPUT&lt;/code>, which reintroduces shell evaluation of attacker-controlled input even though a previous fix had attempted to sanitize it. An attacker who can create a branch (or otherwise control the ref name reaching the action, e.g. via a PR) can name it with an embedded &lt;code>$(...)&lt;/code> command substitution; when a downstream workflow step interpolates the action&amp;rsquo;s &lt;code>current_branch&lt;/code> output into a shell &lt;code>run:&lt;/code> block, the substitution executes with the CI runner&amp;rsquo;s privileges. This PoC repository ships a complete, runnable GitHub Actions workflow (&lt;code>.github/workflows/vulnerable-demo.yml&lt;/code>) that reproduces the vulnerable pattern end-to-end, showing secrets such as &lt;code>GITHUB_TOKEN&lt;/code> and AWS credentials being reachable for exfiltration.&lt;/p></description></item><item><title>psf/black GitHub Action RCE via Insecure Regex Version Validation — CVE-2026-31900</title><link>https://poc.intelseclab.com/pocs/misc/2026-07-05_cve-2026-31900-psf-black-action-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/misc/2026-07-05_cve-2026-31900-psf-black-action-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

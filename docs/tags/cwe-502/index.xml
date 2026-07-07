@@ -83,7 +83,432 @@
 &lt;/table>
 &lt;hr>
 &lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>Apache Camel&amp;rsquo;s &lt;code>camel-consul&lt;/code> component uses a Consul key/value store as a Camel bean registry (&lt;code>ConsulRegistry&lt;/code>). When a bean is looked up by name, &lt;code>ConsulRegistryUtils.deserialize()&lt;/code> Base64-decodes the stored KV value and deserializes it with a raw &lt;code>ObjectInputStream&lt;/code> and, in affected versions, &lt;strong>no &lt;code>ObjectInputFilter&lt;/code>&lt;/strong>. Any principal able to write to the Consul KV path used by the registry can plant a Java gadget-chain payload (e.g. via &lt;code>commons-collections&lt;/code>) that executes arbitrary code the next time Camel resolves that bean — through &lt;code>lookupByName()&lt;/code>, &lt;code>lookupByNameAndType()&lt;/code>, &lt;code>findByTypeWithName()&lt;/code>, or &lt;code>findByType()&lt;/code>. This is the same root-cause class of bug as CVE-2024-22369 (Cassandra-backed registry) and CVE-2024-23114 / CVE-2026-25747 (LevelDB-backed registry), which were overlooked when &lt;code>camel-consul&lt;/code> was audited during those earlier fixes.&lt;/p></description></item><item><title>Apache MINA acceptMatchers Deserialization Filter Bypass to RCE (CVE-2026-42779)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-42779-apache-mina-deserialization-bypass/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-42779-apache-mina-deserialization-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;p>Apache Camel&amp;rsquo;s &lt;code>camel-consul&lt;/code> component uses a Consul key/value store as a Camel bean registry (&lt;code>ConsulRegistry&lt;/code>). When a bean is looked up by name, &lt;code>ConsulRegistryUtils.deserialize()&lt;/code> Base64-decodes the stored KV value and deserializes it with a raw &lt;code>ObjectInputStream&lt;/code> and, in affected versions, &lt;strong>no &lt;code>ObjectInputFilter&lt;/code>&lt;/strong>. Any principal able to write to the Consul KV path used by the registry can plant a Java gadget-chain payload (e.g. via &lt;code>commons-collections&lt;/code>) that executes arbitrary code the next time Camel resolves that bean — through &lt;code>lookupByName()&lt;/code>, &lt;code>lookupByNameAndType()&lt;/code>, &lt;code>findByTypeWithName()&lt;/code>, or &lt;code>findByType()&lt;/code>. This is the same root-cause class of bug as CVE-2024-22369 (Cassandra-backed registry) and CVE-2024-23114 / CVE-2026-25747 (LevelDB-backed registry), which were overlooked when &lt;code>camel-consul&lt;/code> was audited during those earlier fixes.&lt;/p></description></item><item><title>Apache Parquet-Avro Schema Deserialization RCE/SSRF — Incomplete-Fix Bypass (CVE-2025-30065)</title><link>https://poc.intelseclab.com/pocs/misc/2026-07-06_cve-2025-30065-parquet-avro-schema-deserialization-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/misc/2026-07-06_cve-2025-30065-parquet-avro-schema-deserialization-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>micrictor&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-30065&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>misc&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>rce, ssrf, unsafe-deserialization, parquet-avro, avro-schema, java-class, jvm, cwe-502, cwe-20, incomplete-fix, java&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Apache Parquet Java (&lt;code>parquet-avro&lt;/code> module)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&lt;code>parquet-avro&lt;/code> &amp;lt; 1.15.1 fully vulnerable (Vector A, &lt;code>java-class&lt;/code> STRING fields); &lt;code>parquet-avro&lt;/code> 1.15.1 and later remain vulnerable to a lower-severity bypass (Vector B, record name/namespace resolution) that the official fix does not cover&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Java 17, Maven, JVM-based data pipelines (Spark/Flink/Hadoop-style consumers using &lt;code>AvroParquetReader&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (attacker must get a crafted Parquet file into a victim ingestion path; SSRF variant requires attacker-reachable callback listener)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-30065 is an unsafe class-instantiation vulnerability in Apache Parquet Java&amp;rsquo;s &lt;code>parquet-avro&lt;/code> module: crafted Avro schema metadata embedded in a Parquet file can force the reading JVM to load and instantiate attacker-named classes. The official 1.15.1 patch introduced &lt;code>ReflectClassValidator&lt;/code> to block the most dangerous vector (&lt;code>java-class&lt;/code> on STRING fields, which allows single-argument &lt;code>String&lt;/code> constructors such as &lt;code>javax.swing.JEditorPane(String url)&lt;/code> to be called with attacker-controlled input, yielding confirmed SSRF). This PoC repository shows that fix is incomplete: a second vector — setting the Avro record&amp;rsquo;s &lt;code>name&lt;/code>/&lt;code>namespace&lt;/code> to the target class&amp;rsquo;s fully-qualified name — still causes &lt;code>SpecificData.getClass(schema)&lt;/code> to call &lt;code>Class.forName()&lt;/code> and invoke a no-arg constructor on every version including patched 1.15.1, because &lt;code>ReflectClassValidator&lt;/code> is never consulted on that code path. The repository includes working demos for both vectors plus an honest write-up concluding the bypass is real but, absent a known no-arg-constructor gadget with dangerous side effects, its practical impact is more limited (DoS/file-write/environment-dependent JNDI) than the original CVSS 10.0 rating for the pre-fix vulnerability would suggest.&lt;/p></description></item><item><title>GiveWP Unauthenticated PHP Object Injection via Weak Serialized-Data Regex Check (CVE-2025-22777)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-22777-givewp-php-object-injection/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-22777-givewp-php-object-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>SevDMG&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-22777&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>givewp, wordpress, wordpress-plugin, php-object-injection, deserialization, unserialize, gadget-chain, cwe-502, php, unauthenticated&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>GiveWP – Donation Plugin and Fundraising Platform (WordPress plugin, 100,000+ active installs)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 3.19.3 (patched in 3.19.4)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP (target plugin), Python (PoC/exploit tooling) on WordPress&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP access to the donation form / &lt;code>admin-ajax.php&lt;/code> endpoint)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-22777 is an unauthenticated PHP Object Injection (CWE-502, Deserialization of Untrusted Data) vulnerability in the GiveWP WordPress donation plugin. GiveWP stores certain donor-supplied form field values as serialized PHP meta in the database and runs a regex check meant to confirm the value &amp;ldquo;looks like&amp;rdquo; a safe serialized string before it is later passed to PHP&amp;rsquo;s &lt;code>unserialize()&lt;/code>; that regex check is weak and can be defeated by padding the payload with junk/gibberish characters, letting a crafted serialized object slip through and get deserialized. If a suitable gadget chain (a class with an exploitable magic method such as &lt;code>__destruct()&lt;/code>/&lt;code>__wakeup()&lt;/code>) is reachable in GiveWP or a co-installed plugin/theme, this results in arbitrary PHP object instantiation and potentially remote code execution, arbitrary file write/deletion, or other high-impact side effects — with no authentication required. This mirrored repository is an independent researcher&amp;rsquo;s work-in-progress PoC that builds a serialized &amp;ldquo;gadget&amp;rdquo; object (a &lt;code>FinalGadget&lt;/code>/&lt;code>ChainGadget&lt;/code> class chain targeting a &lt;code>filename&lt;/code> property, injected via the donation form&amp;rsquo;s &lt;code>give_company&lt;/code> field to &lt;code>admin-ajax.php?action=give_process_donation&lt;/code>), but the actual HTTP exploit driver (&lt;code>exploit_cve2025-22777.py&lt;/code>) ships with an empty &lt;code>payload = {}&lt;/code> and no request is ever sent, and the more developed &lt;code>exploit_struct.py&lt;/code> script&amp;rsquo;s &lt;code>exploit()&lt;/code> function is truncated before it issues any HTTP request. As shipped, neither script performs a working end-to-end attack.&lt;/p></description></item><item><title>Laravel Livewire Remote Code Execution via Known APP_KEY (CVE-2025-54068)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-54068-livewire-appkey-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-54068-livewire-appkey-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>haxorstars (recode of original research by Synacktiv / Livepyre)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-54068&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>laravel, livewire, php, deserialization, app-key, hmac-forgery, gadget-chain, rce, cwe-502, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Laravel Livewire (versions prior to v3.6.4)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Livewire &amp;lt; v3.6.4 (per repository&amp;rsquo;s bundled &lt;code>versions.json&lt;/code> version-hash fingerprinting)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 exploit client targeting a PHP/Laravel + Livewire web application&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No application session required, but the attacker must know (or have leaked/brute-forced) the target&amp;rsquo;s Laravel &lt;code>APP_KEY&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Laravel Livewire serializes component state into a &lt;code>wire:snapshot&lt;/code> HTML attribute and protects it with an HMAC-SHA256 checksum keyed on the application&amp;rsquo;s &lt;code>APP_KEY&lt;/code>. If an attacker obtains the &lt;code>APP_KEY&lt;/code> (leaked &lt;code>.env&lt;/code>, default/demo key, weak secret, etc.), they can craft an arbitrary snapshot payload, sign it with a correctly computed checksum, and submit it to Livewire&amp;rsquo;s component-update endpoint. Because Livewire trusts any snapshot whose checksum matches, a forged snapshot containing nested serialized PHP objects (&lt;code>Illuminate\Broadcasting\BroadcastEvent&lt;/code>, &lt;code>Illuminate\Validation\Validator&lt;/code>, &lt;code>Laravel\SerializableClosure\Serializers\Signed&lt;/code>, &lt;code>GuzzleHttp\Psr7\FnStream&lt;/code>, etc.) reaches a PHP-object-injection gadget chain that invokes an arbitrary PHP function (e.g. &lt;code>system&lt;/code>, &lt;code>shell_exec&lt;/code>, or &lt;code>unserialize&lt;/code> of a further attacker-supplied payload) with attacker-controlled arguments, yielding remote code execution. This repository (a Python recode of Synacktiv&amp;rsquo;s original &amp;ldquo;Livepyre&amp;rdquo; PoC) automates the whole chain: locating the Livewire snapshot and CSRF token on a page, rebuilding a malicious snapshot with the injected gadget, HMAC-signing it using the supplied &lt;code>APP_KEY&lt;/code>, and POSTing it to the discovered Livewire update URI.&lt;/p></description></item><item><title>Roundcube Webmail Post-Auth RCE via PHP Object Deserialization (CVE-2025-49113)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-49113-roundcube-php-object-deserialization-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-49113-roundcube-php-object-deserialization-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>rippsec&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-49113&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.9 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>roundcube, webmail, php, deserialization, object-injection, gadget-chain, rce, post-auth, cwe-502&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Roundcube Webmail&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>≤ 1.6.10&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (stdlib only) PoC targeting a PHP web application&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (any valid Roundcube user account)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP/HTTPS to the Roundcube instance)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Roundcube Webmail versions up to and including 1.6.10 are vulnerable to a post-authentication PHP object deserialization vulnerability in the file upload handler, which passes a client-supplied attachment filename through a deserialization path without validation. The root cause is that the &lt;code>Crypt_GPG_Engine&lt;/code> class (present in Roundcube&amp;rsquo;s dependency chain) acts as a usable gadget chain: its &lt;code>_gpgconf&lt;/code> property is invoked in a system-level call during object handling. An authenticated attacker can craft a serialized &lt;code>Crypt_GPG_Engine&lt;/code> object as the filename of an uploaded attachment, causing the server to instantiate it and execute an attacker-controlled OS command as the webserver user. The included Python PoC logs into Roundcube, then uploads a multipart file whose filename field contains the malicious serialized payload (with the command Base32-encoded to survive the filename field&amp;rsquo;s character restrictions), achieving full remote command execution.&lt;/p></description></item><item><title>SAP NetWeaver Visual Composer Unrestricted File Upload RCE (CVE-2025-31324)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-31324-sap-netweaver-visual-composer-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-31324-sap-netweaver-visual-composer-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>aristois913 (repo attributes original exploitation to &amp;ldquo;ShinyHunters&amp;rdquo; / &amp;ldquo;Scattered LAPSUS$ Hunters&amp;rdquo;)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-31324&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>sap-netweaver, visual-composer, metadatauploader, unrestricted-file-upload, java-deserialization, jsp-webshell, rce, cwe-434, cwe-502, python&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-42999&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>SAP NetWeaver Application Server (AS) Java — Visual Composer component (&lt;code>VCFRAMEWORK&lt;/code>), specifically the Metadata Uploader servlet&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>SAP NetWeaver AS Java instances with the Visual Composer Development Server component (VCFRAMEWORK) installed and exposed; per source repository (includes a version-7.5-specific code path)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (attacker-side exploit), targeting a Java EE application server (SAP NetWeaver AS Java)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CVE-2025-31324 is an unrestricted file upload vulnerability in the Metadata Uploader servlet of SAP NetWeaver Visual Composer (&lt;code>VCFRAMEWORK&lt;/code>), which is exposed unauthenticated on the &lt;code>/developmentserver/metadatauploader&lt;/code> endpoint. The root cause is that this endpoint accepts attacker-supplied ZIP archives containing a &lt;code>.properties&lt;/code> file and deserializes/parses their content without verifying the caller&amp;rsquo;s identity or the destination path, allowing an attacker to write arbitrary files — including JSP web shells — directly into the server&amp;rsquo;s deployed web root. The PoC in this repository (&lt;code>main.py&lt;/code>) crafts a raw Java serialized object stream (a &lt;code>java.util.Properties&lt;/code>/SDO gadget chain terminating in either direct &lt;code>Runtime.exec()&lt;/code> or an XSLTC/&lt;code>TemplatesImpl&lt;/code>-style gadget) inside the zipped &lt;code>.properties&lt;/code> payload, POSTs it to the metadata uploader, and can either execute an arbitrary OS command directly or drop a persistent JSP web shell at a predictable path under &lt;code>/irj/&lt;/code>. Successful exploitation yields remote code execution with the privileges of the SAP service user (typically &lt;code>sidadm&lt;/code>), i.e. full compromise of the SAP application server.&lt;/p></description></item><item><title>Apache MINA acceptMatchers Deserialization Filter Bypass to RCE (CVE-2026-42779)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-42779-apache-mina-deserialization-bypass/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-42779-apache-mina-deserialization-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>
