@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-07-07 08:36:33
+> Last updated: 2026-07-07 08:39:12
 
 ---
 
@@ -564,7 +564,6 @@
 
 ## Archives
 
-- [unknown](./archive/unknown.md) — 0 entries
 - [2025](./archive/2025.md) — 111 entries
 - [2024](./archive/2024.md) — 12 entries
 - [2023](./archive/2023.md) — 2 entries
