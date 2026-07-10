@@ -1,4 +1,604 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Pocs on PoC Archive</title><link>https://poc.intelseclab.com/pocs/</link><description>Recent content in Pocs on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Wed, 08 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/pocs/index.xml" rel="self" type="application/rss+xml"/><item><title>Linux Kernel rtmutex Priority-Inheritance Stack-UAF — "GhostLock" (CVE-2026-43499, Nebula Security weaponized variant)</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-08_cve-2026-43499-ghostlock-nebula-security/</link><pubDate>Wed, 08 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-08_cve-2026-43499-ghostlock-nebula-security/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Pocs on PoC Archive</title><link>https://poc.intelseclab.com/pocs/</link><description>Recent content in Pocs on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sat, 11 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/pocs/index.xml" rel="self" type="application/rss+xml"/><item><title>D-Link DIR-820L `get_set.ccp` LAN Configuration OS Command Injection (CVE-2022-26258)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-11_cve-2022-26258-dlink-dir820l-command-injection/</link><pubDate>Sat, 11 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-11_cve-2022-26258-dlink-dir820l-command-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-11&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>SkYe231, Akast, GD, Amao (Hillstone Networks) — public PoC; entry compiled from NVD/CISA KEV sources&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2022-26258&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (CVSS 3.1, &lt;code>AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized (public PoC available; listed in CISA KEV)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>d-link, dir-820l, router, command-injection, cwe-78, unauthenticated, remote, iot, eol-device, kev&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>D-Link DIR-820L wireless router, all hardware revisions&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Firmware 1.05B03 (confirmed by NVD and the public PoC; likely affects other 1.05 branch builds given the shared &lt;code>libleopard.so&lt;/code> filter logic, but only 1.05B03 has been independently verified)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Embedded Linux / MIPS firmware, C, &lt;code>boa&lt;/code>/CGI-style web management stack&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No, per NVD/CISA classification (&lt;code>PR:N&lt;/code> in the CVSS vector). The published PoC request does carry a &lt;code>Cookie: hasLogin=1&lt;/code> header, but this is a static client-supplied flag rather than a server-validated session token — see Notes for the caveat on this point.&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — attacker needs HTTP(S) access to the router&amp;rsquo;s LAN-side management interface (WAN-side exposure would require the admin interface to be reachable from the internet, which is not the default configuration)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>D-Link DIR-820L firmware 1.05B03 contains an OS command injection (CWE-78) in the router&amp;rsquo;s &lt;code>/get_set.ccp&lt;/code> LAN-configuration handler. The &lt;code>lanHostCfg_DeviceName_1.1.1.0&lt;/code> parameter (submitted from the &amp;ldquo;Device Name&amp;rdquo; field on the &lt;code>lan.asp&lt;/code> LAN setup page) is filtered by both client-side JavaScript and a backend routine (&lt;code>hasInjectionString&lt;/code>, implemented in &lt;code>lib/libleopard.so&lt;/code>), but that backend filter does not strip the newline character (&lt;code>\n&lt;/code> / &lt;code>%0a&lt;/code>). An attacker who can reach the router&amp;rsquo;s HTTP management interface can submit a crafted &lt;code>ccp_act=set&lt;/code> POST request with a newline-delimited shell command embedded in the device name field, which is executed with the privileges of the router&amp;rsquo;s management process — giving full remote command execution on the device. The vulnerability is unauthenticated per its CVSS vector and NVD/CISA characterization, is in the CISA Known Exploited Vulnerabilities (KEV) catalog since 2022-09-08, and affects a device D-Link has declared end-of-life with no firmware fix planned.&lt;/p></description></item><item><title>Nagios XI 5.5.6–5.7.5 Authenticated OS Command Injection — Cloud-VM Config Wizard (CVE-2021-25298)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-11_cve-2021-25298-nagios-xi-cloudvm-command-injection/</link><pubDate>Sat, 11 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-11_cve-2021-25298-nagios-xi-cloudvm-command-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-11&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Matthew Mathur (Rapid7) — Metasploit module; original bug report by fs0c-sh&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2021-25298&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>8.8 (CVSS 3.1, AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized (public Metasploit module + nuclei templates, in CISA KEV)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>nagios-xi, os-command-injection, authenticated, config-wizard, cloud-vm, cwe-78, kev, metasploit&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>Same disclosure, distinct injection points in the same authenticated RCE chain: &lt;a href="../2026-07-11_cve-2021-25296-nagios-xi-windowswmi-command-injection/">2026-07-11_cve-2021-25296-nagios-xi-windowswmi-command-injection&lt;/a> (Windows WMI config wizard), &lt;a href="../2026-07-11_cve-2021-25297-nagios-xi-switch-command-injection/">2026-07-11_cve-2021-25297-nagios-xi-switch-command-injection&lt;/a> (switch config wizard). All three share the same vulnerability class, the same authenticated HTTP entry point (&lt;code>monitoringwizard.php&lt;/code>), and the same public Metasploit module.&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Nagios XI — Cloud/VM monitoring configuration wizard (DigitalOcean provider sub-option)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Nagios XI 5.5.6 through 5.7.5&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP (Apache/CentOS-based Nagios XI appliance)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — any valid Nagios XI user account (admin or non-admin)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Nagios XI&amp;rsquo;s &amp;ldquo;Cloud/VM&amp;rdquo; configuration wizard (&lt;code>/usr/local/nagiosxi/html/includes/configwizards/cloud-vm/cloud-vm.inc.php&lt;/code>) performs a reachability check against an attacker-supplied host address by shelling out to &lt;code>ping&lt;/code>. The address parameter is concatenated directly into the &lt;code>ping&lt;/code> command string passed to PHP&amp;rsquo;s &lt;code>exec()&lt;/code>, with no sanitization. Any authenticated Nagios XI user — including a low-privileged, non-admin account — can submit a crafted address value containing shell metacharacters and execute arbitrary OS commands as the &lt;code>apache&lt;/code> user. This is one of three sibling command-injection bugs (CVE-2021-25296/25297/25298) disclosed together, each in a different config wizard, all reachable through the same &lt;code>monitoringwizard.php&lt;/code> endpoint. The wizard is reached with &lt;code>wizard=digitalocean&lt;/code> (the DigitalOcean provider option served by &lt;code>cloud-vm.inc.php&lt;/code>).&lt;/p></description></item><item><title>Nagios XI 5.5.6–5.7.5 Authenticated OS Command Injection — Switch Config Wizard (CVE-2021-25297)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-11_cve-2021-25297-nagios-xi-switch-command-injection/</link><pubDate>Sat, 11 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-11_cve-2021-25297-nagios-xi-switch-command-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-11&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Matthew Mathur (Rapid7) — Metasploit module; original bug report by fs0c-sh&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2021-25297&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>8.8 (CVSS 3.1, AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized (public Metasploit module + nuclei templates, in CISA KEV)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>nagios-xi, os-command-injection, authenticated, config-wizard, switch, cwe-78, kev, metasploit&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>Same disclosure, distinct injection points in the same authenticated RCE chain: &lt;a href="../2026-07-11_cve-2021-25296-nagios-xi-windowswmi-command-injection/">2026-07-11_cve-2021-25296-nagios-xi-windowswmi-command-injection&lt;/a> (Windows WMI config wizard), &lt;a href="../2026-07-11_cve-2021-25298-nagios-xi-cloudvm-command-injection/">2026-07-11_cve-2021-25298-nagios-xi-cloudvm-command-injection&lt;/a> (cloud-vm config wizard). All three share the same vulnerability class, the same authenticated HTTP entry point (&lt;code>monitoringwizard.php&lt;/code>), and the same public Metasploit module.&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Nagios XI — Switch (SNMP) monitoring configuration wizard&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Nagios XI 5.5.6 through 5.7.5&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP (Apache/CentOS-based Nagios XI appliance)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — any valid Nagios XI user account (admin or non-admin)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Nagios XI&amp;rsquo;s &amp;ldquo;Switch&amp;rdquo; configuration wizard (&lt;code>/usr/local/nagiosxi/html/includes/configwizards/switch/switch.inc.php&lt;/code>) generates an MRTG configuration snippet for the monitored switch and writes it into an MRTG config file using a shell &lt;code>sed&lt;/code> command built from attacker-supplied HTTP parameters, most notably the target device address. The address value is embedded, unsanitized, inside a quoted &lt;code>sed&lt;/code> replacement expression that is itself run through PHP&amp;rsquo;s &lt;code>exec()&lt;/code>. An attacker with any valid Nagios XI login can break out of the quoted context and append arbitrary OS commands, which execute as the &lt;code>apache&lt;/code> user. This is one of three sibling command-injection bugs (CVE-2021-25296/25297/25298) disclosed together, each in a different config wizard, all reachable through the same &lt;code>monitoringwizard.php&lt;/code> endpoint.&lt;/p></description></item><item><title>Nagios XI 5.5.6–5.7.5 Authenticated OS Command Injection — Windows WMI Config Wizard (CVE-2021-25296)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-11_cve-2021-25296-nagios-xi-windowswmi-command-injection/</link><pubDate>Sat, 11 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-11_cve-2021-25296-nagios-xi-windowswmi-command-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-11&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Matthew Mathur (Rapid7) — Metasploit module; original bug report by fs0c-sh&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2021-25296&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>8.8 (CVSS 3.1, AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized (public Metasploit module + nuclei templates, in CISA KEV)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>nagios-xi, os-command-injection, authenticated, config-wizard, windowswmi, cwe-78, kev, metasploit&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>Same disclosure, distinct injection points in the same authenticated RCE chain: &lt;a href="../2026-07-11_cve-2021-25297-nagios-xi-switch-command-injection/">2026-07-11_cve-2021-25297-nagios-xi-switch-command-injection&lt;/a> (switch config wizard), &lt;a href="../2026-07-11_cve-2021-25298-nagios-xi-cloudvm-command-injection/">2026-07-11_cve-2021-25298-nagios-xi-cloudvm-command-injection&lt;/a> (cloud-vm config wizard). All three share the same vulnerability class, the same authenticated HTTP entry point (&lt;code>monitoringwizard.php&lt;/code>), and the same public Metasploit module.&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Nagios XI — Windows WMI monitoring configuration wizard&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Nagios XI 5.5.6 through 5.7.5&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP (Apache/CentOS-based Nagios XI appliance)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — any valid Nagios XI user account (admin or non-admin)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Nagios XI&amp;rsquo;s &amp;ldquo;Windows WMI&amp;rdquo; configuration wizard (&lt;code>/usr/local/nagiosxi/html/includes/configwizards/windowswmi/windowswmi.inc.php&lt;/code>) builds a WMI-check shell command using several attacker-supplied HTTP parameters, including &lt;code>plugin_output_len&lt;/code>. The value is never validated as an integer (despite its name implying a numeric length) and is concatenated directly into a string later passed to PHP&amp;rsquo;s &lt;code>exec()&lt;/code>. Any authenticated Nagios XI user — including a low-privileged, non-admin account — can submit a crafted &lt;code>plugin_output_len&lt;/code> value containing shell metacharacters to the wizard&amp;rsquo;s step-3 request and execute arbitrary OS commands as the &lt;code>apache&lt;/code> user. This is one of three sibling command-injection bugs (CVE-2021-25296/25297/25298) disclosed together, each in a different config wizard, all reachable through the same &lt;code>monitoringwizard.php&lt;/code> endpoint.&lt;/p></description></item><item><title>Sitecore XP Report.ashx Insecure Deserialization RCE (CVE-2021-42237)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-11_cve-2021-42237-sitecore-xp-deserialization-rce/</link><pubDate>Sat, 11 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-11_cve-2021-42237-sitecore-xp-deserialization-rce/</guid><description>&lt;!--
+ File: 2026-07-11_cve-2021-42237-sitecore-xp-deserialization-rce.md
+ Location: pocs/web/
+-->
+&lt;hr>
+&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-11&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Original research: Assetnote (Shubham Shah / Assetnote team). PoC: ItsIgnacioPortal.&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2021-42237 (Sitecore advisory SC2021-003-499266)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (CVSS 3.1, AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized (public PoC + Metasploit module, in CISA KEV, known ransomware campaign use)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>sitecore, deserialization, rce, cms, unauthenticated, remote, kev, known-ransomware-use, cwe-502&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Sitecore Experience Platform (XP)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Sitecore XP 7.5 Initial Release through 8.2 Update-7 (reported ranges include 7.5–7.5.2, 8.0–8.0.7, 8.1–8.1.3, 8.2–8.2.7)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>.NET / C#, IIS on Windows&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Sitecore Experience Platform ships a legacy, unused reporting handler at &lt;code>/sitecore/shell/ClientBin/Reporting/Report.ashx&lt;/code> that is reachable without authentication. The handler deserializes an attacker-supplied XML &lt;code>&amp;lt;parameters&amp;gt;&lt;/code> block using &lt;code>NetDataContractSerializer&lt;/code>, a .NET serializer that reconstructs arbitrary CLR types from its input and is unsafe to use on untrusted data. By submitting a crafted XML payload containing a &lt;code>System.Collections.Generic.SortedSet&lt;/code> whose custom &lt;code>ComparisonComparer&lt;/code> delegate points at &lt;code>System.Diagnostics.Process.Start&lt;/code>, an unauthenticated remote attacker can achieve arbitrary OS command execution in the context of the IIS application pool (typically &lt;code>NETWORK SERVICE&lt;/code> or a dedicated app-pool identity). The vulnerability was discovered and disclosed by Assetnote in November 2021, received a public PoC and a Metasploit module shortly after, was added to the CISA Known Exploited Vulnerabilities (KEV) catalog on 2022-03-25, and has since been observed used in ransomware intrusions — giving it an EPSS score of roughly 0.979 (near-certain exploitation likelihood).&lt;/p></description></item><item><title>Unauthenticated Arbitrary File Upload RCE in iCagenda for Joomla (CVE-2026-48939)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-11_cve-2026-48939-icagenda-joomla-file-upload-rce/</link><pubDate>Sat, 11 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-11_cve-2026-48939-icagenda-joomla-file-upload-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-11&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-06-16 (legacy patch 3.9.15 released)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>mysites.guru (root-cause research/disclosure); public exploit author &lt;code>shinthink&lt;/code> (PoC repo)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-48939&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (CVSS 3.1, &lt;code>AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H&lt;/code>) — also reported as 10.0 under CVSS 4.0 by some sources (e.g. &lt;code>CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:H/SI:H/SA:H&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized (public PoC available, actively exploited in the wild, in CISA KEV since 2026-07-10)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>joomla, icagenda, file-upload, rce, cwe-434, unauthenticated, remote, kev, cms, php, access-control-bypass&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>iCagenda — events/calendar extension (component) for Joomla&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>3.2.1 through 3.9.14 (legacy branch), 4.0.0 through 4.0.7 (current branch) — some sources report the vulnerable range extending back to 1.0.0&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP / Joomla CMS (2.5–6.x hosts)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (HTTP/HTTPS to any Joomla site with iCagenda&amp;rsquo;s frontend event-registration form enabled)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>iCagenda&amp;rsquo;s frontend event-registration form includes an optional file-attachment field. The &amp;ldquo;Registered Only&amp;rdquo; access restriction meant to gate that field is enforced only in the &lt;em>view&lt;/em> layer that decides whether to render the form — the &lt;code>registration.submit&lt;/code> controller that actually processes the submitted data never re-checks it. Combined with a complete absence of file-extension/MIME/content validation on the attachment handler, this lets any unauthenticated visitor POST a &lt;code>.php&lt;/code> file straight to the submission endpoint. The file is written verbatim, with attacker-chosen extension intact, under the web root at &lt;code>/images/icagenda/frontend/attachments/&lt;/code>, where Joomla&amp;rsquo;s web server will execute it directly — yielding unauthenticated remote code execution. The flaw was found under active exploitation (UA string &lt;code>icagenda-batch/1.0&lt;/code>) before the vendor patch shipped, and CISA added it to the Known Exploited Vulnerabilities catalog. Fixed in iCagenda 4.0.8 (and backported to legacy as 3.9.15).&lt;/p></description></item><item><title>ZKTeco BioTime v8.5.5 Unauthenticated Path Traversal / Arbitrary File Read via iclock API (CVE-2023-38950)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-11_cve-2023-38950-zkteco-biotime-path-traversal/</link><pubDate>Sat, 11 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-11_cve-2023-38950-zkteco-biotime-path-traversal/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-11&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Discovered/disclosed by Claroty Team82; public PoC by @w3bd3vil (Krash Consulting)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2023-38950&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>7.5 (CVSS 3.1, AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized (public PoC, in CISA KEV)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>zkteco, biotime, path-traversal, arbitrary-file-read, cwe-22, unauthenticated, remote, iclock-api, kev&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>Disclosed alongside CVE-2023-38951 (authenticated path traversal / arbitrary file write via SFTP settings, leading to RCE) and CVE-2023-38952 (insecure access control on backup/static file resources); N/A within this archive&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>ZKTeco BioTime (web-based time &amp;amp; attendance / access control management platform)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>BioTime v8.5.5 (Windows builds observed: &lt;code>20211030.13012&lt;/code>, &lt;code>20231103.R1905&lt;/code>); the public PoC also targets 9.0.1 (&lt;code>20240108.18753&lt;/code>). Fixed in ZKBioTime version 9.0.120240617.19506 (Middle East build line fixed in 8.5.5.2944).&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 2.7 / 3.7 backend (Django, &lt;code>mod_wsgi&lt;/code> under Apache), Windows Server hosting (observed banners: &lt;code>Apache/2.4.29 (Win64) mod_wsgi/4.5.24 Python/2.7&lt;/code>, &lt;code>Apache/2.4.52 (Win64) mod_wsgi/4.7.1 Python/3.7&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (remote, over HTTP/HTTPS to the BioTime web management port, commonly &lt;code>:80&lt;/code>/&lt;code>:81&lt;/code>/&lt;code>:8088&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>ZKTeco BioTime v8.5.5 exposes the &lt;code>iclock&lt;/code> device-communication API endpoint (&lt;code>/iclock/file&lt;/code>) without authentication. The &lt;code>url&lt;/code> query parameter, which is meant to reference firmware/log filenames pulled by physical biometric terminals, is concatenated into a filesystem path without normalization or restriction to an allowed directory. By supplying a payload of &lt;code>../&lt;/code> sequences, a remote, unauthenticated attacker can read arbitrary files from the underlying Windows filesystem, including BioTime&amp;rsquo;s own configuration file (&lt;code>attsite.ini&lt;/code>), which contains RC4-&amp;ldquo;encrypted&amp;rdquo; (effectively obfuscated, trivially reversible) credentials for the database, SMTP, and LDAP integrations. This is CWE-22 (Improper Limitation of a Pathname to a Restricted Directory), tracked as CVE-2023-38950, CVSS 3.1 7.5 (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N). CISA added it to the Known Exploited Vulnerabilities (KEV) catalog on 2025-05-19 (due date 2025-06-09) following reports of in-the-wild exploitation, roughly two years after initial disclosure.&lt;/p></description></item><item><title>Linux Kernel rtmutex Priority-Inheritance Stack-UAF — "GhostLock" (CVE-2026-43499, Nebula Security weaponized variant)</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-08_cve-2026-43499-ghostlock-nebula-security/</link><pubDate>Wed, 08 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-08_cve-2026-43499-ghostlock-nebula-security/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>
@@ -49961,15 +50561,15 @@
  &lt;/tr>
  &lt;tr>
  &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-06-30&lt;/td>
+ &lt;td>2026-07-11&lt;/td>
  &lt;/tr>
  &lt;tr>
  &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>Ashraf Zaryouh / 0xBlackash&lt;/td>
+ &lt;td>Ashraf Zaryouh / 0xBlackash (initial PoC); root-cause/ITW payload research: mysites.guru; mass-scan PoC: ayiezola (fork of papageo75/CVE-2026-48908-PoC)&lt;/td>
  &lt;/tr>
  &lt;tr>
  &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-48908&lt;/td>
+ &lt;td>CVE-2026-48908 (GHSA-8fwr-8fxr-8v2p)&lt;/td>
  &lt;/tr>
  &lt;tr>
  &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
@@ -49981,15 +50581,15 @@
  &lt;/tr>
  &lt;tr>
  &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>10.0 (CVSSv4, Joomla! Project CNA; AV:N/AC:L/AT:N/PR:N/UI:N)&lt;/td>
+ &lt;td>10.0 (CVSSv4, Joomla! Project CNA; AV:N/AC:L/AT:N/PR:N/UI:N) — also reported as 9.8 under CVSS 3.1 (&lt;code>AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H&lt;/code>)&lt;/td>
  &lt;/tr>
  &lt;tr>
  &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>PoC&lt;/td>
+ &lt;td>Weaponized — public PoC with mass-scan support, added to CISA KEV 2026-07-07, confirmed active in-the-wild exploitation&lt;/td>
  &lt;/tr>
  &lt;tr>
  &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>RCE, unauthenticated, file-upload, PHP-webshell, Joomla, CMS, access-control, Python, CVSS-10&lt;/td>
+ &lt;td>RCE, unauthenticated, file-upload, PHP-webshell, Joomla, CMS, access-control, Python, CVSS-10, kev, backdoor, cwe-434&lt;/td>
  &lt;/tr>
  &lt;tr>
  &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
@@ -54982,12 +55582,16 @@
  &lt;td>2026-05-16&lt;/td>
  &lt;/tr>
  &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-11&lt;/td>
+ &lt;/tr>
+ &lt;tr>
  &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>watchTowr Labs (Sonny)&lt;/td>
+ &lt;td>watchTowr Labs (Sonny); alternate public PoC: exfil0/CVE-2024-55591-POC&lt;/td>
  &lt;/tr>
  &lt;tr>
  &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2024-55591&lt;/td>
+ &lt;td>CVE-2024-55591 (Fortinet FG-IR-24-535)&lt;/td>
  &lt;/tr>
  &lt;tr>
  &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
@@ -54999,15 +55603,15 @@
  &lt;/tr>
  &lt;tr>
  &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>9.6 (CVSSv3)&lt;/td>
+ &lt;td>9.6 (CVSSv3, per Fortinet PSIRT advisory) — also reported as 9.8 by NVD/CISA using a slightly different vector; both agree the flaw is Critical/near-maximum severity&lt;/td>
  &lt;/tr>
  &lt;tr>
  &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>Weaponized&lt;/td>
+ &lt;td>Weaponized — public PoC exploit code available, listed in CISA KEV (added 2025-01-14), confirmed used in ransomware intrusions&lt;/td>
  &lt;/tr>
  &lt;tr>
  &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>auth-bypass, websocket, race-condition, FortiOS, FortiProxy, unauthenticated, super-admin&lt;/td>
+ &lt;td>auth-bypass, websocket, race-condition, FortiOS, FortiProxy, unauthenticated, super-admin, kev, known-ransomware-use, cwe-288&lt;/td>
  &lt;/tr>
  &lt;tr>
  &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Biotime on PoC Archive</title><link>https://poc.intelseclab.com/tags/biotime/</link><description>Recent content in Biotime on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sat, 11 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/biotime/index.xml" rel="self" type="application/rss+xml"/><item><title>ZKTeco BioTime v8.5.5 Unauthenticated Path Traversal / Arbitrary File Read via iclock API (CVE-2023-38950)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-11_cve-2023-38950-zkteco-biotime-path-traversal/</link><pubDate>Sat, 11 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-11_cve-2023-38950-zkteco-biotime-path-traversal/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-11&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Discovered/disclosed by Claroty Team82; public PoC by @w3bd3vil (Krash Consulting)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2023-38950&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>7.5 (CVSS 3.1, AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized (public PoC, in CISA KEV)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>zkteco, biotime, path-traversal, arbitrary-file-read, cwe-22, unauthenticated, remote, iclock-api, kev&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>Disclosed alongside CVE-2023-38951 (authenticated path traversal / arbitrary file write via SFTP settings, leading to RCE) and CVE-2023-38952 (insecure access control on backup/static file resources); N/A within this archive&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>ZKTeco BioTime (web-based time &amp;amp; attendance / access control management platform)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>BioTime v8.5.5 (Windows builds observed: &lt;code>20211030.13012&lt;/code>, &lt;code>20231103.R1905&lt;/code>); the public PoC also targets 9.0.1 (&lt;code>20240108.18753&lt;/code>). Fixed in ZKBioTime version 9.0.120240617.19506 (Middle East build line fixed in 8.5.5.2944).&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 2.7 / 3.7 backend (Django, &lt;code>mod_wsgi&lt;/code> under Apache), Windows Server hosting (observed banners: &lt;code>Apache/2.4.29 (Win64) mod_wsgi/4.5.24 Python/2.7&lt;/code>, &lt;code>Apache/2.4.52 (Win64) mod_wsgi/4.7.1 Python/3.7&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (remote, over HTTP/HTTPS to the BioTime web management port, commonly &lt;code>:80&lt;/code>/&lt;code>:81&lt;/code>/&lt;code>:8088&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>ZKTeco BioTime v8.5.5 exposes the &lt;code>iclock&lt;/code> device-communication API endpoint (&lt;code>/iclock/file&lt;/code>) without authentication. The &lt;code>url&lt;/code> query parameter, which is meant to reference firmware/log filenames pulled by physical biometric terminals, is concatenated into a filesystem path without normalization or restriction to an allowed directory. By supplying a payload of &lt;code>../&lt;/code> sequences, a remote, unauthenticated attacker can read arbitrary files from the underlying Windows filesystem, including BioTime&amp;rsquo;s own configuration file (&lt;code>attsite.ini&lt;/code>), which contains RC4-&amp;ldquo;encrypted&amp;rdquo; (effectively obfuscated, trivially reversible) credentials for the database, SMTP, and LDAP integrations. This is CWE-22 (Improper Limitation of a Pathname to a Restricted Directory), tracked as CVE-2023-38950, CVSS 3.1 7.5 (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N). CISA added it to the Known Exploited Vulnerabilities (KEV) catalog on 2025-05-19 (due date 2025-06-09) following reports of in-the-wild exploitation, roughly two years after initial disclosure.&lt;/p></description></item></channel></rss>
