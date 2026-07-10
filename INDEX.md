@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-07-10 12:46:44
+> Last updated: 2026-07-11 01:00:04
 
 ---
 
@@ -253,7 +253,7 @@
 | 2026-05-30 | 2026-04-30 | [litespeed-user-end-cpanel-plugin-privesc](./pocs/web/2026-05-30_litespeed-user-end-cpanel-plugin-privesc/) | `web` | CVE-2026-48172 | High | local-privilege-escalation, cPanel, LiteSpeed, symlink, archive-extraction | Patched |
 | 2026-06-08 | 2026-06-08 | [firefox-focus-ios-uxss-redirect-scheme-race-condition](./pocs/web/2026-06-08_firefox-focus-ios-uxss-redirect-scheme-race-condition/) | `web` | N/A | Critical | UXSS, XSS, race-condition, TOCTOU, redirect-validation, javascript-scheme, iOS, Firefox Focus | Unpatched |
 | 2026-06-28 | 2026-06-12 | [cve-2026-20253-splunk-preauth-rce](./pocs/web/2026-06-28_cve-2026-20253-splunk-preauth-rce/) | `web` | CVE-2026-20253 | Critical | pre-auth, RCE, PostgreSQL, Splunk, CISA-KEV, lo-export, sidecar, unauthenticated, file-write | PoC |
-| 2026-06-30 | 2026-06-30 | [cve-2026-48908-sp-page-builder-joomla-rce](./pocs/web/2026-06-30_cve-2026-48908-sp-page-builder-joomla-rce/) | `web` | CVE-2026-48908 | Critical | RCE, unauthenticated, file-upload, PHP-webshell, Joomla, CMS, access-control, Python, CVSS-10 | PoC |
+| 2026-06-30 | 2026-07-11 | [cve-2026-48908-sp-page-builder-joomla-rce](./pocs/web/2026-06-30_cve-2026-48908-sp-page-builder-joomla-rce/) | `web` | CVE-2026-48908 (GHSA-8fwr-8fxr-8v2p) | Critical | RCE, unauthenticated, file-upload, PHP-webshell, Joomla, CMS, access-control, Python, CVSS-10, kev, backdoor, cwe-434 | Weaponized — public PoC with mass-scan support, added to CISA KEV 2026-07-07, confirmed active in-the-wild exploitation |
 | 2026-07-01 | 2026-05-29 | [cve-2026-0257-pan-os-globalprotect-auth-bypass](./pocs/web/2026-07-01_cve-2026-0257-pan-os-globalprotect-auth-bypass/) | `web` | CVE-2026-0257 | High | auth-bypass, VPN, GlobalProtect, PAN-OS, Palo-Alto, certificate-bypass, cookie-forgery, Prisma-Access, unauthenticated | PoC |
 | 2026-07-01 | 2026-06 | [cve-2026-11645-chrome-v8-oob-crash](./pocs/web/2026-07-01_cve-2026-11645-chrome-v8-oob-crash/) | `web` | CVE-2026-11645 | High | browser, chrome, v8, javascript, turbofan, out-of-bounds, memory-corruption, zero-day, incomplete-poc, active-exploitation | Incomplete PoC (crash only — no confirmed public RCE chain) |
 | 2026-07-01 | 2026-06 | [cve-2026-42271-litellm-mcp-command-injection](./pocs/web/2026-07-01_cve-2026-42271-litellm-mcp-command-injection/) | `web` | CVE-2026-42271 | High | command-injection, LiteLLM, MCP, AI-application, ai-gateway, authenticated, api-key, subprocess | PoC |
@@ -383,8 +383,8 @@
 | 2026-07-05 | 2026-03 | [cve-2026-3228-nextscripts-wp-stored-xss](./pocs/web/2026-07-05_cve-2026-3228-nextscripts-wp-stored-xss/) | `web` | CVE-2026-3228 | Medium | wordpress, xss, stored-xss, plugin, contributor-privilege, shortcode, session-hijacking | PoC |
 | 2026-07-05 | 2026-03 | [cve-2026-32731-apostrophecms-tar-path-traversal](./pocs/web/2026-07-05_cve-2026-32731-apostrophecms-tar-path-traversal/) | `web` | CVE-2026-32731 | High | apostrophecms, cms, path-traversal, tar-slip, arbitrary-file-write, import, node-js | PoC |
 | 2026-07-05 | 2026-05 | [cve-2026-3296-everest-forms-object-injection](./pocs/web/2026-07-05_cve-2026-3296-everest-forms-object-injection/) | `web` | CVE-2026-3296 | Critical | wordpress, everest-forms, php-object-injection, deserialization, unserialize, rce, cwe-502 | PoC (functional two-phase injection/trigger tool; RCE requires supplying a real POP gadget chain via PHPGGC) |
-| 2026-07-05 | 2026-06 | [cve-2026-3300-everest-forms-code-injection](./pocs/web/2026-07-05_cve-2026-3300-everest-forms-code-injection/) | `web` | CVE-2026-3300 | Critical | wordpress, everest-forms-pro, php-code-injection, rce, reverse-shell, form-calculation, unauthenticated | Weaponized (includes working reverse-shell payload builder and listener) |
 | 2026-07-05 | 2026-05 | [cve-2026-33006-apache-mod-auth-digest-timing](./pocs/web/2026-07-05_cve-2026-33006-apache-mod-auth-digest-timing/) | `web` | CVE-2026-33006 | Medium | apache, mod_auth_digest, timing-attack, authentication-bypass, digest-auth, http, side-channel | PoC |
+| 2026-07-05 | 2026-06 | [cve-2026-3300-everest-forms-code-injection](./pocs/web/2026-07-05_cve-2026-3300-everest-forms-code-injection/) | `web` | CVE-2026-3300 | Critical | wordpress, everest-forms-pro, php-code-injection, rce, reverse-shell, form-calculation, unauthenticated | Weaponized (includes working reverse-shell payload builder and listener) |
 | 2026-07-05 | 2026-07 | [cve-2026-33017-langflow-rce](./pocs/web/2026-07-05_cve-2026-33017-langflow-rce/) | `web` | CVE-2026-33017 | Critical | langflow, rce, custom-component, code-execution, flow-builder, reverse-shell, curl | PoC |
 | 2026-07-05 | 2026-04 | [cve-2026-33033-django-multipartparser-dos](./pocs/web/2026-07-05_cve-2026-33033-django-multipartparser-dos/) | `web` | CVE-2026-33033 | Medium | django, dos, multipart, base64, cpu-amplification, python, file-upload | PoC |
 | 2026-07-05 | 2026-03 | [cve-2026-3304-multer-orphaned-file-dos](./pocs/web/2026-07-05_cve-2026-3304-multer-orphaned-file-dos/) | `web` | CVE-2026-3304 | High | multer, nodejs, express, dos, file-upload, orphaned-file, disk-exhaustion, multipart | PoC |
@@ -511,8 +511,8 @@
 | 2026-07-05 | 2026-07 | [cve-2026-52813-gogs-path-traversal-hook-rce](./pocs/web/2026-07-05_cve-2026-52813-gogs-path-traversal-hook-rce/) | `web` | CVE-2026-52813 | Not disclosed | gogs, path-traversal, git-hooks, rce, authenticated, account-takeover, self-hosted-git | PoC |
 | 2026-07-05 | 2026-06 | [cve-2026-53435-jenkins-deser-file-read](./pocs/web/2026-07-05_cve-2026-53435-jenkins-deser-file-read/) | `web` | CVE-2026-53435 (Jenkins SECURITY-3707) | High (advisory also describes user impersonation and Script Console RCE via the same primitive; this PoC demonstrates file-read impact only) | jenkins, deserialization, classfilter-bypass, xstream, config-xml, stapler, arbitrary-file-read, docker-lab, cwe-502 | PoC |
 | 2026-07-05 | Unknown | [cve-2026-53519-nezha-path-traversal-jwt-forgery](./pocs/web/2026-07-05_cve-2026-53519-nezha-path-traversal-jwt-forgery/) | `web` | CVE-2026-53519 (GHSA-5c25-7vpj-9mqh) | Not disclosed (unauthenticated path traversal leading to full admin JWT forgery) | nezha, path-traversal, jwt-forgery, unauthenticated, config-disclosure, sqlite, privilege-escalation, cwe-22, cwe-347 | PoC |
-| 2026-07-05 | 2026-04 | [cve-2026-5364-cf7-dnd-upload-rce](./pocs/web/2026-07-05_cve-2026-5364-cf7-dnd-upload-rce/) | `web` | CVE-2026-5364 | High | wordpress, contact-form-7, file-upload, webshell, rce, sanitize-file-name-bypass, admin-ajax, cwe-434 | PoC |
 | 2026-07-05 | 2026-06 | [cve-2026-53647-fossbilling-chained-rce](./pocs/web/2026-07-05_cve-2026-53647-fossbilling-chained-rce/) | `web` | CVE-2026-53647 (also documents chained CVE-2026-53646) | Moderate | fossbilling, api-key-disclosure, password-reset, token-reuse, account-takeover, unauthenticated, ghsa, php | PoC |
+| 2026-07-05 | 2026-04 | [cve-2026-5364-cf7-dnd-upload-rce](./pocs/web/2026-07-05_cve-2026-5364-cf7-dnd-upload-rce/) | `web` | CVE-2026-5364 | High | wordpress, contact-form-7, file-upload, webshell, rce, sanitize-file-name-bypass, admin-ajax, cwe-434 | PoC |
 | 2026-07-05 | 2026-06 | [cve-2026-5366-prefect-git-argument-injection](./pocs/web/2026-07-05_cve-2026-5366-prefect-git-argument-injection/) | `web` | CVE-2026-5366 (Huntr bounty e2e88a0f-a8f6-49c9-94c5-e98dc385f07a) | High | prefect, git, argument-injection, rce, upload-pack, workflow-orchestration, supply-chain, python | PoC |
 | 2026-07-05 | 2026-06 | [cve-2026-5415-wp-captcha-pro-auth-bypass](./pocs/web/2026-07-05_cve-2026-5415-wp-captcha-pro-auth-bypass/) | `web` | CVE-2026-5415 | High | wordpress, wp-captcha-pro, auth-bypass, privilege-escalation, nonce, ajax, account-takeover, plugin | PoC |
 | 2026-07-05 | 2026-06 | [cve-2026-5426-knowledgedeliver-viewstate-rce](./pocs/web/2026-07-05_cve-2026-5426-knowledgedeliver-viewstate-rce/) | `web` | CVE-2026-5426 | Critical | aspnet, viewstate, deserialization, rce, hardcoded-keys, machinekey, knowledgedeliver, webshell, python | PoC |
@@ -548,10 +548,11 @@
 | 2026-07-06 | 2026-07-06 | [cve-2026-27172-camel-consul-registry-deserialization](./pocs/web/2026-07-06_cve-2026-27172-camel-consul-registry-deserialization/) | `web` | CVE-2026-27172 | Critical | apache-camel, camel-consul, consulregistry, java-deserialization, rce, cwe-502, gadget-chain, ysoserial, spring-boot | Patched |
 | 2026-07-06 | 2026-07-06 | [cve-2026-27966-langflow-mass-scanner](./pocs/web/2026-07-06_cve-2026-27966-langflow-mass-scanner/) | `web` | CVE-2026-27966 (GHSA-3645-fxcv-hqr4) | Critical | langflow, rce, pre-auth, route-injection, vertex-injection, csv-agent, prompt-injection, python, mass-scanner, ai-security | Patched |
 | 2026-07-06 | 2026-07-06 | [cve-2026-33453-camel-coap-header-injection-reproducer](./pocs/web/2026-07-06_cve-2026-33453-camel-coap-header-injection-reproducer/) | `web` | CVE-2026-33453 | Critical | apache-camel, camel-coap, coap, header-injection, rce, cwe-915, camel-exec, unauthenticated, udp, spring-boot | Patched |
+| 2026-07-11 | 2026-06-16 (legacy patch 3.9.15 released) | [cve-2026-48939-icagenda-joomla-file-upload-rce](./pocs/web/2026-07-11_cve-2026-48939-icagenda-joomla-file-upload-rce/) | `web` | CVE-2026-48939 | Critical | joomla, icagenda, file-upload, rce, cwe-434, unauthenticated, remote, kev, cms, php, access-control-bypass | Weaponized (public PoC available, actively exploited in the wild, in CISA KEV since 2026-07-10) |
 
 ---
 
-*Total POCs: 667*
+*Total POCs: 674*
 
 ## By Category
 
@@ -560,15 +561,16 @@
 - **`crypto`** — 3 entries
 - **`hardware`** — 8 entries
 - **`misc`** — 32 entries
-- **`network`** — 115 entries
+- **`network`** — 116 entries
 - **`social-engineering`** — 2 entries
-- **`web`** — 397 entries
+- **`web`** — 403 entries
 
 ## Archives
 
 - [2025](./archive/2025.md) — 111 entries
 - [2024](./archive/2024.md) — 12 entries
-- [2023](./archive/2023.md) — 2 entries
-- [2021](./archive/2021.md) — 1 entries
+- [2023](./archive/2023.md) — 3 entries
+- [2022](./archive/2022.md) — 1 entries
+- [2021](./archive/2021.md) — 5 entries
 - [2020](./archive/2020.md) — 1 entries
 
