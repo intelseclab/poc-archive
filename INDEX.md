@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-07-12 21:04:52
+> Last updated: 2026-07-15 20:45:48
 
 ---
 
@@ -230,6 +230,7 @@
 | 2026-07-05 | 2026-06 | [cve-2026-8836-lwip-snmpv3-stack-overflow](./pocs/network/2026-07-05_cve-2026-8836-lwip-snmpv3-stack-overflow/) | `network` | CVE-2026-8836 | Critical | lwip, snmp, snmpv3, stack-overflow, embedded, rce, asn1, cwe-121 | PoC |
 | 2026-07-08 | 2026-07-08 | [xring-xquic-qpack-ring-mem-resize-underflow](./pocs/network/2026-07-08_xring-xquic-qpack-ring-mem-resize-underflow/) | `network` | N/A | Critical | quic, http3, qpack, xquic, alibaba, tengine, ring-buffer, integer-underflow, heap-oob-read, memcpy, remote, unauthenticated, dos, no-cve | Weaponized (public PoC, unpatched at publication) |
 | 2026-07-12 | 2026-07-12 | [openssh-agent-lock-provider-bypass](./pocs/network/2026-07-12_openssh-agent-lock-provider-bypass/) | `network` | N/A | High | openssh, ssh-agent, agent-forwarding, pkcs11, race-condition, state-confusion, no-cve, local-provider-abuse | PoC — reproducible against a signed, checksum/signature-verified stock OpenSSH 10.4p1 build; no weaponized payload beyond starting an allowed PKCS#11 provider |
+| 2026-07-15 | 2026-07-15 | [cve-2026-15409-sonicwall-sma1000-ssrf-erlang-rce](./pocs/network/2026-07-15_cve-2026-15409-sonicwall-sma1000-ssrf-erlang-rce/) | `network` | CVE-2026-15409 (SNWLID-2026-0008) | Critical | sonicwall, sma1000, workplace, ssrf, erlang, rpc, cwe-918, unauthenticated, remote, kev, actively-exploited | Weaponized — unauthenticated, non-root remote code execution confirmed against a real appliance build |
 | 2026-07-05 | 2026-05 | [cve-2026-21510-lnk-stomping-generator](./pocs/social-engineering/2026-07-05_cve-2026-21510-lnk-stomping-generator/) | `social-engineering` | CVE-2026-21510 | High | lnk-stomping, shelllink, cve-2026-21510, windows, initial-access, phishing, anti-forensics, red-team | Weaponized |
 | 2026-07-05 | 2026-05 | [cve-2026-21514-cve-2026-21510-rtf-lnk-builder](./pocs/social-engineering/2026-07-05_cve-2026-21514-cve-2026-21510-rtf-lnk-builder/) | `social-engineering` | CVE-2026-21514, CVE-2026-21510 | High | rtf, lnk, ole-object, protected-view-bypass, cve-2026-21514, cve-2026-21510, phishing, initial-access | PoC |
 | 2026-05-14 | — | [nginx-rift-cve-2026-42945](./pocs/web/2026-05-14_nginx-rift-cve-2026-42945/) | `web` | CVE-2026-42945 | Critical | RCE, unauthenticated, nginx, heap-overflow, buffer-overflow, rewrite | Weaponized |
@@ -384,8 +385,8 @@
 | 2026-07-05 | 2026-03 | [cve-2026-3228-nextscripts-wp-stored-xss](./pocs/web/2026-07-05_cve-2026-3228-nextscripts-wp-stored-xss/) | `web` | CVE-2026-3228 | Medium | wordpress, xss, stored-xss, plugin, contributor-privilege, shortcode, session-hijacking | PoC |
 | 2026-07-05 | 2026-03 | [cve-2026-32731-apostrophecms-tar-path-traversal](./pocs/web/2026-07-05_cve-2026-32731-apostrophecms-tar-path-traversal/) | `web` | CVE-2026-32731 | High | apostrophecms, cms, path-traversal, tar-slip, arbitrary-file-write, import, node-js | PoC |
 | 2026-07-05 | 2026-05 | [cve-2026-3296-everest-forms-object-injection](./pocs/web/2026-07-05_cve-2026-3296-everest-forms-object-injection/) | `web` | CVE-2026-3296 | Critical | wordpress, everest-forms, php-object-injection, deserialization, unserialize, rce, cwe-502 | PoC (functional two-phase injection/trigger tool; RCE requires supplying a real POP gadget chain via PHPGGC) |
-| 2026-07-05 | 2026-06 | [cve-2026-3300-everest-forms-code-injection](./pocs/web/2026-07-05_cve-2026-3300-everest-forms-code-injection/) | `web` | CVE-2026-3300 | Critical | wordpress, everest-forms-pro, php-code-injection, rce, reverse-shell, form-calculation, unauthenticated | Weaponized (includes working reverse-shell payload builder and listener) |
 | 2026-07-05 | 2026-05 | [cve-2026-33006-apache-mod-auth-digest-timing](./pocs/web/2026-07-05_cve-2026-33006-apache-mod-auth-digest-timing/) | `web` | CVE-2026-33006 | Medium | apache, mod_auth_digest, timing-attack, authentication-bypass, digest-auth, http, side-channel | PoC |
+| 2026-07-05 | 2026-06 | [cve-2026-3300-everest-forms-code-injection](./pocs/web/2026-07-05_cve-2026-3300-everest-forms-code-injection/) | `web` | CVE-2026-3300 | Critical | wordpress, everest-forms-pro, php-code-injection, rce, reverse-shell, form-calculation, unauthenticated | Weaponized (includes working reverse-shell payload builder and listener) |
 | 2026-07-05 | 2026-07 | [cve-2026-33017-langflow-rce](./pocs/web/2026-07-05_cve-2026-33017-langflow-rce/) | `web` | CVE-2026-33017 | Critical | langflow, rce, custom-component, code-execution, flow-builder, reverse-shell, curl | PoC |
 | 2026-07-05 | 2026-04 | [cve-2026-33033-django-multipartparser-dos](./pocs/web/2026-07-05_cve-2026-33033-django-multipartparser-dos/) | `web` | CVE-2026-33033 | Medium | django, dos, multipart, base64, cpu-amplification, python, file-upload | PoC |
 | 2026-07-05 | 2026-03 | [cve-2026-3304-multer-orphaned-file-dos](./pocs/web/2026-07-05_cve-2026-3304-multer-orphaned-file-dos/) | `web` | CVE-2026-3304 | High | multer, nodejs, express, dos, file-upload, orphaned-file, disk-exhaustion, multipart | PoC |
@@ -512,8 +513,8 @@
 | 2026-07-05 | 2026-07 | [cve-2026-52813-gogs-path-traversal-hook-rce](./pocs/web/2026-07-05_cve-2026-52813-gogs-path-traversal-hook-rce/) | `web` | CVE-2026-52813 | Not disclosed | gogs, path-traversal, git-hooks, rce, authenticated, account-takeover, self-hosted-git | PoC |
 | 2026-07-05 | 2026-06 | [cve-2026-53435-jenkins-deser-file-read](./pocs/web/2026-07-05_cve-2026-53435-jenkins-deser-file-read/) | `web` | CVE-2026-53435 (Jenkins SECURITY-3707) | High (advisory also describes user impersonation and Script Console RCE via the same primitive; this PoC demonstrates file-read impact only) | jenkins, deserialization, classfilter-bypass, xstream, config-xml, stapler, arbitrary-file-read, docker-lab, cwe-502 | PoC |
 | 2026-07-05 | Unknown | [cve-2026-53519-nezha-path-traversal-jwt-forgery](./pocs/web/2026-07-05_cve-2026-53519-nezha-path-traversal-jwt-forgery/) | `web` | CVE-2026-53519 (GHSA-5c25-7vpj-9mqh) | Not disclosed (unauthenticated path traversal leading to full admin JWT forgery) | nezha, path-traversal, jwt-forgery, unauthenticated, config-disclosure, sqlite, privilege-escalation, cwe-22, cwe-347 | PoC |
-| 2026-07-05 | 2026-04 | [cve-2026-5364-cf7-dnd-upload-rce](./pocs/web/2026-07-05_cve-2026-5364-cf7-dnd-upload-rce/) | `web` | CVE-2026-5364 | High | wordpress, contact-form-7, file-upload, webshell, rce, sanitize-file-name-bypass, admin-ajax, cwe-434 | PoC |
 | 2026-07-05 | 2026-06 | [cve-2026-53647-fossbilling-chained-rce](./pocs/web/2026-07-05_cve-2026-53647-fossbilling-chained-rce/) | `web` | CVE-2026-53647 (also documents chained CVE-2026-53646) | Moderate | fossbilling, api-key-disclosure, password-reset, token-reuse, account-takeover, unauthenticated, ghsa, php | PoC |
+| 2026-07-05 | 2026-04 | [cve-2026-5364-cf7-dnd-upload-rce](./pocs/web/2026-07-05_cve-2026-5364-cf7-dnd-upload-rce/) | `web` | CVE-2026-5364 | High | wordpress, contact-form-7, file-upload, webshell, rce, sanitize-file-name-bypass, admin-ajax, cwe-434 | PoC |
 | 2026-07-05 | 2026-06 | [cve-2026-5366-prefect-git-argument-injection](./pocs/web/2026-07-05_cve-2026-5366-prefect-git-argument-injection/) | `web` | CVE-2026-5366 (Huntr bounty e2e88a0f-a8f6-49c9-94c5-e98dc385f07a) | High | prefect, git, argument-injection, rce, upload-pack, workflow-orchestration, supply-chain, python | PoC |
 | 2026-07-05 | 2026-06 | [cve-2026-5415-wp-captcha-pro-auth-bypass](./pocs/web/2026-07-05_cve-2026-5415-wp-captcha-pro-auth-bypass/) | `web` | CVE-2026-5415 | High | wordpress, wp-captcha-pro, auth-bypass, privilege-escalation, nonce, ajax, account-takeover, plugin | PoC |
 | 2026-07-05 | 2026-06 | [cve-2026-5426-knowledgedeliver-viewstate-rce](./pocs/web/2026-07-05_cve-2026-5426-knowledgedeliver-viewstate-rce/) | `web` | CVE-2026-5426 | Critical | aspnet, viewstate, deserialization, rce, hardcoded-keys, machinekey, knowledgedeliver, webshell, python | PoC |
@@ -557,7 +558,7 @@
 
 ---
 
-*Total POCs: 679*
+*Total POCs: 680*
 
 ## By Category
 
@@ -566,7 +567,7 @@
 - **`crypto`** — 3 entries
 - **`hardware`** — 8 entries
 - **`misc`** — 32 entries
-- **`network`** — 117 entries
+- **`network`** — 118 entries
 - **`social-engineering`** — 2 entries
 - **`web`** — 407 entries
 
