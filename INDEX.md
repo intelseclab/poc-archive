@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-07-15 18:47:29
+> Last updated: 2026-07-19 06:53:11
 
 ---
 
@@ -208,7 +208,7 @@
 | 2026-07-05 | 2026-05 | [cve-2026-38426-tasmota-fetchjpg-strcpy-overflow](./pocs/network/2026-07-05_cve-2026-38426-tasmota-fetchjpg-strcpy-overflow/) | `network` | CVE-2026-38426 | Critical | tasmota, esp32, iot, buffer-overflow, strcpy, rce, mjpeg, scripter | PoC |
 | 2026-07-05 | 2026-05 | [cve-2026-38427-tasmota-fetchjpg-integer-wraparound](./pocs/network/2026-07-05_cve-2026-38427-tasmota-fetchjpg-integer-wraparound/) | `network` | CVE-2026-38427 | Critical | tasmota, esp32, iot, integer-overflow, heap-corruption, rce, mjpeg, scripter | PoC |
 | 2026-07-05 | 2026-06 | [cve-2026-38698-wyze-cam-tutk-heap-overflow](./pocs/network/2026-07-05_cve-2026-38698-wyze-cam-tutk-heap-overflow/) | `network` | CVE-2026-38698 | Critical | tutk-sdk, iot, camera, heap-overflow, av-server, wyze, authenticated, p2p | PoC |
-| 2026-07-05 | 2026-06 | [cve-2026-39808-fortisandbox-os-command-injection](./pocs/network/2026-07-05_cve-2026-39808-fortisandbox-os-command-injection/) | `network` | CVE-2026-39808 | Critical | fortinet, fortisandbox, os-command-injection, unauthenticated, root-rce, cwe-78, actively-exploited | Weaponized |
+| 2026-07-05 | 2026-07-19 (corrected — see Notes) | [cve-2026-39808-fortisandbox-os-command-injection](./pocs/network/2026-07-05_cve-2026-39808-fortisandbox-os-command-injection/) | `network` | CVE-2026-39808 | Critical | fortinet, fortisandbox, os-command-injection, unauthenticated, root-rce, cwe-78, actively-exploited, kev | Weaponized — real, working exploit verified from two independent sources |
 | 2026-07-05 | 2026-04 | [cve-2026-4112-sonicwall-sma-sqli-hash-extraction](./pocs/network/2026-07-05_cve-2026-4112-sonicwall-sma-sqli-hash-extraction/) | `network` | CVE-2026-4112 (SonicWall Advisory SNWLID-2026-0003) | High | sonicwall, sma, sql-injection, blind-sqli, privilege-escalation, load-file, hash-extraction, appliance | Weaponized |
 | 2026-07-05 | 2026-05 | [cve-2026-41285-openbsd-slaacd-nd-dos](./pocs/network/2026-07-05_cve-2026-41285-openbsd-slaacd-nd-dos/) | `network` | CVE-2026-41285 | High | openbsd, slaacd, rad, icmpv6, ipv6, dos, infinite-loop, scapy, neighbor-discovery | Weaponized |
 | 2026-07-05 | 2026-05 | [cve-2026-42096-sparx-binary-protocol-sqli](./pocs/network/2026-07-05_cve-2026-42096-sparx-binary-protocol-sqli/) | `network` | CVE-2026-42096 | Critical | sqli, unauthenticated, sparx, enterprise-architect, pro-cloud-server, binary-protocol, python | PoC |
@@ -385,8 +385,8 @@
 | 2026-07-05 | 2026-03 | [cve-2026-3228-nextscripts-wp-stored-xss](./pocs/web/2026-07-05_cve-2026-3228-nextscripts-wp-stored-xss/) | `web` | CVE-2026-3228 | Medium | wordpress, xss, stored-xss, plugin, contributor-privilege, shortcode, session-hijacking | PoC |
 | 2026-07-05 | 2026-03 | [cve-2026-32731-apostrophecms-tar-path-traversal](./pocs/web/2026-07-05_cve-2026-32731-apostrophecms-tar-path-traversal/) | `web` | CVE-2026-32731 | High | apostrophecms, cms, path-traversal, tar-slip, arbitrary-file-write, import, node-js | PoC |
 | 2026-07-05 | 2026-05 | [cve-2026-3296-everest-forms-object-injection](./pocs/web/2026-07-05_cve-2026-3296-everest-forms-object-injection/) | `web` | CVE-2026-3296 | Critical | wordpress, everest-forms, php-object-injection, deserialization, unserialize, rce, cwe-502 | PoC (functional two-phase injection/trigger tool; RCE requires supplying a real POP gadget chain via PHPGGC) |
-| 2026-07-05 | 2026-06 | [cve-2026-3300-everest-forms-code-injection](./pocs/web/2026-07-05_cve-2026-3300-everest-forms-code-injection/) | `web` | CVE-2026-3300 | Critical | wordpress, everest-forms-pro, php-code-injection, rce, reverse-shell, form-calculation, unauthenticated | Weaponized (includes working reverse-shell payload builder and listener) |
 | 2026-07-05 | 2026-05 | [cve-2026-33006-apache-mod-auth-digest-timing](./pocs/web/2026-07-05_cve-2026-33006-apache-mod-auth-digest-timing/) | `web` | CVE-2026-33006 | Medium | apache, mod_auth_digest, timing-attack, authentication-bypass, digest-auth, http, side-channel | PoC |
+| 2026-07-05 | 2026-06 | [cve-2026-3300-everest-forms-code-injection](./pocs/web/2026-07-05_cve-2026-3300-everest-forms-code-injection/) | `web` | CVE-2026-3300 | Critical | wordpress, everest-forms-pro, php-code-injection, rce, reverse-shell, form-calculation, unauthenticated | Weaponized (includes working reverse-shell payload builder and listener) |
 | 2026-07-05 | 2026-07 | [cve-2026-33017-langflow-rce](./pocs/web/2026-07-05_cve-2026-33017-langflow-rce/) | `web` | CVE-2026-33017 | Critical | langflow, rce, custom-component, code-execution, flow-builder, reverse-shell, curl | PoC |
 | 2026-07-05 | 2026-04 | [cve-2026-33033-django-multipartparser-dos](./pocs/web/2026-07-05_cve-2026-33033-django-multipartparser-dos/) | `web` | CVE-2026-33033 | Medium | django, dos, multipart, base64, cpu-amplification, python, file-upload | PoC |
 | 2026-07-05 | 2026-03 | [cve-2026-3304-multer-orphaned-file-dos](./pocs/web/2026-07-05_cve-2026-3304-multer-orphaned-file-dos/) | `web` | CVE-2026-3304 | High | multer, nodejs, express, dos, file-upload, orphaned-file, disk-exhaustion, multipart | PoC |
@@ -513,8 +513,8 @@
 | 2026-07-05 | 2026-07 | [cve-2026-52813-gogs-path-traversal-hook-rce](./pocs/web/2026-07-05_cve-2026-52813-gogs-path-traversal-hook-rce/) | `web` | CVE-2026-52813 | Not disclosed | gogs, path-traversal, git-hooks, rce, authenticated, account-takeover, self-hosted-git | PoC |
 | 2026-07-05 | 2026-06 | [cve-2026-53435-jenkins-deser-file-read](./pocs/web/2026-07-05_cve-2026-53435-jenkins-deser-file-read/) | `web` | CVE-2026-53435 (Jenkins SECURITY-3707) | High (advisory also describes user impersonation and Script Console RCE via the same primitive; this PoC demonstrates file-read impact only) | jenkins, deserialization, classfilter-bypass, xstream, config-xml, stapler, arbitrary-file-read, docker-lab, cwe-502 | PoC |
 | 2026-07-05 | Unknown | [cve-2026-53519-nezha-path-traversal-jwt-forgery](./pocs/web/2026-07-05_cve-2026-53519-nezha-path-traversal-jwt-forgery/) | `web` | CVE-2026-53519 (GHSA-5c25-7vpj-9mqh) | Not disclosed (unauthenticated path traversal leading to full admin JWT forgery) | nezha, path-traversal, jwt-forgery, unauthenticated, config-disclosure, sqlite, privilege-escalation, cwe-22, cwe-347 | PoC |
-| 2026-07-05 | 2026-04 | [cve-2026-5364-cf7-dnd-upload-rce](./pocs/web/2026-07-05_cve-2026-5364-cf7-dnd-upload-rce/) | `web` | CVE-2026-5364 | High | wordpress, contact-form-7, file-upload, webshell, rce, sanitize-file-name-bypass, admin-ajax, cwe-434 | PoC |
 | 2026-07-05 | 2026-06 | [cve-2026-53647-fossbilling-chained-rce](./pocs/web/2026-07-05_cve-2026-53647-fossbilling-chained-rce/) | `web` | CVE-2026-53647 (also documents chained CVE-2026-53646) | Moderate | fossbilling, api-key-disclosure, password-reset, token-reuse, account-takeover, unauthenticated, ghsa, php | PoC |
+| 2026-07-05 | 2026-04 | [cve-2026-5364-cf7-dnd-upload-rce](./pocs/web/2026-07-05_cve-2026-5364-cf7-dnd-upload-rce/) | `web` | CVE-2026-5364 | High | wordpress, contact-form-7, file-upload, webshell, rce, sanitize-file-name-bypass, admin-ajax, cwe-434 | PoC |
 | 2026-07-05 | 2026-06 | [cve-2026-5366-prefect-git-argument-injection](./pocs/web/2026-07-05_cve-2026-5366-prefect-git-argument-injection/) | `web` | CVE-2026-5366 (Huntr bounty e2e88a0f-a8f6-49c9-94c5-e98dc385f07a) | High | prefect, git, argument-injection, rce, upload-pack, workflow-orchestration, supply-chain, python | PoC |
 | 2026-07-05 | 2026-06 | [cve-2026-5415-wp-captcha-pro-auth-bypass](./pocs/web/2026-07-05_cve-2026-5415-wp-captcha-pro-auth-bypass/) | `web` | CVE-2026-5415 | High | wordpress, wp-captcha-pro, auth-bypass, privilege-escalation, nonce, ajax, account-takeover, plugin | PoC |
 | 2026-07-05 | 2026-06 | [cve-2026-5426-knowledgedeliver-viewstate-rce](./pocs/web/2026-07-05_cve-2026-5426-knowledgedeliver-viewstate-rce/) | `web` | CVE-2026-5426 | Critical | aspnet, viewstate, deserialization, rce, hardcoded-keys, machinekey, knowledgedeliver, webshell, python | PoC |
@@ -555,10 +555,12 @@
 | 2026-07-11 | 2026-06-16 (legacy patch 3.9.15 released) | [cve-2026-48939-icagenda-joomla-file-upload-rce](./pocs/web/2026-07-11_cve-2026-48939-icagenda-joomla-file-upload-rce/) | `web` | CVE-2026-48939 | Critical | joomla, icagenda, file-upload, rce, cwe-434, unauthenticated, remote, kev, cms, php, access-control-bypass | Weaponized (public PoC available, actively exploited in the wild, in CISA KEV since 2026-07-10) |
 | 2026-07-12 | 2026-07-12 | [cve-2026-56260-crawl4ai-output-path-arbitrary-write](./pocs/web/2026-07-12_cve-2026-56260-crawl4ai-output-path-arbitrary-write/) | `web` | CVE-2026-56260 (GHSA-365w-hqf6-vxfg) | Critical | crawl4ai, ai-web-crawler, docker-api, path-traversal, arbitrary-file-write, cwe-22, unauthenticated, remote, denial-of-service | PoC — lab (`vulnerable-app/`) demonstrates genuine unrestricted arbitrary file write; the bundled `poc.py` scanner is deliberately conservative (writes only to a randomized safe `/tmp` marker) so it is safe to run against real/production targets. See Notes. |
 | 2026-07-12 | 2026-07-12 | [cve-2026-56271-flowise-hardcoded-jwt-authbypass](./pocs/web/2026-07-12_cve-2026-56271-flowise-hardcoded-jwt-authbypass/) | `web` | CVE-2026-56271 (GHSA-cc4f-hjpj-g9p8) | Critical | flowise, ai-gateway, llm-orchestration, jwt, hardcoded-secret, authentication-bypass, cwe-321, unauthenticated, remote, privilege-escalation | Weaponized (functional PoC forges valid admin JWTs and confirms bypass against real endpoints) |
+| 2026-07-19 | 2026-07-19 | [cve-2026-58116-llamafactory-trust-remote-code-rce](./pocs/web/2026-07-19_cve-2026-58116-llamafactory-trust-remote-code-rce/) | `web` | CVE-2026-58116 | Critical | llamafactory, llm-training, webui, trust-remote-code, huggingface, transformers, cwe-94, unauthenticated-within-webui, remote-code-execution, ai-supply-chain | Weaponized — confirmed code execution via the exact sink LLaMA-Factory reaches |
+| 2026-07-19 | 2026-07-19 | [cve-2026-63030-cve-2026-60137-wp2shell-wordpress-core-preauth-rce](./pocs/web/2026-07-19_cve-2026-63030-cve-2026-60137-wp2shell-wordpress-core-preauth-rce/) | `web` | CVE-2026-63030 (REST `/batch/v1` route confusion, CVSS 7.5), CVE-2026-60137 (`author__not_in` SQL injection, CVSS 9.1); GHSA-ff9f-jf42-662q, GHSA-fpp7-x2x2-2mjf | Critical | wordpress, wp-core, sql-injection, route-confusion, cwe-89, cwe-436, unauthenticated, remote, privilege-escalation, rce, oembed, changeset | Weaponized — full pre-auth RCE confirmed against stock-default WordPress core, no plugins/misconfiguration required |
 
 ---
 
-*Total POCs: 680*
+*Total POCs: 682*
 
 ## By Category
 
@@ -569,7 +571,7 @@
 - **`misc`** — 32 entries
 - **`network`** — 118 entries
 - **`social-engineering`** — 2 entries
-- **`web`** — 407 entries
+- **`web`** — 409 entries
 
 ## Archives
 
