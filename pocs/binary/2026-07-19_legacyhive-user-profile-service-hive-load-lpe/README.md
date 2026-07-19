@@ -1,0 +1,160 @@
+# LegacyHive - Windows user profile service arbitrary hive load elevation of privileges vulnerability
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-07-19 |
+| **Last Updated** | 2026-07-14 |
+| **Author / Researcher** | MSNightmare (Nightmare-Eclipse) |
+| **CVE / Advisory** | N/A |
+| **Category** | binary |
+| **Severity** | High |
+| **CVSS Score** | N/A |
+| **Status** | Weaponized |
+| **Tags** | windows, lpe, user-profile-service, registry-hive, usrclass.dat, oplock, symbolic-link |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Microsoft Windows user profile service / registry hive loading path |
+| **Versions Affected** | Windows desktop and server installations reported as exploitable by the researcher as of July 2026 patches |
+| **Language / Platform** | C++, Windows |
+| **Authentication Required** | Partial (requires standard user credentials and a target username) |
+| **Network Access Required** | Local only |
+
+---
+
+## Summary
+
+LegacyHive demonstrates a local privilege-escalation path in Windows user profile hive handling where a low-privileged user can influence how another user's hive is loaded. The PoC modifies hive data and abuses object manager links and an oplock timing window to coerce privileged behavior around `UsrClass.dat` loading. On success, the target user's hive is mounted in the attacker's context via `RegOpenUserClassesRoot`, demonstrating unauthorized hive-load behavior that can be used for privilege escalation scenarios.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+The PoC indicates a trust-boundary failure in user profile hive loading logic: attacker-controlled filesystem/object-manager redirection combined with modified hive values (`User Shell Folders\Local AppData`) can influence where profile-service components resolve and load user hive content. This enables privileged operations to act on attacker-controlled paths.
+
+### Attack Vector
+
+1. Authenticate as a standard user and prepare a writable working directory and object manager links under `\BaseNamedObjects\Restricted`.
+2. Patch the attacker's `ntuser.dat` hive so `Local AppData` points to a crafted path, then replace the on-disk hive.
+3. Copy a target user's `UsrClass.dat`, hold it with a batch oplock, and trigger profile loading via `CreateProcessWithLogonW` + `RegOpenUserClassesRoot`.
+4. Release timing controls after oplock trigger so the redirected path is used during hive load.
+
+### Impact
+
+A local attacker can force unintended hive-loading behavior for another user profile, enabling elevation-of-privilege conditions and unauthorized access to user hive context/data.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:        Windows desktop/server build (researcher claims July 2026 patched systems remain affected)
+Target:    Local Windows host with multiple user accounts
+Attacker:  Standard local user account
+Tools:     Visual Studio / C++ build chain, Windows SDK, offreg library headers
+```
+
+### Setup Steps
+
+```bash
+# Build LegacyHive.cpp in a Windows C++ environment with required libraries.
+# Run with credentials and target username:
+LegacyHive.exe <username> <password> <target_user_hive>
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Compile the PoC**
+   ```bash
+   cl /EHsc LegacyHive.cpp /link userenv.lib advapi32.lib ntdll.lib offreg.lib Rpcrt4.lib
+   ```
+
+2. **Execute with standard-user credentials and a target account name**
+   ```bash
+   LegacyHive.exe standard_user Password123 target_username
+   ```
+
+3. **Observe success condition**
+   ```text
+   oplock triggered !
+   Hive loaded, press any key to unload and exit.
+   ```
+
+### Exploit Code
+
+> See `LegacyHive.cpp` in this folder.
+
+```cpp
+// Core trigger path (simplified)
+// 1) Create object-manager links
+// 2) Modify Local AppData in ntuser.dat
+// 3) Trigger RegOpenUserClassesRoot while holding/releasing oplock
+```
+
+### Expected Output
+
+```
+oplock triggered !
+Hive loaded, press any key to unload and exit.
+```
+
+---
+
+## Screenshots / Evidence
+
+- Upstream screenshot embedded in source README demonstrates successful run output.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+# Suspicious access to user hive files (ntuser.dat / UsrClass.dat) by unexpected processes
+# Object-manager symbolic link creation under \BaseNamedObjects\Restricted\*
+# Batch oplock activity against copied UsrClass.dat followed by RegOpenUserClassesRoot calls
+```
+
+**SIEM / IDS Rule (example):**
+```
+Alert when low-privileged processes create symbolic links in object namespaces
+and immediately trigger profile hive load APIs (RegOpenUserClassesRoot).
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Monitor Microsoft advisories and apply profile-service / hive-loading related security updates when published |
+| **Workaround** | Restrict local attack surface (least privilege, limit interactive logons, monitor privileged profile API abuse) |
+| **Config Hardening** | Detect/block suspicious object manager link creation and unusual hive file manipulation patterns |
+
+---
+
+## References
+
+- [Source Repository](https://github.com/MSNightmare/LegacyHive)
+
+---
+
+## Notes
+
+The upstream researcher states this public PoC is intentionally stripped down and that a fuller internal variant can target arbitrary hives.
+
+Auto-ingested from https://github.com/MSNightmare/LegacyHive on 2026-07-19.
