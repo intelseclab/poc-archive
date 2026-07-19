@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Llm-Training on PoC Archive</title><link>https://poc.intelseclab.com/tags/llm-training/</link><description>Recent content in Llm-Training on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 19 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/llm-training/index.xml" rel="self" type="application/rss+xml"/><item><title>LLaMA-Factory WebUI Remote Code Execution via Hardcoded `trust_remote_code` (CVE-2026-58116)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-19_cve-2026-58116-llamafactory-trust-remote-code-rce/</link><pubDate>Sun, 19 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-19_cve-2026-58116-llamafactory-trust-remote-code-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-19&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-19&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Original disclosure by h3nrrrych4u; PoC by Hunt-Benito&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-58116&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (CVSS 3.1, &lt;code>AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized — confirmed code execution via the exact sink LLaMA-Factory reaches&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>llamafactory, llm-training, webui, trust-remote-code, huggingface, transformers, cwe-94, unauthenticated-within-webui, remote-code-execution, ai-supply-chain&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>LLaMA-Factory (&lt;a href="https://github.com/hiyouga/LLaMA-Factory">hiyouga/LLaMA-Factory&lt;/a>) — WebUI Chat and Training interfaces&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&amp;lt;= 0.9.5&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python, Hugging Face &lt;code>transformers&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No additional auth beyond having WebUI access (the WebUI itself is often deployed without further access control)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>No — triggered by loading a model, which can be a local action or reachable if the WebUI is exposed&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>LLaMA-Factory&amp;rsquo;s WebUI hardcodes &lt;code>trust_remote_code=True&lt;/code> whenever it loads a model (&lt;code>src/llamafactory/webui/chatter.py:139&lt;/code> and &lt;code>runner.py:175,320&lt;/code>). The &amp;ldquo;Model path&amp;rdquo; field — fully attacker/user-controlled — flows unvalidated into &lt;code>AutoTokenizer.from_pretrained()&lt;/code> / &lt;code>AutoModel.from_pretrained()&lt;/code>. Because &lt;code>trust_remote_code=True&lt;/code> tells Hugging Face &lt;code>transformers&lt;/code> to download and execute arbitrary Python modules declared in a model repository&amp;rsquo;s &lt;code>config.json&lt;/code> (&lt;code>auto_map&lt;/code>), simply pointing the WebUI&amp;rsquo;s Model path at a malicious Hugging Face repository — or any path resolving to one — results in immediate remote code execution as the LLaMA-Factory process, before any model weights are even loaded.&lt;/p></description></item></channel></rss>
