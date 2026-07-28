@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Pkinit on PoC Archive</title><link>https://poc.intelseclab.com/tags/pkinit/</link><description>Recent content in Pkinit on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Fri, 24 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/pkinit/index.xml" rel="self" type="application/rss+xml"/><item><title>AD CS/AD FS Enrollment "cdc" Chase Attribute Abuse → Domain Controller Impersonation (CertiGhost, CVE-2026-54121)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-27_cve-2026-54121-certighost-adcs-dc-impersonation/</link><pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-27_cve-2026-54121-certighost-adcs-dc-impersonation/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-24&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>aniqfakhrul &amp;amp; H0j3n&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-54121&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>8.8 (CVSSv3)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>active-directory, adcs, certificate-services, dcsync, pkinit, kerberos, privilege-escalation, domain-controller-impersonation, windows&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Microsoft Active Directory Certificate Services (AD CS) Enterprise CA, in environments where AD FS / certificate enrollment resolves DC identity via &amp;ldquo;chase&amp;rdquo; (&lt;code>cdc&lt;/code>/&lt;code>rmd&lt;/code>) request attributes&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Windows Server AD CS Enterprise CA builds prior to Microsoft&amp;rsquo;s 2026-07-14 fix; templates whose &lt;code>msPKI-Certificate-Name-Flag&lt;/code> includes a DNS-name subject flag (&lt;code>nameFlag &amp;amp; 0x58000000&lt;/code>, e.g. the default &lt;code>Machine&lt;/code>/&lt;code>DomainController&lt;/code>-style templates) are exploitable&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Windows Server, Active Directory Certificate Services, Kerberos/PKINIT, LDAP/SMB (Netlogon)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — any authenticated low-privileged domain user (default AD &amp;ldquo;create computer objects&amp;rdquo; / self-join quota is sufficient)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — the attacker host must be reachable by the Enterprise CA over SMB (445) and LDAP (389)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>CertiGhost (CVE-2026-54121) abuses a &amp;ldquo;chase&amp;rdquo; mechanism in AD CS certificate enrollment: when a certificate request carries a &lt;code>cdc&lt;/code> (chase domain controller) attribute pointing at an attacker-controlled IP alongside an &lt;code>rmd&lt;/code> (remote machine DNS) attribute naming a target machine, the Enterprise CA will connect back to that attacker-controlled host over SMB/LDAP to resolve the named machine&amp;rsquo;s identity (sAMAccountName, SID, dNSHostName) instead of querying a real, trusted source. A low-privileged domain user can stand up rogue LDAP/SMB listeners, request a machine certificate as a self-created computer account, set &lt;code>cdc&lt;/code> to their own IP and &lt;code>rmd&lt;/code> to a real Domain Controller&amp;rsquo;s DNS name, and have the CA issue a certificate for a computer object whose identity was fabricated by the attacker&amp;rsquo;s rogue listener — a certificate that authenticates as the Domain Controller itself. That certificate is then used with PKINIT to log on as the DC, extract its NT hash/PAC via a U2U ticket, and pivot to DCSync/krbtgt theft for full domain compromise.&lt;/p></description></item></channel></rss>

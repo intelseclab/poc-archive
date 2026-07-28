@@ -1,3 +1,4 @@
+// Disclaimer: For authorized security research and educational use only.
 #define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
 #include <Windows.h>

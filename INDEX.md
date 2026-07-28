@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-07-28 07:21:42
+> Last updated: 2026-07-28 08:23:22
 
 ---
 
@@ -99,8 +99,8 @@
 | 2026-07-05 | 2026-06 | [cve-2026-7270-freebsd-execargs-oob-memmove-lpe](./pocs/binary/2026-07-05_cve-2026-7270-freebsd-execargs-oob-memmove-lpe/) | `binary` | CVE-2026-7270 | Critical | freebsd, kernel, lpe, memmove, oob, race-condition, ld_preload, sshd, cwe-190, cwe-787 | Weaponized |
 | 2026-07-08 | 2026-07-08 | [cve-2026-43499-ghostlock-nebula-security](./pocs/binary/2026-07-08_cve-2026-43499-ghostlock-nebula-security/) | `binary` | CVE-2026-43499 (aka GhostLock) | High | linux-kernel, use-after-free, futex, rtmutex, priority-inheritance, lpe, local, container-escape, kernelctf, ghostlock | Weaponized (per Nebula Security disclosure); no exploit code mirrored into this repo, see Notes |
 | 2026-07-19 | 2026-07-19 | [cve-2026-14431-v8-array-iterator-maglev-type-confusion](./pocs/binary/2026-07-19_cve-2026-14431-v8-array-iterator-maglev-type-confusion/) | `binary` | CVE-2026-14431 | High | v8, javascript-engine, chromium, maglev, type-confusion, array-iterator, cwe-843, sandboxed-read-write, memory-corruption | PoC — real, working sandboxed read/write primitives (`addrof`/`fakeobj`); no sandbox-escape/RCE chain published (author states this is still in progress) |
+| 2026-07-19 | 2026-07-14 | [legacyhive-user-profile-service-hive-load-lpe](./pocs/binary/2026-07-19_legacyhive-user-profile-service-hive-load-lpe/) | `binary` | N/A | High | windows, lpe, user-profile-service, registry-hive, usrclass.dat, oplock, symbolic-link | Weaponized |
 | 2026-07-27 | 2026-06-11 | [greatxml-winre-bitlocker-bypass](./pocs/binary/2026-07-27_greatxml-winre-bitlocker-bypass/) | `binary` | N/A (no CVE assigned, no Microsoft advisory as of 2026-07-27) | High | windows, bitlocker, winre, defender, offline-scan, trust-boundary-bypass, zero-day, unpatched, physical-access, local | Unpatched |
-| 2026-07-27 | 2026-07-24 | [legacyhive-windows-hive-load-lpe](./pocs/binary/2026-07-27_legacyhive-windows-hive-load-lpe/) | `binary` | N/A (no CVE assigned, no Microsoft advisory as of 2026-07-27) | High | windows, lpe, privilege-escalation, registry-hive, user-profile-service, toctou, oplock, zero-day, unpatched, local | Unpatched |
 | 2026-07-03 | 2026-06 | [docker-cp-copyout-destination-escape](./pocs/cloud/2026-07-03_docker-cp-copyout-destination-escape/) | `cloud` | None assigned as of 2026-07-03 | Medium | docker, container-escape, toctou, symlink-race, docker-cp, path-traversal, archive-extraction, host-file-write | PoC |
 | 2026-07-03 | 2026-06 | [floci-apigateway-vtl-rce](./pocs/cloud/2026-07-03_floci-apigateway-vtl-rce/) | `cloud` | None assigned as of 2026-07-03 | Critical | floci, api-gateway, velocity-template-language, rce, iam-bypass, sigv4, java-reflection, localstack-alternative | Weaponized |
 | 2026-07-03 | 2026-07 | [gitea-act-runner-container-options-escape](./pocs/cloud/2026-07-03_gitea-act-runner-container-options-escape/) | `cloud` | None assigned as of 2026-07-03 | High | gitea, act-runner, ci-cd, docker, container-escape, host-namespace, privilege-escalation, capabilities | PoC |

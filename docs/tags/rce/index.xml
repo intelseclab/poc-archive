@@ -1,4 +1,344 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Rce on PoC Archive</title><link>https://poc.intelseclab.com/tags/rce/</link><description>Recent content in Rce on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 19 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/rce/index.xml" rel="self" type="application/rss+xml"/><item><title>wp2shell — WordPress Core Pre-Auth SQLi → Row Forgery → Admin Creation → RCE (CVE-2026-63030 + CVE-2026-60137)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-19_cve-2026-63030-cve-2026-60137-wp2shell-wordpress-core-preauth-rce/</link><pubDate>Sun, 19 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-19_cve-2026-63030-cve-2026-60137-wp2shell-wordpress-core-preauth-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Rce on PoC Archive</title><link>https://poc.intelseclab.com/tags/rce/</link><description>Recent content in Rce on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 27 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/rce/index.xml" rel="self" type="application/rss+xml"/><item><title>Crawl4AI JsonCssExtractionStrategy AST Sandbox Escape → Unauthenticated RCE (CVE-2026-53753)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-53753-crawl4ai-sandbox-escape-rce/</link><pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-53753-crawl4ai-sandbox-escape-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Caio Fabrício (BiiTts) — corroborated by 0xEnc0der&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-53753 (GHSA-qxjp-w3pj-48m7)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (CVSS 3.1, &lt;code>AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized — full end-to-end command execution reproduced against the official &lt;code>unclecode/crawl4ai:0.8.6&lt;/code> image&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>crawl4ai, sandbox-escape, rce, python, ast-bypass, unauthenticated, llm-tooling, ai-security&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Crawl4AI — open-source LLM-friendly web crawler/scraper, Docker API server&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>&lt;code>&amp;lt;= 0.8.6&lt;/code> (fixed in &lt;code>0.8.7&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (crawl4ai&amp;rsquo;s &lt;code>extraction_strategy.py&lt;/code>), served via the project&amp;rsquo;s Docker API image&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No — the shipped Docker image config has &lt;code>security.jwt_enabled: false&lt;/code>, so the &lt;code>/crawl&lt;/code> token dependency is a no-op&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — direct reachability to the Crawl4AI API port (default &lt;code>11235&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Crawl4AI&amp;rsquo;s &lt;code>JsonCssExtractionStrategy&lt;/code> supports &amp;ldquo;computed fields&amp;rdquo; — small Python expressions evaluated against each extracted item via &lt;code>_safe_eval_expression()&lt;/code>. That function tries to sandbox the expression with an AST allow-list (rejecting only names/attributes/calls that start with &lt;code>_&lt;/code>, plus &lt;code>import&lt;/code> statements) and a stripped-down &lt;code>__builtins__&lt;/code> dict. The allow-list is name-prefix-based and never inspects &lt;code>ast.Subscript&lt;/code> keys, &lt;code>ast.Lambda&lt;/code>, &lt;code>ast.GeneratorExp&lt;/code>, or &lt;code>ast.NamedExpr&lt;/code> nodes. An attacker-supplied expression can therefore walk a &lt;em>running&lt;/em> generator&amp;rsquo;s frame chain (&lt;code>gi_frame&lt;/code> → &lt;code>f_back&lt;/code> × 3 → &lt;code>f_builtins&lt;/code>) — none of which start with &lt;code>_&lt;/code> — to reach the real, unrestricted builtins module of the calling frame, then pull &lt;code>__import__&lt;/code> out of it via a dict subscript (&lt;code>['__import__']&lt;/code>, never checked as an attribute). From there &lt;code>__import__('os').popen(cmd).read()&lt;/code> executes an arbitrary shell command and returns its stdout in-band as the computed field&amp;rsquo;s value. Because the default Docker deployment ships with JWT auth disabled, this is reachable by any unauthenticated network client that can reach &lt;code>POST /crawl&lt;/code>, yielding full remote code execution as the container&amp;rsquo;s service user.&lt;/p></description></item><item><title>GitLab Notebook-Diff Oj Parser Memory-Corruption Chain → Unauthenticated-Reach RCE (No CVE Yet)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-27_gitlab-oj-json-parser-rce-chain/</link><pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-27_gitlab-oj-json-parser-rce-chain/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Yuhang Wu (depthfirst.com)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>N/A (no CVE assigned as of 2026-07-27 — researcher disclosure via depthfirst.com blog, covered by The Hacker News)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>N/A (no official score yet — no CVE/vendor advisory to derive one from)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>gitlab, oj-gem, json-parser, rce, aslr-bypass, ruby, deserialization, no-cve-yet&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>GitLab Community/Enterprise Edition — Jupyter notebook diff rendering (backed by the &lt;code>Oj&lt;/code> native Ruby JSON parser gem)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>GitLab 18.11.3 (version used in the published Docker lab/demo); researcher&amp;rsquo;s writeup states the chain applies to 15.2.0–19.0.1&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Ruby (GitLab Rails app + &lt;code>Oj&lt;/code> native C extension), Puma app server, containerized (&lt;code>gitlab/gitlab-ce&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — requires an ordinary (non-admin) authenticated GitLab user account; no special privileges needed&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — direct HTTP(S) reachability to the GitLab instance&amp;rsquo;s notebook-diff endpoint&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>GitLab renders diffs for Jupyter notebooks by passing repository-controlled JSON through &lt;code>Oj&lt;/code>, a native (C-extension) Ruby JSON parser, in the Puma worker process. The researcher (Yuhang Wu, depthfirst.com) found and chained two distinct memory-corruption bugs in &lt;code>Oj&lt;/code>&amp;rsquo;s parser: one corrupts internal parser state until it gains control of a callback function pointer, and a second independently discloses a heap pointer that narrows the search space needed to defeat ASLR. Combining these, an attacker who can push a crafted notebook file to a repository (as an ordinary authenticated user — no admin rights required) can make the GitLab Puma worker connect back to an attacker-controlled listener and execute shell commands as the &lt;code>git&lt;/code> user, by triggering repeated notebook-diff requests that first leak enough heap-layout information to identify the process&amp;rsquo;s exact library-base addresses (using a precomputed offline fingerprint table), then deliver a final corrupting request that redirects execution to a &lt;code>system()&lt;/code>/&lt;code>nc&lt;/code> callback chain. No CVE has been assigned as of this writing; the vulnerability is publicly disclosed via a technical blog post and a working, reproducible Docker-based demo.&lt;/p></description></item><item><title>Joomla Balbooa Forms Unauthenticated Arbitrary File Upload → RCE (CVE-2026-56291)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-56291-joomla-balbooa-forms-file-upload-rce/</link><pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-56291-joomla-balbooa-forms-file-upload-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>ChiefYoru (Yoru / يورو, t.me/ChiefYoru)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-56291&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (CVSSv3)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>joomla, balbooa-forms, file-upload, webshell, unauthenticated, rce, kev, actively-exploited, cwe-434&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Balbooa Forms (&lt;code>com_baforms&lt;/code>) — third-party Joomla! extension by balbooa.com&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Before 2.4.1&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP (Joomla! component), any OS the Joomla install runs on&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — direct HTTP(S) reachability to the Joomla site&amp;rsquo;s &lt;code>index.php&lt;/code> front controller&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Balbooa Forms is a popular drag-and-drop form builder extension for Joomla!. Its &lt;code>form.uploadAttachmentFile&lt;/code> task — reachable via the unauthenticated &lt;code>com_baforms&lt;/code> component entry point — accepts multipart file uploads for form attachments but performs neither a Joomla &lt;code>Session::checkToken()&lt;/code> CSRF/session check nor any file-extension whitelist/blacklist validation. An unauthenticated attacker can therefore POST a &lt;code>.php&lt;/code> or &lt;code>.phtml&lt;/code> file disguised as an image attachment directly to the task handler; the file is stored under a predictable, web-reachable path (&lt;code>/images/baforms/uploads/form-{id}/&lt;/code>) and is immediately executable by the PHP interpreter, yielding full remote code execution as the web server user. CISA added this to the KEV catalog on 2026-07-10 with active in-the-wild exploitation observed; EPSS is approximately 0.76.&lt;/p></description></item><item><title>Microsoft SharePoint Server WS-Federation SecurityContextToken Deserialization → Unauthenticated RCE (CVE-2026-50522)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-50522-sharepoint-preauth-rce/</link><pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-50522-sharepoint-preauth-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>testanull (X handle &amp;ldquo;Janggggg&amp;rdquo;)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-50522&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (CVSSv3 — base score confirmed; full vector not published, treated as unauthenticated network RCE)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized — public PoC confirmed used in real attacks within hours of release (watchTowr honeypot telemetry)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>sharepoint, deserialization, binaryformatter, ws-federation, unauthenticated, rce, kev, actively-exploited, microsoft&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-58644 — sibling vulnerability from the same July 2026 patch wave, different vulnerable code path in the same WS-Federation/WIF pipeline. &lt;strong>No public PoC exists for CVE-2026-58644&lt;/strong> (only known via private threat-actor exploitation chains); this entry covers CVE-2026-50522, the sibling that &lt;em>does&lt;/em> have a real, weaponized public PoC.&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Microsoft SharePoint Server (on-premises)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>SharePoint Server 2016, SharePoint Server 2019, SharePoint Server Subscription Edition — all prior to the 2026-07-14 (July Patch Tuesday) security update&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>ASP.NET / IIS, Windows Server, Windows Identity Foundation (WIF)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — direct HTTP(S) reachability to the SharePoint site&amp;rsquo;s &lt;code>/_trust/default.aspx&lt;/code> WS-Federation sign-in endpoint&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>SharePoint&amp;rsquo;s WS-Federation passive sign-in endpoint (&lt;code>/_trust/default.aspx&lt;/code>) accepts a &lt;code>wresult&lt;/code> parameter containing a WS-Trust &lt;code>RequestSecurityTokenResponse&lt;/code> that can carry a &lt;code>SecurityContextToken&lt;/code> with an embedded &lt;code>Cookie&lt;/code> value. Windows Identity Foundation&amp;rsquo;s &lt;code>SessionSecurityTokenHandler&lt;/code> decodes that cookie (via &lt;code>DeflateCookieTransform&lt;/code>) and deserializes the resulting bytes using the legacy, unsafe &lt;code>BinaryFormatter&lt;/code> — before any authentication has taken place. An attacker who crafts this cookie to contain a &lt;code>ysoserial.exe&lt;/code>-generated &lt;code>.NET&lt;/code> gadget chain (e.g. &lt;code>TypeConfuseDelegate&lt;/code>) achieves arbitrary code execution as soon as the server processes the POST, with zero credentials and zero prior session state required. This is a sibling flaw to CVE-2026-58644 from the same July 2026 patch wave — same WS-Federation/WIF deserialization surface, different vulnerable path — but unlike CVE-2026-58644 (which has no public PoC and is known only via private threat-actor chains), CVE-2026-50522 has a real, working, publicly released weaponized PoC.&lt;/p></description></item><item><title>wp2shell — WordPress Core Pre-Auth SQLi → Row Forgery → Admin Creation → RCE (CVE-2026-63030 + CVE-2026-60137)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-19_cve-2026-63030-cve-2026-60137-wp2shell-wordpress-core-preauth-rce/</link><pubDate>Sun, 19 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-19_cve-2026-63030-cve-2026-60137-wp2shell-wordpress-core-preauth-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>
