@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-07-19 11:18:23
+> Last updated: 2026-07-28 07:21:42
 
 ---
 
@@ -99,6 +99,8 @@
 | 2026-07-05 | 2026-06 | [cve-2026-7270-freebsd-execargs-oob-memmove-lpe](./pocs/binary/2026-07-05_cve-2026-7270-freebsd-execargs-oob-memmove-lpe/) | `binary` | CVE-2026-7270 | Critical | freebsd, kernel, lpe, memmove, oob, race-condition, ld_preload, sshd, cwe-190, cwe-787 | Weaponized |
 | 2026-07-08 | 2026-07-08 | [cve-2026-43499-ghostlock-nebula-security](./pocs/binary/2026-07-08_cve-2026-43499-ghostlock-nebula-security/) | `binary` | CVE-2026-43499 (aka GhostLock) | High | linux-kernel, use-after-free, futex, rtmutex, priority-inheritance, lpe, local, container-escape, kernelctf, ghostlock | Weaponized (per Nebula Security disclosure); no exploit code mirrored into this repo, see Notes |
 | 2026-07-19 | 2026-07-19 | [cve-2026-14431-v8-array-iterator-maglev-type-confusion](./pocs/binary/2026-07-19_cve-2026-14431-v8-array-iterator-maglev-type-confusion/) | `binary` | CVE-2026-14431 | High | v8, javascript-engine, chromium, maglev, type-confusion, array-iterator, cwe-843, sandboxed-read-write, memory-corruption | PoC — real, working sandboxed read/write primitives (`addrof`/`fakeobj`); no sandbox-escape/RCE chain published (author states this is still in progress) |
+| 2026-07-27 | 2026-06-11 | [greatxml-winre-bitlocker-bypass](./pocs/binary/2026-07-27_greatxml-winre-bitlocker-bypass/) | `binary` | N/A (no CVE assigned, no Microsoft advisory as of 2026-07-27) | High | windows, bitlocker, winre, defender, offline-scan, trust-boundary-bypass, zero-day, unpatched, physical-access, local | Unpatched |
+| 2026-07-27 | 2026-07-24 | [legacyhive-windows-hive-load-lpe](./pocs/binary/2026-07-27_legacyhive-windows-hive-load-lpe/) | `binary` | N/A (no CVE assigned, no Microsoft advisory as of 2026-07-27) | High | windows, lpe, privilege-escalation, registry-hive, user-profile-service, toctou, oplock, zero-day, unpatched, local | Unpatched |
 | 2026-07-03 | 2026-06 | [docker-cp-copyout-destination-escape](./pocs/cloud/2026-07-03_docker-cp-copyout-destination-escape/) | `cloud` | None assigned as of 2026-07-03 | Medium | docker, container-escape, toctou, symlink-race, docker-cp, path-traversal, archive-extraction, host-file-write | PoC |
 | 2026-07-03 | 2026-06 | [floci-apigateway-vtl-rce](./pocs/cloud/2026-07-03_floci-apigateway-vtl-rce/) | `cloud` | None assigned as of 2026-07-03 | Critical | floci, api-gateway, velocity-template-language, rce, iam-bypass, sigv4, java-reflection, localstack-alternative | Weaponized |
 | 2026-07-03 | 2026-07 | [gitea-act-runner-container-options-escape](./pocs/cloud/2026-07-03_gitea-act-runner-container-options-escape/) | `cloud` | None assigned as of 2026-07-03 | High | gitea, act-runner, ci-cd, docker, container-escape, host-namespace, privilege-escalation, capabilities | PoC |
@@ -233,6 +235,7 @@
 | 2026-07-12 | 2026-07-12 | [openssh-agent-lock-provider-bypass](./pocs/network/2026-07-12_openssh-agent-lock-provider-bypass/) | `network` | N/A | High | openssh, ssh-agent, agent-forwarding, pkcs11, race-condition, state-confusion, no-cve, local-provider-abuse | PoC — reproducible against a signed, checksum/signature-verified stock OpenSSH 10.4p1 build; no weaponized payload beyond starting an allowed PKCS#11 provider |
 | 2026-07-15 | 2026-07-15 | [cve-2026-15409-sonicwall-sma1000-ssrf-erlang-rce](./pocs/network/2026-07-15_cve-2026-15409-sonicwall-sma1000-ssrf-erlang-rce/) | `network` | CVE-2026-15409 (SNWLID-2026-0008) | Critical | sonicwall, sma1000, workplace, ssrf, erlang, rpc, cwe-918, unauthenticated, remote, kev, actively-exploited | Weaponized — unauthenticated, non-root remote code execution confirmed against a real appliance build |
 | 2026-07-19 | 2026-07-19 | [cve-2026-20230-cisco-ucm-ssrf-arbitrary-file-write](./pocs/network/2026-07-19_cve-2026-20230-cisco-ucm-ssrf-arbitrary-file-write/) | `network` | CVE-2026-20230 (cisco-sa-cucm-ssrf-cXPnHcW) | Critical (per Ciscos own Security Impact Rating, despite a High numeric CVSS) | cisco, unified-communications-manager, ucm, webdialer, ssrf, cwe-918, unauthenticated, remote, privilege-escalation, kev, actively-exploited | PoC — scanner/tester confirms the WebDialer precondition and SSRF reachability |
+| 2026-07-27 | 2026-07-24 | [cve-2026-54121-certighost-adcs-dc-impersonation](./pocs/network/2026-07-27_cve-2026-54121-certighost-adcs-dc-impersonation/) | `network` | CVE-2026-54121 | High | active-directory, adcs, certificate-services, dcsync, pkinit, kerberos, privilege-escalation, domain-controller-impersonation, windows | Weaponized |
 | 2026-07-05 | 2026-05 | [cve-2026-21510-lnk-stomping-generator](./pocs/social-engineering/2026-07-05_cve-2026-21510-lnk-stomping-generator/) | `social-engineering` | CVE-2026-21510 | High | lnk-stomping, shelllink, cve-2026-21510, windows, initial-access, phishing, anti-forensics, red-team | Weaponized |
 | 2026-07-05 | 2026-05 | [cve-2026-21514-cve-2026-21510-rtf-lnk-builder](./pocs/social-engineering/2026-07-05_cve-2026-21514-cve-2026-21510-rtf-lnk-builder/) | `social-engineering` | CVE-2026-21514, CVE-2026-21510 | High | rtf, lnk, ole-object, protected-view-bypass, cve-2026-21514, cve-2026-21510, phishing, initial-access | PoC |
 | 2026-05-14 | — | [nginx-rift-cve-2026-42945](./pocs/web/2026-05-14_nginx-rift-cve-2026-42945/) | `web` | CVE-2026-42945 | Critical | RCE, unauthenticated, nginx, heap-overflow, buffer-overflow, rewrite | Weaponized |
@@ -562,21 +565,26 @@
 | 2026-07-19 | 2026-07-19 | [cve-2026-55255-langflow-responses-api-idor](./pocs/web/2026-07-19_cve-2026-55255-langflow-responses-api-idor/) | `web` | CVE-2026-55255 (GHSA-qrpv-q767-xqq2) | High | langflow, ai-agent-framework, idor, cwe-639, authenticated, remote, cross-tenant, kev | Weaponized — confirmed cross-user flow execution via a minimal request-only PoC |
 | 2026-07-19 | 2026-07-19 | [cve-2026-58116-llamafactory-trust-remote-code-rce](./pocs/web/2026-07-19_cve-2026-58116-llamafactory-trust-remote-code-rce/) | `web` | CVE-2026-58116 | Critical | llamafactory, llm-training, webui, trust-remote-code, huggingface, transformers, cwe-94, unauthenticated-within-webui, remote-code-execution, ai-supply-chain | Weaponized — confirmed code execution via the exact sink LLaMA-Factory reaches |
 | 2026-07-19 | 2026-07-19 | [cve-2026-63030-cve-2026-60137-wp2shell-wordpress-core-preauth-rce](./pocs/web/2026-07-19_cve-2026-63030-cve-2026-60137-wp2shell-wordpress-core-preauth-rce/) | `web` | CVE-2026-63030 (REST `/batch/v1` route confusion, CVSS 7.5), CVE-2026-60137 (`author__not_in` SQL injection, CVSS 9.1); GHSA-ff9f-jf42-662q, GHSA-fpp7-x2x2-2mjf | Critical | wordpress, wp-core, sql-injection, route-confusion, cwe-89, cwe-436, unauthenticated, remote, privilege-escalation, rce, oembed, changeset | Weaponized — full pre-auth RCE confirmed against stock-default WordPress core, no plugins/misconfiguration required |
+| 2026-07-27 | 2026-07-27 | [cve-2026-50522-sharepoint-preauth-rce](./pocs/web/2026-07-27_cve-2026-50522-sharepoint-preauth-rce/) | `web` | CVE-2026-50522 | Critical | sharepoint, deserialization, binaryformatter, ws-federation, unauthenticated, rce, kev, actively-exploited, microsoft | Weaponized — public PoC confirmed used in real attacks within hours of release (watchTowr honeypot telemetry) |
+| 2026-07-27 | 2026-07-27 | [cve-2026-53753-crawl4ai-sandbox-escape-rce](./pocs/web/2026-07-27_cve-2026-53753-crawl4ai-sandbox-escape-rce/) | `web` | CVE-2026-53753 (GHSA-qxjp-w3pj-48m7) | Critical | crawl4ai, sandbox-escape, rce, python, ast-bypass, unauthenticated, llm-tooling, ai-security | Weaponized — full end-to-end command execution reproduced against the official `unclecode/crawl4ai:0.8.6` image |
+| 2026-07-27 | 2026-07-27 | [cve-2026-54350-budibase-nosql-injection](./pocs/web/2026-07-27_cve-2026-54350-budibase-nosql-injection/) | `web` | CVE-2026-54350 (GHSA-8qv3-p479-cj62) | Critical | budibase, nosql-injection, mongodb, unauthenticated, low-code, json-injection | Weaponized — reproduced end-to-end against a real `budibase/budibase:3.39.0` instance |
+| 2026-07-27 | 2026-07-27 | [cve-2026-56291-joomla-balbooa-forms-file-upload-rce](./pocs/web/2026-07-27_cve-2026-56291-joomla-balbooa-forms-file-upload-rce/) | `web` | CVE-2026-56291 | Critical | joomla, balbooa-forms, file-upload, webshell, unauthenticated, rce, kev, actively-exploited, cwe-434 | Weaponized |
+| 2026-07-27 | 2026-07-27 | [gitlab-oj-json-parser-rce-chain](./pocs/web/2026-07-27_gitlab-oj-json-parser-rce-chain/) | `web` | N/A (no CVE assigned as of 2026-07-27 — researcher disclosure via depthfirst.com blog, covered by The Hacker News) | Critical | gitlab, oj-gem, json-parser, rce, aslr-bypass, ruby, deserialization, no-cve-yet | Weaponized |
 
 ---
 
-*Total POCs: 687*
+*Total POCs: 695*
 
 ## By Category
 
-- **`binary`** — 103 entries
+- **`binary`** — 105 entries
 - **`cloud`** — 21 entries
 - **`crypto`** — 3 entries
 - **`hardware`** — 8 entries
 - **`misc`** — 32 entries
-- **`network`** — 119 entries
+- **`network`** — 120 entries
 - **`social-engineering`** — 2 entries
-- **`web`** — 412 entries
+- **`web`** — 417 entries
 
 ## Archives
 
