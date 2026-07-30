@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Ibm on PoC Archive</title><link>https://poc.intelseclab.com/tags/ibm/</link><description>Recent content in Ibm on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Fri, 31 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/ibm/index.xml" rel="self" type="application/rss+xml"/><item><title>IBM Langflow OSS Unauthenticated RCE via Auto-Login + validate/code Chain (CVE-2026-9198)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-31_cve-2026-9198-langflow-auto-login-validate-code-rce/</link><pubDate>Fri, 31 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-31_cve-2026-9198-langflow-auto-login-validate-code-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-31&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-31&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>ywh-jfellus (corroborated by 0xdak and 0xgh057r3c0n)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-9198&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.8 (CVSS 3.1, AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>langflow, ibm, auto-login, code-injection, cwe-94, unauthenticated, rce, python-exec, ai-agent-framework&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A — distinct from the unrelated CVE-2026-33017 (a different Langflow RCE via the flow-build endpoint); see Notes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>IBM Langflow OSS (visual AI/agent-flow builder)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>1.0.0 through 1.10.0&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python (FastAPI backend)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — direct reachability to the Langflow HTTP API (default port 7860)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>IBM Langflow OSS ships an &lt;code>/api/v1/auto_login&lt;/code> endpoint that, when the deployment has &lt;code>LANGFLOW_AUTO_LOGIN&lt;/code> enabled (a common/default posture), will mint and hand back a fully-privileged SUPERUSER JWT access token to &lt;em>any&lt;/em> caller — no credentials, no session, nothing. That token can then be used against &lt;code>/api/v1/validate/code&lt;/code>, an endpoint intended to lint/validate user-submitted Python component code, but which actually evaluates the submitted source. By abusing Python&amp;rsquo;s semantics that default-argument expressions are evaluated at function-&lt;em>definition&lt;/em> time (not call time), an attacker can smuggle an &lt;code>exec()&lt;/code> call into a function signature&amp;rsquo;s default value and have arbitrary code run on the server the instant the code is &amp;ldquo;validated&amp;rdquo; — before the function is ever invoked. The command output is exfiltrated by deliberately raising an exception whose message is reflected back in the response&amp;rsquo;s &lt;code>function.errors[]&lt;/code> field. The end result is full unauthenticated, pre-auth remote code execution with no user interaction required.&lt;/p></description></item></channel></rss>
