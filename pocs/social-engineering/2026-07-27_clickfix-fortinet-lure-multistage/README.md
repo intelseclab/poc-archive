@@ -1,0 +1,191 @@
+# ClickFix Social-Engineering Technique — Fortinet-Branded Multi-Stage Lure (Fake File-Access Page + Fake CAPTCHA + Clipboard Injection)
+
+<!--
+  File: 2026-07-27_clickfix-fortinet-lure-multistage/README.md
+  Location: pocs/social-engineering/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-07-27 |
+| **Last Updated** | N/A |
+| **Author / Researcher** | Hann1bl3L3ct3r |
+| **CVE / Advisory** | N/A (social-engineering technique, not a software vulnerability) |
+| **Category** | social-engineering |
+| **Severity** | High |
+| **CVSS Score** | N/A |
+| **Status** | PoC (inert placeholder payload) |
+| **Tags** | clickfix, fake-captcha, clipboard-injection, brand-impersonation, social-engineering, phishing, run-dialog, multistage-lure |
+| **Related** | pocs/social-engineering/2026-07-27_clickfix-recaptcha-phish-mshta-hta/ (sibling ClickFix variant, if present) |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Human victims via a browser-rendered phishing lure; end effect targets Windows Run dialog / PowerShell |
+| **Versions Affected** | N/A — social-engineering technique, not version-specific software |
+| **Language / Platform** | Static HTML/CSS/JS (no server backend); target execution environment is Windows (Win+R / PowerShell) |
+| **Authentication Required** | No |
+| **Network Access Required** | Yes (victim must load the hosted lure pages in a browser) |
+
+---
+
+## Summary
+
+This entry documents a second ClickFix-style social-engineering demo, distinct from other ClickFix variants in this archive: a **multi-stage** lure that opens with a Fortinet-branded fake "Secure File Access" page (`index.html`) requesting a work email, then redirects to a fake CAPTCHA verification page (`captcha.html`) that coerces the victim into pressing Win+R and pasting a clipboard-injected command. ClickFix itself is a widely-reported in-the-wild technique in which a fake CAPTCHA/verification page tricks a user into copying an attacker-supplied command (usually via `document.execCommand("copy")` against a hidden textarea) and pasting it into the Windows Run dialog or PowerShell, bypassing the need for any drive-by exploit or malicious attachment. In this repository the embedded payload is an inert placeholder string, not a working encoded command, so the code as-is is a non-functional lure/demo rather than a live attack chain.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+There is no software vulnerability here — this is a pure social-engineering (pretexting) technique. The "root cause" is human trust in familiar UI patterns (a vendor-branded access page, a CAPTCHA box) combined with the fact that Windows will happily execute whatever a user pastes into Run/PowerShell, with no distinction between text the user typed and text silently placed on the clipboard by a web page via `document.execCommand("copy")`.
+
+### Attack Vector
+
+1. Victim is directed (via phishing email/link) to `index.html`, a page impersonating a Fortinet "Secure File Access" portal, styled with a real `fortinet_logo.png` asset and a form asking for a work email address.
+2. Submitting the form does not send the email anywhere meaningful — the value is read into a JS variable and discarded, and the page simply navigates to `captcha.html`. This first stage exists purely to build legitimacy/brand trust and produce a plausible multi-step flow before the payload stage.
+3. `captcha.html` renders a fake CAPTCHA challenge image (`captcha.png`) with a deliberately disabled/unusable text-input verify control, then displays "trouble verifying?" instructions telling the victim to press Win+R and paste a "verification command."
+4. A "Copy Verification Command" button calls a `copyPayload()` function that creates a hidden `<textarea>` containing a PowerShell one-liner, selects it, and calls `document.execCommand("copy")` — genuinely placing the command on the clipboard without the victim ever seeing or typing it.
+5. If the victim pastes into Run/PowerShell and executes, `powershell.exe` runs with `-exec bypass -windowstyle hidden -encodedcommand <payload>` — hidden window, execution policy bypassed, base64-encoded command body (a classic ClickFix payload shape).
+
+### Impact
+
+If weaponized with a real base64-encoded command, this pattern gives an attacker arbitrary code execution as the logged-in user, with no exploit and no file to scan — the victim manually invokes `powershell.exe` themselves via the OS Run dialog, which routinely evades attachment/executable scanning and user "don't run untrusted files" training. **As shipped in this repository, the payload is the literal placeholder string `[REPLACE_WITH_BASE64]` and is not a functioning command — running it as-is causes PowerShell to fail to decode/execute, with no malicious effect.**
+
+---
+
+## Environment / Lab Setup
+
+```
+Target:    Any modern browser to render index.html / captcha.html; Windows host to observe the Win+R / PowerShell paste step
+Attacker:  Static file hosting only (e.g. python3 -m http.server) — no backend/server logic is present
+Tools:     Any web server for local hosting; browser dev tools to inspect clipboard behavior
+```
+
+### Setup Steps
+
+```bash
+# Serve the lure locally (isolated lab / analysis VM only)
+cd pocs/social-engineering/2026-07-27_clickfix-fortinet-lure-multistage
+python3 -m http.server 8000
+# Browse to http://localhost:8000/index.html
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Stage 1 — brand-impersonation gate** — Open `index.html`. It renders a Fortinet-branded "Access Secure Shared Files" box requesting a work email.
+   ```html
+   <img src="fortinet_logo.png" alt="Fortinet Logo" width="200" />
+   ...
+   <input type="email" id="emailInput" placeholder="you@example.com" required />
+   ```
+
+2. **Stage 1 to Stage 2 handoff** — Submitting the form discards the email client-side and redirects to the CAPTCHA page:
+   ```javascript
+   document.getElementById("loginForm").addEventListener("submit", function(e) {
+       e.preventDefault();
+       const email = document.getElementById("emailInput").value;
+       window.location.href = "captcha.html";
+   });
+   ```
+
+3. **Stage 2 — fake CAPTCHA and clipboard injection** — `captcha.html` shows a disabled CAPTCHA input and a "Copy Verification Command" button wired to `copyPayload()`:
+   ```javascript
+   function copyPayload() {
+       const text = document.getElementById("hiddenCommand").textContent;
+       const tempInput = document.createElement("textarea");
+       tempInput.value = text;
+       document.body.appendChild(tempInput);
+       tempInput.select();
+       document.execCommand("copy");
+       document.body.removeChild(tempInput);
+       alert("Command copied to clipboard. Open Run (Win + R) and paste it.");
+   }
+   ```
+
+4. **Payload as shipped** — the hidden command element contains only a placeholder, confirming this copy of the repo is a non-functional demo:
+   ```html
+   <div id="hiddenCommand">powershell -exec bypass -windowstyle hidden -encodedcommand [REPLACE_WITH_BASE64]</div>
+   ```
+
+### Exploit Code
+
+> See `index.html` and `captcha.html` in this folder (real, unmodified upstream files — verified byte-identical to the source repository).
+
+### Expected Output
+
+```
+As-is (placeholder payload): clicking "Copy Verification Command" copies the literal string
+"powershell -exec bypass -windowstyle hidden -encodedcommand [REPLACE_WITH_BASE64]" to the clipboard.
+Pasting and running this in Win+R / PowerShell fails to decode a valid command and has no malicious effect.
+
+If [REPLACE_WITH_BASE64] were swapped for a real base64-encoded PowerShell payload by an operator,
+running the pasted command would execute that payload with the current users privileges, hidden window,
+execution policy bypassed.
+```
+
+---
+
+## Screenshots / Evidence
+
+- `index.html` — rendered "Secure File Access" page impersonating Fortinet (uses real `fortinet_logo.png`)
+- `captcha.html` — rendered fake CAPTCHA verification page (uses `captcha.png`) with the clipboard-injection instructions and button
+- No screenshots captured in this pass; files can be opened directly in a browser to observe the flow described above
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+# Browser/proxy telemetry:
+# - Pages combining vendor logo assets with an email-gated "Continue" flow that hands off
+#   to a second page containing CAPTCHA imagery plus Win+R / clipboard instructions
+# - document.execCommand("copy") invoked against a programmatically created,
+#   hidden <textarea>/<div> element immediately before instructing the user to open Run
+
+# Endpoint telemetry:
+# - explorer.exe spawning powershell.exe with -encodedcommand and -windowstyle hidden
+#   shortly after a Win+R (RunMRU) entry, with no corresponding email/document download
+```
+
+**Signs of compromise:**
+- User reports being told to "verify" via Windows Run / PowerShell paste from a browser-based CAPTCHA or file-access page
+- RunMRU registry key recording a `powershell -encodedcommand ...` entry
+- PowerShell process ancestry showing `explorer.exe -> powershell.exe` with `-windowstyle hidden -exec bypass -encodedcommand`
+- Browser history showing a two-hop flow (branded "file access"/login page -> "CAPTCHA verification" page) immediately preceding the RunMRU entry
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Primary fix** | N/A — this is a phishing/social-engineering pattern, not a patchable software flaw |
+| **User awareness** | Train users that no legitimate CAPTCHA, vendor portal, or verification flow ever requires opening Win+R or pasting a command into PowerShell |
+| **Technical controls** | Restrict/alert on `powershell.exe`/`cmd.exe` launched directly from `explorer.exe` via RunMRU shortly after browser activity; consider Attack Surface Reduction rules and PowerShell Constrained Language Mode / AppLocker for standard users; monitor and alert on `-encodedcommand` usage |
+| **Browser/clipboard hardening** | Clipboard-write permission prompts and disabling legacy `document.execCommand("copy")` behavior reduce silent clipboard injection, though this does not fully close the underlying social-engineering vector |
+
+---
+
+## References
+
+- [Source repository](https://github.com/Hann1bl3L3ct3r/ClickFix)
+- [Group-IB: ClickFix — the social engineering technique hackers use to manipulate victims](https://www.group-ib.com/blog/clickfix-the-social-engineering-technique-hackers-use-to-manipulate-victims/) (linked from upstream README as background on the general ClickFix technique)
+
+---
+
+## Notes
+
+Verified before ingestion this session: real repository files were read directly rather than taken on faith — `index.html` (Fortinet-branded fake "Secure File Access" page, email-gated form that discards the entered value and simply redirects to `captcha.html`) and `captcha.html` (fake CAPTCHA page with a genuine `copyPayload()` function that builds a hidden textarea and calls `document.execCommand("copy")`, matching the real-world ClickFix clipboard-injection pattern). The embedded PowerShell command is confirmed to be an inert placeholder — the literal string `[REPLACE_WITH_BASE64]` — not a live/working encoded payload, so this copy of the code cannot execute malicious actions as distributed. No scam gating, payment wall, or Telegram/external C2 redirection was found anywhere in the two HTML files. The author account (repository owner Hann1bl3L3ct3r) was confirmed as an established, active security-research account — created 2023-08-02, with 20 public repositories showing a consistent output of CVE PoCs and red-team tooling (MindPalace C2, SentinelStriker, PiSquirrel, CredBomb, LDAPBuster) — not a farm or throwaway account. The Fortinet branding (`fortinet_logo.png`) is used only as a static logo image inside a self-contained, locally-hosted demo lure; it is not deployed against, nor does it interact with, any real Fortinet infrastructure or service. This entry is explicitly a SOCIAL-ENGINEERING / SECURITY-AWARENESS demonstration of the ClickFix technique, not a software vulnerability — no CVE applies, and severity/impact depend entirely on what payload an operator substitutes for the placeholder and how successfully the lure manipulates a victim.

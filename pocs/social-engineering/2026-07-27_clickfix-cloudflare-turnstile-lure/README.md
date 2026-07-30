@@ -1,0 +1,184 @@
+# ClickFix Social Engineering Technique — Fake Cloudflare Turnstile Just a Moment Verification Lure
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-07-27 |
+| **Last Updated** | N/A |
+| **Author / Researcher** | 0x204 |
+| **CVE / Advisory** | N/A (social-engineering technique, not a software vulnerability) |
+| **Category** | social-engineering |
+| **Severity** | High |
+| **CVSS Score** | N/A |
+| **Status** | PoC (benign placeholder payload) |
+| **Tags** | clickfix, fake-captcha, cloudflare-turnstile-lure, clipboard-injection, social-engineering, phishing, run-dialog, multilingual-lure |
+| **Related** | pocs/social-engineering/2026-07-27_clickfix-fortinet-lure-multistage, pocs/social-engineering/2026-07-27_clickfix-recaptcha-phish-mshta-hta |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Human victim / browser + Windows Run dialog (Win+R) — no software vulnerability, this is a social-engineering lure page |
+| **Versions Affected** | N/A — technique works against any browser/OS combination where the victim can be tricked into pressing Win+R and pasting a clipboard-injected command |
+| **Language / Platform** | Static HTML/CSS/JavaScript (index.html, main.js, styles.css) — served from any web host |
+| **Authentication Required** | No |
+| **Network Access Required** | Yes (victim must load the lure page in a browser) |
+
+---
+
+## Summary
+
+ClickFix is a widely reported in-the-wild social-engineering technique in which a fake CAPTCHA or "verification" page tricks a victim into copying an attacker-controlled command (silently injected into the clipboard by the page) and pasting/executing it themselves via the Windows Run dialog (Win+R) or PowerShell. This entry mirrors a real, working ClickFix lure page — [`0x204/ClickFix-Turnstile`](https://github.com/0x204/ClickFix-Turnstile) — that impersonates Cloudflare Turnstile's "Just a moment..." human-verification interstitial. The page walks the victim through a fake checkbox click, silently overwrites the clipboard with an attacker-defined command via a hijacked `copy` event, and then displays instructions telling the victim to press Win+R, paste with Ctrl+V, and press Enter to "complete verification" — actually executing the injected command via `Run`. The shipped placeholder command is the benign string `webshell`, not a functional dropper; an operator would need to substitute their own payload (e.g. a `mshta`/`powershell` one-liner) for this to cause real harm.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+This is not a memory-safety or logic vulnerability in software — it exploits user trust in a familiar UI pattern (Cloudflare's real "Just a moment..." bot-check interstitial) combined with a browser feature (scripted control over the `copy` clipboard event) that lets a web page silently substitute clipboard contents. There is no technical flaw being exploited on the victim's machine; the "vulnerability" is purely social — victims are conditioned to click through CAPTCHA-style checks and are not used to scrutinizing what a "Copy" action actually places on their clipboard before pasting it into a privileged execution context like Run or a terminal.
+
+### Attack Vector
+
+1. Victim is directed (via phishing email, malvertising, compromised site, or search-poisoning) to a page running this lure, optionally with `?site=` and `?logo=` query parameters that spoof the displayed domain name and favicon to match a trusted brand.
+2. The page renders a pixel-accurate clone of Cloudflare's "Just a moment..." Turnstile interstitial, including a fake Ray ID (`generateRayId()`) and a fake reCAPTCHA-style verification ID (`generateVerificationId()`) to look legitimate.
+3. Victim clicks the checkbox (`#checkbox`); the click handler calls `copyToClipboard(CONFIG.command)`, and a `document.addEventListener("copy", ...)` override additionally force-sets `e.clipboardData` / `window.clipboardData` to `CONFIG.command` on any copy event, guaranteeing the attacker-chosen string ends up on the clipboard regardless of what the page visually shows as "copied."
+4. The verification panel then instructs the victim, in the victim's own language (18 locales are supported via an i18n string table): "Press & hold the Windows Key + R", "In the verification window, press Ctrl+V", "Press Enter on your keyboard to finish."
+5. Victim follows the on-screen steps, unknowingly opening the Windows Run dialog, pasting the attacker's clipboard-injected command, and pressing Enter — executing it with their own user privileges.
+6. In this repository's shipped configuration, `CONFIG.command` is the harmless placeholder string `"webshell"`; a real attacker would replace it with an actual command (e.g. a PowerShell/mshta downloader-and-execute one-liner) before deployment.
+
+### Impact
+
+If weaponized with a real payload in place of the placeholder, this technique achieves arbitrary command execution on the victim's Windows host as the logged-in user — entirely through social engineering, without any browser exploit or software vulnerability, and without triggering typical download/attachment-based AV or email-gateway scanning since no file is ever "downloaded" by the victim. As shipped in this repo, the command is inert (`webshell`), so there is no functional impact out of the box.
+
+---
+
+## Environment / Lab Setup
+
+```
+Target:      Any modern browser (Chrome/Edge/Firefox) on Windows, for realistic demonstration of the Win+R flow
+Attacker:    Any static web host (or `python3 -m http.server`) to serve index.html/main.js/styles.css
+Tools:       Browser DevTools (to observe the clipboard-override behavior), a plain-text editor to inspect main.js
+```
+
+### Setup Steps
+
+```bash
+# Serve the lure page locally for awareness training / detection-engineering purposes only
+cd 2026-07-27_clickfix-cloudflare-turnstile-lure
+python3 -m http.server 8000
+# then browse to http://localhost:8000/index.html
+# optional domain/logo spoof query params:
+# http://localhost:8000/index.html?site=example.com&logo=https://example.com/favicon.ico
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Serve the page** — Host `index.html`, `main.js`, and `styles.css` from any static web server.
+   ```bash
+   python3 -m http.server 8000
+   ```
+
+2. **Load it in a browser** — Navigate to the page; it renders the fake Cloudflare "Just a moment..." Turnstile check, complete with a spoofed Ray ID.
+   ```
+   http://localhost:8000/index.html
+   ```
+
+3. **Click the checkbox** — This fires `copyToClipboard(CONFIG.command)` and arms the `copy` event override, then reveals the "Win+R / Ctrl+V / Enter" instruction panel.
+
+4. **Follow the on-screen steps** (Win+R, Ctrl+V, Enter) — Confirm the placeholder string `webshell` (not a real command) lands in the Run dialog, demonstrating the clipboard-injection mechanic without executing anything harmful.
+
+### Exploit Code
+
+> See `index.html`, `main.js`, `styles.css` in this folder — mirrored byte-for-byte from the upstream repository.
+
+```js
+// main.js (excerpt) — the core clipboard-injection primitive
+const CONFIG = {
+  command: "webshell"   // placeholder; a real attacker substitutes their own command here
+};
+
+function copyToClipboard(text) { /* ... execCommand('copy') fallback path ... */ }
+
+document.addEventListener("copy", (e) => {
+  if (e.clipboardData) {
+    e.clipboardData.setData('text/plain', CONFIG.command);
+  } else if (window.clipboardData) {
+    window.clipboardData.setData('Text', CONFIG.command);
+  }
+});
+
+// wired to the fake "I am not a robot" checkbox:
+// checkbox.addEventListener("click", () => { copyToClipboard(CONFIG.command); ... });
+```
+
+### Expected Output
+
+```
+Clipboard contents after clicking the checkbox: "webshell"
+(In a weaponized deployment, this would instead be the operator's real command,
+executed the moment the victim pastes it into Win+R and presses Enter.)
+```
+
+---
+
+## Screenshots / Evidence
+
+- Upstream repository README embeds a screenshot of the rendered lure (spoofed "Just a moment..." Cloudflare Turnstile check) — see `upstream-README.md` for the original image link.
+
+---
+
+## Detection & Indicators of Compromise
+
+```
+# Browser/endpoint-side indicators:
+# - Pages that visually replicate Cloudflare's Turnstile/"Just a moment..." interstitial
+#   but are hosted on a non-Cloudflare domain (check actual page origin vs. displayed brand)
+# - JavaScript registering a `copy` event listener that calls `setData()` unconditionally
+#   (clipboard-hijacking pattern), independent of any real text selection
+# - Instructional UI text referencing Win+R / "Windows Key + R" / Ctrl+V paired with a
+#   "verification" or "human check" framing
+# - Fake Ray ID / verification ID strings that do not match Cloudflare's real Ray ID format
+#   or cannot be validated against Cloudflare's systems
+```
+
+**Endpoint-side signs of compromise:**
+- `explorer.exe` spawning `powershell.exe`, `cmd.exe`, or `mshta.exe` moments after a Run-dialog (Win+R) invocation with no corresponding legitimate admin action
+- Clipboard history containing a command line pasted from a browser tab showing a CAPTCHA/verification page
+- Browser process having recently rendered a page whose DOM contains `document.addEventListener("copy", ...)` clipboard overrides
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Primary control** | User awareness training specifically covering ClickFix: never paste clipboard content into Run/PowerShell/terminal at the instruction of a web page, regardless of how legitimate the page looks |
+| **Technical mitigation** | Restrict or monitor Win+R / `mshta.exe` / `powershell.exe` execution shortly following clipboard-paste events via EDR behavioral rules; browser policies to disable/limit scripted clipboard write access on untrusted origins |
+| **Detection engineering** | Alert on `explorer.exe` -> Run dialog -> shell/script-interpreter parent-child chains, and on pages that combine Cloudflare-branded visual assets with non-Cloudflare origins |
+
+---
+
+## References
+
+- [Source repository](https://github.com/0x204/ClickFix-Turnstile)
+- General background: ClickFix is a widely documented in-the-wild social-engineering technique (fake CAPTCHA/verification pages that trick victims into pasting clipboard-injected commands into Run/PowerShell); see vendor and researcher writeups on "ClickFix" for broader campaign context.
+
+---
+
+## Notes
+
+Verified before ingestion: the real upstream files (`index.html`, `main.js`, `styles.css`) were cloned directly from https://github.com/0x204/ClickFix-Turnstile and copied into this entry byte-for-byte (diffed against the clone, confirmed identical) — no code was paraphrased or rewritten. Manual review of `main.js` confirmed a genuine, functional clipboard-injection mechanism: `copyToClipboard()` plus a `document.addEventListener("copy", ...)` override that force-sets the clipboard to `CONFIG.command` on the fake checkbox click, wired into a convincing Cloudflare Turnstile "Just a moment..." clone with 18-locale i18n strings, dynamic favicon/domain spoofing via `?site=`/`?logo=` query parameters, and fake Ray ID/verification ID generators. `CONFIG.command` ships as the benign placeholder `"webshell"` — not a functional dropper or payload. The repository was grepped for common exfiltration/gating indicators (telegram, discord, webhook, fetch, eval, atob, payment, crypto, onion) with no hits: no hidden C2, no phone-home, no payment gating, no unrelated dropper bundled in.
+
+Author-credibility caveat (flagged plainly, not a rejection reason): the commit author (email `pauloromire@gmail.com`, active Nov 2025) maintains 16 repositories with a "vibe-coder" bio, including a Cloudflare Turnstile solver extension alongside unrelated offensive tools — a Discord voice-channel disruption tool and a raw-TCP DDoS tool. This profile reads as an offensive-tooling hobbyist rather than an established or vetted security researcher. That caveat applies to the author's broader body of work, not to this specific repository, whose code was independently reviewed and found clean of hidden malicious functionality.
+
+This is a SOCIAL-ENGINEERING / AWARENESS demonstration, not a software vulnerability — there is no CVE, no CVSS score, and no vendor patch applicable. The entry exists to document a real, reproducible instance of the ClickFix technique (specifically the Cloudflare Turnstile impersonation variant) for detection-engineering and user-awareness purposes, mirroring how this archive treats other no-CVE ClickFix lure variants already catalogued under this category.
