@@ -1,256 +1,33 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Oauth2 on PoC Archive</title><link>https://poc.intelseclab.com/tags/oauth2/</link><description>Recent content in Oauth2 on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/oauth2/index.xml" rel="self" type="application/rss+xml"/><item><title>Gitea OAuth2 Scope Enforcement Bypass via HTTP Basic Auth — CVE-2026-28699</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-28699-gitea-oauth2-scope-bypass/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-28699-gitea-oauth2-scope-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-05&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>Alardiians&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-28699&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>High&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>Not specified in source&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>PoC&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>gitea, oauth2, scope-bypass, basic-auth, incorrect-authorization, cwe-863, api&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>Gitea (code.gitea.io/gitea)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>&amp;lt;= 1.26.1 (fixed in 1.26.2)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>Python PoC (&lt;code>requests&lt;/code>) against a Go web application&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>Yes (a valid, narrowly-scoped OAuth2 access token)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>Gitea lets an OAuth2 application obtain an access token restricted to a subset of a user&amp;rsquo;s permissions (e.g. &lt;code>read:user&lt;/code> only), and enforces that restriction through a &lt;code>tokenRequiresScopes&lt;/code> middleware. The middleware relies on an &lt;code>ApiTokenScope&lt;/code> value that is correctly attached to the request context when the token is presented as a Bearer header, but is never attached when the same token is presented via HTTP Basic auth (&lt;code>Authorization: Basic base64(&amp;lt;token&amp;gt;:x-oauth-basic)&lt;/code>). Because the middleware treats a missing scope value as &amp;ldquo;nothing to check&amp;rdquo; and returns early, any OAuth2 token switched from Bearer to Basic silently loses all scope enforcement. The PoC provisions a disposable Gitea instance, mints a &lt;code>read:user&lt;/code>-only token via the OAuth2 authorization-code flow, and demonstrates that a write request blocked over Bearer succeeds over Basic.&lt;/p></description></item><item><title>PocketBase OAuth2 Account Pre-Hijacking (CVE-2026-44166)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-44166-pocketbase-oauth2-account-prehijack/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-44166-pocketbase-oauth2-account-prehijack/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-05&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>Alardiians&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-44166 / &lt;a href="https://github.com/pocketbase/pocketbase/security/advisories/GHSA-pq7p-mc74-g65w">GHSA-pq7p-mc74-g65w&lt;/a>&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Medium&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>6.1 (CVSS 4.0)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>PoC&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>pocketbase, oauth2, account-takeover, account-pre-hijacking, cwe-287, improper-authentication, go&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>CVE-2024-38351 (incomplete prior fix for the same class of bug)&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>&lt;a href="https://github.com/pocketbase/pocketbase">PocketBase&lt;/a> (Go backend / BaaS)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>&lt;code>&amp;lt; 0.22.42&lt;/code> and &lt;code>&amp;gt;= 0.30.0, &amp;lt; 0.37.4&lt;/code>&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>Go web backend, exploited over its REST API&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No admin auth needed — attacker only needs their own account on a configured OAuth2 provider&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes — HTTP access to the target&amp;rsquo;s &lt;code>auth-with-oauth2&lt;/code> endpoint&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>PocketBase&amp;rsquo;s &lt;code>auth-with-oauth2&lt;/code> endpoint accepts a client-supplied &lt;code>createData&lt;/code> object when provisioning a new user record during OAuth2 sign-up, but never validates the &lt;code>email&lt;/code> field inside it against the email address actually verified by the OAuth2 provider. An attacker who authenticates with their own account on any configured provider (e.g. GitHub, Google, a custom OIDC provider) can set &lt;code>createData.email&lt;/code> to a victim&amp;rsquo;s email address, creating a PocketBase record that carries the victim&amp;rsquo;s identity but is linked to the attacker&amp;rsquo;s OAuth2 login. Depending on how many providers are configured, this either permanently locks the real owner out (single provider) or lets the attacker silently co-own the account indefinitely (two or more providers). This is a more complete bypass of the same account-pre-hijacking class that CVE-2024-38351 tried, and failed, to fully close.&lt;/p></description></item><item><title>Rocket.Chat OAuth2 NoSQL Injection Privilege Escalation — CVE-2026-29198</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-29198-rocketchat-oauth2-nosqli/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-29198-rocketchat-oauth2-nosqli/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-05&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>hieuminhnv&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-29198&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Critical&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>Not specified in source&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>PoC&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>rocket-chat, nosqli, mongodb, oauth2, privilege-escalation, python, unauthenticated&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>Rocket.Chat (OAuth2 login flow)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>&amp;lt; 8.3.0, &amp;lt; 8.2.1, &amp;lt; 8.1.2, &amp;lt; 8.0.3, &amp;lt; 7.13.5, &amp;lt; 7.12.6, &amp;lt; 7.11.6, &amp;lt; 7.10.9&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>Python 3 (PoC), Rocket.Chat server (Node.js/MongoDB)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>Rocket.Chat&amp;rsquo;s OAuth2 authentication flow builds a MongoDB query from attacker-influenced OAuth2 profile/identity fields without sufficient sanitization, allowing NoSQL injection operators to be smuggled into the user lookup query. By crafting a malicious OAuth2 response, an attacker can manipulate the query Rocket.Chat uses to match/create the authenticated user record, enabling account takeover or privilege escalation (including an &lt;code>--escalate&lt;/code> mode in the PoC) without valid credentials.&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Oauth2 on PoC Archive</title>
+    <link>http://192.168.0.124:1313/tags/oauth2/</link>
+    <description>Recent content in Oauth2 on PoC Archive</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://192.168.0.124:1313/tags/oauth2/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Gitea OAuth2 Scope Enforcement Bypass via HTTP Basic Auth — CVE-2026-28699</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-28699-gitea-oauth2-scope-bypass/</link>
+      <pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-28699-gitea-oauth2-scope-bypass/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-05&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Alardiians&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-28699&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;High&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Not specified in source&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PoC&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;gitea, oauth2, scope-bypass, basic-auth, incorrect-authorization, cwe-863, api&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Gitea (code.gitea.io/gitea)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;&amp;lt;= 1.26.1 (fixed in 1.26.2)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Python PoC (&lt;code&gt;requests&lt;/code&gt;) against a Go web application&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes (a valid, narrowly-scoped OAuth2 access token)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;Gitea lets an OAuth2 application obtain an access token restricted to a subset of a user&amp;rsquo;s permissions (e.g. &lt;code&gt;read:user&lt;/code&gt; only), and enforces that restriction through a &lt;code&gt;tokenRequiresScopes&lt;/code&gt; middleware. The middleware relies on an &lt;code&gt;ApiTokenScope&lt;/code&gt; value that is correctly attached to the request context when the token is presented as a Bearer header, but is never attached when the same token is presented via HTTP Basic auth (&lt;code&gt;Authorization: Basic base64(&amp;lt;token&amp;gt;:x-oauth-basic)&lt;/code&gt;). Because the middleware treats a missing scope value as &amp;ldquo;nothing to check&amp;rdquo; and returns early, any OAuth2 token switched from Bearer to Basic silently loses all scope enforcement. The PoC provisions a disposable Gitea instance, mints a &lt;code&gt;read:user&lt;/code&gt;-only token via the OAuth2 authorization-code flow, and demonstrates that a write request blocked over Bearer succeeds over Basic.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>PocketBase OAuth2 Account Pre-Hijacking (CVE-2026-44166)</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-44166-pocketbase-oauth2-account-prehijack/</link>
+      <pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-44166-pocketbase-oauth2-account-prehijack/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-05&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Alardiians&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-44166 / &lt;a href=&#34;https://github.com/pocketbase/pocketbase/security/advisories/GHSA-pq7p-mc74-g65w&#34;&gt;GHSA-pq7p-mc74-g65w&lt;/a&gt;&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Medium&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;6.1 (CVSS 4.0)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PoC&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;pocketbase, oauth2, account-takeover, account-pre-hijacking, cwe-287, improper-authentication, go&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2024-38351 (incomplete prior fix for the same class of bug)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;&lt;a href=&#34;https://github.com/pocketbase/pocketbase&#34;&gt;PocketBase&lt;/a&gt; (Go backend / BaaS)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;&lt;code&gt;&amp;lt; 0.22.42&lt;/code&gt; and &lt;code&gt;&amp;gt;= 0.30.0, &amp;lt; 0.37.4&lt;/code&gt;&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Go web backend, exploited over its REST API&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No admin auth needed — attacker only needs their own account on a configured OAuth2 provider&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes — HTTP access to the target&amp;rsquo;s &lt;code&gt;auth-with-oauth2&lt;/code&gt; endpoint&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;PocketBase&amp;rsquo;s &lt;code&gt;auth-with-oauth2&lt;/code&gt; endpoint accepts a client-supplied &lt;code&gt;createData&lt;/code&gt; object when provisioning a new user record during OAuth2 sign-up, but never validates the &lt;code&gt;email&lt;/code&gt; field inside it against the email address actually verified by the OAuth2 provider. An attacker who authenticates with their own account on any configured provider (e.g. GitHub, Google, a custom OIDC provider) can set &lt;code&gt;createData.email&lt;/code&gt; to a victim&amp;rsquo;s email address, creating a PocketBase record that carries the victim&amp;rsquo;s identity but is linked to the attacker&amp;rsquo;s OAuth2 login. Depending on how many providers are configured, this either permanently locks the real owner out (single provider) or lets the attacker silently co-own the account indefinitely (two or more providers). This is a more complete bypass of the same account-pre-hijacking class that CVE-2024-38351 tried, and failed, to fully close.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Rocket.Chat OAuth2 NoSQL Injection Privilege Escalation — CVE-2026-29198</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-29198-rocketchat-oauth2-nosqli/</link>
+      <pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-29198-rocketchat-oauth2-nosqli/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-05&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;hieuminhnv&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-29198&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Not specified in source&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PoC&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;rocket-chat, nosqli, mongodb, oauth2, privilege-escalation, python, unauthenticated&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Rocket.Chat (OAuth2 login flow)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;&amp;lt; 8.3.0, &amp;lt; 8.2.1, &amp;lt; 8.1.2, &amp;lt; 8.0.3, &amp;lt; 7.13.5, &amp;lt; 7.12.6, &amp;lt; 7.11.6, &amp;lt; 7.10.9&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Python 3 (PoC), Rocket.Chat server (Node.js/MongoDB)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;Rocket.Chat&amp;rsquo;s OAuth2 authentication flow builds a MongoDB query from attacker-influenced OAuth2 profile/identity fields without sufficient sanitization, allowing NoSQL injection operators to be smuggled into the user lookup query. By crafting a malicious OAuth2 response, an attacker can manipulate the query Rocket.Chat uses to match/create the authenticated user record, enabling account takeover or privilege escalation (including an &lt;code&gt;--escalate&lt;/code&gt; mode in the PoC) without valid credentials.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

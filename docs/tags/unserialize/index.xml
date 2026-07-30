@@ -1,171 +1,26 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Unserialize on PoC Archive</title><link>https://poc.intelseclab.com/tags/unserialize/</link><description>Recent content in Unserialize on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/unserialize/index.xml" rel="self" type="application/rss+xml"/><item><title>GiveWP Unauthenticated PHP Object Injection via Weak Serialized-Data Regex Check (CVE-2025-22777)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-22777-givewp-php-object-injection/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-22777-givewp-php-object-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-07-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>SevDMG&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2025-22777&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Critical&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>9.8 (per NVD)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>PoC&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>givewp, wordpress, wordpress-plugin, php-object-injection, deserialization, unserialize, gadget-chain, cwe-502, php, unauthenticated&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>GiveWP – Donation Plugin and Fundraising Platform (WordPress plugin, 100,000+ active installs)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>&amp;lt;= 3.19.3 (patched in 3.19.4)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>PHP (target plugin), Python (PoC/exploit tooling) on WordPress&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes (HTTP access to the donation form / &lt;code>admin-ajax.php&lt;/code> endpoint)&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>CVE-2025-22777 is an unauthenticated PHP Object Injection (CWE-502, Deserialization of Untrusted Data) vulnerability in the GiveWP WordPress donation plugin. GiveWP stores certain donor-supplied form field values as serialized PHP meta in the database and runs a regex check meant to confirm the value &amp;ldquo;looks like&amp;rdquo; a safe serialized string before it is later passed to PHP&amp;rsquo;s &lt;code>unserialize()&lt;/code>; that regex check is weak and can be defeated by padding the payload with junk/gibberish characters, letting a crafted serialized object slip through and get deserialized. If a suitable gadget chain (a class with an exploitable magic method such as &lt;code>__destruct()&lt;/code>/&lt;code>__wakeup()&lt;/code>) is reachable in GiveWP or a co-installed plugin/theme, this results in arbitrary PHP object instantiation and potentially remote code execution, arbitrary file write/deletion, or other high-impact side effects — with no authentication required. This mirrored repository is an independent researcher&amp;rsquo;s work-in-progress PoC that builds a serialized &amp;ldquo;gadget&amp;rdquo; object (a &lt;code>FinalGadget&lt;/code>/&lt;code>ChainGadget&lt;/code> class chain targeting a &lt;code>filename&lt;/code> property, injected via the donation form&amp;rsquo;s &lt;code>give_company&lt;/code> field to &lt;code>admin-ajax.php?action=give_process_donation&lt;/code>), but the actual HTTP exploit driver (&lt;code>exploit_cve2025-22777.py&lt;/code>) ships with an empty &lt;code>payload = {}&lt;/code> and no request is ever sent, and the more developed &lt;code>exploit_struct.py&lt;/code> script&amp;rsquo;s &lt;code>exploit()&lt;/code> function is truncated before it issues any HTTP request. As shipped, neither script performs a working end-to-end attack.&lt;/p></description></item><item><title>Everest Forms Unauthenticated PHP Object Injection to RCE (CVE-2026-3296)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-3296-everest-forms-object-injection/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-3296-everest-forms-object-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-05&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-05&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>0xsabre (Wordfence); PoC scanner by xxconi&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-3296&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Critical&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>9.8 (CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>PoC (functional two-phase injection/trigger tool; RCE requires supplying a real POP gadget chain via PHPGGC)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>wordpress, everest-forms, php-object-injection, deserialization, unserialize, rce, cwe-502&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>Everest Forms (WordPress plugin — Contact Form, Payment Form, Quiz, Survey &amp;amp; Custom Form Builder)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>&amp;lt;= 3.4.3 (fixed in 3.4.4)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>PHP (WordPress plugin); PoC written in Python&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No for injection phase; Admin session required to trigger deserialization&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>Everest Forms saves submitted form field values into the &lt;code>wp_evf_entrymeta&lt;/code> table using &lt;code>maybe_serialize()&lt;/code>, and its sanitization routine (&lt;code>sanitize_text_field()&lt;/code>) strips HTML/null bytes but does not strip PHP serialization control characters, so an attacker can submit a serialized PHP object as a form field value and have it stored verbatim. The plugin&amp;rsquo;s admin entry-view page (&lt;code>html-admin-page-entries-view.php&lt;/code>) later calls PHP&amp;rsquo;s native &lt;code>unserialize()&lt;/code> on that stored value without the &lt;code>allowed_classes&lt;/code> restriction, so when an administrator views the submission, any POP (property-oriented-programming) gadget chain available in the WordPress/plugin environment can be instantiated, leading to remote code execution. The PoC in this repo automates both the unauthenticated injection phase and the admin-triggered deserialization phase, and includes benign probe payloads as well as placeholders for real POP chains generated via PHPGGC.&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Unserialize on PoC Archive</title>
+    <link>http://192.168.0.124:1313/tags/unserialize/</link>
+    <description>Recent content in Unserialize on PoC Archive</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://192.168.0.124:1313/tags/unserialize/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>GiveWP Unauthenticated PHP Object Injection via Weak Serialized-Data Regex Check (CVE-2025-22777)</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-06_cve-2025-22777-givewp-php-object-injection/</link>
+      <pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-06_cve-2025-22777-givewp-php-object-injection/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;SevDMG&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2025-22777&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;9.8 (per NVD)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PoC&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;givewp, wordpress, wordpress-plugin, php-object-injection, deserialization, unserialize, gadget-chain, cwe-502, php, unauthenticated&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;GiveWP – Donation Plugin and Fundraising Platform (WordPress plugin, 100,000+ active installs)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;&amp;lt;= 3.19.3 (patched in 3.19.4)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PHP (target plugin), Python (PoC/exploit tooling) on WordPress&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes (HTTP access to the donation form / &lt;code&gt;admin-ajax.php&lt;/code&gt; endpoint)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;CVE-2025-22777 is an unauthenticated PHP Object Injection (CWE-502, Deserialization of Untrusted Data) vulnerability in the GiveWP WordPress donation plugin. GiveWP stores certain donor-supplied form field values as serialized PHP meta in the database and runs a regex check meant to confirm the value &amp;ldquo;looks like&amp;rdquo; a safe serialized string before it is later passed to PHP&amp;rsquo;s &lt;code&gt;unserialize()&lt;/code&gt;; that regex check is weak and can be defeated by padding the payload with junk/gibberish characters, letting a crafted serialized object slip through and get deserialized. If a suitable gadget chain (a class with an exploitable magic method such as &lt;code&gt;__destruct()&lt;/code&gt;/&lt;code&gt;__wakeup()&lt;/code&gt;) is reachable in GiveWP or a co-installed plugin/theme, this results in arbitrary PHP object instantiation and potentially remote code execution, arbitrary file write/deletion, or other high-impact side effects — with no authentication required. This mirrored repository is an independent researcher&amp;rsquo;s work-in-progress PoC that builds a serialized &amp;ldquo;gadget&amp;rdquo; object (a &lt;code&gt;FinalGadget&lt;/code&gt;/&lt;code&gt;ChainGadget&lt;/code&gt; class chain targeting a &lt;code&gt;filename&lt;/code&gt; property, injected via the donation form&amp;rsquo;s &lt;code&gt;give_company&lt;/code&gt; field to &lt;code&gt;admin-ajax.php?action=give_process_donation&lt;/code&gt;), but the actual HTTP exploit driver (&lt;code&gt;exploit_cve2025-22777.py&lt;/code&gt;) ships with an empty &lt;code&gt;payload = {}&lt;/code&gt; and no request is ever sent, and the more developed &lt;code&gt;exploit_struct.py&lt;/code&gt; script&amp;rsquo;s &lt;code&gt;exploit()&lt;/code&gt; function is truncated before it issues any HTTP request. As shipped, neither script performs a working end-to-end attack.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Everest Forms Unauthenticated PHP Object Injection to RCE (CVE-2026-3296)</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-3296-everest-forms-object-injection/</link>
+      <pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-3296-everest-forms-object-injection/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-05&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-05&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;0xsabre (Wordfence); PoC scanner by xxconi&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-3296&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;9.8 (CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PoC (functional two-phase injection/trigger tool; RCE requires supplying a real POP gadget chain via PHPGGC)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;wordpress, everest-forms, php-object-injection, deserialization, unserialize, rce, cwe-502&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Everest Forms (WordPress plugin — Contact Form, Payment Form, Quiz, Survey &amp;amp; Custom Form Builder)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;&amp;lt;= 3.4.3 (fixed in 3.4.4)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PHP (WordPress plugin); PoC written in Python&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No for injection phase; Admin session required to trigger deserialization&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;Everest Forms saves submitted form field values into the &lt;code&gt;wp_evf_entrymeta&lt;/code&gt; table using &lt;code&gt;maybe_serialize()&lt;/code&gt;, and its sanitization routine (&lt;code&gt;sanitize_text_field()&lt;/code&gt;) strips HTML/null bytes but does not strip PHP serialization control characters, so an attacker can submit a serialized PHP object as a form field value and have it stored verbatim. The plugin&amp;rsquo;s admin entry-view page (&lt;code&gt;html-admin-page-entries-view.php&lt;/code&gt;) later calls PHP&amp;rsquo;s native &lt;code&gt;unserialize()&lt;/code&gt; on that stored value without the &lt;code&gt;allowed_classes&lt;/code&gt; restriction, so when an administrator views the submission, any POP (property-oriented-programming) gadget chain available in the WordPress/plugin environment can be instantiated, leading to remote code execution. The PoC in this repo automates both the unauthenticated injection phase and the admin-triggered deserialization phase, and includes benign probe payloads as well as placeholders for real POP chains generated via PHPGGC.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

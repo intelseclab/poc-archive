@@ -1,86 +1,19 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Workplace on PoC Archive</title><link>https://poc.intelseclab.com/tags/workplace/</link><description>Recent content in Workplace on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Wed, 15 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/workplace/index.xml" rel="self" type="application/rss+xml"/><item><title>SonicWall SMA1000 WorkPlace SSRF → Internal Erlang RPC Remote Code Execution (CVE-2026-15409)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-15_cve-2026-15409-sonicwall-sma1000-ssrf-erlang-rce/</link><pubDate>Wed, 15 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-15_cve-2026-15409-sonicwall-sma1000-ssrf-erlang-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-15&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-07-15&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>Ryan Emmons (Rapid7)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-15409 (SNWLID-2026-0008)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>network&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Critical&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>10.0 (CVSS 3.1, &lt;code>AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H&lt;/code>)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>Weaponized — unauthenticated, non-root remote code execution confirmed against a real appliance build&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>sonicwall, sma1000, workplace, ssrf, erlang, rpc, cwe-918, unauthenticated, remote, kev, actively-exploited&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-15410 (post-auth privesc to root, chained after this)&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>SonicWall SMA1000 Appliance — WorkPlace interface (websocket proxy service)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>SMA1000 appliances; PoC developed/tested against &lt;code>ex_sra_vm_12.5.0-02002.ova&lt;/code> with the June 2026 hotfix applied (the last build prior to the fix)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>Erlang/OTP (BEAM VM) backend behind an HTTPS/websocket front end&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes — direct reachability to the WorkPlace service (typically port 443)&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>The SMA1000 WorkPlace interface exposes a websocket-based remote-access proxy (&lt;code>wsproxy&lt;/code>) that lets an authenticated remote-access session request a proxied connection to a destination host/port/service combination (e.g. SSH, TELNET). The proxy does not restrict which internal destination it will connect to: an unauthenticated attacker can point it at &lt;code>127.0.0.1&lt;/code>/&lt;code>0.0.0.0&lt;/code> on port 1050 (or 8188, observed in the wild) — the appliance&amp;rsquo;s own internal Erlang distribution port. Once the websocket is redirected there, the attacker completes a standard Erlang inter-node distribution handshake using a cookie value that is hardcoded and consistent across appliances, and then issues arbitrary Erlang RPC calls (&lt;code>os:cmd/1&lt;/code>, &lt;code>file:read_file/1&lt;/code>, etc.) against the node — resulting in unauthenticated remote code execution as the low-privilege &lt;code>couchdb&lt;/code> user. CISA has confirmed active in-the-wild exploitation, added this to KEV on 2026-07-14, and the researcher&amp;rsquo;s own notes describe an observed follow-on privilege-escalation chain to root via the related CVE-2026-15410.&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Workplace on PoC Archive</title>
+    <link>http://192.168.0.124:1313/tags/workplace/</link>
+    <description>Recent content in Workplace on PoC Archive</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Wed, 15 Jul 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://192.168.0.124:1313/tags/workplace/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>SonicWall SMA1000 WorkPlace SSRF → Internal Erlang RPC Remote Code Execution (CVE-2026-15409)</title>
+      <link>http://192.168.0.124:1313/pocs/network/2026-07-15_cve-2026-15409-sonicwall-sma1000-ssrf-erlang-rce/</link>
+      <pubDate>Wed, 15 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/network/2026-07-15_cve-2026-15409-sonicwall-sma1000-ssrf-erlang-rce/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-15&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-15&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Ryan Emmons (Rapid7)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-15409 (SNWLID-2026-0008)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;network&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;10.0 (CVSS 3.1, &lt;code&gt;AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Weaponized — unauthenticated, non-root remote code execution confirmed against a real appliance build&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;sonicwall, sma1000, workplace, ssrf, erlang, rpc, cwe-918, unauthenticated, remote, kev, actively-exploited&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-15410 (post-auth privesc to root, chained after this)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;SonicWall SMA1000 Appliance — WorkPlace interface (websocket proxy service)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;SMA1000 appliances; PoC developed/tested against &lt;code&gt;ex_sra_vm_12.5.0-02002.ova&lt;/code&gt; with the June 2026 hotfix applied (the last build prior to the fix)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Erlang/OTP (BEAM VM) backend behind an HTTPS/websocket front end&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes — direct reachability to the WorkPlace service (typically port 443)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;The SMA1000 WorkPlace interface exposes a websocket-based remote-access proxy (&lt;code&gt;wsproxy&lt;/code&gt;) that lets an authenticated remote-access session request a proxied connection to a destination host/port/service combination (e.g. SSH, TELNET). The proxy does not restrict which internal destination it will connect to: an unauthenticated attacker can point it at &lt;code&gt;127.0.0.1&lt;/code&gt;/&lt;code&gt;0.0.0.0&lt;/code&gt; on port 1050 (or 8188, observed in the wild) — the appliance&amp;rsquo;s own internal Erlang distribution port. Once the websocket is redirected there, the attacker completes a standard Erlang inter-node distribution handshake using a cookie value that is hardcoded and consistent across appliances, and then issues arbitrary Erlang RPC calls (&lt;code&gt;os:cmd/1&lt;/code&gt;, &lt;code&gt;file:read_file/1&lt;/code&gt;, etc.) against the node — resulting in unauthenticated remote code execution as the low-privilege &lt;code&gt;couchdb&lt;/code&gt; user. CISA has confirmed active in-the-wild exploitation, added this to KEV on 2026-07-14, and the researcher&amp;rsquo;s own notes describe an observed follow-on privilege-escalation chain to root via the related CVE-2026-15410.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

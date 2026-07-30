@@ -1,86 +1,19 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Javascript-Script-Update-Processor on PoC Archive</title><link>https://poc.intelseclab.com/tags/javascript-script-update-processor/</link><description>Recent content in Javascript-Script-Update-Processor on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/javascript-script-update-processor/index.xml" rel="self" type="application/rss+xml"/><item><title>Apache Solr UNC Path Validation Bypass to RCE (CVE-2026-22444)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-22444-solr-unc-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-22444-solr-unc-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-05&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-01&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>Repository author (GitHub: bfdfhdsfdd-crypto)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-22444&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Critical&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>Not specified in source&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>Weaponized&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>apache-solr, rce, unc-path, smb, configset, javascript-script-update-processor, windows, cwe-20&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>Apache Solr, standalone mode, running on Windows&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>Versions affected by insufficient path validation in &lt;code>CoreDescriptor&lt;/code>/&lt;code>CoreContainer&lt;/code> (see openwall disclosure); exact version range not specified in source&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>Python (exploit), JavaScript (RCE payload run inside Solr&amp;rsquo;s script update processor)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No (if Solr has no auth enabled, or attacker has core-create privileges)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>CVE-2026-22444 affects Apache Solr&amp;rsquo;s &amp;ldquo;create core&amp;rdquo; admin API on Windows deployments running in standalone mode. Path validation (&lt;code>assertPathAllowed()&lt;/code>) is only performed after the &lt;code>CoreDescriptor&lt;/code> constructor has already triggered filesystem/network operations (&lt;code>toAbsolutePath()&lt;/code>, &lt;code>Files.exists()&lt;/code>, &lt;code>Files.newInputStream()&lt;/code>) on the supplied instance path. By passing a UNC path (&lt;code>\\attacker-ip\share&lt;/code>) as the &lt;code>configSet&lt;/code> parameter, an attacker can make the Solr server fetch a malicious configset from an attacker-controlled SMB share before the path is validated. The malicious configset defines a &lt;code>StatelessScriptUpdateProcessorFactory&lt;/code> chain that loads a JavaScript payload (&lt;code>rce.js&lt;/code>) executing arbitrary OS commands via &lt;code>java.lang.Runtime.exec()&lt;/code> whenever update requests (add/delete/commit/rollback) are processed. The included Python exploit stands up a local SMB server (via Impacket), triggers core creation pointing at it, then sends an update request to invoke the payload and provides an interactive command shell.&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Javascript-Script-Update-Processor on PoC Archive</title>
+    <link>http://192.168.0.124:1313/tags/javascript-script-update-processor/</link>
+    <description>Recent content in Javascript-Script-Update-Processor on PoC Archive</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://192.168.0.124:1313/tags/javascript-script-update-processor/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Apache Solr UNC Path Validation Bypass to RCE (CVE-2026-22444)</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-22444-solr-unc-rce/</link>
+      <pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-22444-solr-unc-rce/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-05&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-01&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Repository author (GitHub: bfdfhdsfdd-crypto)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-22444&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Not specified in source&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Weaponized&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;apache-solr, rce, unc-path, smb, configset, javascript-script-update-processor, windows, cwe-20&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Apache Solr, standalone mode, running on Windows&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Versions affected by insufficient path validation in &lt;code&gt;CoreDescriptor&lt;/code&gt;/&lt;code&gt;CoreContainer&lt;/code&gt; (see openwall disclosure); exact version range not specified in source&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Python (exploit), JavaScript (RCE payload run inside Solr&amp;rsquo;s script update processor)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No (if Solr has no auth enabled, or attacker has core-create privileges)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;CVE-2026-22444 affects Apache Solr&amp;rsquo;s &amp;ldquo;create core&amp;rdquo; admin API on Windows deployments running in standalone mode. Path validation (&lt;code&gt;assertPathAllowed()&lt;/code&gt;) is only performed after the &lt;code&gt;CoreDescriptor&lt;/code&gt; constructor has already triggered filesystem/network operations (&lt;code&gt;toAbsolutePath()&lt;/code&gt;, &lt;code&gt;Files.exists()&lt;/code&gt;, &lt;code&gt;Files.newInputStream()&lt;/code&gt;) on the supplied instance path. By passing a UNC path (&lt;code&gt;\\attacker-ip\share&lt;/code&gt;) as the &lt;code&gt;configSet&lt;/code&gt; parameter, an attacker can make the Solr server fetch a malicious configset from an attacker-controlled SMB share before the path is validated. The malicious configset defines a &lt;code&gt;StatelessScriptUpdateProcessorFactory&lt;/code&gt; chain that loads a JavaScript payload (&lt;code&gt;rce.js&lt;/code&gt;) executing arbitrary OS commands via &lt;code&gt;java.lang.Runtime.exec()&lt;/code&gt; whenever update requests (add/delete/commit/rollback) are processed. The included Python exploit stands up a local SMB server (via Impacket), triggers core creation pointing at it, then sends an update request to invoke the payload and provides an interactive command shell.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

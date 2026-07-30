@@ -1,426 +1,47 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Sandbox-Bypass on PoC Archive</title><link>https://poc.intelseclab.com/tags/sandbox-bypass/</link><description>Recent content in Sandbox-Bypass on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/sandbox-bypass/index.xml" rel="self" type="application/rss+xml"/><item><title>Python tarfile `filter="data"` Bypass via PATH_MAX/realpath Confusion (CVE-2025-4517)</title><link>https://poc.intelseclab.com/pocs/misc/2026-07-06_cve-2025-4517-tarfile-filter-data-path-max-bypass/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/misc/2026-07-06_cve-2025-4517-tarfile-filter-data-path-max-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-07-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>Esteban Zárate — &lt;a href="https://github.com/estebanzarate">github.com/estebanzarate&lt;/a> (cleanup/simplification; original discovery credited to the Python Security Response Team)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2025-4517&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>misc&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Critical&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>9.4 (per NVD)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>Weaponized&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>python, tarfile, path-traversal, sandbox-bypass, path_max, realpath, symlink, cwe-22, stdlib&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>Python standard library &lt;code>tarfile&lt;/code> module — &lt;code>filter=&amp;quot;data&amp;quot;&lt;/code> / &lt;code>filter=&amp;quot;tar&amp;quot;&lt;/code> extraction filters (PEP 706)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>Python 3.8.0 through 3.13.1 (per source repository)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>Python 3 PoC, exploiting a Linux/POSIX filesystem &lt;code>PATH_MAX&lt;/code> (4096-byte) limitation in path resolution&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>Depends on the integrating application — any code path that calls &lt;code>tarfile.extractall(filter=&amp;quot;data&amp;quot;)&lt;/code> (or &lt;code>&amp;quot;tar&amp;quot;&lt;/code>) on an attacker-influenced archive is affected. This PoC&amp;rsquo;s staged demo additionally requires local access with &lt;code>sudo&lt;/code> rights to trigger a specific backup-restore script.&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>No for this PoC&amp;rsquo;s local trigger — but any networked service that extracts attacker-supplied tar archives (e.g. an upload/import/backup-restore feature) using the affected filter would be remotely exploitable via the same technique.&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>Python&amp;rsquo;s &lt;code>tarfile&lt;/code> module added extraction filters (&lt;code>filter=&amp;quot;data&amp;quot;&lt;/code>/&lt;code>&amp;quot;tar&amp;quot;&lt;/code>, PEP 706, enabled by default since Python 3.12 and backported) specifically to prevent unsafe archive extraction — path traversal, symlink escapes, and writes outside the destination directory. CVE-2025-4517 is a bypass of that sandbox: the filter&amp;rsquo;s safety check calls &lt;code>os.path.realpath()&lt;/code> to resolve a member&amp;rsquo;s path and confirm it stays inside the extraction directory, but &lt;code>realpath()&lt;/code> silently stops resolving symlinks once the accumulated path exceeds &lt;code>PATH_MAX&lt;/code> (4096 bytes on Linux) and returns the unresolved (safe-looking) path instead of raising an error. The kernel, however, has no such limit during the actual extraction/write syscalls and fully resolves the same symlink chain, escaping the intended sandbox. This PoC builds a tar archive with deeply nested 247-character directory names and chained symlinks that push the resolved path just past &lt;code>PATH_MAX&lt;/code>, then uses the resulting confusion to write an SSH public key to &lt;code>/root/.ssh/authorized_keys&lt;/code>, granting the attacker root SSH access.&lt;/p></description></item><item><title>local-mcp exec Tool Sandbox/Restriction Bypass (CVE-2026-6130)</title><link>https://poc.intelseclab.com/pocs/misc/2026-07-05_cve-2026-6130-local-mcp-exec-sandbox-bypass/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/misc/2026-07-05_cve-2026-6130-local-mcp-exec-sandbox-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-05&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>fan-67 (documented bypass, mirrored by original PoC contributor)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-6130&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>misc&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Medium&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>Not specified in source&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>PoC&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>mcp, model-context-protocol, sandbox-bypass, command-execution, exec-restriction-bypass&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>local-mcp (zero-dependency MCP server for local file operations, v1.1.1)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>1.1.1&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>Node.js (MCP server) — .mjs source&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>Local MCP client access (e.g. an AI agent configured to use the server)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>No (stdio/local HTTP transport)&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>This is not a standalone PoC script but the actual local-mcp MCP server codebase, whose &lt;code>exec&lt;/code> tool contains the real CVE-2026-6130 bypass: a workaround using a generated batch file plus base64 encoding that circumvents intended command-execution restrictions within the tool&amp;rsquo;s sandboxing logic, allowing execution of commands that the restriction mechanism was meant to block.&lt;/p></description></item><item><title>Math.js Expression Parser Sandbox Bypass RCE (CVE-2026-40897)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-40897-mathjs-sandbox-bypass-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-40897-mathjs-sandbox-bypass-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-05&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-05&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>EQSTLab (Minseo Jwa)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-40897&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Critical&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>Not specified in source&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>Weaponized&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>mathjs, nodejs, sandbox-bypass, rce, expression-parser, prototype-pollution-adjacent, reverse-shell, javascript&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>Math.js expression parser (Node.js library)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>13.1.1 &amp;lt;= version &amp;lt;= 15.1.1 (fixed in 15.2.0)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>JavaScript / Node.js&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>Math.js exposes an expression-evaluation API (&lt;code>math.evaluate&lt;/code>) intended to run untrusted mathematical expressions inside a restricted sandbox that blocks access to dangerous properties such as &lt;code>constructor&lt;/code>. The &lt;code>isSafeProperty&lt;/code> guard only inspects direct property access performed from the user-supplied expression text, but does not cover accesses made through internal library code paths. By abusing the &lt;code>reviver&lt;/code> deserialization helper to reconstruct an &lt;code>ArrayNode&lt;/code>, leaking its internal array via &lt;code>toJSON()&lt;/code>, and overwriting the array&amp;rsquo;s &lt;code>.map&lt;/code> method with an attacker-controlled function, an attacker can trick Math.js&amp;rsquo;s own internal code into calling &lt;code>Function.constructor&lt;/code>, escaping the sandbox and reaching arbitrary JavaScript execution. The included Docker lab and &lt;code>server.js&lt;/code> provide a minimal vulnerable Node.js service that accepts a math expression and evaluates it, letting the PoC payload pop a reverse shell on the host.&lt;/p></description></item><item><title>Microsoft Semantic Kernel In-Memory Vector Store Filter eval() Sandbox Bypass RCE (CVE-2026-26030)</title><link>https://poc.intelseclab.com/pocs/misc/2026-07-05_cve-2026-26030-semantic-kernel-eval-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/misc/2026-07-05_cve-2026-26030-semantic-kernel-eval-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-05&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>InertFluid&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-26030&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>misc&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Critical&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>Not specified in source&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>Weaponized&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>semantic-kernel, python, eval-injection, sandbox-bypass, prompt-injection, llm-agent, rce, ast-allowlist-bypass, vector-store&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>Microsoft Semantic Kernel (Python), &lt;code>InMemoryCollection&lt;/code> vector store connector&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>&amp;lt; 1.39.4 (fixed in 1.39.4)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>Python 3.13, LLM agent framework (Semantic Kernel + optional Groq-hosted LLM demo)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No (exploited indirectly via prompt injection into an LLM agent)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>No for the headless lab PoC (local); Yes for the live agent demo (LLM API + local web UI)&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>CVE-2026-26030 is a sandbox-bypass remote code execution vulnerability in Semantic Kernel&amp;rsquo;s in-memory vector store search filter evaluation. Agents that expose a search/query tool backed by &lt;code>InMemoryCollection&lt;/code> let the LLM emit a filter expression string (e.g. &lt;code>lambda x: x.team == 'platform'&lt;/code>), which is compiled and evaluated by &lt;code>_parse_and_validate_filter()&lt;/code> in &lt;code>connectors/in_memory.py&lt;/code>. That function empties &lt;code>__builtins__&lt;/code> and applies an AST node allowlist, intending to prevent arbitrary code execution — but two gaps break the sandbox: unrestricted &lt;code>ast.Attribute&lt;/code> access allows dunder-attribute traversal (&lt;code>().__class__.__base__.__subclasses__&lt;/code>), and the &lt;code>ast.Call&lt;/code> name-check only inspects &lt;code>func&lt;/code> when it&amp;rsquo;s a &lt;code>Name&lt;/code> or &lt;code>Attribute&lt;/code> node, silently skipping the check when &lt;code>func&lt;/code> is a &lt;code>Subscript&lt;/code> (which is itself allowlisted). Chaining &lt;code>[obj.method][0](args)&lt;/code>-style calls lets an attacker walk to &lt;code>BuiltinImporter&lt;/code>, &lt;code>load_module('os')&lt;/code>, and &lt;code>os.system()&lt;/code>, achieving code execution whenever a filter string an LLM was steered into emitting (via direct user prompt or injected retrieved content) reaches this code path. The repository is a full, runnable lab: isolated venvs for the vulnerable (1.39.3) and patched (1.39.4) versions, a headless exploit script, a validator-only probe, and an optional live FastAPI + LLM agent demo that opens a harmless &amp;ldquo;ransom note&amp;rdquo; file to visually confirm RCE end-to-end.&lt;/p></description></item><item><title>n8n Unauthenticated Arbitrary File Read to RCE Full Chain — CVE-2026-21858 + CVE-2025-68613</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-21858-n8n-rce-chain/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-21858-n8n-rce-chain/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-05&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>Chocapikk (exploit); vulnerability discovered by Dor Attias (Cyera)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-21858, CVE-2025-68613&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Critical&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>10.0 (CVE-2026-21858, AFR) / 9.9 (CVE-2025-68613, RCE)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>Weaponized&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>n8n, arbitrary-file-read, jwt-forgery, sandbox-bypass, expression-injection, rce, workflow-automation&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>n8n workflow automation platform&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>&amp;lt;= 1.65.0 (arbitrary file read, CVE-2026-21858); &amp;gt;= 0.211.0 (expression injection RCE, CVE-2025-68613); fixed in 1.121.0 / 1.120.4+ respectively&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>Python 3 (&lt;code>uv run&lt;/code>, &lt;code>requests&lt;/code>, &lt;code>pyjwt&lt;/code>), Docker lab environment&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No (initial file-read step is unauthenticated)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>This PoC chains two n8n vulnerabilities into full unauthenticated remote code execution. First, CVE-2026-21858 is a Content-Type confusion bug in n8n&amp;rsquo;s binary file handling: sending &lt;code>Content-Type: application/json&lt;/code> instead of &lt;code>multipart/form-data&lt;/code> to a form endpoint lets an attacker control the &lt;code>filepath&lt;/code> argument passed into n8n&amp;rsquo;s file-copy helper, yielding arbitrary file read. The exploit uses this to read &lt;code>/proc/self/environ&lt;/code> (to find &lt;code>$HOME&lt;/code>), then &lt;code>$HOME/.n8n/config&lt;/code> (to get the instance&amp;rsquo;s &lt;code>encryptionKey&lt;/code>) and &lt;code>$HOME/.n8n/database.sqlite&lt;/code> (to get the admin user&amp;rsquo;s password hash). It derives the JWT signing secret from the encryption key and forges a valid admin session cookie without ever authenticating. With admin access, it creates a workflow using an n8n expression that reaches &lt;code>this.process.mainModule.require&lt;/code> — an expression-injection sandbox escape (CVE-2025-68613) — to run arbitrary shell commands via &lt;code>child_process.execSync&lt;/code>. The exploit is not a universal &amp;ldquo;pwn any n8n&amp;rdquo; tool: it requires a publicly reachable form workflow with a file-upload field and a Respond-to-Webhook node configured to return the file&amp;rsquo;s binary content in the HTTP response, a pattern the author found present in a number of public community workflow repositories.&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Sandbox-Bypass on PoC Archive</title>
+    <link>http://192.168.0.124:1313/tags/sandbox-bypass/</link>
+    <description>Recent content in Sandbox-Bypass on PoC Archive</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://192.168.0.124:1313/tags/sandbox-bypass/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Python tarfile `filter=&#34;data&#34;` Bypass via PATH_MAX/realpath Confusion (CVE-2025-4517)</title>
+      <link>http://192.168.0.124:1313/pocs/misc/2026-07-06_cve-2025-4517-tarfile-filter-data-path-max-bypass/</link>
+      <pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/misc/2026-07-06_cve-2025-4517-tarfile-filter-data-path-max-bypass/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Esteban Zárate — &lt;a href=&#34;https://github.com/estebanzarate&#34;&gt;github.com/estebanzarate&lt;/a&gt; (cleanup/simplification; original discovery credited to the Python Security Response Team)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2025-4517&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;misc&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;9.4 (per NVD)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Weaponized&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;python, tarfile, path-traversal, sandbox-bypass, path_max, realpath, symlink, cwe-22, stdlib&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Python standard library &lt;code&gt;tarfile&lt;/code&gt; module — &lt;code&gt;filter=&amp;quot;data&amp;quot;&lt;/code&gt; / &lt;code&gt;filter=&amp;quot;tar&amp;quot;&lt;/code&gt; extraction filters (PEP 706)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Python 3.8.0 through 3.13.1 (per source repository)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Python 3 PoC, exploiting a Linux/POSIX filesystem &lt;code&gt;PATH_MAX&lt;/code&gt; (4096-byte) limitation in path resolution&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Depends on the integrating application — any code path that calls &lt;code&gt;tarfile.extractall(filter=&amp;quot;data&amp;quot;)&lt;/code&gt; (or &lt;code&gt;&amp;quot;tar&amp;quot;&lt;/code&gt;) on an attacker-influenced archive is affected. This PoC&amp;rsquo;s staged demo additionally requires local access with &lt;code&gt;sudo&lt;/code&gt; rights to trigger a specific backup-restore script.&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No for this PoC&amp;rsquo;s local trigger — but any networked service that extracts attacker-supplied tar archives (e.g. an upload/import/backup-restore feature) using the affected filter would be remotely exploitable via the same technique.&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;Python&amp;rsquo;s &lt;code&gt;tarfile&lt;/code&gt; module added extraction filters (&lt;code&gt;filter=&amp;quot;data&amp;quot;&lt;/code&gt;/&lt;code&gt;&amp;quot;tar&amp;quot;&lt;/code&gt;, PEP 706, enabled by default since Python 3.12 and backported) specifically to prevent unsafe archive extraction — path traversal, symlink escapes, and writes outside the destination directory. CVE-2025-4517 is a bypass of that sandbox: the filter&amp;rsquo;s safety check calls &lt;code&gt;os.path.realpath()&lt;/code&gt; to resolve a member&amp;rsquo;s path and confirm it stays inside the extraction directory, but &lt;code&gt;realpath()&lt;/code&gt; silently stops resolving symlinks once the accumulated path exceeds &lt;code&gt;PATH_MAX&lt;/code&gt; (4096 bytes on Linux) and returns the unresolved (safe-looking) path instead of raising an error. The kernel, however, has no such limit during the actual extraction/write syscalls and fully resolves the same symlink chain, escaping the intended sandbox. This PoC builds a tar archive with deeply nested 247-character directory names and chained symlinks that push the resolved path just past &lt;code&gt;PATH_MAX&lt;/code&gt;, then uses the resulting confusion to write an SSH public key to &lt;code&gt;/root/.ssh/authorized_keys&lt;/code&gt;, granting the attacker root SSH access.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>local-mcp exec Tool Sandbox/Restriction Bypass (CVE-2026-6130)</title>
+      <link>http://192.168.0.124:1313/pocs/misc/2026-07-05_cve-2026-6130-local-mcp-exec-sandbox-bypass/</link>
+      <pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/misc/2026-07-05_cve-2026-6130-local-mcp-exec-sandbox-bypass/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-05&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;fan-67 (documented bypass, mirrored by original PoC contributor)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-6130&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;misc&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Medium&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Not specified in source&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PoC&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;mcp, model-context-protocol, sandbox-bypass, command-execution, exec-restriction-bypass&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;local-mcp (zero-dependency MCP server for local file operations, v1.1.1)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;1.1.1&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Node.js (MCP server) — .mjs source&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Local MCP client access (e.g. an AI agent configured to use the server)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No (stdio/local HTTP transport)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;This is not a standalone PoC script but the actual local-mcp MCP server codebase, whose &lt;code&gt;exec&lt;/code&gt; tool contains the real CVE-2026-6130 bypass: a workaround using a generated batch file plus base64 encoding that circumvents intended command-execution restrictions within the tool&amp;rsquo;s sandboxing logic, allowing execution of commands that the restriction mechanism was meant to block.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Math.js Expression Parser Sandbox Bypass RCE (CVE-2026-40897)</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-40897-mathjs-sandbox-bypass-rce/</link>
+      <pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-40897-mathjs-sandbox-bypass-rce/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-05&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-05&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;EQSTLab (Minseo Jwa)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-40897&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Not specified in source&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Weaponized&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;mathjs, nodejs, sandbox-bypass, rce, expression-parser, prototype-pollution-adjacent, reverse-shell, javascript&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Math.js expression parser (Node.js library)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;13.1.1 &amp;lt;= version &amp;lt;= 15.1.1 (fixed in 15.2.0)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;JavaScript / Node.js&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;Math.js exposes an expression-evaluation API (&lt;code&gt;math.evaluate&lt;/code&gt;) intended to run untrusted mathematical expressions inside a restricted sandbox that blocks access to dangerous properties such as &lt;code&gt;constructor&lt;/code&gt;. The &lt;code&gt;isSafeProperty&lt;/code&gt; guard only inspects direct property access performed from the user-supplied expression text, but does not cover accesses made through internal library code paths. By abusing the &lt;code&gt;reviver&lt;/code&gt; deserialization helper to reconstruct an &lt;code&gt;ArrayNode&lt;/code&gt;, leaking its internal array via &lt;code&gt;toJSON()&lt;/code&gt;, and overwriting the array&amp;rsquo;s &lt;code&gt;.map&lt;/code&gt; method with an attacker-controlled function, an attacker can trick Math.js&amp;rsquo;s own internal code into calling &lt;code&gt;Function.constructor&lt;/code&gt;, escaping the sandbox and reaching arbitrary JavaScript execution. The included Docker lab and &lt;code&gt;server.js&lt;/code&gt; provide a minimal vulnerable Node.js service that accepts a math expression and evaluates it, letting the PoC payload pop a reverse shell on the host.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Microsoft Semantic Kernel In-Memory Vector Store Filter eval() Sandbox Bypass RCE (CVE-2026-26030)</title>
+      <link>http://192.168.0.124:1313/pocs/misc/2026-07-05_cve-2026-26030-semantic-kernel-eval-rce/</link>
+      <pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/misc/2026-07-05_cve-2026-26030-semantic-kernel-eval-rce/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-05&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;InertFluid&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-26030&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;misc&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Not specified in source&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Weaponized&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;semantic-kernel, python, eval-injection, sandbox-bypass, prompt-injection, llm-agent, rce, ast-allowlist-bypass, vector-store&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Microsoft Semantic Kernel (Python), &lt;code&gt;InMemoryCollection&lt;/code&gt; vector store connector&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;&amp;lt; 1.39.4 (fixed in 1.39.4)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Python 3.13, LLM agent framework (Semantic Kernel + optional Groq-hosted LLM demo)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No (exploited indirectly via prompt injection into an LLM agent)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No for the headless lab PoC (local); Yes for the live agent demo (LLM API + local web UI)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;CVE-2026-26030 is a sandbox-bypass remote code execution vulnerability in Semantic Kernel&amp;rsquo;s in-memory vector store search filter evaluation. Agents that expose a search/query tool backed by &lt;code&gt;InMemoryCollection&lt;/code&gt; let the LLM emit a filter expression string (e.g. &lt;code&gt;lambda x: x.team == &#39;platform&#39;&lt;/code&gt;), which is compiled and evaluated by &lt;code&gt;_parse_and_validate_filter()&lt;/code&gt; in &lt;code&gt;connectors/in_memory.py&lt;/code&gt;. That function empties &lt;code&gt;__builtins__&lt;/code&gt; and applies an AST node allowlist, intending to prevent arbitrary code execution — but two gaps break the sandbox: unrestricted &lt;code&gt;ast.Attribute&lt;/code&gt; access allows dunder-attribute traversal (&lt;code&gt;().__class__.__base__.__subclasses__&lt;/code&gt;), and the &lt;code&gt;ast.Call&lt;/code&gt; name-check only inspects &lt;code&gt;func&lt;/code&gt; when it&amp;rsquo;s a &lt;code&gt;Name&lt;/code&gt; or &lt;code&gt;Attribute&lt;/code&gt; node, silently skipping the check when &lt;code&gt;func&lt;/code&gt; is a &lt;code&gt;Subscript&lt;/code&gt; (which is itself allowlisted). Chaining &lt;code&gt;[obj.method][0](args)&lt;/code&gt;-style calls lets an attacker walk to &lt;code&gt;BuiltinImporter&lt;/code&gt;, &lt;code&gt;load_module(&#39;os&#39;)&lt;/code&gt;, and &lt;code&gt;os.system()&lt;/code&gt;, achieving code execution whenever a filter string an LLM was steered into emitting (via direct user prompt or injected retrieved content) reaches this code path. The repository is a full, runnable lab: isolated venvs for the vulnerable (1.39.3) and patched (1.39.4) versions, a headless exploit script, a validator-only probe, and an optional live FastAPI + LLM agent demo that opens a harmless &amp;ldquo;ransom note&amp;rdquo; file to visually confirm RCE end-to-end.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>n8n Unauthenticated Arbitrary File Read to RCE Full Chain — CVE-2026-21858 &#43; CVE-2025-68613</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-21858-n8n-rce-chain/</link>
+      <pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-21858-n8n-rce-chain/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-05&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Chocapikk (exploit); vulnerability discovered by Dor Attias (Cyera)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-21858, CVE-2025-68613&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;10.0 (CVE-2026-21858, AFR) / 9.9 (CVE-2025-68613, RCE)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Weaponized&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;n8n, arbitrary-file-read, jwt-forgery, sandbox-bypass, expression-injection, rce, workflow-automation&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;n8n workflow automation platform&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;&amp;lt;= 1.65.0 (arbitrary file read, CVE-2026-21858); &amp;gt;= 0.211.0 (expression injection RCE, CVE-2025-68613); fixed in 1.121.0 / 1.120.4+ respectively&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Python 3 (&lt;code&gt;uv run&lt;/code&gt;, &lt;code&gt;requests&lt;/code&gt;, &lt;code&gt;pyjwt&lt;/code&gt;), Docker lab environment&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No (initial file-read step is unauthenticated)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;This PoC chains two n8n vulnerabilities into full unauthenticated remote code execution. First, CVE-2026-21858 is a Content-Type confusion bug in n8n&amp;rsquo;s binary file handling: sending &lt;code&gt;Content-Type: application/json&lt;/code&gt; instead of &lt;code&gt;multipart/form-data&lt;/code&gt; to a form endpoint lets an attacker control the &lt;code&gt;filepath&lt;/code&gt; argument passed into n8n&amp;rsquo;s file-copy helper, yielding arbitrary file read. The exploit uses this to read &lt;code&gt;/proc/self/environ&lt;/code&gt; (to find &lt;code&gt;$HOME&lt;/code&gt;), then &lt;code&gt;$HOME/.n8n/config&lt;/code&gt; (to get the instance&amp;rsquo;s &lt;code&gt;encryptionKey&lt;/code&gt;) and &lt;code&gt;$HOME/.n8n/database.sqlite&lt;/code&gt; (to get the admin user&amp;rsquo;s password hash). It derives the JWT signing secret from the encryption key and forges a valid admin session cookie without ever authenticating. With admin access, it creates a workflow using an n8n expression that reaches &lt;code&gt;this.process.mainModule.require&lt;/code&gt; — an expression-injection sandbox escape (CVE-2025-68613) — to run arbitrary shell commands via &lt;code&gt;child_process.execSync&lt;/code&gt;. The exploit is not a universal &amp;ldquo;pwn any n8n&amp;rdquo; tool: it requires a publicly reachable form workflow with a file-upload field and a Respond-to-Webhook node configured to return the file&amp;rsquo;s binary content in the HTTP response, a pattern the author found present in a number of public community workflow repositories.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

@@ -1,256 +1,33 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Apache-Camel on PoC Archive</title><link>https://poc.intelseclab.com/tags/apache-camel/</link><description>Recent content in Apache-Camel on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/apache-camel/index.xml" rel="self" type="application/rss+xml"/><item><title>Apache Camel `camel-consul` ConsulRegistry Deserialization RCE (CVE-2026-27172)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2026-27172-camel-consul-registry-deserialization/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2026-27172-camel-consul-registry-deserialization/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-07-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>oscerd (Andrea Cosentino)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-27172&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Critical&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>9.8 (per Apache Camel security advisory)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>Patched&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>apache-camel, camel-consul, consulregistry, java-deserialization, rce, cwe-502, gadget-chain, ysoserial, spring-boot&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>CVE-2024-22369, CVE-2024-23114, CVE-2026-25747&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>Apache Camel &lt;code>camel-consul&lt;/code> component (&lt;code>org.apache.camel.component.consul.ConsulRegistry&lt;/code>)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>From 3.0.0 before 4.14.6, and from 4.15.0 before 4.18.1&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>Java 17+, Spring Boot, Apache Camel, HashiCorp Consul (KV store)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No (requires write access to the backing Consul KV store)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>Apache Camel&amp;rsquo;s &lt;code>camel-consul&lt;/code> component uses a Consul key/value store as a Camel bean registry (&lt;code>ConsulRegistry&lt;/code>). When a bean is looked up by name, &lt;code>ConsulRegistryUtils.deserialize()&lt;/code> Base64-decodes the stored KV value and deserializes it with a raw &lt;code>ObjectInputStream&lt;/code> and, in affected versions, &lt;strong>no &lt;code>ObjectInputFilter&lt;/code>&lt;/strong>. Any principal able to write to the Consul KV path used by the registry can plant a Java gadget-chain payload (e.g. via &lt;code>commons-collections&lt;/code>) that executes arbitrary code the next time Camel resolves that bean — through &lt;code>lookupByName()&lt;/code>, &lt;code>lookupByNameAndType()&lt;/code>, &lt;code>findByTypeWithName()&lt;/code>, or &lt;code>findByType()&lt;/code>. This is the same root-cause class of bug as CVE-2024-22369 (Cassandra-backed registry) and CVE-2024-23114 / CVE-2026-25747 (LevelDB-backed registry), which were overlooked when &lt;code>camel-consul&lt;/code> was audited during those earlier fixes.&lt;/p></description></item><item><title>camel-coap Header Injection → RCE Self-Contained Reproducer (CVE-2026-33453)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2026-33453-camel-coap-header-injection-reproducer/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2026-33453-camel-coap-header-injection-reproducer/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-07-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>oscerd (Andrea Cosentino)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-33453&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Critical&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>9.8 (per Apache Camel security advisory)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>Patched&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>apache-camel, camel-coap, coap, header-injection, rce, cwe-915, camel-exec, unauthenticated, udp, spring-boot&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>Apache Camel &lt;code>camel-coap&lt;/code> component (&lt;code>org.apache.camel.coap.CamelCoapResource&lt;/code>), routes forwarding to &lt;code>camel-exec&lt;/code>&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>From 4.14.0 before 4.14.6, and from 4.15.0 before 4.18.1&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>Java 17+, Spring Boot, Apache Camel&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes (single unauthenticated CoAP/UDP datagram to port 5683)&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>Apache Camel&amp;rsquo;s &lt;code>camel-coap&lt;/code> component copies CoAP request URI query parameters directly into Camel Exchange headers inside &lt;code>CamelCoapResource.handleRequest()&lt;/code>, without applying any &lt;code>HeaderFilterStrategy&lt;/code>. Because &lt;code>CoAPEndpoint&lt;/code> extends &lt;code>DefaultEndpoint&lt;/code> (not &lt;code>DefaultHeaderFilterStrategyEndpoint&lt;/code>) and &lt;code>CoAPComponent&lt;/code> does not implement &lt;code>HeaderFilterStrategyComponent&lt;/code>, internal &lt;code>Camel*&lt;/code>-prefixed control headers can be injected by any unauthenticated CoAP client simply by adding query parameters to the request URI. When the route forwards to a header-sensitive producer such as &lt;code>camel-exec&lt;/code>, an attacker-controlled &lt;code>CamelExecCommandExecutable&lt;/code>/&lt;code>CamelExecCommandArgs&lt;/code> header overrides the configured command, giving unauthenticated remote code execution from a single UDP datagram. This is a self-contained Spring Boot reproducer bundling both the vulnerable victim route (&lt;code>coap://.../run&lt;/code> → &lt;code>exec:echo&lt;/code>) and an attacker CoAP client, so no external target or Docker container is required to reproduce the bug.&lt;/p></description></item><item><title>Apache Camel camel-coap Header Injection to Remote Code Execution (CVE-2026-33453)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-33453-apache-camel-coap-header-injection-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-33453-apache-camel-coap-header-injection-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-05&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-04&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>dinosn&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-33453&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Critical&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>10.0 (per source assessment)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>Weaponized&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>apache-camel, coap, header-injection, rce, cwe-915, camel-exec, unauthenticated, udp&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>Apache Camel — &lt;code>camel-coap&lt;/code> component (&lt;code>CamelCoapResource&lt;/code>), routes forwarding to &lt;code>camel-exec&lt;/code>&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>Apache Camel 4.18.0 (and other versions sharing the same &lt;code>CamelCoapResource&lt;/code> code path prior to the fix); fixed in 4.18.1 / 4.14.6&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>Java (Apache Camel route), exploit written in Python 3.8+ sending raw CoAP/UDP requests&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>Apache Camel&amp;rsquo;s &lt;code>camel-coap&lt;/code> component maps CoAP URI query parameters directly into Camel Exchange headers via &lt;code>setHeader()&lt;/code> inside &lt;code>CamelCoapResource.handleRequest()&lt;/code>, without applying any &lt;code>HeaderFilterStrategy&lt;/code>. Because &lt;code>CoAPEndpoint&lt;/code> extends &lt;code>DefaultEndpoint&lt;/code> rather than &lt;code>DefaultHeaderFilterStrategyEndpoint&lt;/code>, internal &lt;code>Camel*&lt;/code>-prefixed headers — which are normally reserved for framework-internal use — can be injected by any unauthenticated CoAP client simply by adding query parameters to the request. When a Camel route forwards the exchange to a &lt;code>camel-exec&lt;/code> endpoint, an attacker-controlled &lt;code>CamelExecCommandExecutable&lt;/code> header (and optionally &lt;code>CamelExecCommandArgs&lt;/code>) overrides the route&amp;rsquo;s configured command, letting a single crafted UDP packet execute an arbitrary command on the host. The bundled PoC exploits this against a Dockerized vulnerable Camel CoAP+exec route and returns command output directly in the CoAP response.&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Apache-Camel on PoC Archive</title>
+    <link>http://192.168.0.124:1313/tags/apache-camel/</link>
+    <description>Recent content in Apache-Camel on PoC Archive</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://192.168.0.124:1313/tags/apache-camel/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Apache Camel `camel-consul` ConsulRegistry Deserialization RCE (CVE-2026-27172)</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-06_cve-2026-27172-camel-consul-registry-deserialization/</link>
+      <pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-06_cve-2026-27172-camel-consul-registry-deserialization/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;oscerd (Andrea Cosentino)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-27172&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;9.8 (per Apache Camel security advisory)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Patched&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;apache-camel, camel-consul, consulregistry, java-deserialization, rce, cwe-502, gadget-chain, ysoserial, spring-boot&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2024-22369, CVE-2024-23114, CVE-2026-25747&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Apache Camel &lt;code&gt;camel-consul&lt;/code&gt; component (&lt;code&gt;org.apache.camel.component.consul.ConsulRegistry&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;From 3.0.0 before 4.14.6, and from 4.15.0 before 4.18.1&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Java 17+, Spring Boot, Apache Camel, HashiCorp Consul (KV store)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No (requires write access to the backing Consul KV store)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;Apache Camel&amp;rsquo;s &lt;code&gt;camel-consul&lt;/code&gt; component uses a Consul key/value store as a Camel bean registry (&lt;code&gt;ConsulRegistry&lt;/code&gt;). When a bean is looked up by name, &lt;code&gt;ConsulRegistryUtils.deserialize()&lt;/code&gt; Base64-decodes the stored KV value and deserializes it with a raw &lt;code&gt;ObjectInputStream&lt;/code&gt; and, in affected versions, &lt;strong&gt;no &lt;code&gt;ObjectInputFilter&lt;/code&gt;&lt;/strong&gt;. Any principal able to write to the Consul KV path used by the registry can plant a Java gadget-chain payload (e.g. via &lt;code&gt;commons-collections&lt;/code&gt;) that executes arbitrary code the next time Camel resolves that bean — through &lt;code&gt;lookupByName()&lt;/code&gt;, &lt;code&gt;lookupByNameAndType()&lt;/code&gt;, &lt;code&gt;findByTypeWithName()&lt;/code&gt;, or &lt;code&gt;findByType()&lt;/code&gt;. This is the same root-cause class of bug as CVE-2024-22369 (Cassandra-backed registry) and CVE-2024-23114 / CVE-2026-25747 (LevelDB-backed registry), which were overlooked when &lt;code&gt;camel-consul&lt;/code&gt; was audited during those earlier fixes.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>camel-coap Header Injection → RCE Self-Contained Reproducer (CVE-2026-33453)</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-06_cve-2026-33453-camel-coap-header-injection-reproducer/</link>
+      <pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-06_cve-2026-33453-camel-coap-header-injection-reproducer/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;oscerd (Andrea Cosentino)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-33453&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;9.8 (per Apache Camel security advisory)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Patched&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;apache-camel, camel-coap, coap, header-injection, rce, cwe-915, camel-exec, unauthenticated, udp, spring-boot&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Apache Camel &lt;code&gt;camel-coap&lt;/code&gt; component (&lt;code&gt;org.apache.camel.coap.CamelCoapResource&lt;/code&gt;), routes forwarding to &lt;code&gt;camel-exec&lt;/code&gt;&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;From 4.14.0 before 4.14.6, and from 4.15.0 before 4.18.1&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Java 17+, Spring Boot, Apache Camel&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes (single unauthenticated CoAP/UDP datagram to port 5683)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;Apache Camel&amp;rsquo;s &lt;code&gt;camel-coap&lt;/code&gt; component copies CoAP request URI query parameters directly into Camel Exchange headers inside &lt;code&gt;CamelCoapResource.handleRequest()&lt;/code&gt;, without applying any &lt;code&gt;HeaderFilterStrategy&lt;/code&gt;. Because &lt;code&gt;CoAPEndpoint&lt;/code&gt; extends &lt;code&gt;DefaultEndpoint&lt;/code&gt; (not &lt;code&gt;DefaultHeaderFilterStrategyEndpoint&lt;/code&gt;) and &lt;code&gt;CoAPComponent&lt;/code&gt; does not implement &lt;code&gt;HeaderFilterStrategyComponent&lt;/code&gt;, internal &lt;code&gt;Camel*&lt;/code&gt;-prefixed control headers can be injected by any unauthenticated CoAP client simply by adding query parameters to the request URI. When the route forwards to a header-sensitive producer such as &lt;code&gt;camel-exec&lt;/code&gt;, an attacker-controlled &lt;code&gt;CamelExecCommandExecutable&lt;/code&gt;/&lt;code&gt;CamelExecCommandArgs&lt;/code&gt; header overrides the configured command, giving unauthenticated remote code execution from a single UDP datagram. This is a self-contained Spring Boot reproducer bundling both the vulnerable victim route (&lt;code&gt;coap://.../run&lt;/code&gt; → &lt;code&gt;exec:echo&lt;/code&gt;) and an attacker CoAP client, so no external target or Docker container is required to reproduce the bug.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Apache Camel camel-coap Header Injection to Remote Code Execution (CVE-2026-33453)</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-33453-apache-camel-coap-header-injection-rce/</link>
+      <pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-33453-apache-camel-coap-header-injection-rce/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-05&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-04&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;dinosn&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-33453&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;10.0 (per source assessment)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Weaponized&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;apache-camel, coap, header-injection, rce, cwe-915, camel-exec, unauthenticated, udp&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Apache Camel — &lt;code&gt;camel-coap&lt;/code&gt; component (&lt;code&gt;CamelCoapResource&lt;/code&gt;), routes forwarding to &lt;code&gt;camel-exec&lt;/code&gt;&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Apache Camel 4.18.0 (and other versions sharing the same &lt;code&gt;CamelCoapResource&lt;/code&gt; code path prior to the fix); fixed in 4.18.1 / 4.14.6&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Java (Apache Camel route), exploit written in Python 3.8+ sending raw CoAP/UDP requests&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;Apache Camel&amp;rsquo;s &lt;code&gt;camel-coap&lt;/code&gt; component maps CoAP URI query parameters directly into Camel Exchange headers via &lt;code&gt;setHeader()&lt;/code&gt; inside &lt;code&gt;CamelCoapResource.handleRequest()&lt;/code&gt;, without applying any &lt;code&gt;HeaderFilterStrategy&lt;/code&gt;. Because &lt;code&gt;CoAPEndpoint&lt;/code&gt; extends &lt;code&gt;DefaultEndpoint&lt;/code&gt; rather than &lt;code&gt;DefaultHeaderFilterStrategyEndpoint&lt;/code&gt;, internal &lt;code&gt;Camel*&lt;/code&gt;-prefixed headers — which are normally reserved for framework-internal use — can be injected by any unauthenticated CoAP client simply by adding query parameters to the request. When a Camel route forwards the exchange to a &lt;code&gt;camel-exec&lt;/code&gt; endpoint, an attacker-controlled &lt;code&gt;CamelExecCommandExecutable&lt;/code&gt; header (and optionally &lt;code&gt;CamelExecCommandArgs&lt;/code&gt;) overrides the route&amp;rsquo;s configured command, letting a single crafted UDP packet execute an arbitrary command on the host. The bundled PoC exploits this against a Dockerized vulnerable Camel CoAP+exec route and returns command output directly in the CoAP response.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

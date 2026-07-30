@@ -1,426 +1,47 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Django on PoC Archive</title><link>https://poc.intelseclab.com/tags/django/</link><description>Recent content in Django on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/django/index.xml" rel="self" type="application/rss+xml"/><item><title>Django QuerySet/Q Object SQL Injection via `_connector` Kwarg (CVE-2025-64459)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-64459-django-queryset-connector-sqli/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-64459-django-queryset-connector-sqli/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-07-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>Joshua Lent (joshualent)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2025-64459&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Critical&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>9.1 (per NVD)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>Weaponized&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>django, python, sql-injection, queryset, q-object, orm, cwe-89, data-exposure, sqlite&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>Django ORM (&lt;code>QuerySet.filter()&lt;/code> / &lt;code>Q&lt;/code> object construction)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>Multiple Django versions prior to the official security-patch release (per source repository); this demo pins &lt;code>django==5.2.7&lt;/code> to reproduce the issue&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>Python / Django 5.2, demo blog app served via &lt;code>manage.py runserver&lt;/code> or Gunicorn&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes (standard HTTP access to the vulnerable route)&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>This is a SQL injection vulnerability in Django&amp;rsquo;s &lt;code>QuerySet&lt;/code>/&lt;code>Q&lt;/code> object construction: when application code builds a &lt;code>Q(**kwargs)&lt;/code> filter directly from user-controlled input (such as a raw &lt;code>request.GET&lt;/code> &lt;code>QueryDict&lt;/code>) without allow-listing keys, an attacker can supply the reserved &lt;code>_connector&lt;/code> (and &lt;code>_negated&lt;/code>) keyword that Django&amp;rsquo;s &lt;code>Q&lt;/code> constructor uses internally to choose the raw SQL boolean join operator (&lt;code>AND&lt;/code>/&lt;code>OR&lt;/code>) between conditions. Because that value is spliced into the compiled SQL as a literal keyword rather than being validated against &lt;code>AND&lt;/code>/&lt;code>OR&lt;/code>/&lt;code>XOR&lt;/code>, an attacker-supplied string is inserted verbatim into the &lt;code>WHERE&lt;/code> clause. The bundled demo app is a small Django blog whose &lt;code>post_list&lt;/code> view builds its filter dict straight from &lt;code>request.GET&lt;/code>, blocking only a handful of named fields (&lt;code>status&lt;/code>, &lt;code>is_archived&lt;/code>, &lt;code>id&lt;/code>, &lt;code>pk&lt;/code>) — leaving &lt;code>_connector&lt;/code> open. Visiting the home route with &lt;code>?_connector=OR 1=1 OR&lt;/code> turns the intended &amp;ldquo;published, non-archived posts only&amp;rdquo; filter into an always-true condition, exposing draft and archived posts that should not be publicly visible, and demonstrates a general primitive for SQL fragment injection through the ORM.&lt;/p></description></item><item><title>XSpeeder SXZOS Pre-Auth eval() Remote Code Execution (CVE-2025-54322)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-54322-xspeeder-sxzos-preauth-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-06_cve-2025-54322-xspeeder-sxzos-preauth-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-07-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>Chirag Artani (Sachinart); original discovery credited to pwn.ai&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2025-54322&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>network&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Critical&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>10.0 (per NVD; source lists 9.8+)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>Weaponized&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>xspeeder, sxzos, sd-wan, router, firmware, python, django, eval-injection, pre-auth, rce, cwe-95&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>XSpeeder SXZOS firmware (SD-WAN devices, routers, edge networking equipment)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>Per source repository — SXZOS firmware builds with the vulnerable Django-based web interface exposed; vendor unresponsive, no patched version identified&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>Python 3 scanner targeting a Django-based embedded web interface on the device&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>XSpeeder SXZOS firmware exposes a Django-based web endpoint that passes a base64-decoded, attacker-controlled &lt;code>chkid&lt;/code> query parameter into Python&amp;rsquo;s &lt;code>eval()&lt;/code>. Because there is no authentication check on this endpoint and no sanitization of the decoded payload, an unauthenticated remote attacker can execute arbitrary Python (and by extension OS commands via &lt;code>os.system&lt;/code>/&lt;code>subprocess&lt;/code>) with root privileges on the device. &lt;code>scanner.py&lt;/code> is a genuine multithreaded scanner that reproduces the full exploit chain end-to-end: it computes a time-based nonce, &amp;ldquo;warms up&amp;rdquo; a session against &lt;code>/webInfos/&lt;/code>, crafts a base64-encoded &lt;code>eval()&lt;/code> payload appended with a &lt;code>#sUserCodexsPwd&lt;/code> comment (used to defeat a naive string filter), and sends it as the &lt;code>chkid&lt;/code> parameter alongside decoy &lt;code>title&lt;/code>/&lt;code>oIp&lt;/code> parameters to preserve the expected 3-parameter request shape. A successful hit is detected by regexing the HTTP response for &lt;code>id&lt;/code>-command output (&lt;code>uid=0(root) gid=0(root)&lt;/code>), confirming root-level command execution. The vendor advisory states roughly 70,000+ internet-facing hosts were affected at time of disclosure.&lt;/p></description></item><item><title>Django GIS RasterField SQL Injection (CVE-2026-1207)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-1207-django-gis-rasterfield-sqli/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-1207-django-gis-rasterfield-sqli/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-05&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-04&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>sw0rd1ight&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-1207&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>High&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>Not specified in source&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>PoC&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>django, gis, geodjango, sql-injection, rasterfield, postgis, python&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>Django &lt;code>django.contrib.gis&lt;/code> (GeoDjango) RasterField queries&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>Django versions using GeoDjango &lt;code>RasterField&lt;/code> with &lt;code>__contains&lt;/code> raster lookups (specific patched version not stated in source)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>Python / Django, PostgreSQL + PostGIS backend&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>The reproduction project demonstrates a SQL injection flaw in GeoDjango&amp;rsquo;s raster query handling. When a view builds a &lt;code>RasterField&lt;/code> lookup such as &lt;code>rast__contains=(rast, band)&lt;/code>, the &lt;code>band&lt;/code> value taken directly from an HTTP query parameter is concatenated into the generated SQL rather than being passed as a bound parameter. An attacker can therefore inject arbitrary SQL through the &lt;code>band&lt;/code> parameter of the demo &lt;code>book/search&lt;/code> endpoint. The included Django project (models, views, migrations) reproduces the vulnerable raster comparison end-to-end against a PostGIS-backed database inside a devcontainer.&lt;/p></description></item><item><title>Django MultiPartParser Base64 Whitespace CPU Amplification DoS — CVE-2026-33033</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-33033-django-multipartparser-dos/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-33033-django-multipartparser-dos/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-05&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-04&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>ch4n3-yoon&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-33033&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Medium&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>Not specified in source (Django advisory rates it &amp;ldquo;Moderate&amp;rdquo;)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>PoC&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>django, dos, multipart, base64, cpu-amplification, python, file-upload&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>Django (&lt;code>django.http.multipartparser.MultiPartParser&lt;/code>)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>Django &amp;lt;= 6.0.3, &amp;lt;= 5.2.11, 5.1.x, &amp;lt;= 5.0.14, &amp;lt;= 4.2.28 (fixed in 6.0.4, 5.2.12, 5.1.16, 5.0.15, 4.2.29)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>Python exploit script against a Django (WSGI/uWSGI) server&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>Django&amp;rsquo;s multipart form parser has a special path for file parts declared with &lt;code>Content-Transfer-Encoding: base64&lt;/code>. When the stripped chunk length isn&amp;rsquo;t a multiple of 4, the parser calls &lt;code>field_stream.read(1)&lt;/code> in a loop to pull additional bytes for alignment. If the uploaded body is mostly whitespace, every whitespace byte strips to nothing, so the loop never terminates naturally and calls &lt;code>read(1)&lt;/code> once per whitespace byte. Because each single-byte read internally triggers a costly &amp;ldquo;unget&amp;rdquo; operation that copies an entire ~64KB leftover buffer, this turns a small number of whitespace bytes into an enormous amount of memory-copy work — the PoC&amp;rsquo;s README documents roughly a 2,100x CPU amplification for a 2.5MB request. A built-in anti-abuse check that flags repeated identical unget sizes is bypassed because the unget sizes here monotonically decrease, so every value is unique and the check never triggers. Because Django&amp;rsquo;s CSRF middleware accesses &lt;code>request.POST&lt;/code> before any view executes, even endpoints that would ultimately reject the request pay the full parsing cost.&lt;/p></description></item><item><title>Tandoor Recipes Authenticated Local File Disclosure via Recipe Import (CVE-2026-25964)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-25964-tandoor-recipes-lfi/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-25964-tandoor-recipes-lfi/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-05&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-02&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>drkim-dev&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-25964 (GHSA-6485-jr28-52xx)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Medium&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>4.9 (CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:N/A:N)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>PoC&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>path-traversal, local-file-disclosure, tandoor-recipes, django, rest-api, authenticated, cwe-22, arbitrary-file-read&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>Tandoor Recipes (self-hosted recipe manager, Django-based)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>&amp;lt;= 2.5.0 (fixed in 2.5.1)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>Documented via curl / HTTP requests against the Django REST API&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>Yes (any account with recipe-import permission)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>CVE-2026-25964 is a path traversal / arbitrary file read vulnerability in Tandoor Recipes&amp;rsquo; recipe-import workflow. The &lt;code>/api/recipe-import/&lt;/code> endpoint lets an authenticated user set an arbitrary &lt;code>file_path&lt;/code> and &lt;code>storage&lt;/code> backend on a &lt;code>RecipeImport&lt;/code> object without validating that the path stays inside the configured storage root. The &lt;code>Local.get_file()&lt;/code> provider (&lt;code>cookbook/provider/local.py&lt;/code>) then opens that path directly via &lt;code>open(recipe.file_path, 'rb')&lt;/code>, with no containment check. Once the import is converted into a real &lt;code>Recipe&lt;/code>, a follow-up request to &lt;code>/api/get_recipe_file/&amp;lt;id&amp;gt;/&lt;/code> streams back the contents of whatever file was referenced — including absolute paths like &lt;code>/etc/passwd&lt;/code> or the application&amp;rsquo;s own &lt;code>settings.py&lt;/code>. The repository is essentially a documented, curl-driven reproduction rather than a packaged script.&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Django on PoC Archive</title>
+    <link>http://192.168.0.124:1313/tags/django/</link>
+    <description>Recent content in Django on PoC Archive</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://192.168.0.124:1313/tags/django/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Django QuerySet/Q Object SQL Injection via `_connector` Kwarg (CVE-2025-64459)</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-06_cve-2025-64459-django-queryset-connector-sqli/</link>
+      <pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-06_cve-2025-64459-django-queryset-connector-sqli/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Joshua Lent (joshualent)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2025-64459&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;9.1 (per NVD)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Weaponized&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;django, python, sql-injection, queryset, q-object, orm, cwe-89, data-exposure, sqlite&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Django ORM (&lt;code&gt;QuerySet.filter()&lt;/code&gt; / &lt;code&gt;Q&lt;/code&gt; object construction)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Multiple Django versions prior to the official security-patch release (per source repository); this demo pins &lt;code&gt;django==5.2.7&lt;/code&gt; to reproduce the issue&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Python / Django 5.2, demo blog app served via &lt;code&gt;manage.py runserver&lt;/code&gt; or Gunicorn&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes (standard HTTP access to the vulnerable route)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;This is a SQL injection vulnerability in Django&amp;rsquo;s &lt;code&gt;QuerySet&lt;/code&gt;/&lt;code&gt;Q&lt;/code&gt; object construction: when application code builds a &lt;code&gt;Q(**kwargs)&lt;/code&gt; filter directly from user-controlled input (such as a raw &lt;code&gt;request.GET&lt;/code&gt; &lt;code&gt;QueryDict&lt;/code&gt;) without allow-listing keys, an attacker can supply the reserved &lt;code&gt;_connector&lt;/code&gt; (and &lt;code&gt;_negated&lt;/code&gt;) keyword that Django&amp;rsquo;s &lt;code&gt;Q&lt;/code&gt; constructor uses internally to choose the raw SQL boolean join operator (&lt;code&gt;AND&lt;/code&gt;/&lt;code&gt;OR&lt;/code&gt;) between conditions. Because that value is spliced into the compiled SQL as a literal keyword rather than being validated against &lt;code&gt;AND&lt;/code&gt;/&lt;code&gt;OR&lt;/code&gt;/&lt;code&gt;XOR&lt;/code&gt;, an attacker-supplied string is inserted verbatim into the &lt;code&gt;WHERE&lt;/code&gt; clause. The bundled demo app is a small Django blog whose &lt;code&gt;post_list&lt;/code&gt; view builds its filter dict straight from &lt;code&gt;request.GET&lt;/code&gt;, blocking only a handful of named fields (&lt;code&gt;status&lt;/code&gt;, &lt;code&gt;is_archived&lt;/code&gt;, &lt;code&gt;id&lt;/code&gt;, &lt;code&gt;pk&lt;/code&gt;) — leaving &lt;code&gt;_connector&lt;/code&gt; open. Visiting the home route with &lt;code&gt;?_connector=OR 1=1 OR&lt;/code&gt; turns the intended &amp;ldquo;published, non-archived posts only&amp;rdquo; filter into an always-true condition, exposing draft and archived posts that should not be publicly visible, and demonstrates a general primitive for SQL fragment injection through the ORM.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>XSpeeder SXZOS Pre-Auth eval() Remote Code Execution (CVE-2025-54322)</title>
+      <link>http://192.168.0.124:1313/pocs/network/2026-07-06_cve-2025-54322-xspeeder-sxzos-preauth-rce/</link>
+      <pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/network/2026-07-06_cve-2025-54322-xspeeder-sxzos-preauth-rce/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Chirag Artani (Sachinart); original discovery credited to pwn.ai&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2025-54322&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;network&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;10.0 (per NVD; source lists 9.8+)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Weaponized&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;xspeeder, sxzos, sd-wan, router, firmware, python, django, eval-injection, pre-auth, rce, cwe-95&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;XSpeeder SXZOS firmware (SD-WAN devices, routers, edge networking equipment)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Per source repository — SXZOS firmware builds with the vulnerable Django-based web interface exposed; vendor unresponsive, no patched version identified&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Python 3 scanner targeting a Django-based embedded web interface on the device&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;XSpeeder SXZOS firmware exposes a Django-based web endpoint that passes a base64-decoded, attacker-controlled &lt;code&gt;chkid&lt;/code&gt; query parameter into Python&amp;rsquo;s &lt;code&gt;eval()&lt;/code&gt;. Because there is no authentication check on this endpoint and no sanitization of the decoded payload, an unauthenticated remote attacker can execute arbitrary Python (and by extension OS commands via &lt;code&gt;os.system&lt;/code&gt;/&lt;code&gt;subprocess&lt;/code&gt;) with root privileges on the device. &lt;code&gt;scanner.py&lt;/code&gt; is a genuine multithreaded scanner that reproduces the full exploit chain end-to-end: it computes a time-based nonce, &amp;ldquo;warms up&amp;rdquo; a session against &lt;code&gt;/webInfos/&lt;/code&gt;, crafts a base64-encoded &lt;code&gt;eval()&lt;/code&gt; payload appended with a &lt;code&gt;#sUserCodexsPwd&lt;/code&gt; comment (used to defeat a naive string filter), and sends it as the &lt;code&gt;chkid&lt;/code&gt; parameter alongside decoy &lt;code&gt;title&lt;/code&gt;/&lt;code&gt;oIp&lt;/code&gt; parameters to preserve the expected 3-parameter request shape. A successful hit is detected by regexing the HTTP response for &lt;code&gt;id&lt;/code&gt;-command output (&lt;code&gt;uid=0(root) gid=0(root)&lt;/code&gt;), confirming root-level command execution. The vendor advisory states roughly 70,000+ internet-facing hosts were affected at time of disclosure.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Django GIS RasterField SQL Injection (CVE-2026-1207)</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-1207-django-gis-rasterfield-sqli/</link>
+      <pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-1207-django-gis-rasterfield-sqli/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-05&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-04&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;sw0rd1ight&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-1207&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;High&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Not specified in source&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PoC&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;django, gis, geodjango, sql-injection, rasterfield, postgis, python&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Django &lt;code&gt;django.contrib.gis&lt;/code&gt; (GeoDjango) RasterField queries&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Django versions using GeoDjango &lt;code&gt;RasterField&lt;/code&gt; with &lt;code&gt;__contains&lt;/code&gt; raster lookups (specific patched version not stated in source)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Python / Django, PostgreSQL + PostGIS backend&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;The reproduction project demonstrates a SQL injection flaw in GeoDjango&amp;rsquo;s raster query handling. When a view builds a &lt;code&gt;RasterField&lt;/code&gt; lookup such as &lt;code&gt;rast__contains=(rast, band)&lt;/code&gt;, the &lt;code&gt;band&lt;/code&gt; value taken directly from an HTTP query parameter is concatenated into the generated SQL rather than being passed as a bound parameter. An attacker can therefore inject arbitrary SQL through the &lt;code&gt;band&lt;/code&gt; parameter of the demo &lt;code&gt;book/search&lt;/code&gt; endpoint. The included Django project (models, views, migrations) reproduces the vulnerable raster comparison end-to-end against a PostGIS-backed database inside a devcontainer.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Django MultiPartParser Base64 Whitespace CPU Amplification DoS — CVE-2026-33033</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-33033-django-multipartparser-dos/</link>
+      <pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-33033-django-multipartparser-dos/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-05&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-04&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;ch4n3-yoon&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-33033&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Medium&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Not specified in source (Django advisory rates it &amp;ldquo;Moderate&amp;rdquo;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PoC&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;django, dos, multipart, base64, cpu-amplification, python, file-upload&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Django (&lt;code&gt;django.http.multipartparser.MultiPartParser&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Django &amp;lt;= 6.0.3, &amp;lt;= 5.2.11, 5.1.x, &amp;lt;= 5.0.14, &amp;lt;= 4.2.28 (fixed in 6.0.4, 5.2.12, 5.1.16, 5.0.15, 4.2.29)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Python exploit script against a Django (WSGI/uWSGI) server&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;Django&amp;rsquo;s multipart form parser has a special path for file parts declared with &lt;code&gt;Content-Transfer-Encoding: base64&lt;/code&gt;. When the stripped chunk length isn&amp;rsquo;t a multiple of 4, the parser calls &lt;code&gt;field_stream.read(1)&lt;/code&gt; in a loop to pull additional bytes for alignment. If the uploaded body is mostly whitespace, every whitespace byte strips to nothing, so the loop never terminates naturally and calls &lt;code&gt;read(1)&lt;/code&gt; once per whitespace byte. Because each single-byte read internally triggers a costly &amp;ldquo;unget&amp;rdquo; operation that copies an entire ~64KB leftover buffer, this turns a small number of whitespace bytes into an enormous amount of memory-copy work — the PoC&amp;rsquo;s README documents roughly a 2,100x CPU amplification for a 2.5MB request. A built-in anti-abuse check that flags repeated identical unget sizes is bypassed because the unget sizes here monotonically decrease, so every value is unique and the check never triggers. Because Django&amp;rsquo;s CSRF middleware accesses &lt;code&gt;request.POST&lt;/code&gt; before any view executes, even endpoints that would ultimately reject the request pay the full parsing cost.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Tandoor Recipes Authenticated Local File Disclosure via Recipe Import (CVE-2026-25964)</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-25964-tandoor-recipes-lfi/</link>
+      <pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-25964-tandoor-recipes-lfi/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-05&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-02&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;drkim-dev&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-25964 (GHSA-6485-jr28-52xx)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Medium&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;4.9 (CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:N/A:N)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PoC&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;path-traversal, local-file-disclosure, tandoor-recipes, django, rest-api, authenticated, cwe-22, arbitrary-file-read&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Tandoor Recipes (self-hosted recipe manager, Django-based)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;&amp;lt;= 2.5.0 (fixed in 2.5.1)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Documented via curl / HTTP requests against the Django REST API&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes (any account with recipe-import permission)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;CVE-2026-25964 is a path traversal / arbitrary file read vulnerability in Tandoor Recipes&amp;rsquo; recipe-import workflow. The &lt;code&gt;/api/recipe-import/&lt;/code&gt; endpoint lets an authenticated user set an arbitrary &lt;code&gt;file_path&lt;/code&gt; and &lt;code&gt;storage&lt;/code&gt; backend on a &lt;code&gt;RecipeImport&lt;/code&gt; object without validating that the path stays inside the configured storage root. The &lt;code&gt;Local.get_file()&lt;/code&gt; provider (&lt;code&gt;cookbook/provider/local.py&lt;/code&gt;) then opens that path directly via &lt;code&gt;open(recipe.file_path, &#39;rb&#39;)&lt;/code&gt;, with no containment check. Once the import is converted into a real &lt;code&gt;Recipe&lt;/code&gt;, a follow-up request to &lt;code&gt;/api/get_recipe_file/&amp;lt;id&amp;gt;/&lt;/code&gt; streams back the contents of whatever file was referenced — including absolute paths like &lt;code&gt;/etc/passwd&lt;/code&gt; or the application&amp;rsquo;s own &lt;code&gt;settings.py&lt;/code&gt;. The repository is essentially a documented, curl-driven reproduction rather than a packaged script.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

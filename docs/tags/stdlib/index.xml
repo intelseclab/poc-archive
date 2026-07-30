@@ -1,86 +1,19 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Stdlib on PoC Archive</title><link>https://poc.intelseclab.com/tags/stdlib/</link><description>Recent content in Stdlib on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/stdlib/index.xml" rel="self" type="application/rss+xml"/><item><title>Python tarfile `filter="data"` Bypass via PATH_MAX/realpath Confusion (CVE-2025-4517)</title><link>https://poc.intelseclab.com/pocs/misc/2026-07-06_cve-2025-4517-tarfile-filter-data-path-max-bypass/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/misc/2026-07-06_cve-2025-4517-tarfile-filter-data-path-max-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-07-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>Esteban Zárate — &lt;a href="https://github.com/estebanzarate">github.com/estebanzarate&lt;/a> (cleanup/simplification; original discovery credited to the Python Security Response Team)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2025-4517&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>misc&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Critical&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>9.4 (per NVD)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>Weaponized&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>python, tarfile, path-traversal, sandbox-bypass, path_max, realpath, symlink, cwe-22, stdlib&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>Python standard library &lt;code>tarfile&lt;/code> module — &lt;code>filter=&amp;quot;data&amp;quot;&lt;/code> / &lt;code>filter=&amp;quot;tar&amp;quot;&lt;/code> extraction filters (PEP 706)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>Python 3.8.0 through 3.13.1 (per source repository)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>Python 3 PoC, exploiting a Linux/POSIX filesystem &lt;code>PATH_MAX&lt;/code> (4096-byte) limitation in path resolution&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>Depends on the integrating application — any code path that calls &lt;code>tarfile.extractall(filter=&amp;quot;data&amp;quot;)&lt;/code> (or &lt;code>&amp;quot;tar&amp;quot;&lt;/code>) on an attacker-influenced archive is affected. This PoC&amp;rsquo;s staged demo additionally requires local access with &lt;code>sudo&lt;/code> rights to trigger a specific backup-restore script.&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>No for this PoC&amp;rsquo;s local trigger — but any networked service that extracts attacker-supplied tar archives (e.g. an upload/import/backup-restore feature) using the affected filter would be remotely exploitable via the same technique.&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>Python&amp;rsquo;s &lt;code>tarfile&lt;/code> module added extraction filters (&lt;code>filter=&amp;quot;data&amp;quot;&lt;/code>/&lt;code>&amp;quot;tar&amp;quot;&lt;/code>, PEP 706, enabled by default since Python 3.12 and backported) specifically to prevent unsafe archive extraction — path traversal, symlink escapes, and writes outside the destination directory. CVE-2025-4517 is a bypass of that sandbox: the filter&amp;rsquo;s safety check calls &lt;code>os.path.realpath()&lt;/code> to resolve a member&amp;rsquo;s path and confirm it stays inside the extraction directory, but &lt;code>realpath()&lt;/code> silently stops resolving symlinks once the accumulated path exceeds &lt;code>PATH_MAX&lt;/code> (4096 bytes on Linux) and returns the unresolved (safe-looking) path instead of raising an error. The kernel, however, has no such limit during the actual extraction/write syscalls and fully resolves the same symlink chain, escaping the intended sandbox. This PoC builds a tar archive with deeply nested 247-character directory names and chained symlinks that push the resolved path just past &lt;code>PATH_MAX&lt;/code>, then uses the resulting confusion to write an SSH public key to &lt;code>/root/.ssh/authorized_keys&lt;/code>, granting the attacker root SSH access.&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Stdlib on PoC Archive</title>
+    <link>http://192.168.0.124:1313/tags/stdlib/</link>
+    <description>Recent content in Stdlib on PoC Archive</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://192.168.0.124:1313/tags/stdlib/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Python tarfile `filter=&#34;data&#34;` Bypass via PATH_MAX/realpath Confusion (CVE-2025-4517)</title>
+      <link>http://192.168.0.124:1313/pocs/misc/2026-07-06_cve-2025-4517-tarfile-filter-data-path-max-bypass/</link>
+      <pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/misc/2026-07-06_cve-2025-4517-tarfile-filter-data-path-max-bypass/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Esteban Zárate — &lt;a href=&#34;https://github.com/estebanzarate&#34;&gt;github.com/estebanzarate&lt;/a&gt; (cleanup/simplification; original discovery credited to the Python Security Response Team)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2025-4517&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;misc&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;9.4 (per NVD)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Weaponized&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;python, tarfile, path-traversal, sandbox-bypass, path_max, realpath, symlink, cwe-22, stdlib&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Python standard library &lt;code&gt;tarfile&lt;/code&gt; module — &lt;code&gt;filter=&amp;quot;data&amp;quot;&lt;/code&gt; / &lt;code&gt;filter=&amp;quot;tar&amp;quot;&lt;/code&gt; extraction filters (PEP 706)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Python 3.8.0 through 3.13.1 (per source repository)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Python 3 PoC, exploiting a Linux/POSIX filesystem &lt;code&gt;PATH_MAX&lt;/code&gt; (4096-byte) limitation in path resolution&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Depends on the integrating application — any code path that calls &lt;code&gt;tarfile.extractall(filter=&amp;quot;data&amp;quot;)&lt;/code&gt; (or &lt;code&gt;&amp;quot;tar&amp;quot;&lt;/code&gt;) on an attacker-influenced archive is affected. This PoC&amp;rsquo;s staged demo additionally requires local access with &lt;code&gt;sudo&lt;/code&gt; rights to trigger a specific backup-restore script.&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No for this PoC&amp;rsquo;s local trigger — but any networked service that extracts attacker-supplied tar archives (e.g. an upload/import/backup-restore feature) using the affected filter would be remotely exploitable via the same technique.&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;Python&amp;rsquo;s &lt;code&gt;tarfile&lt;/code&gt; module added extraction filters (&lt;code&gt;filter=&amp;quot;data&amp;quot;&lt;/code&gt;/&lt;code&gt;&amp;quot;tar&amp;quot;&lt;/code&gt;, PEP 706, enabled by default since Python 3.12 and backported) specifically to prevent unsafe archive extraction — path traversal, symlink escapes, and writes outside the destination directory. CVE-2025-4517 is a bypass of that sandbox: the filter&amp;rsquo;s safety check calls &lt;code&gt;os.path.realpath()&lt;/code&gt; to resolve a member&amp;rsquo;s path and confirm it stays inside the extraction directory, but &lt;code&gt;realpath()&lt;/code&gt; silently stops resolving symlinks once the accumulated path exceeds &lt;code&gt;PATH_MAX&lt;/code&gt; (4096 bytes on Linux) and returns the unresolved (safe-looking) path instead of raising an error. The kernel, however, has no such limit during the actual extraction/write syscalls and fully resolves the same symlink chain, escaping the intended sandbox. This PoC builds a tar archive with deeply nested 247-character directory names and chained symlinks that push the resolved path just past &lt;code&gt;PATH_MAX&lt;/code&gt;, then uses the resulting confusion to write an SSH public key to &lt;code&gt;/root/.ssh/authorized_keys&lt;/code&gt;, granting the attacker root SSH access.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

@@ -1,86 +1,19 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Threat-Intel-Platform on PoC Archive</title><link>https://poc.intelseclab.com/tags/threat-intel-platform/</link><description>Recent content in Threat-Intel-Platform on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 27 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/threat-intel-platform/index.xml" rel="self" type="application/rss+xml"/><item><title>MISP Core `deleteSelection` Broken Access Control — Bulk Deletion of Foreign Event Reports &amp; Sharing Groups (CVE-2026-56423)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-56423-misp-core-deleteselection-broken-access-control/</link><pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-56423-misp-core-deleteselection-broken-access-control/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-27&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-07-27&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>BiiTts (Caio Fabrício)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-56423&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>High&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>8.8 (CVSS 3.1, &lt;code>AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H&lt;/code>)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>Weaponized — contributor-level bulk hard-delete of a foreign organizations Event Report confirmed against a real MISP core build; denied on the patched build&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>misp, misp-core, broken-access-control, cwe-862, bulk-deletion, authenticated, threat-intel-platform&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>MISP (Malware Information Sharing Platform) Core — &lt;code>EventReportsController::deleteSelection&lt;/code> and &lt;code>SharingGroupsController::deleteSelection&lt;/code>&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>MISP Core up to and including 2.5.41 (fixed in 2.5.42)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>PHP (CakePHP), MISP core application&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>Yes — any authenticated account whose role has &lt;code>perm_add&lt;/code> (the default built-in &amp;ldquo;User&amp;rdquo;/contributor role qualifies)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes — direct HTTP(S) access to the MISP web/API interface&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>MISP&amp;rsquo;s bulk-deletion endpoints for Event Reports (&lt;code>/eventReports/deleteSelection&lt;/code>) and Sharing Groups (&lt;code>/sharingGroups/deleteSelection&lt;/code>) authorize each selected item using a &lt;code>checkModifyCallback&lt;/code> that discards the item id and instead returns the acting user&amp;rsquo;s &lt;strong>global role permission&lt;/strong> (&lt;code>$this-&amp;gt;userRole['perm_add']&lt;/code> / &lt;code>perm_sharing_group&lt;/code>). The equivalent single-item endpoint (&lt;code>/eventReports/delete/{id}&lt;/code>) correctly performs a per-object check via &lt;code>fetchIfAuthorized&lt;/code>/ownership resolution. As a result, any low-privileged authenticated contributor (default &amp;ldquo;User&amp;rdquo; role) can submit report or sharing-group IDs belonging to &lt;strong>any organisation&lt;/strong> on the instance and hard-delete them in bulk, even though the per-item delete path for the exact same object is properly denied. This is a cross-tenant integrity/availability break in a platform CERTs, ISACs, and SOCs use to share sensitive threat intelligence.&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Threat-Intel-Platform on PoC Archive</title>
+    <link>http://192.168.0.124:1313/tags/threat-intel-platform/</link>
+    <description>Recent content in Threat-Intel-Platform on PoC Archive</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 27 Jul 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://192.168.0.124:1313/tags/threat-intel-platform/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>MISP Core `deleteSelection` Broken Access Control — Bulk Deletion of Foreign Event Reports &amp; Sharing Groups (CVE-2026-56423)</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-27_cve-2026-56423-misp-core-deleteselection-broken-access-control/</link>
+      <pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-27_cve-2026-56423-misp-core-deleteselection-broken-access-control/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-27&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-27&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;BiiTts (Caio Fabrício)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-56423&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;High&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;8.8 (CVSS 3.1, &lt;code&gt;AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Weaponized — contributor-level bulk hard-delete of a foreign organizations Event Report confirmed against a real MISP core build; denied on the patched build&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;misp, misp-core, broken-access-control, cwe-862, bulk-deletion, authenticated, threat-intel-platform&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;MISP (Malware Information Sharing Platform) Core — &lt;code&gt;EventReportsController::deleteSelection&lt;/code&gt; and &lt;code&gt;SharingGroupsController::deleteSelection&lt;/code&gt;&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;MISP Core up to and including 2.5.41 (fixed in 2.5.42)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PHP (CakePHP), MISP core application&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes — any authenticated account whose role has &lt;code&gt;perm_add&lt;/code&gt; (the default built-in &amp;ldquo;User&amp;rdquo;/contributor role qualifies)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes — direct HTTP(S) access to the MISP web/API interface&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;MISP&amp;rsquo;s bulk-deletion endpoints for Event Reports (&lt;code&gt;/eventReports/deleteSelection&lt;/code&gt;) and Sharing Groups (&lt;code&gt;/sharingGroups/deleteSelection&lt;/code&gt;) authorize each selected item using a &lt;code&gt;checkModifyCallback&lt;/code&gt; that discards the item id and instead returns the acting user&amp;rsquo;s &lt;strong&gt;global role permission&lt;/strong&gt; (&lt;code&gt;$this-&amp;gt;userRole[&#39;perm_add&#39;]&lt;/code&gt; / &lt;code&gt;perm_sharing_group&lt;/code&gt;). The equivalent single-item endpoint (&lt;code&gt;/eventReports/delete/{id}&lt;/code&gt;) correctly performs a per-object check via &lt;code&gt;fetchIfAuthorized&lt;/code&gt;/ownership resolution. As a result, any low-privileged authenticated contributor (default &amp;ldquo;User&amp;rdquo; role) can submit report or sharing-group IDs belonging to &lt;strong&gt;any organisation&lt;/strong&gt; on the instance and hard-delete them in bulk, even though the per-item delete path for the exact same object is properly denied. This is a cross-tenant integrity/availability break in a platform CERTs, ISACs, and SOCs use to share sensitive threat intelligence.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

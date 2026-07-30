@@ -1,86 +1,19 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Kfence on PoC Archive</title><link>https://poc.intelseclab.com/tags/kfence/</link><description>Recent content in Kfence on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/kfence/index.xml" rel="self" type="application/rss+xml"/><item><title>Linux Kernel KFENCE Cross-Cache Free of SKB Head via bpf_prog_test_run_skb — CVE-2026-31429</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-31429-linux-kfence-skb-crosscache/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-31429-linux-kfence-skb-crosscache/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-05&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-04&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>Antonius / w1sdom (Blue Dragon Security)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-31429&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>binary&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Medium&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>Not specified in source&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>PoC&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>linux-kernel, kfence, cross-cache, slab-corruption, ebpf, skb, cwe-763, use-after-free-adjacent&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>Linux kernel — &lt;code>net/core/skbuff.c&lt;/code> (&lt;code>skb_kfree_head()&lt;/code>) via &lt;code>bpf_prog_test_run_skb&lt;/code>&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>Linux &amp;gt;= 6.3 (introduced by &lt;code>bf9f1baa279f&lt;/code>); fixed &amp;gt;= 6.12.82, &amp;gt;= 6.18.23, &amp;gt;= 6.19.13, &amp;gt;= 7.0 (commit &lt;code>0f42e3f4fe2a&lt;/code>)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>C, Linux kernel (KFENCE-enabled builds)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>Local-only (ability to issue &lt;code>BPF_PROG_TEST_RUN&lt;/code>, typically requires &lt;code>CAP_BPF&lt;/code>/&lt;code>CAP_SYS_ADMIN&lt;/code>-class privilege depending on &lt;code>unprivileged_bpf_disabled&lt;/code>)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>No&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>Linux&amp;rsquo;s &lt;code>skb_kfree_head()&lt;/code> decides which slab cache to free an SKB&amp;rsquo;s head buffer back to based solely on whether &lt;code>end_offset&lt;/code> equals &lt;code>SKB_SMALL_HEAD_HEADROOM&lt;/code>, relying on the fact that &lt;code>SKB_SMALL_HEAD_CACHE_SIZE&lt;/code> is a non-power-of-2 value that normally never collides with a generic kmalloc bucket size. When KFENCE intercepts the allocation (as can happen via &lt;code>bpf_test_init()&lt;/code> in &lt;code>net/bpf/test_run.c&lt;/code> calling &lt;code>kzalloc()&lt;/code> with a size equal to &lt;code>SKB_SMALL_HEAD_CACHE_SIZE&lt;/code>), &lt;code>kfence_ksize()&lt;/code> returns the &lt;em>exact&lt;/em> requested size rather than the rounded-up bucket size, causing the heuristic to falsely conclude the buffer belongs to &lt;code>skb_small_head_cache&lt;/code> and freeing it to the wrong slab cache. This cross-cache free corrupts slab metadata and can be leveraged toward further memory-corruption primitives (the repository&amp;rsquo;s own README characterizes this as a proof-of-concept demonstrating the confusion, not a full working exploit).&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Kfence on PoC Archive</title>
+    <link>http://192.168.0.124:1313/tags/kfence/</link>
+    <description>Recent content in Kfence on PoC Archive</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://192.168.0.124:1313/tags/kfence/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Linux Kernel KFENCE Cross-Cache Free of SKB Head via bpf_prog_test_run_skb — CVE-2026-31429</title>
+      <link>http://192.168.0.124:1313/pocs/binary/2026-07-05_cve-2026-31429-linux-kfence-skb-crosscache/</link>
+      <pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/binary/2026-07-05_cve-2026-31429-linux-kfence-skb-crosscache/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-05&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-04&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Antonius / w1sdom (Blue Dragon Security)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-31429&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;binary&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Medium&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Not specified in source&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PoC&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;linux-kernel, kfence, cross-cache, slab-corruption, ebpf, skb, cwe-763, use-after-free-adjacent&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Linux kernel — &lt;code&gt;net/core/skbuff.c&lt;/code&gt; (&lt;code&gt;skb_kfree_head()&lt;/code&gt;) via &lt;code&gt;bpf_prog_test_run_skb&lt;/code&gt;&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Linux &amp;gt;= 6.3 (introduced by &lt;code&gt;bf9f1baa279f&lt;/code&gt;); fixed &amp;gt;= 6.12.82, &amp;gt;= 6.18.23, &amp;gt;= 6.19.13, &amp;gt;= 7.0 (commit &lt;code&gt;0f42e3f4fe2a&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;C, Linux kernel (KFENCE-enabled builds)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Local-only (ability to issue &lt;code&gt;BPF_PROG_TEST_RUN&lt;/code&gt;, typically requires &lt;code&gt;CAP_BPF&lt;/code&gt;/&lt;code&gt;CAP_SYS_ADMIN&lt;/code&gt;-class privilege depending on &lt;code&gt;unprivileged_bpf_disabled&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;Linux&amp;rsquo;s &lt;code&gt;skb_kfree_head()&lt;/code&gt; decides which slab cache to free an SKB&amp;rsquo;s head buffer back to based solely on whether &lt;code&gt;end_offset&lt;/code&gt; equals &lt;code&gt;SKB_SMALL_HEAD_HEADROOM&lt;/code&gt;, relying on the fact that &lt;code&gt;SKB_SMALL_HEAD_CACHE_SIZE&lt;/code&gt; is a non-power-of-2 value that normally never collides with a generic kmalloc bucket size. When KFENCE intercepts the allocation (as can happen via &lt;code&gt;bpf_test_init()&lt;/code&gt; in &lt;code&gt;net/bpf/test_run.c&lt;/code&gt; calling &lt;code&gt;kzalloc()&lt;/code&gt; with a size equal to &lt;code&gt;SKB_SMALL_HEAD_CACHE_SIZE&lt;/code&gt;), &lt;code&gt;kfence_ksize()&lt;/code&gt; returns the &lt;em&gt;exact&lt;/em&gt; requested size rather than the rounded-up bucket size, causing the heuristic to falsely conclude the buffer belongs to &lt;code&gt;skb_small_head_cache&lt;/code&gt; and freeing it to the wrong slab cache. This cross-cache free corrupts slab metadata and can be leveraged toward further memory-corruption primitives (the repository&amp;rsquo;s own README characterizes this as a proof-of-concept demonstrating the confusion, not a full working exploit).&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

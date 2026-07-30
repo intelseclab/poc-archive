@@ -1,86 +1,19 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Cloud-Vm on PoC Archive</title><link>https://poc.intelseclab.com/tags/cloud-vm/</link><description>Recent content in Cloud-Vm on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sat, 11 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/cloud-vm/index.xml" rel="self" type="application/rss+xml"/><item><title>Nagios XI 5.5.6–5.7.5 Authenticated OS Command Injection — Cloud-VM Config Wizard (CVE-2021-25298)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-11_cve-2021-25298-nagios-xi-cloudvm-command-injection/</link><pubDate>Sat, 11 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-11_cve-2021-25298-nagios-xi-cloudvm-command-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-11&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>Matthew Mathur (Rapid7) — Metasploit module; original bug report by fs0c-sh&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2021-25298&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>High&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>8.8 (CVSS 3.1, AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>Weaponized (public Metasploit module + nuclei templates, in CISA KEV)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>nagios-xi, os-command-injection, authenticated, config-wizard, cloud-vm, cwe-78, kev, metasploit&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>Same disclosure, distinct injection points in the same authenticated RCE chain: &lt;a href="../2026-07-11_cve-2021-25296-nagios-xi-windowswmi-command-injection/">2026-07-11_cve-2021-25296-nagios-xi-windowswmi-command-injection&lt;/a> (Windows WMI config wizard), &lt;a href="../2026-07-11_cve-2021-25297-nagios-xi-switch-command-injection/">2026-07-11_cve-2021-25297-nagios-xi-switch-command-injection&lt;/a> (switch config wizard). All three share the same vulnerability class, the same authenticated HTTP entry point (&lt;code>monitoringwizard.php&lt;/code>), and the same public Metasploit module.&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>Nagios XI — Cloud/VM monitoring configuration wizard (DigitalOcean provider sub-option)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>Nagios XI 5.5.6 through 5.7.5&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>PHP (Apache/CentOS-based Nagios XI appliance)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>Yes — any valid Nagios XI user account (admin or non-admin)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>Nagios XI&amp;rsquo;s &amp;ldquo;Cloud/VM&amp;rdquo; configuration wizard (&lt;code>/usr/local/nagiosxi/html/includes/configwizards/cloud-vm/cloud-vm.inc.php&lt;/code>) performs a reachability check against an attacker-supplied host address by shelling out to &lt;code>ping&lt;/code>. The address parameter is concatenated directly into the &lt;code>ping&lt;/code> command string passed to PHP&amp;rsquo;s &lt;code>exec()&lt;/code>, with no sanitization. Any authenticated Nagios XI user — including a low-privileged, non-admin account — can submit a crafted address value containing shell metacharacters and execute arbitrary OS commands as the &lt;code>apache&lt;/code> user. This is one of three sibling command-injection bugs (CVE-2021-25296/25297/25298) disclosed together, each in a different config wizard, all reachable through the same &lt;code>monitoringwizard.php&lt;/code> endpoint. The wizard is reached with &lt;code>wizard=digitalocean&lt;/code> (the DigitalOcean provider option served by &lt;code>cloud-vm.inc.php&lt;/code>).&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Cloud-Vm on PoC Archive</title>
+    <link>http://192.168.0.124:1313/tags/cloud-vm/</link>
+    <description>Recent content in Cloud-Vm on PoC Archive</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 11 Jul 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://192.168.0.124:1313/tags/cloud-vm/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Nagios XI 5.5.6–5.7.5 Authenticated OS Command Injection — Cloud-VM Config Wizard (CVE-2021-25298)</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-11_cve-2021-25298-nagios-xi-cloudvm-command-injection/</link>
+      <pubDate>Sat, 11 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-11_cve-2021-25298-nagios-xi-cloudvm-command-injection/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-11&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Matthew Mathur (Rapid7) — Metasploit module; original bug report by fs0c-sh&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2021-25298&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;High&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;8.8 (CVSS 3.1, AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Weaponized (public Metasploit module + nuclei templates, in CISA KEV)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;nagios-xi, os-command-injection, authenticated, config-wizard, cloud-vm, cwe-78, kev, metasploit&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Same disclosure, distinct injection points in the same authenticated RCE chain: &lt;a href=&#34;../2026-07-11_cve-2021-25296-nagios-xi-windowswmi-command-injection/&#34;&gt;2026-07-11_cve-2021-25296-nagios-xi-windowswmi-command-injection&lt;/a&gt; (Windows WMI config wizard), &lt;a href=&#34;../2026-07-11_cve-2021-25297-nagios-xi-switch-command-injection/&#34;&gt;2026-07-11_cve-2021-25297-nagios-xi-switch-command-injection&lt;/a&gt; (switch config wizard). All three share the same vulnerability class, the same authenticated HTTP entry point (&lt;code&gt;monitoringwizard.php&lt;/code&gt;), and the same public Metasploit module.&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Nagios XI — Cloud/VM monitoring configuration wizard (DigitalOcean provider sub-option)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Nagios XI 5.5.6 through 5.7.5&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PHP (Apache/CentOS-based Nagios XI appliance)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes — any valid Nagios XI user account (admin or non-admin)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;Nagios XI&amp;rsquo;s &amp;ldquo;Cloud/VM&amp;rdquo; configuration wizard (&lt;code&gt;/usr/local/nagiosxi/html/includes/configwizards/cloud-vm/cloud-vm.inc.php&lt;/code&gt;) performs a reachability check against an attacker-supplied host address by shelling out to &lt;code&gt;ping&lt;/code&gt;. The address parameter is concatenated directly into the &lt;code&gt;ping&lt;/code&gt; command string passed to PHP&amp;rsquo;s &lt;code&gt;exec()&lt;/code&gt;, with no sanitization. Any authenticated Nagios XI user — including a low-privileged, non-admin account — can submit a crafted address value containing shell metacharacters and execute arbitrary OS commands as the &lt;code&gt;apache&lt;/code&gt; user. This is one of three sibling command-injection bugs (CVE-2021-25296/25297/25298) disclosed together, each in a different config wizard, all reachable through the same &lt;code&gt;monitoringwizard.php&lt;/code&gt; endpoint. The wizard is reached with &lt;code&gt;wizard=digitalocean&lt;/code&gt; (the DigitalOcean provider option served by &lt;code&gt;cloud-vm.inc.php&lt;/code&gt;).&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

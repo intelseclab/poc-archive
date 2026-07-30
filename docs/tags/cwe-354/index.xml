@@ -1,86 +1,19 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Cwe-354 on PoC Archive</title><link>https://poc.intelseclab.com/tags/cwe-354/</link><description>Recent content in Cwe-354 on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 27 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/cwe-354/index.xml" rel="self" type="application/rss+xml"/><item><title>Apache APISIX `jwe-decrypt` Integrity-Check Bypass → Unauthenticated Gateway Auth Bypass (CVE-2026-49230)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-49230-apisix-jwe-decrypt-auth-bypass/</link><pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-49230-apisix-jwe-decrypt-auth-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-27&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>BiiTts (Caio Fabrício)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-49230&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Critical&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>9.1 (CVSSv3.1, &lt;code>AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N&lt;/code>)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>Weaponized&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>apache-apisix, jwe, jwt, integrity-bypass, cwe-354, unauthenticated, api-gateway, lua&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>Apache APISIX — &lt;code>jwe-decrypt&lt;/code> auth plugin (&lt;code>apisix/plugins/jwe-decrypt.lua&lt;/code>)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>3.8.0 – 3.16.0&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>Lua (OpenResty/Nginx), via &lt;code>resty.aes&lt;/code> / OpenSSL AES-256-GCM&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No — attacker needs only a valid consumer &lt;code>kid&lt;/code> (public, rides unencrypted in every legitimate token&amp;rsquo;s header), never the AES secret&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes — direct HTTP(S) access to a route protected by &lt;code>jwe-decrypt&lt;/code>&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>The &lt;code>jwe-decrypt&lt;/code> plugin is an &lt;code>auth&lt;/code>-type APISIX plugin that decrypts an incoming JWE token with a per-consumer AES-256-GCM secret and forwards the plaintext upstream as proof of authentication. Its internal helper &lt;code>jwe_decrypt_with_obj()&lt;/code> returns only the decrypted value from &lt;code>aes:decrypt()&lt;/code>, discarding OpenSSL&amp;rsquo;s GCM-tag verification result. The call site binds a second &lt;code>err&lt;/code> variable that is therefore always &lt;code>nil&lt;/code>, so the guard &lt;code>if err ~= nil then return 400&lt;/code> never triggers. An attacker who knows any consumer&amp;rsquo;s &lt;code>kid&lt;/code> (public metadata, present in cleartext in every legitimate token) can submit a JWE with a valid &lt;code>kid&lt;/code> but completely garbage ciphertext and tag, and the gateway authenticates the request anyway — forwarding it (with an empty identity header) to the upstream. No knowledge of the AES secret is required, fully defeating the authentication boundary the plugin exists to enforce.&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Cwe-354 on PoC Archive</title>
+    <link>http://192.168.0.124:1313/tags/cwe-354/</link>
+    <description>Recent content in Cwe-354 on PoC Archive</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 27 Jul 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://192.168.0.124:1313/tags/cwe-354/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Apache APISIX `jwe-decrypt` Integrity-Check Bypass → Unauthenticated Gateway Auth Bypass (CVE-2026-49230)</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-27_cve-2026-49230-apisix-jwe-decrypt-auth-bypass/</link>
+      <pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-27_cve-2026-49230-apisix-jwe-decrypt-auth-bypass/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-27&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;BiiTts (Caio Fabrício)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-49230&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;9.1 (CVSSv3.1, &lt;code&gt;AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Weaponized&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;apache-apisix, jwe, jwt, integrity-bypass, cwe-354, unauthenticated, api-gateway, lua&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Apache APISIX — &lt;code&gt;jwe-decrypt&lt;/code&gt; auth plugin (&lt;code&gt;apisix/plugins/jwe-decrypt.lua&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;3.8.0 – 3.16.0&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Lua (OpenResty/Nginx), via &lt;code&gt;resty.aes&lt;/code&gt; / OpenSSL AES-256-GCM&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No — attacker needs only a valid consumer &lt;code&gt;kid&lt;/code&gt; (public, rides unencrypted in every legitimate token&amp;rsquo;s header), never the AES secret&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes — direct HTTP(S) access to a route protected by &lt;code&gt;jwe-decrypt&lt;/code&gt;&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;The &lt;code&gt;jwe-decrypt&lt;/code&gt; plugin is an &lt;code&gt;auth&lt;/code&gt;-type APISIX plugin that decrypts an incoming JWE token with a per-consumer AES-256-GCM secret and forwards the plaintext upstream as proof of authentication. Its internal helper &lt;code&gt;jwe_decrypt_with_obj()&lt;/code&gt; returns only the decrypted value from &lt;code&gt;aes:decrypt()&lt;/code&gt;, discarding OpenSSL&amp;rsquo;s GCM-tag verification result. The call site binds a second &lt;code&gt;err&lt;/code&gt; variable that is therefore always &lt;code&gt;nil&lt;/code&gt;, so the guard &lt;code&gt;if err ~= nil then return 400&lt;/code&gt; never triggers. An attacker who knows any consumer&amp;rsquo;s &lt;code&gt;kid&lt;/code&gt; (public metadata, present in cleartext in every legitimate token) can submit a JWE with a valid &lt;code&gt;kid&lt;/code&gt; but completely garbage ciphertext and tag, and the gateway authenticates the request anyway — forwarding it (with an empty identity header) to the upstream. No knowledge of the AES secret is required, fully defeating the authentication boundary the plugin exists to enforce.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

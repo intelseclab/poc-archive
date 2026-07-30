@@ -1,86 +1,19 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Icagenda on PoC Archive</title><link>https://poc.intelseclab.com/tags/icagenda/</link><description>Recent content in Icagenda on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sat, 11 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/icagenda/index.xml" rel="self" type="application/rss+xml"/><item><title>Unauthenticated Arbitrary File Upload RCE in iCagenda for Joomla (CVE-2026-48939)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-11_cve-2026-48939-icagenda-joomla-file-upload-rce/</link><pubDate>Sat, 11 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-11_cve-2026-48939-icagenda-joomla-file-upload-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-11&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-06-16 (legacy patch 3.9.15 released)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>mysites.guru (root-cause research/disclosure); public exploit author &lt;code>shinthink&lt;/code> (PoC repo)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-48939&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Critical&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>9.8 (CVSS 3.1, &lt;code>AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H&lt;/code>) — also reported as 10.0 under CVSS 4.0 by some sources (e.g. &lt;code>CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:H/SI:H/SA:H&lt;/code>)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>Weaponized (public PoC available, actively exploited in the wild, in CISA KEV since 2026-07-10)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>joomla, icagenda, file-upload, rce, cwe-434, unauthenticated, remote, kev, cms, php, access-control-bypass&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>iCagenda — events/calendar extension (component) for Joomla&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>3.2.1 through 3.9.14 (legacy branch), 4.0.0 through 4.0.7 (current branch) — some sources report the vulnerable range extending back to 1.0.0&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>PHP / Joomla CMS (2.5–6.x hosts)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes (HTTP/HTTPS to any Joomla site with iCagenda&amp;rsquo;s frontend event-registration form enabled)&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>iCagenda&amp;rsquo;s frontend event-registration form includes an optional file-attachment field. The &amp;ldquo;Registered Only&amp;rdquo; access restriction meant to gate that field is enforced only in the &lt;em>view&lt;/em> layer that decides whether to render the form — the &lt;code>registration.submit&lt;/code> controller that actually processes the submitted data never re-checks it. Combined with a complete absence of file-extension/MIME/content validation on the attachment handler, this lets any unauthenticated visitor POST a &lt;code>.php&lt;/code> file straight to the submission endpoint. The file is written verbatim, with attacker-chosen extension intact, under the web root at &lt;code>/images/icagenda/frontend/attachments/&lt;/code>, where Joomla&amp;rsquo;s web server will execute it directly — yielding unauthenticated remote code execution. The flaw was found under active exploitation (UA string &lt;code>icagenda-batch/1.0&lt;/code>) before the vendor patch shipped, and CISA added it to the Known Exploited Vulnerabilities catalog. Fixed in iCagenda 4.0.8 (and backported to legacy as 3.9.15).&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Icagenda on PoC Archive</title>
+    <link>http://192.168.0.124:1313/tags/icagenda/</link>
+    <description>Recent content in Icagenda on PoC Archive</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 11 Jul 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://192.168.0.124:1313/tags/icagenda/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Unauthenticated Arbitrary File Upload RCE in iCagenda for Joomla (CVE-2026-48939)</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-11_cve-2026-48939-icagenda-joomla-file-upload-rce/</link>
+      <pubDate>Sat, 11 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-11_cve-2026-48939-icagenda-joomla-file-upload-rce/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-11&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-06-16 (legacy patch 3.9.15 released)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;mysites.guru (root-cause research/disclosure); public exploit author &lt;code&gt;shinthink&lt;/code&gt; (PoC repo)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-48939&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;9.8 (CVSS 3.1, &lt;code&gt;AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H&lt;/code&gt;) — also reported as 10.0 under CVSS 4.0 by some sources (e.g. &lt;code&gt;CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:H/SI:H/SA:H&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Weaponized (public PoC available, actively exploited in the wild, in CISA KEV since 2026-07-10)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;joomla, icagenda, file-upload, rce, cwe-434, unauthenticated, remote, kev, cms, php, access-control-bypass&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;iCagenda — events/calendar extension (component) for Joomla&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;3.2.1 through 3.9.14 (legacy branch), 4.0.0 through 4.0.7 (current branch) — some sources report the vulnerable range extending back to 1.0.0&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PHP / Joomla CMS (2.5–6.x hosts)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes (HTTP/HTTPS to any Joomla site with iCagenda&amp;rsquo;s frontend event-registration form enabled)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;iCagenda&amp;rsquo;s frontend event-registration form includes an optional file-attachment field. The &amp;ldquo;Registered Only&amp;rdquo; access restriction meant to gate that field is enforced only in the &lt;em&gt;view&lt;/em&gt; layer that decides whether to render the form — the &lt;code&gt;registration.submit&lt;/code&gt; controller that actually processes the submitted data never re-checks it. Combined with a complete absence of file-extension/MIME/content validation on the attachment handler, this lets any unauthenticated visitor POST a &lt;code&gt;.php&lt;/code&gt; file straight to the submission endpoint. The file is written verbatim, with attacker-chosen extension intact, under the web root at &lt;code&gt;/images/icagenda/frontend/attachments/&lt;/code&gt;, where Joomla&amp;rsquo;s web server will execute it directly — yielding unauthenticated remote code execution. The flaw was found under active exploitation (UA string &lt;code&gt;icagenda-batch/1.0&lt;/code&gt;) before the vendor patch shipped, and CISA added it to the Known Exploited Vulnerabilities catalog. Fixed in iCagenda 4.0.8 (and backported to legacy as 3.9.15).&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

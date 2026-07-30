@@ -1,86 +1,19 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Kev-Adjacent on PoC Archive</title><link>https://poc.intelseclab.com/tags/kev-adjacent/</link><description>Recent content in Kev-Adjacent on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sat, 11 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/kev-adjacent/index.xml" rel="self" type="application/rss+xml"/><item><title>LiteLLM Proxy Pre-Authentication SQL Injection via Error-Handling Callback (CVE-2026-42208)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-11_cve-2026-42208-litellm-sqli-proxy-authbypass/</link><pubDate>Sat, 11 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-11_cve-2026-42208-litellm-sqli-proxy-authbypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-11&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-07-11&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>Original reporter credited in GHSA-r75f-5x8p-qvmc (BerriAI/LiteLLM advisory); PoC lab by imjdl&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-42208 (GHSA-r75f-5x8p-qvmc)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Critical&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>9.8 (CVSS 3.1, &lt;code>AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H&lt;/code>) — also reported as 9.3 elsewhere&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>Weaponized (public working PoC + Docker lab, actively exploited in the wild within 36 hours of disclosure)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>litellm, ai-gateway, llm-proxy, sql-injection, cwe-89, unauthenticated, remote, blind-sqli, kev-adjacent, credential-theft&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>Other LiteLLM entries in this archive: &lt;a href="../2026-07-01_cve-2026-42271-litellm-mcp-command-injection/">2026-07-01_cve-2026-42271-litellm-mcp-command-injection&lt;/a>, &lt;a href="../2026-07-05_cve-2026-35029-litellm-config-broken-access-control/">2026-07-05_cve-2026-35029-litellm-config-broken-access-control&lt;/a>, &lt;a href="../2026-07-05_cve-2026-35030-litellm-oidc-cache-collision-authbypass/">2026-07-05_cve-2026-35030-litellm-oidc-cache-collision-authbypass&lt;/a> — different bugs, same product&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>LiteLLM Proxy — open-source LLM/AI gateway (22,000+ GitHub stars) fronting OpenAI, Anthropic, and other model provider APIs&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>v1.81.16 through v1.83.6&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>Python, PostgreSQL backend (via Prisma)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes — any LLM API route on the proxy (e.g. &lt;code>/chat/completions&lt;/code>)&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>LiteLLM Proxy authenticates API requests by checking that the &lt;code>Authorization: Bearer&lt;/code> token starts with &lt;code>sk-&lt;/code>. When a caller sends a token that does &lt;strong>not&lt;/strong> start with &lt;code>sk-&lt;/code>, that assertion fails — but instead of simply rejecting the request, the raw, unhashed token is passed into an error-handling/failure-callback chain (&lt;code>_handle_authentication_error&lt;/code> → &lt;code>post_call_failure_hook&lt;/code> → &lt;code>_enrich_failure_metadata_with_key_info&lt;/code> → &lt;code>get_key_object&lt;/code>) that ends in a database lookup built with raw f-string interpolation: &lt;code>WHERE v.token = '{token}'&lt;/code>. Because this path is only reached when the token &lt;em>doesn&amp;rsquo;t&lt;/em> match the &lt;code>sk-&lt;/code> prefix, it bypasses the normal authenticated flow entirely — the main &lt;code>sk-&lt;/code> path is safe because tokens there are SHA-256 hashed before reaching any query. An unauthenticated attacker can inject SQL through this side path, using time-based blind techniques to extract data including other users&amp;rsquo; API keys and upstream LLM provider credentials from the proxy&amp;rsquo;s own database. Sysdig observed real-world exploitation beginning roughly 26 hours after the GitHub Security Advisory was published — among the fastest mass-exploitation timelines recorded for an AI-infrastructure CVE.&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Kev-Adjacent on PoC Archive</title>
+    <link>http://192.168.0.124:1313/tags/kev-adjacent/</link>
+    <description>Recent content in Kev-Adjacent on PoC Archive</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 11 Jul 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://192.168.0.124:1313/tags/kev-adjacent/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>LiteLLM Proxy Pre-Authentication SQL Injection via Error-Handling Callback (CVE-2026-42208)</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-11_cve-2026-42208-litellm-sqli-proxy-authbypass/</link>
+      <pubDate>Sat, 11 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-11_cve-2026-42208-litellm-sqli-proxy-authbypass/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-11&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-11&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Original reporter credited in GHSA-r75f-5x8p-qvmc (BerriAI/LiteLLM advisory); PoC lab by imjdl&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-42208 (GHSA-r75f-5x8p-qvmc)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;9.8 (CVSS 3.1, &lt;code&gt;AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H&lt;/code&gt;) — also reported as 9.3 elsewhere&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Weaponized (public working PoC + Docker lab, actively exploited in the wild within 36 hours of disclosure)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;litellm, ai-gateway, llm-proxy, sql-injection, cwe-89, unauthenticated, remote, blind-sqli, kev-adjacent, credential-theft&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Other LiteLLM entries in this archive: &lt;a href=&#34;../2026-07-01_cve-2026-42271-litellm-mcp-command-injection/&#34;&gt;2026-07-01_cve-2026-42271-litellm-mcp-command-injection&lt;/a&gt;, &lt;a href=&#34;../2026-07-05_cve-2026-35029-litellm-config-broken-access-control/&#34;&gt;2026-07-05_cve-2026-35029-litellm-config-broken-access-control&lt;/a&gt;, &lt;a href=&#34;../2026-07-05_cve-2026-35030-litellm-oidc-cache-collision-authbypass/&#34;&gt;2026-07-05_cve-2026-35030-litellm-oidc-cache-collision-authbypass&lt;/a&gt; — different bugs, same product&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;LiteLLM Proxy — open-source LLM/AI gateway (22,000+ GitHub stars) fronting OpenAI, Anthropic, and other model provider APIs&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;v1.81.16 through v1.83.6&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Python, PostgreSQL backend (via Prisma)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes — any LLM API route on the proxy (e.g. &lt;code&gt;/chat/completions&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;LiteLLM Proxy authenticates API requests by checking that the &lt;code&gt;Authorization: Bearer&lt;/code&gt; token starts with &lt;code&gt;sk-&lt;/code&gt;. When a caller sends a token that does &lt;strong&gt;not&lt;/strong&gt; start with &lt;code&gt;sk-&lt;/code&gt;, that assertion fails — but instead of simply rejecting the request, the raw, unhashed token is passed into an error-handling/failure-callback chain (&lt;code&gt;_handle_authentication_error&lt;/code&gt; → &lt;code&gt;post_call_failure_hook&lt;/code&gt; → &lt;code&gt;_enrich_failure_metadata_with_key_info&lt;/code&gt; → &lt;code&gt;get_key_object&lt;/code&gt;) that ends in a database lookup built with raw f-string interpolation: &lt;code&gt;WHERE v.token = &#39;{token}&#39;&lt;/code&gt;. Because this path is only reached when the token &lt;em&gt;doesn&amp;rsquo;t&lt;/em&gt; match the &lt;code&gt;sk-&lt;/code&gt; prefix, it bypasses the normal authenticated flow entirely — the main &lt;code&gt;sk-&lt;/code&gt; path is safe because tokens there are SHA-256 hashed before reaching any query. An unauthenticated attacker can inject SQL through this side path, using time-based blind techniques to extract data including other users&amp;rsquo; API keys and upstream LLM provider credentials from the proxy&amp;rsquo;s own database. Sysdig observed real-world exploitation beginning roughly 26 hours after the GitHub Security Advisory was published — among the fastest mass-exploitation timelines recorded for an AI-infrastructure CVE.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

@@ -1,86 +1,19 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>C-Ares on PoC Archive</title><link>https://poc.intelseclab.com/tags/c-ares/</link><description>Recent content in C-Ares on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Fri, 03 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/c-ares/index.xml" rel="self" type="application/rss+xml"/><item><title>c-ares TCP ares_getaddrinfo() Use-After-Free Code Execution</title><link>https://poc.intelseclab.com/pocs/network/2026-07-03_c-ares-tcp-getaddrinfo-uaf/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-03_c-ares-tcp-getaddrinfo-uaf/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-03&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>bikini (@ashdfrkl) — original discovery; mirrored via exploitarium&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>None assigned as of 2026-07-03&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>network&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>High&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>Not yet scored (no CVE/CVSS assigned)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>PoC&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>c-ares, use-after-free, dns, resolver, tcp, heap-corruption, code-execution, edns&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>c-ares (async DNS resolver library)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>Upstream &lt;code>main&lt;/code> (&lt;code>c93e50f3ebc0373fe57677523ec960f6c1cb0e15&lt;/code>) and latest release &lt;code>v1.34.6&lt;/code> (&lt;code>3ac47ee46edd8ea40370222f91613fc16c434853&lt;/code>)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>C, Linux/WSL, requires gcc/cmake/POSIX sockets&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes (attacker acts as, or spoofs, the DNS-over-TCP server the victim resolver connects to)&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>c-ares&amp;rsquo;s &lt;code>ares_getaddrinfo()&lt;/code> path over DNS-over-TCP with EDNS enabled contains a use-after-free reachable when a malicious or compromised DNS server sends two responses for the same query ID in a single TCP read — the first a &lt;code>FORMERR&lt;/code> without OPT data (triggering EDNS retry handling) and the second a successful empty response — followed by a connection reset before internal cleanup runs. This stale-state condition causes c-ares to later dereference a freed &lt;code>ares_query_t&lt;/code> structure during query cleanup, ultimately reaching an attacker-shaped indirect function-pointer call (&lt;code>node-&amp;gt;parent-&amp;gt;destruct(node-&amp;gt;data)&lt;/code>) inside &lt;code>ares_slist_node_destroy()&lt;/code>. The included PoC shapes the freed allocation via c-ares&amp;rsquo;s public &lt;code>ares_library_init_mem()&lt;/code> allocator hook to reliably redirect that destructor call to an arbitrary local function, which in this PoC writes a proof marker file and launches a calculator to demonstrate full control-flow hijack rather than a mere crash. It was verified against both current upstream &lt;code>main&lt;/code> and the latest official release tag, and the researcher notes the bug is heap-layout sensitive so the harness retries until the marker is hit. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated &amp;ldquo;exploitarium&amp;rdquo; vulnerability dump; it has not been vendor-confirmed.&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>C-Ares on PoC Archive</title>
+    <link>http://192.168.0.124:1313/tags/c-ares/</link>
+    <description>Recent content in C-Ares on PoC Archive</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Fri, 03 Jul 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://192.168.0.124:1313/tags/c-ares/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>c-ares TCP ares_getaddrinfo() Use-After-Free Code Execution</title>
+      <link>http://192.168.0.124:1313/pocs/network/2026-07-03_c-ares-tcp-getaddrinfo-uaf/</link>
+      <pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/network/2026-07-03_c-ares-tcp-getaddrinfo-uaf/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-03&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;bikini (@ashdfrkl) — original discovery; mirrored via exploitarium&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;None assigned as of 2026-07-03&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;network&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;High&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Not yet scored (no CVE/CVSS assigned)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PoC&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;c-ares, use-after-free, dns, resolver, tcp, heap-corruption, code-execution, edns&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;c-ares (async DNS resolver library)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Upstream &lt;code&gt;main&lt;/code&gt; (&lt;code&gt;c93e50f3ebc0373fe57677523ec960f6c1cb0e15&lt;/code&gt;) and latest release &lt;code&gt;v1.34.6&lt;/code&gt; (&lt;code&gt;3ac47ee46edd8ea40370222f91613fc16c434853&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;C, Linux/WSL, requires gcc/cmake/POSIX sockets&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes (attacker acts as, or spoofs, the DNS-over-TCP server the victim resolver connects to)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;c-ares&amp;rsquo;s &lt;code&gt;ares_getaddrinfo()&lt;/code&gt; path over DNS-over-TCP with EDNS enabled contains a use-after-free reachable when a malicious or compromised DNS server sends two responses for the same query ID in a single TCP read — the first a &lt;code&gt;FORMERR&lt;/code&gt; without OPT data (triggering EDNS retry handling) and the second a successful empty response — followed by a connection reset before internal cleanup runs. This stale-state condition causes c-ares to later dereference a freed &lt;code&gt;ares_query_t&lt;/code&gt; structure during query cleanup, ultimately reaching an attacker-shaped indirect function-pointer call (&lt;code&gt;node-&amp;gt;parent-&amp;gt;destruct(node-&amp;gt;data)&lt;/code&gt;) inside &lt;code&gt;ares_slist_node_destroy()&lt;/code&gt;. The included PoC shapes the freed allocation via c-ares&amp;rsquo;s public &lt;code&gt;ares_library_init_mem()&lt;/code&gt; allocator hook to reliably redirect that destructor call to an arbitrary local function, which in this PoC writes a proof marker file and launches a calculator to demonstrate full control-flow hijack rather than a mere crash. It was verified against both current upstream &lt;code&gt;main&lt;/code&gt; and the latest official release tag, and the researcher notes the bug is heap-layout sensitive so the harness retries until the marker is hit. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated &amp;ldquo;exploitarium&amp;rdquo; vulnerability dump; it has not been vendor-confirmed.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

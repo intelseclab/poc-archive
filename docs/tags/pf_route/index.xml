@@ -1,86 +1,19 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Pf_route on PoC Archive</title><link>https://poc.intelseclab.com/tags/pf_route/</link><description>Recent content in Pf_route on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/pf_route/index.xml" rel="self" type="application/rss+xml"/><item><title>XNU PF_ROUTE RTA_GENMASK Heap Buffer Overflow (CVE-2026-20698)</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-20698-xnu-pf-route-heap-overflow/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-20698-xnu-pf-route-heap-overflow/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-05&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-03&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>Somair Ansar (Somisomair) — independently discovered; CVE credited to DARKNAVY as original reporter&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-20698&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>binary&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>High&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>Not specified in source&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>PoC&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>xnu, kernel, ios, macos, pf_route, routing-socket, heap-overflow, radix-tree, kernel-panic, bounds-safety&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>XNU kernel routing socket subsystem (&lt;code>PF_ROUTE&lt;/code>, &lt;code>bsd/net/rtsock.c&lt;/code> / &lt;code>bsd/net/radix.c&lt;/code>)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>iOS/iPadOS &amp;lt; 26.4, macOS &amp;lt; 26.4 (tested on iPhone 17 Pro Max, iOS 26.3.1, and additional devices on iOS 26.1); fixed in iOS/iPadOS 26.4&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>C, targets the XNU kernel via a raw &lt;code>PF_ROUTE&lt;/code> socket&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>No (local, unprivileged process; no entitlements required)&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>XNU&amp;rsquo;s routing socket implementation processes &lt;code>RTM_GET&lt;/code> messages carrying an &lt;code>RTA_GENMASK&lt;/code> sockaddr through &lt;code>rn_addmask()&lt;/code>, which copies the supplied genmask into a fixed, address-family-dependent radix-tree node buffer without validating that the attacker-controlled &lt;code>sa_len&lt;/code> actually fits. Because &lt;code>socket(PF_ROUTE, SOCK_RAW, 0)&lt;/code> and &lt;code>RTM_GET&lt;/code> are both available to fully unprivileged, unsandboxed-relevant apps, any local process can trigger an out-of-bounds write. On current iOS builds this is caught by the &lt;code>-fbounds-safety&lt;/code> compiler instrumentation and converted into a deterministic kernel panic rather than silent corruption; the repo documents five crash variants across different address families (AF_UNIX, AF_LINK, AF_INET6, AF_INET, AF_UNSPEC), two of which (AF_UNIX, AF_LINK) overflow at the very minimum possible sockaddr length, meaning there is no valid input for those families that avoids the bug.&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Pf_route on PoC Archive</title>
+    <link>http://192.168.0.124:1313/tags/pf_route/</link>
+    <description>Recent content in Pf_route on PoC Archive</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://192.168.0.124:1313/tags/pf_route/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>XNU PF_ROUTE RTA_GENMASK Heap Buffer Overflow (CVE-2026-20698)</title>
+      <link>http://192.168.0.124:1313/pocs/binary/2026-07-05_cve-2026-20698-xnu-pf-route-heap-overflow/</link>
+      <pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/binary/2026-07-05_cve-2026-20698-xnu-pf-route-heap-overflow/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-05&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-03&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Somair Ansar (Somisomair) — independently discovered; CVE credited to DARKNAVY as original reporter&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-20698&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;binary&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;High&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Not specified in source&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PoC&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;xnu, kernel, ios, macos, pf_route, routing-socket, heap-overflow, radix-tree, kernel-panic, bounds-safety&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;XNU kernel routing socket subsystem (&lt;code&gt;PF_ROUTE&lt;/code&gt;, &lt;code&gt;bsd/net/rtsock.c&lt;/code&gt; / &lt;code&gt;bsd/net/radix.c&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;iOS/iPadOS &amp;lt; 26.4, macOS &amp;lt; 26.4 (tested on iPhone 17 Pro Max, iOS 26.3.1, and additional devices on iOS 26.1); fixed in iOS/iPadOS 26.4&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;C, targets the XNU kernel via a raw &lt;code&gt;PF_ROUTE&lt;/code&gt; socket&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No (local, unprivileged process; no entitlements required)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;XNU&amp;rsquo;s routing socket implementation processes &lt;code&gt;RTM_GET&lt;/code&gt; messages carrying an &lt;code&gt;RTA_GENMASK&lt;/code&gt; sockaddr through &lt;code&gt;rn_addmask()&lt;/code&gt;, which copies the supplied genmask into a fixed, address-family-dependent radix-tree node buffer without validating that the attacker-controlled &lt;code&gt;sa_len&lt;/code&gt; actually fits. Because &lt;code&gt;socket(PF_ROUTE, SOCK_RAW, 0)&lt;/code&gt; and &lt;code&gt;RTM_GET&lt;/code&gt; are both available to fully unprivileged, unsandboxed-relevant apps, any local process can trigger an out-of-bounds write. On current iOS builds this is caught by the &lt;code&gt;-fbounds-safety&lt;/code&gt; compiler instrumentation and converted into a deterministic kernel panic rather than silent corruption; the repo documents five crash variants across different address families (AF_UNIX, AF_LINK, AF_INET6, AF_INET, AF_UNSPEC), two of which (AF_UNIX, AF_LINK) overflow at the very minimum possible sockaddr length, meaning there is no valid input for those families that avoids the bug.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

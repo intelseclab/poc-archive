@@ -1,341 +1,40 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Aslr-Bypass on PoC Archive</title><link>https://poc.intelseclab.com/tags/aslr-bypass/</link><description>Recent content in Aslr-Bypass on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 27 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/aslr-bypass/index.xml" rel="self" type="application/rss+xml"/><item><title>GitLab Notebook-Diff Oj Parser Memory-Corruption Chain → Unauthenticated-Reach RCE (No CVE Yet)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-27_gitlab-oj-json-parser-rce-chain/</link><pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-27_gitlab-oj-json-parser-rce-chain/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-27&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-07-27&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>Yuhang Wu (depthfirst.com)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>N/A (no CVE assigned as of 2026-07-27 — researcher disclosure via depthfirst.com blog, covered by The Hacker News)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Critical&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>N/A (no official score yet — no CVE/vendor advisory to derive one from)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>Weaponized&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>gitlab, oj-gem, json-parser, rce, aslr-bypass, ruby, deserialization, no-cve-yet&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>GitLab Community/Enterprise Edition — Jupyter notebook diff rendering (backed by the &lt;code>Oj&lt;/code> native Ruby JSON parser gem)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>GitLab 18.11.3 (version used in the published Docker lab/demo); researcher&amp;rsquo;s writeup states the chain applies to 15.2.0–19.0.1&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>Ruby (GitLab Rails app + &lt;code>Oj&lt;/code> native C extension), Puma app server, containerized (&lt;code>gitlab/gitlab-ce&lt;/code>)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>Yes — requires an ordinary (non-admin) authenticated GitLab user account; no special privileges needed&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes — direct HTTP(S) reachability to the GitLab instance&amp;rsquo;s notebook-diff endpoint&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>GitLab renders diffs for Jupyter notebooks by passing repository-controlled JSON through &lt;code>Oj&lt;/code>, a native (C-extension) Ruby JSON parser, in the Puma worker process. The researcher (Yuhang Wu, depthfirst.com) found and chained two distinct memory-corruption bugs in &lt;code>Oj&lt;/code>&amp;rsquo;s parser: one corrupts internal parser state until it gains control of a callback function pointer, and a second independently discloses a heap pointer that narrows the search space needed to defeat ASLR. Combining these, an attacker who can push a crafted notebook file to a repository (as an ordinary authenticated user — no admin rights required) can make the GitLab Puma worker connect back to an attacker-controlled listener and execute shell commands as the &lt;code>git&lt;/code> user, by triggering repeated notebook-diff requests that first leak enough heap-layout information to identify the process&amp;rsquo;s exact library-base addresses (using a precomputed offline fingerprint table), then deliver a final corrupting request that redirects execution to a &lt;code>system()&lt;/code>/&lt;code>nc&lt;/code> callback chain. No CVE has been assigned as of this writing; the vulnerability is publicly disclosed via a technical blog post and a working, reproducible Docker-based demo.&lt;/p></description></item><item><title>nginx PoolSlip × Rift Chained ASLR-Independent Remote Code Execution (CVE-2026-9256 / CVE-2026-42945)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-9256-nginx-poolslip-rift-rce-chain/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-9256-nginx-poolslip-rift-rce-chain/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-05&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>y198nt (chaining, ASLR-independent technique, Debian glibc-2.41 port); rift component PoC by DepthFirstDisclosures&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-9256 (&amp;ldquo;PoolSlip&amp;rdquo;), chained with CVE-2026-42945 (&amp;ldquo;rift&amp;rdquo;)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Critical&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>Not specified in source&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>PoC&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>nginx, heap-overflow, heap-over-read, aslr-bypass, rce, rewrite-engine, request-smuggling-adjacent, chained-exploit&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-42945&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>nginx (rewrite engine)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-42945 (rift): 0.6.27 – 1.30.0; CVE-2026-9256 (PoolSlip): 0.1.17 – 1.30.1 and 1.31.0 (both fixed only as of 1.30.2 / 1.31.1)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>C (nginx core), tested on stock &lt;code>nginx:1.30.0&lt;/code> Docker image, Debian 13 / glibc 2.41&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>This PoC chains two nginx rewrite-engine bugs that share the same root cause — a two-pass mismatch in how &lt;code>is_args&lt;/code>/&lt;code>$args&lt;/code> length is computed — into a single ASLR-independent remote &lt;code>system()&lt;/code> call on a stock, unmodified &lt;code>nginx:1.30.0&lt;/code> Docker image, with no hardcoded addresses and no nginx restart required (~90% reliability per fresh worker). CVE-2026-9256 (&amp;ldquo;PoolSlip&amp;rdquo;) is a heap over-read triggered via a crafted &lt;code>rewrite&lt;/code> directive that lets &lt;code>$args&lt;/code> be reflected past its buffer, leaking live libc and heap addresses. CVE-2026-42945 (&amp;ldquo;rift&amp;rdquo;) is a heap overflow limited to URL-safe bytes, used here to perform a 2-byte partial overwrite of an already-valid &lt;code>limit_conn&lt;/code> cleanup pointer — since only the ASLR-random low bytes are overwritten, the technique works regardless of ASLR. The corrupted pointer is redirected to a sprayed cleanup handler that calls &lt;code>system(cmd)&lt;/code>, achieving remote code execution when nginx tears down the connection.&lt;/p></description></item><item><title>PostgreSQL pgcrypto PGP Heap Overflow to Superuser Escalation — CVE-2026-2005</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-2005-postgresql-pgcrypto-heapoverflow/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-05_cve-2026-2005-postgresql-pgcrypto-heapoverflow/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-05&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-05&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>var77&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-2005&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>binary&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Critical&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>Not specified in source&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>PoC&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>postgresql, pgcrypto, heap-overflow, aslr-bypass, privilege-escalation, pgp, memory-corruption&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>PostgreSQL &lt;code>pgcrypto&lt;/code> extension (PGP session-key parsing)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>Builds at/around PostgreSQL commit &lt;code>4b324845ba5d24682b9b3708a769f00d160afbd7&lt;/code> with &lt;code>pgcrypto&lt;/code> enabled (per source repository)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>Python 3.10+ (exploit), targeting the native PostgreSQL server binary&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>Yes — any authenticated low-privileged database user&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>The &lt;code>pgcrypto&lt;/code> extension&amp;rsquo;s PGP session-key parsing contains a heap-based buffer overflow that corrupts &lt;code>MBuf&lt;/code> structure headers used internally to track ciphertext/plaintext buffers. By crafting malicious PGP messages passed to &lt;code>pgcrypto&lt;/code> decryption functions, a low-privileged authenticated database user can leak heap pointers, achieve an arbitrary memory read primitive, and ultimately an arbitrary memory write primitive within the PostgreSQL server process. The included PoC chains these primitives to defeat ASLR by voting on candidate PIE base addresses against known ELF symbol offsets, then overwrites the in-memory &lt;code>CurrentUserId&lt;/code> variable with the bootstrap superuser OID (10), allowing the attacker to execute arbitrary OS commands via &lt;code>COPY FROM PROGRAM&lt;/code> as the PostgreSQL system user.&lt;/p></description></item><item><title>objdump DLX ELF Backend Out-of-Bounds Write (Crash-to-Calc)</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-03_objdump-dlx-elf-backend-oob/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-03_objdump-dlx-elf-backend-oob/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-03&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>4D4J (original discovery — &lt;a href="https://github.com/4D4J/objdump-Out-Of-Bounds-write">objdump-Out-Of-Bounds-write&lt;/a>, credited as prior/primary finder with a more complete PoC including full ASLR bypass); bikini (@ashdfrkl) — independent/parallel PoC, mirrored via exploitarium&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>None assigned as of 2026-07-03&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>binary&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Medium&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>Not yet scored (no CVE/CVSS assigned)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>PoC&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>binutils, objdump, elf-parsing, dlx, out-of-bounds-write, aslr-bypass, local-code-execution, crash-to-calc&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>GNU Binutils &lt;code>objdump&lt;/code> — DLX ELF backend (&lt;code>elf32-dlx&lt;/code>)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>binutils-gdb master at commit &lt;code>c311f4d37f31ff3fbb5db6923abcdf93bb75a37b&lt;/code>; also validated against GNU Binutils &lt;code>2.46.1&lt;/code> release with a clean &lt;code>dlx-elf&lt;/code> build&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>C (target: &lt;code>objdump&lt;/code>/binutils DLX backend); crafted ELF/DLX object files + shell helper (PoC)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>Local-only (attacker must get a victim/process to run &lt;code>objdump -g&lt;/code> on a crafted file)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>No&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>&lt;code>objdump -g&lt;/code> (debug-info dumping) against a crafted ELF/DLX object file triggers an out-of-bounds write in the DLX ELF backend&amp;rsquo;s relocation-processing code, writing outside the intended debug section buffer. The researcher shapes the crafted relocation data so that, when process memory layout cooperates, control flow is redirected to run an attacker-supplied helper command — demonstrated here by launching a benign local helper script (&lt;code>P&lt;/code>) that logs a marker and opens Windows Calculator via WSL. Because ASLR remains enabled, the PoC ships a set of layout-specific payload variants and a retry loop rather than a single deterministic shot; the researcher measured close to 100% hit rates in repeated local runs against a stable target build. Note: the source README explicitly states that researcher 4D4J&amp;rsquo;s independent repository (&lt;a href="https://github.com/4D4J/objdump-Out-Of-Bounds-write">objdump-Out-Of-Bounds-write&lt;/a>) found and published this bug first, with a stronger PoC including a full ASLR bypass; this exploitarium entry is a parallel/independent finding by bikini. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated &amp;ldquo;exploitarium&amp;rdquo; vulnerability dump; it has not been vendor-confirmed.&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Aslr-Bypass on PoC Archive</title>
+    <link>http://192.168.0.124:1313/tags/aslr-bypass/</link>
+    <description>Recent content in Aslr-Bypass on PoC Archive</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 27 Jul 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://192.168.0.124:1313/tags/aslr-bypass/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>GitLab Notebook-Diff Oj Parser Memory-Corruption Chain → Unauthenticated-Reach RCE (No CVE Yet)</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-27_gitlab-oj-json-parser-rce-chain/</link>
+      <pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-27_gitlab-oj-json-parser-rce-chain/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-27&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-27&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yuhang Wu (depthfirst.com)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A (no CVE assigned as of 2026-07-27 — researcher disclosure via depthfirst.com blog, covered by The Hacker News)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A (no official score yet — no CVE/vendor advisory to derive one from)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Weaponized&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;gitlab, oj-gem, json-parser, rce, aslr-bypass, ruby, deserialization, no-cve-yet&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;GitLab Community/Enterprise Edition — Jupyter notebook diff rendering (backed by the &lt;code&gt;Oj&lt;/code&gt; native Ruby JSON parser gem)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;GitLab 18.11.3 (version used in the published Docker lab/demo); researcher&amp;rsquo;s writeup states the chain applies to 15.2.0–19.0.1&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Ruby (GitLab Rails app + &lt;code&gt;Oj&lt;/code&gt; native C extension), Puma app server, containerized (&lt;code&gt;gitlab/gitlab-ce&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes — requires an ordinary (non-admin) authenticated GitLab user account; no special privileges needed&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes — direct HTTP(S) reachability to the GitLab instance&amp;rsquo;s notebook-diff endpoint&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;GitLab renders diffs for Jupyter notebooks by passing repository-controlled JSON through &lt;code&gt;Oj&lt;/code&gt;, a native (C-extension) Ruby JSON parser, in the Puma worker process. The researcher (Yuhang Wu, depthfirst.com) found and chained two distinct memory-corruption bugs in &lt;code&gt;Oj&lt;/code&gt;&amp;rsquo;s parser: one corrupts internal parser state until it gains control of a callback function pointer, and a second independently discloses a heap pointer that narrows the search space needed to defeat ASLR. Combining these, an attacker who can push a crafted notebook file to a repository (as an ordinary authenticated user — no admin rights required) can make the GitLab Puma worker connect back to an attacker-controlled listener and execute shell commands as the &lt;code&gt;git&lt;/code&gt; user, by triggering repeated notebook-diff requests that first leak enough heap-layout information to identify the process&amp;rsquo;s exact library-base addresses (using a precomputed offline fingerprint table), then deliver a final corrupting request that redirects execution to a &lt;code&gt;system()&lt;/code&gt;/&lt;code&gt;nc&lt;/code&gt; callback chain. No CVE has been assigned as of this writing; the vulnerability is publicly disclosed via a technical blog post and a working, reproducible Docker-based demo.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>nginx PoolSlip × Rift Chained ASLR-Independent Remote Code Execution (CVE-2026-9256 / CVE-2026-42945)</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-9256-nginx-poolslip-rift-rce-chain/</link>
+      <pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-9256-nginx-poolslip-rift-rce-chain/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-05&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;y198nt (chaining, ASLR-independent technique, Debian glibc-2.41 port); rift component PoC by DepthFirstDisclosures&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-9256 (&amp;ldquo;PoolSlip&amp;rdquo;), chained with CVE-2026-42945 (&amp;ldquo;rift&amp;rdquo;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Not specified in source&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PoC&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;nginx, heap-overflow, heap-over-read, aslr-bypass, rce, rewrite-engine, request-smuggling-adjacent, chained-exploit&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-42945&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;nginx (rewrite engine)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-42945 (rift): 0.6.27 – 1.30.0; CVE-2026-9256 (PoolSlip): 0.1.17 – 1.30.1 and 1.31.0 (both fixed only as of 1.30.2 / 1.31.1)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;C (nginx core), tested on stock &lt;code&gt;nginx:1.30.0&lt;/code&gt; Docker image, Debian 13 / glibc 2.41&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;This PoC chains two nginx rewrite-engine bugs that share the same root cause — a two-pass mismatch in how &lt;code&gt;is_args&lt;/code&gt;/&lt;code&gt;$args&lt;/code&gt; length is computed — into a single ASLR-independent remote &lt;code&gt;system()&lt;/code&gt; call on a stock, unmodified &lt;code&gt;nginx:1.30.0&lt;/code&gt; Docker image, with no hardcoded addresses and no nginx restart required (~90% reliability per fresh worker). CVE-2026-9256 (&amp;ldquo;PoolSlip&amp;rdquo;) is a heap over-read triggered via a crafted &lt;code&gt;rewrite&lt;/code&gt; directive that lets &lt;code&gt;$args&lt;/code&gt; be reflected past its buffer, leaking live libc and heap addresses. CVE-2026-42945 (&amp;ldquo;rift&amp;rdquo;) is a heap overflow limited to URL-safe bytes, used here to perform a 2-byte partial overwrite of an already-valid &lt;code&gt;limit_conn&lt;/code&gt; cleanup pointer — since only the ASLR-random low bytes are overwritten, the technique works regardless of ASLR. The corrupted pointer is redirected to a sprayed cleanup handler that calls &lt;code&gt;system(cmd)&lt;/code&gt;, achieving remote code execution when nginx tears down the connection.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>PostgreSQL pgcrypto PGP Heap Overflow to Superuser Escalation — CVE-2026-2005</title>
+      <link>http://192.168.0.124:1313/pocs/binary/2026-07-05_cve-2026-2005-postgresql-pgcrypto-heapoverflow/</link>
+      <pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/binary/2026-07-05_cve-2026-2005-postgresql-pgcrypto-heapoverflow/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-05&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-05&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;var77&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-2005&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;binary&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Not specified in source&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PoC&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;postgresql, pgcrypto, heap-overflow, aslr-bypass, privilege-escalation, pgp, memory-corruption&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PostgreSQL &lt;code&gt;pgcrypto&lt;/code&gt; extension (PGP session-key parsing)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Builds at/around PostgreSQL commit &lt;code&gt;4b324845ba5d24682b9b3708a769f00d160afbd7&lt;/code&gt; with &lt;code&gt;pgcrypto&lt;/code&gt; enabled (per source repository)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Python 3.10+ (exploit), targeting the native PostgreSQL server binary&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes — any authenticated low-privileged database user&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;The &lt;code&gt;pgcrypto&lt;/code&gt; extension&amp;rsquo;s PGP session-key parsing contains a heap-based buffer overflow that corrupts &lt;code&gt;MBuf&lt;/code&gt; structure headers used internally to track ciphertext/plaintext buffers. By crafting malicious PGP messages passed to &lt;code&gt;pgcrypto&lt;/code&gt; decryption functions, a low-privileged authenticated database user can leak heap pointers, achieve an arbitrary memory read primitive, and ultimately an arbitrary memory write primitive within the PostgreSQL server process. The included PoC chains these primitives to defeat ASLR by voting on candidate PIE base addresses against known ELF symbol offsets, then overwrites the in-memory &lt;code&gt;CurrentUserId&lt;/code&gt; variable with the bootstrap superuser OID (10), allowing the attacker to execute arbitrary OS commands via &lt;code&gt;COPY FROM PROGRAM&lt;/code&gt; as the PostgreSQL system user.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>objdump DLX ELF Backend Out-of-Bounds Write (Crash-to-Calc)</title>
+      <link>http://192.168.0.124:1313/pocs/binary/2026-07-03_objdump-dlx-elf-backend-oob/</link>
+      <pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/binary/2026-07-03_objdump-dlx-elf-backend-oob/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-03&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;4D4J (original discovery — &lt;a href=&#34;https://github.com/4D4J/objdump-Out-Of-Bounds-write&#34;&gt;objdump-Out-Of-Bounds-write&lt;/a&gt;, credited as prior/primary finder with a more complete PoC including full ASLR bypass); bikini (@ashdfrkl) — independent/parallel PoC, mirrored via exploitarium&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;None assigned as of 2026-07-03&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;binary&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Medium&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Not yet scored (no CVE/CVSS assigned)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PoC&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;binutils, objdump, elf-parsing, dlx, out-of-bounds-write, aslr-bypass, local-code-execution, crash-to-calc&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;GNU Binutils &lt;code&gt;objdump&lt;/code&gt; — DLX ELF backend (&lt;code&gt;elf32-dlx&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;binutils-gdb master at commit &lt;code&gt;c311f4d37f31ff3fbb5db6923abcdf93bb75a37b&lt;/code&gt;; also validated against GNU Binutils &lt;code&gt;2.46.1&lt;/code&gt; release with a clean &lt;code&gt;dlx-elf&lt;/code&gt; build&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;C (target: &lt;code&gt;objdump&lt;/code&gt;/binutils DLX backend); crafted ELF/DLX object files + shell helper (PoC)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Local-only (attacker must get a victim/process to run &lt;code&gt;objdump -g&lt;/code&gt; on a crafted file)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;&lt;code&gt;objdump -g&lt;/code&gt; (debug-info dumping) against a crafted ELF/DLX object file triggers an out-of-bounds write in the DLX ELF backend&amp;rsquo;s relocation-processing code, writing outside the intended debug section buffer. The researcher shapes the crafted relocation data so that, when process memory layout cooperates, control flow is redirected to run an attacker-supplied helper command — demonstrated here by launching a benign local helper script (&lt;code&gt;P&lt;/code&gt;) that logs a marker and opens Windows Calculator via WSL. Because ASLR remains enabled, the PoC ships a set of layout-specific payload variants and a retry loop rather than a single deterministic shot; the researcher measured close to 100% hit rates in repeated local runs against a stable target build. Note: the source README explicitly states that researcher 4D4J&amp;rsquo;s independent repository (&lt;a href=&#34;https://github.com/4D4J/objdump-Out-Of-Bounds-write&#34;&gt;objdump-Out-Of-Bounds-write&lt;/a&gt;) found and published this bug first, with a stronger PoC including a full ASLR bypass; this exploitarium entry is a parallel/independent finding by bikini. This PoC was published by a pseudonymous independent researcher (bikini/ashdfrkl) as part of the uncoordinated &amp;ldquo;exploitarium&amp;rdquo; vulnerability dump; it has not been vendor-confirmed.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

@@ -1,86 +1,19 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Weblate on PoC Archive</title><link>https://poc.intelseclab.com/tags/weblate/</link><description>Recent content in Weblate on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/weblate/index.xml" rel="self" type="application/rss+xml"/><item><title>Weblate Arbitrary File Read via ssh-keyscan Host Argument Injection — CVE-2026-24126</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-24126-weblate-ssh-keyscan-file-read/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-24126-weblate-ssh-keyscan-file-read/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-05&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-03&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>Alejandro Baño (alexb616)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-24126&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>High&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>6.5 (CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:C/C:L/I:L/A:L, per source repository)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>PoC&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>weblate, argument-injection, command-injection, ssh-keyscan, arbitrary-file-read, authenticated, python, cwe-88&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>Weblate (self-hosted translation platform)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>All versions &amp;lt;= 5.15.2 (tested against 5.0.2 and 5.15.2; fixed in 5.16.0)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>Python (PoC), Django-based Weblate backend&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>Yes (Weblate administrator account)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>Weblate&amp;rsquo;s SSH host-key management feature (&lt;code>weblate/ssh/views.py&lt;/code>, &lt;code>add_host_key()&lt;/code>) passes the administrator-supplied &lt;code>host&lt;/code> field straight into an &lt;code>ssh-keyscan&lt;/code> subprocess invocation with no sanitization and no &lt;code>--&lt;/code> argument terminator. Because &lt;code>ssh-keyscan&lt;/code> supports a &lt;code>-f &amp;lt;file&amp;gt;&lt;/code> flag to read a list of target hostnames from a file, an authenticated admin can submit a &lt;code>host&lt;/code> value like &lt;code>-f/etc/passwd&lt;/code> to make the server run &lt;code>ssh-keyscan -f /etc/passwd&lt;/code>, treating each line of the target file as a &amp;ldquo;hostname&amp;rdquo; it fails to resolve. The resulting per-line resolution errors are captured by Weblate&amp;rsquo;s error handler and reflected back into the page&amp;rsquo;s &lt;code>alert-danger&lt;/code> block, effectively leaking the file&amp;rsquo;s contents line by line. The PoC script logs in as an admin, extracts the CSRF token, submits the crafted &lt;code>host&lt;/code> value to &lt;code>/manage/ssh/&lt;/code>, and parses the leaked file content out of the returned error text.&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Weblate on PoC Archive</title>
+    <link>http://192.168.0.124:1313/tags/weblate/</link>
+    <description>Recent content in Weblate on PoC Archive</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 05 Jul 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://192.168.0.124:1313/tags/weblate/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Weblate Arbitrary File Read via ssh-keyscan Host Argument Injection — CVE-2026-24126</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-24126-weblate-ssh-keyscan-file-read/</link>
+      <pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-24126-weblate-ssh-keyscan-file-read/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-05&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-03&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Alejandro Baño (alexb616)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-24126&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;High&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;6.5 (CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:C/C:L/I:L/A:L, per source repository)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PoC&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;weblate, argument-injection, command-injection, ssh-keyscan, arbitrary-file-read, authenticated, python, cwe-88&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Weblate (self-hosted translation platform)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;All versions &amp;lt;= 5.15.2 (tested against 5.0.2 and 5.15.2; fixed in 5.16.0)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Python (PoC), Django-based Weblate backend&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes (Weblate administrator account)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;Weblate&amp;rsquo;s SSH host-key management feature (&lt;code&gt;weblate/ssh/views.py&lt;/code&gt;, &lt;code&gt;add_host_key()&lt;/code&gt;) passes the administrator-supplied &lt;code&gt;host&lt;/code&gt; field straight into an &lt;code&gt;ssh-keyscan&lt;/code&gt; subprocess invocation with no sanitization and no &lt;code&gt;--&lt;/code&gt; argument terminator. Because &lt;code&gt;ssh-keyscan&lt;/code&gt; supports a &lt;code&gt;-f &amp;lt;file&amp;gt;&lt;/code&gt; flag to read a list of target hostnames from a file, an authenticated admin can submit a &lt;code&gt;host&lt;/code&gt; value like &lt;code&gt;-f/etc/passwd&lt;/code&gt; to make the server run &lt;code&gt;ssh-keyscan -f /etc/passwd&lt;/code&gt;, treating each line of the target file as a &amp;ldquo;hostname&amp;rdquo; it fails to resolve. The resulting per-line resolution errors are captured by Weblate&amp;rsquo;s error handler and reflected back into the page&amp;rsquo;s &lt;code&gt;alert-danger&lt;/code&gt; block, effectively leaking the file&amp;rsquo;s contents line by line. The PoC script logs in as an admin, extracts the CSRF token, submits the crafted &lt;code&gt;host&lt;/code&gt; value to &lt;code&gt;/manage/ssh/&lt;/code&gt;, and parses the leaked file content out of the returned error text.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

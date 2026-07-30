@@ -1,256 +1,33 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Quic on PoC Archive</title><link>https://poc.intelseclab.com/tags/quic/</link><description>Recent content in Quic on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Wed, 08 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/quic/index.xml" rel="self" type="application/rss+xml"/><item><title>XRING — XQUIC QPACK Ring Buffer Resize Underflow (Remote Unauthenticated DoS)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-08_xring-xquic-qpack-ring-mem-resize-underflow/</link><pubDate>Wed, 08 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-08_xring-xquic-qpack-ring-mem-resize-underflow/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-08&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-07-08&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>Sébastien Féry (FoxIO)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>network&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Critical&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>N/A (no official score published) — remote, unauthenticated, deterministic crash from ~260 bytes of spec-compliant traffic&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>Weaponized (public PoC, unpatched at publication)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>quic, http3, qpack, xquic, alibaba, tengine, ring-buffer, integer-underflow, heap-oob-read, memcpy, remote, unauthenticated, dos, no-cve&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>&lt;a href="https://github.com/alibaba/xquic">alibaba/xquic&lt;/a> — QUIC/HTTP-3 library, used by Tengine and reportedly across Alibaba&amp;rsquo;s cloud/CDN infrastructure (Taobao, AliPay)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>All versions through v1.9.4 (latest at time of publication)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>C, Linux server&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes — remote, unauthenticated UDP/QUIC client&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>XRING is a remote, unauthenticated crash in XQUIC (Alibaba&amp;rsquo;s QUIC/HTTP-3 library) triggered by fully spec-compliant QPACK dynamic-table encoder-stream instructions. A single incorrect variable in &lt;code>xqc_ring_mem_resize()&lt;/code> (&lt;code>src/common/utils/ringmem/xqc_ring_mem.c&lt;/code>) causes the &amp;ldquo;both-truncated&amp;rdquo; resize branch to size the old buffer&amp;rsquo;s tail using the &lt;em>new&lt;/em> table capacity instead of the &lt;em>old&lt;/em> one. This produces a 64-byte heap out-of-bounds read followed by a &lt;code>size_t&lt;/code> underflow that is then used as a &lt;code>memcpy&lt;/code> length, causing an oversized heap write and crashing the server. No authentication or unusual configuration is required — roughly 260 bytes of valid QPACK instructions from any remote client are enough. FoxIO reported the bug privately to the xquic maintainers starting 2026-04-07 and received no fix or response after repeated follow-ups, publishing the PoC on 2026-07-08 with no CVE assigned and no patch available.&lt;/p></description></item><item><title>HAProxy HTTP/3 (QUIC) Standalone FIN Body Validation Bypass Leading to Request Smuggling — CVE-2026-33555</title><link>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-33555-haproxy-h3-request-smuggling/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-05_cve-2026-33555-haproxy-h3-request-smuggling/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-05&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-04&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>r3verii&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-33555&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>network&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>High&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>Not specified in source&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>PoC&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>haproxy, http3, quic, request-smuggling, http-reuse, content-length, reverse-proxy, cross-user&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>HAProxy with HTTP/3 (QUIC) support built (&lt;code>USE_QUIC=1&lt;/code>); tested on HAProxy 3.0.18&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>HAProxy 3.0.18 (QUIC-enabled builds); requires &lt;code>http-reuse always&lt;/code> backend configuration&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>PoC client in Python (aioquic); target is HAProxy + nginx backend, run via Docker Compose&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>HAProxy&amp;rsquo;s HTTP/3 frontend does not validate that a request&amp;rsquo;s declared &lt;code>Content-Length&lt;/code> matches the number of body bytes actually delivered over the QUIC stream before the stream is closed (a &amp;ldquo;standalone FIN&amp;rdquo;). When HAProxy translates such a malformed HTTP/3 request into HTTP/1.1 for the backend, it forwards the (incorrect) &lt;code>Content-Length&lt;/code> header while transmitting zero actual body bytes. If the backend answers early (e.g. with a 301 redirect) and then drains the declared-but-missing body bytes from the pooled TCP connection — a pattern enabled by the non-default but common &lt;code>http-reuse always&lt;/code> setting — it inadvertently consumes bytes belonging to the next, unrelated HTTP request queued on that same reused connection. Because HAProxy pools backend connections across different client requests, this effectively smuggles one user&amp;rsquo;s request into another user&amp;rsquo;s response, a classic cross-user HTTP request smuggling condition. The PoC ships a full Docker Compose lab (HAProxy H3/QUIC frontend, stock nginx backend, and a Python/aioquic attacker client) that continuously sends malformed &amp;ldquo;poison&amp;rdquo; requests and demonstrates that a legitimate victim on a separate QUIC connection receives corrupted (400) responses while the attack is running.&lt;/p></description></item><item><title>Nginx QUIC/HTTP-3 DCID Length Heap Overflow Lab (CVE-2026-0211)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-0211-nginx-quic-heap-overflow/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-0211-nginx-quic-heap-overflow/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-05&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>Hamza Arda Karabacak (student), advised by Keyvan Arasteh — İstinye University, &amp;ldquo;Sızma Testi&amp;rdquo; (Penetration Testing) course BGT006&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-0211 (repository explicitly labels this as a hypothetical/simulated CVE for coursework, not a confirmed vendor-assigned vulnerability)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>High&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>Not specified in source — repository states this is a simulated/educational scenario and does not claim a real-world CVSS score&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>PoC&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>nginx, quic, http-3, heap-overflow, dos, fuzzing, dcid, academic-lab, docker&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>A custom, deliberately vulnerabilized fork of Nginx 1.25.3&amp;rsquo;s QUIC transport module (&lt;code>ngx_event_quic_transport.c&lt;/code>), run inside a purpose-built Docker lab — not the stock upstream Nginx release&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>Lab-modified Nginx 1.25.3 with HTTP/3 (QUIC) enabled and DCID length bounds-checking intentionally weakened&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>Python (recon/DoS/fuzzer scripts, Scapy), C (target patch/diff), Docker Compose&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>This repository is a university penetration-testing course project that models a hypothetical heap buffer overflow in Nginx&amp;rsquo;s QUIC (HTTP/3) packet parser, where the Destination Connection ID (DCID) length field is not properly bounds-checked before being used to read/copy the DCID bytes. The lab target is a custom-built, intentionally vulnerable Nginx container (not real-world production Nginx) fronting a mock &amp;ldquo;enterprise security gateway&amp;rdquo; website inside an isolated Docker network. Included Python tooling probes for QUIC/HTTP-3 support, crafts QUIC Initial packets with an oversized DCID length (&lt;code>0xFF&lt;/code> / 255 bytes against an expected max of ~20), and either fuzzes the target with Scapy-crafted packets or floods it with malformed packets across many threads to trigger crashes/resource exhaustion. A companion patch under &lt;code>src/savunma/&lt;/code> demonstrates the defensive fix (stricter DCID length + buffer-bounds validation) that closes the simulated hole. Framed honestly, this is an academic reproduction of a QUIC parser bug class rather than an exploit against a currently-shipping Nginx release.&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Quic on PoC Archive</title>
+    <link>http://192.168.0.124:1313/tags/quic/</link>
+    <description>Recent content in Quic on PoC Archive</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Wed, 08 Jul 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://192.168.0.124:1313/tags/quic/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>XRING — XQUIC QPACK Ring Buffer Resize Underflow (Remote Unauthenticated DoS)</title>
+      <link>http://192.168.0.124:1313/pocs/network/2026-07-08_xring-xquic-qpack-ring-mem-resize-underflow/</link>
+      <pubDate>Wed, 08 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/network/2026-07-08_xring-xquic-qpack-ring-mem-resize-underflow/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-08&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-08&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Sébastien Féry (FoxIO)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;network&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A (no official score published) — remote, unauthenticated, deterministic crash from ~260 bytes of spec-compliant traffic&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Weaponized (public PoC, unpatched at publication)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;quic, http3, qpack, xquic, alibaba, tengine, ring-buffer, integer-underflow, heap-oob-read, memcpy, remote, unauthenticated, dos, no-cve&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;&lt;a href=&#34;https://github.com/alibaba/xquic&#34;&gt;alibaba/xquic&lt;/a&gt; — QUIC/HTTP-3 library, used by Tengine and reportedly across Alibaba&amp;rsquo;s cloud/CDN infrastructure (Taobao, AliPay)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;All versions through v1.9.4 (latest at time of publication)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;C, Linux server&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes — remote, unauthenticated UDP/QUIC client&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;XRING is a remote, unauthenticated crash in XQUIC (Alibaba&amp;rsquo;s QUIC/HTTP-3 library) triggered by fully spec-compliant QPACK dynamic-table encoder-stream instructions. A single incorrect variable in &lt;code&gt;xqc_ring_mem_resize()&lt;/code&gt; (&lt;code&gt;src/common/utils/ringmem/xqc_ring_mem.c&lt;/code&gt;) causes the &amp;ldquo;both-truncated&amp;rdquo; resize branch to size the old buffer&amp;rsquo;s tail using the &lt;em&gt;new&lt;/em&gt; table capacity instead of the &lt;em&gt;old&lt;/em&gt; one. This produces a 64-byte heap out-of-bounds read followed by a &lt;code&gt;size_t&lt;/code&gt; underflow that is then used as a &lt;code&gt;memcpy&lt;/code&gt; length, causing an oversized heap write and crashing the server. No authentication or unusual configuration is required — roughly 260 bytes of valid QPACK instructions from any remote client are enough. FoxIO reported the bug privately to the xquic maintainers starting 2026-04-07 and received no fix or response after repeated follow-ups, publishing the PoC on 2026-07-08 with no CVE assigned and no patch available.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>HAProxy HTTP/3 (QUIC) Standalone FIN Body Validation Bypass Leading to Request Smuggling — CVE-2026-33555</title>
+      <link>http://192.168.0.124:1313/pocs/network/2026-07-05_cve-2026-33555-haproxy-h3-request-smuggling/</link>
+      <pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/network/2026-07-05_cve-2026-33555-haproxy-h3-request-smuggling/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-05&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-04&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;r3verii&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-33555&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;network&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;High&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Not specified in source&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PoC&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;haproxy, http3, quic, request-smuggling, http-reuse, content-length, reverse-proxy, cross-user&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;HAProxy with HTTP/3 (QUIC) support built (&lt;code&gt;USE_QUIC=1&lt;/code&gt;); tested on HAProxy 3.0.18&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;HAProxy 3.0.18 (QUIC-enabled builds); requires &lt;code&gt;http-reuse always&lt;/code&gt; backend configuration&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PoC client in Python (aioquic); target is HAProxy + nginx backend, run via Docker Compose&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;HAProxy&amp;rsquo;s HTTP/3 frontend does not validate that a request&amp;rsquo;s declared &lt;code&gt;Content-Length&lt;/code&gt; matches the number of body bytes actually delivered over the QUIC stream before the stream is closed (a &amp;ldquo;standalone FIN&amp;rdquo;). When HAProxy translates such a malformed HTTP/3 request into HTTP/1.1 for the backend, it forwards the (incorrect) &lt;code&gt;Content-Length&lt;/code&gt; header while transmitting zero actual body bytes. If the backend answers early (e.g. with a 301 redirect) and then drains the declared-but-missing body bytes from the pooled TCP connection — a pattern enabled by the non-default but common &lt;code&gt;http-reuse always&lt;/code&gt; setting — it inadvertently consumes bytes belonging to the next, unrelated HTTP request queued on that same reused connection. Because HAProxy pools backend connections across different client requests, this effectively smuggles one user&amp;rsquo;s request into another user&amp;rsquo;s response, a classic cross-user HTTP request smuggling condition. The PoC ships a full Docker Compose lab (HAProxy H3/QUIC frontend, stock nginx backend, and a Python/aioquic attacker client) that continuously sends malformed &amp;ldquo;poison&amp;rdquo; requests and demonstrates that a legitimate victim on a separate QUIC connection receives corrupted (400) responses while the attack is running.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Nginx QUIC/HTTP-3 DCID Length Heap Overflow Lab (CVE-2026-0211)</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-0211-nginx-quic-heap-overflow/</link>
+      <pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-0211-nginx-quic-heap-overflow/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-05&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Hamza Arda Karabacak (student), advised by Keyvan Arasteh — İstinye University, &amp;ldquo;Sızma Testi&amp;rdquo; (Penetration Testing) course BGT006&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-0211 (repository explicitly labels this as a hypothetical/simulated CVE for coursework, not a confirmed vendor-assigned vulnerability)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;High&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Not specified in source — repository states this is a simulated/educational scenario and does not claim a real-world CVSS score&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PoC&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;nginx, quic, http-3, heap-overflow, dos, fuzzing, dcid, academic-lab, docker&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;A custom, deliberately vulnerabilized fork of Nginx 1.25.3&amp;rsquo;s QUIC transport module (&lt;code&gt;ngx_event_quic_transport.c&lt;/code&gt;), run inside a purpose-built Docker lab — not the stock upstream Nginx release&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Lab-modified Nginx 1.25.3 with HTTP/3 (QUIC) enabled and DCID length bounds-checking intentionally weakened&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Python (recon/DoS/fuzzer scripts, Scapy), C (target patch/diff), Docker Compose&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;This repository is a university penetration-testing course project that models a hypothetical heap buffer overflow in Nginx&amp;rsquo;s QUIC (HTTP/3) packet parser, where the Destination Connection ID (DCID) length field is not properly bounds-checked before being used to read/copy the DCID bytes. The lab target is a custom-built, intentionally vulnerable Nginx container (not real-world production Nginx) fronting a mock &amp;ldquo;enterprise security gateway&amp;rdquo; website inside an isolated Docker network. Included Python tooling probes for QUIC/HTTP-3 support, crafts QUIC Initial packets with an oversized DCID length (&lt;code&gt;0xFF&lt;/code&gt; / 255 bytes against an expected max of ~20), and either fuzzes the target with Scapy-crafted packets or floods it with malformed packets across many threads to trigger crashes/resource exhaustion. A companion patch under &lt;code&gt;src/savunma/&lt;/code&gt; demonstrates the defensive fix (stricter DCID length + buffer-bounds validation) that closes the simulated hole. Framed honestly, this is an academic reproduction of a QUIC parser bug class rather than an exploit against a currently-shipping Nginx release.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

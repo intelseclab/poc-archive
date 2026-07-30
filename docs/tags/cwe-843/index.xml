@@ -1,86 +1,19 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Cwe-843 on PoC Archive</title><link>https://poc.intelseclab.com/tags/cwe-843/</link><description>Recent content in Cwe-843 on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 19 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/cwe-843/index.xml" rel="self" type="application/rss+xml"/><item><title>V8 Array Iterator Maglev Type Confusion — addrof/fakeobj Primitives (CVE-2026-14431)</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-19_cve-2026-14431-v8-array-iterator-maglev-type-confusion/</link><pubDate>Sun, 19 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-19_cve-2026-14431-v8-array-iterator-maglev-type-confusion/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-19&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-07-19&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>Jafork (jaf0rk)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-14431&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>binary&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>High&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>8.8 (CVSS 3.1, &lt;code>AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H&lt;/code>)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>PoC — real, working sandboxed read/write primitives (&lt;code>addrof&lt;/code>/&lt;code>fakeobj&lt;/code>); no sandbox-escape/RCE chain published (author states this is still in progress)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>v8, javascript-engine, chromium, maglev, type-confusion, array-iterator, cwe-843, sandboxed-read-write, memory-corruption&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>V8 JavaScript engine (Google Chrome and other Chromium-based browsers)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>Google Chrome prior to 150.0.7871.46; PoC developed/tested against V8 &lt;code>14.9.207.29&lt;/code>&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>C++ (V8&amp;rsquo;s Maglev mid-tier JIT compiler), triggered via JavaScript&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes — victim must load a crafted HTML/JS page (user interaction required, &lt;code>UI:R&lt;/code>)&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>&lt;code>Array.prototype[Symbol.iterator]().next()&lt;/code> is miscompiled by V8&amp;rsquo;s Maglev JIT tier: &lt;code>ArrayIteratorPrototypeNext&lt;/code> fails to re-check the map (elements kind) of an inlined array after a side effect can change it mid-call, leading to a type confusion between &lt;code>PACKED_DOUBLE_ELEMENTS&lt;/code> and tagged/pointer elements. By forcing a map transition on the iterated array from inside a re-entrant callback (triggered via &lt;code>Function.prototype.arguments&lt;/code> access on a still-executing frame) while Maglev-compiled code still believes the array&amp;rsquo;s old elements kind is in effect, an attacker gets the JIT to treat a raw double value as a tagged pointer (or vice versa). This yields classic &lt;code>addrof&lt;/code>/&lt;code>fakeobj&lt;/code> primitives — reading a JS object&amp;rsquo;s address and forging fake objects at attacker-chosen addresses — giving read/write access within V8&amp;rsquo;s memory sandbox. The bug was fixed upstream by adding a map check for the inlined array in &lt;code>ArrayIteratorPrototypeNext&lt;/code> (Chromium bug 523884658).&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Cwe-843 on PoC Archive</title>
+    <link>http://192.168.0.124:1313/tags/cwe-843/</link>
+    <description>Recent content in Cwe-843 on PoC Archive</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 19 Jul 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://192.168.0.124:1313/tags/cwe-843/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>V8 Array Iterator Maglev Type Confusion — addrof/fakeobj Primitives (CVE-2026-14431)</title>
+      <link>http://192.168.0.124:1313/pocs/binary/2026-07-19_cve-2026-14431-v8-array-iterator-maglev-type-confusion/</link>
+      <pubDate>Sun, 19 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/binary/2026-07-19_cve-2026-14431-v8-array-iterator-maglev-type-confusion/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-19&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-19&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Jafork (jaf0rk)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-14431&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;binary&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;High&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;8.8 (CVSS 3.1, &lt;code&gt;AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PoC — real, working sandboxed read/write primitives (&lt;code&gt;addrof&lt;/code&gt;/&lt;code&gt;fakeobj&lt;/code&gt;); no sandbox-escape/RCE chain published (author states this is still in progress)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;v8, javascript-engine, chromium, maglev, type-confusion, array-iterator, cwe-843, sandboxed-read-write, memory-corruption&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;V8 JavaScript engine (Google Chrome and other Chromium-based browsers)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Google Chrome prior to 150.0.7871.46; PoC developed/tested against V8 &lt;code&gt;14.9.207.29&lt;/code&gt;&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;C++ (V8&amp;rsquo;s Maglev mid-tier JIT compiler), triggered via JavaScript&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes — victim must load a crafted HTML/JS page (user interaction required, &lt;code&gt;UI:R&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;&lt;code&gt;Array.prototype[Symbol.iterator]().next()&lt;/code&gt; is miscompiled by V8&amp;rsquo;s Maglev JIT tier: &lt;code&gt;ArrayIteratorPrototypeNext&lt;/code&gt; fails to re-check the map (elements kind) of an inlined array after a side effect can change it mid-call, leading to a type confusion between &lt;code&gt;PACKED_DOUBLE_ELEMENTS&lt;/code&gt; and tagged/pointer elements. By forcing a map transition on the iterated array from inside a re-entrant callback (triggered via &lt;code&gt;Function.prototype.arguments&lt;/code&gt; access on a still-executing frame) while Maglev-compiled code still believes the array&amp;rsquo;s old elements kind is in effect, an attacker gets the JIT to treat a raw double value as a tagged pointer (or vice versa). This yields classic &lt;code&gt;addrof&lt;/code&gt;/&lt;code&gt;fakeobj&lt;/code&gt; primitives — reading a JS object&amp;rsquo;s address and forging fake objects at attacker-chosen addresses — giving read/write access within V8&amp;rsquo;s memory sandbox. The bug was fixed upstream by adding a map check for the inlined array in &lt;code&gt;ArrayIteratorPrototypeNext&lt;/code&gt; (Chromium bug 523884658).&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

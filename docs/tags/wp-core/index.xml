@@ -1,86 +1,19 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Wp-Core on PoC Archive</title><link>https://poc.intelseclab.com/tags/wp-core/</link><description>Recent content in Wp-Core on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Sun, 19 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/wp-core/index.xml" rel="self" type="application/rss+xml"/><item><title>wp2shell — WordPress Core Pre-Auth SQLi → Row Forgery → Admin Creation → RCE (CVE-2026-63030 + CVE-2026-60137)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-19_cve-2026-63030-cve-2026-60137-wp2shell-wordpress-core-preauth-rce/</link><pubDate>Sun, 19 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-19_cve-2026-63030-cve-2026-60137-wp2shell-wordpress-core-preauth-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-19&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-07-19&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>Adam Kues (Assetnote / Searchlight Cyber) — route confusion + SQLi; Mustafa Can İPEKÇİ (&lt;a href="https://github.com/mcipekci">nukedx&lt;/a>) — stock-default RCE chain; SQLi also credited to TF1T, dtro, haongo&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2026-63030 (REST &lt;code>/batch/v1&lt;/code> route confusion, CVSS 7.5), CVE-2026-60137 (&lt;code>author__not_in&lt;/code> SQL injection, CVSS 9.1); GHSA-ff9f-jf42-662q, GHSA-fpp7-x2x2-2mjf&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Critical&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>9.1 (CVE-2026-60137, CVSS 3.1); chained RCE impact exceeds either individual CVSS score&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>Weaponized — full pre-auth RCE confirmed against stock-default WordPress core, no plugins/misconfiguration required&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>wordpress, wp-core, sql-injection, route-confusion, cwe-89, cwe-436, unauthenticated, remote, privilege-escalation, rce, oembed, changeset&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>WordPress core (REST API &lt;code>/batch/v1&lt;/code>, &lt;code>WP_Query::author__not_in&lt;/code>)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>6.9.0–6.9.4 and 7.0.0–7.0.1 for the full pre-auth RCE chain (the SQLi sink alone, without the route-confusion delivery, also affects 6.8.0–6.8.5). &lt;strong>Fixed in 6.8.6 / 6.9.5 / 7.0.2.&lt;/strong>&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>PHP, WordPress core (no plugins involved)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes — a single unauthenticated HTTP request to &lt;code>POST /?rest_route=/batch/v1&lt;/code>&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>A two-bug chain in stock WordPress core — no plugins, no misconfiguration, no special DB privileges required — that goes from a single unauthenticated HTTP request to a new administrator account and remote code execution. The always-true primitive is CVE-2026-60137: an unauthenticated SQL injection in &lt;code>WP_Query::author__not_in&lt;/code> giving full database read (admin password hashes, everything in &lt;code>wp_options&lt;/code>/&lt;code>wp_users&lt;/code>) — that alone would justify its 9.1 CVSS and immediate patching. But the chain goes further: CVE-2026-63030&amp;rsquo;s REST batch-endpoint route confusion is used to reach the SQLi from a nominally &amp;ldquo;public&amp;rdquo; route, and the SQLi itself is turned from a read primitive into a write primitive by abusing WordPress&amp;rsquo;s own oEmbed caching behavior to forge database rows. Those forged rows back a changeset-elevation and re-entrant &lt;code>parse_request&lt;/code> trick that ultimately creates a real administrator account — from which a plugin webshell gives full command execution.&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Wp-Core on PoC Archive</title>
+    <link>http://192.168.0.124:1313/tags/wp-core/</link>
+    <description>Recent content in Wp-Core on PoC Archive</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 19 Jul 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://192.168.0.124:1313/tags/wp-core/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>wp2shell — WordPress Core Pre-Auth SQLi → Row Forgery → Admin Creation → RCE (CVE-2026-63030 &#43; CVE-2026-60137)</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-19_cve-2026-63030-cve-2026-60137-wp2shell-wordpress-core-preauth-rce/</link>
+      <pubDate>Sun, 19 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-19_cve-2026-63030-cve-2026-60137-wp2shell-wordpress-core-preauth-rce/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-19&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-19&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Adam Kues (Assetnote / Searchlight Cyber) — route confusion + SQLi; Mustafa Can İPEKÇİ (&lt;a href=&#34;https://github.com/mcipekci&#34;&gt;nukedx&lt;/a&gt;) — stock-default RCE chain; SQLi also credited to TF1T, dtro, haongo&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-63030 (REST &lt;code&gt;/batch/v1&lt;/code&gt; route confusion, CVSS 7.5), CVE-2026-60137 (&lt;code&gt;author__not_in&lt;/code&gt; SQL injection, CVSS 9.1); GHSA-ff9f-jf42-662q, GHSA-fpp7-x2x2-2mjf&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;9.1 (CVE-2026-60137, CVSS 3.1); chained RCE impact exceeds either individual CVSS score&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Weaponized — full pre-auth RCE confirmed against stock-default WordPress core, no plugins/misconfiguration required&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;wordpress, wp-core, sql-injection, route-confusion, cwe-89, cwe-436, unauthenticated, remote, privilege-escalation, rce, oembed, changeset&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;WordPress core (REST API &lt;code&gt;/batch/v1&lt;/code&gt;, &lt;code&gt;WP_Query::author__not_in&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;6.9.0–6.9.4 and 7.0.0–7.0.1 for the full pre-auth RCE chain (the SQLi sink alone, without the route-confusion delivery, also affects 6.8.0–6.8.5). &lt;strong&gt;Fixed in 6.8.6 / 6.9.5 / 7.0.2.&lt;/strong&gt;&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PHP, WordPress core (no plugins involved)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes — a single unauthenticated HTTP request to &lt;code&gt;POST /?rest_route=/batch/v1&lt;/code&gt;&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;A two-bug chain in stock WordPress core — no plugins, no misconfiguration, no special DB privileges required — that goes from a single unauthenticated HTTP request to a new administrator account and remote code execution. The always-true primitive is CVE-2026-60137: an unauthenticated SQL injection in &lt;code&gt;WP_Query::author__not_in&lt;/code&gt; giving full database read (admin password hashes, everything in &lt;code&gt;wp_options&lt;/code&gt;/&lt;code&gt;wp_users&lt;/code&gt;) — that alone would justify its 9.1 CVSS and immediate patching. But the chain goes further: CVE-2026-63030&amp;rsquo;s REST batch-endpoint route confusion is used to reach the SQLi from a nominally &amp;ldquo;public&amp;rdquo; route, and the SQLi itself is turned from a read primitive into a write primitive by abusing WordPress&amp;rsquo;s own oEmbed caching behavior to forge database rows. Those forged rows back a changeset-elevation and re-entrant &lt;code&gt;parse_request&lt;/code&gt; trick that ultimately creates a real administrator account — from which a plugin webshell gives full command execution.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

