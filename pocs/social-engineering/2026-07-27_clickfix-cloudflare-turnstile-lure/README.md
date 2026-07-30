@@ -69,8 +69,12 @@ Tools:       Browser DevTools (to observe the clipboard-override behavior), a pl
 ### Setup Steps
 
 ```bash
-# Serve the lure page locally for awareness training / detection-engineering purposes only
+# index.html and main.js ship inside a password-protected zip (see Notes for
+# why), not as plaintext. Unzip first:
 cd 2026-07-27_clickfix-cloudflare-turnstile-lure
+unzip -P infected poc-files.zip
+
+# Then serve the lure page locally for awareness training / detection-engineering purposes only
 python3 -m http.server 8000
 # then browse to http://localhost:8000/index.html
 # optional domain/logo spoof query params:
@@ -99,7 +103,7 @@ python3 -m http.server 8000
 
 ### Exploit Code
 
-> See `index.html`, `main.js`, `styles.css` in this folder — mirrored byte-for-byte from the upstream repository.
+> See `poc-files.zip` (password: `infected`) in this folder, containing `index.html` and `main.js` (plus `styles.css`, shipped as plaintext since it carries no executable/lure logic) — mirrored byte-for-byte from the upstream repository (see Notes for why `index.html`/`main.js` are zipped rather than committed as plaintext).
 
 ```js
 // main.js (excerpt) — the core clipboard-injection primitive

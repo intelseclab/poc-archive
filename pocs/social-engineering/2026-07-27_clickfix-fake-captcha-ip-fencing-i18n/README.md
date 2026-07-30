@@ -74,7 +74,11 @@ Tools:       Browser dev tools to observe clipboard writes; a Windows VM to safe
 ### Setup Steps
 
 ```bash
-# 1. Clone the archived copy in this folder (real upstream file, unmodified)
+# 0. ClickFix.js ships inside a password-protected zip (see Notes for why),
+#    not as a plaintext file. Unzip first:
+unzip -P infected poc-files.zip
+
+# 1. Use the extracted, archived copy in this folder (real upstream file, unmodified)
 #    ClickFix.js contains the full Worker: HTML + CSS + JS inlined as template literals
 
 # 2. Set a payload command (replace the placeholder before any lab test):
@@ -112,7 +116,7 @@ wrangler deploy ClickFix.js
 
 ### Exploit Code
 
-> Real upstream file archived as-is: `ClickFix.js` (1212 lines) in this folder.
+> Real upstream file archived as-is: `ClickFix.js` (1212 lines), packaged inside `poc-files.zip` (password: `infected`) in this folder — see Notes for why it is zipped rather than committed as plaintext.
 
 ```javascript
 // Core mechanism excerpted from ClickFix.js (unmodified lines shown for reference):
@@ -216,3 +220,5 @@ CRITICAL CORRECTION: the upstream repository's name ("ClickFix-FakeCaptcha-Cloud
 Author attribution: Blake White (GitHub handle `blwhit`), account active since 2023, 201 followers, security-tools-focused bio — an established, identifiable researcher, not an anonymous/throwaway account. Repository created 2025-11-21, 12 stars / 8 forks at time of review, explicitly forked from `0x204/ClickFix-Turnstile` (also archived separately in this repository at `pocs/social-engineering/2026-07-27_clickfix-cloudflare-turnstile-lure/`) with the IP-fencing and localization features added on top of that base. The README states the project is "Created for educational/research/blue-team purposes only."
 
 This entry documents a SOCIAL-ENGINEERING / AWARENESS technique, not a software vulnerability — no CVE applies and none was assigned. The shipped `CONFIG.command` value is an inert placeholder string ("Your Clipboard Command Here"); the repository as published does not execute any malicious payload on its own.
+
+**Distribution note:** `ClickFix.js` is packaged as `poc-files.zip` (password: `infected`, the standard convention used across the malware/threat-research community, e.g. MalwareBazaar and VX-Underground) rather than committed as a plaintext file. ClickFix is a heavily fingerprinted technique — browsing plaintext ClickFix source directly on GitHub triggered AV/browser heuristic blocking (ESET and Chromium-based Safe Browsing signatures) for at least one user of this archive, even though nothing executes just from viewing source on GitHub. Zipping avoids automated signature scanning while keeping the verified, byte-identical content available to anyone doing legitimate research.

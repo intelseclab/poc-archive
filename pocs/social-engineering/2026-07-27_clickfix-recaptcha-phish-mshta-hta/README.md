@@ -71,7 +71,13 @@ Browser:     Any modern browser with clipboard-write support (Chrome/Edge/Firefo
 ### Setup Steps
 
 ```bash
-# From this folder, serve the two files over HTTP so mshta can fetch recaptcha-verify by URL
+# The two lure files are shipped as a password-protected zip (poc-files.zip,
+# password: infected) rather than plaintext, so that browsing this repository
+# on GitHub or its mirrors does not trigger AV/Safe-Browsing heuristic
+# signatures for this well-known, widely fingerprinted technique. Unzip first:
+unzip -P infected poc-files.zip
+
+# Then, from this folder, serve the two extracted files over HTTP so mshta can fetch recaptcha-verify by URL
 python3 -m http.server 8000
 
 # On the Windows test VM, browse to:
@@ -99,7 +105,7 @@ python3 -m http.server 8000
 
 ### Exploit Code
 
-> See `index.html` (fake reCAPTCHA UI + clipboard staging) and `recaptcha-verify` (HTA/VBScript payload stage) in this folder — both are unmodified, byte-identical copies of the upstream files.
+> See `poc-files.zip` (password: `infected`) in this folder, containing `index.html` (fake reCAPTCHA UI + clipboard staging) and `recaptcha-verify` (HTA/VBScript payload stage) — both are unmodified, byte-identical copies of the upstream files, zipped rather than committed as plaintext (see Notes).
 
 ```javascript
 // index.html — clipboard staging (excerpt, real code from this repo)
@@ -187,4 +193,6 @@ alert process any any -> any any (msg:"Possible ClickFix mshta HTA execution fro
 
 ## Notes
 
-Verified before ingestion: real file contents were read directly from the cloned upstream repository (not summarized secondhand) — `index.html` implements the fake reCAPTCHA checkbox UI (mirroring Google's real reCAPTCHA CSS and logo asset) plus clipboard staging via `setClipboardCopyData()`/`document.execCommand("copy")`, and `recaptcha-verify` is a real HTA/VBScript file (`HTA:APPLICATION` header + `Window_onLoad` VBScript) that `mshta.exe` loads and executes. The demo payload was confirmed benign: it only runs `calc.exe` via `WScript.Shell`, then clears the clipboard and displays a fake "failed to connect" error — there is no dropper, no obfuscation, no network exfiltration, and no hidden second-stage payload anywhere in the repo. The author, John Hammond, was confirmed as a credible, well-known security researcher and educator (large public following, long-standing account) rather than an anonymous or suspicious contributor. This entry is filed under `social-engineering` with **no CVE** by design: ClickFix is not a vulnerability in any product, it is a technique that exploits human trust and habitual behavior around CAPTCHA/verification prompts, and its real-world use by threat actors (e.g. to deliver LummaStealer and Emmenhtal-family malware) is documented by Unit42, Huntress, and Orange Cyberdefense, not by any vendor advisory. `index.html` and `recaptcha-verify` in this folder are unmodified, byte-identical copies of the upstream files (verified via `diff`); `upstream-README.md` preserves the original repository README for reference.
+Verified before ingestion: real file contents were read directly from the cloned upstream repository (not summarized secondhand) — `index.html` implements the fake reCAPTCHA checkbox UI (mirroring Google's real reCAPTCHA CSS and logo asset) plus clipboard staging via `setClipboardCopyData()`/`document.execCommand("copy")`, and `recaptcha-verify` is a real HTA/VBScript file (`HTA:APPLICATION` header + `Window_onLoad` VBScript) that `mshta.exe` loads and executes. The demo payload was confirmed benign: it only runs `calc.exe` via `WScript.Shell`, then clears the clipboard and displays a fake "failed to connect" error — there is no dropper, no obfuscation, no network exfiltration, and no hidden second-stage payload anywhere in the repo. The author, John Hammond, was confirmed as a credible, well-known security researcher and educator (large public following, long-standing account) rather than an anonymous or suspicious contributor. This entry is filed under `social-engineering` with **no CVE** by design: ClickFix is not a vulnerability in any product, it is a technique that exploits human trust and habitual behavior around CAPTCHA/verification prompts, and its real-world use by threat actors (e.g. to deliver LummaStealer and Emmenhtal-family malware) is documented by Unit42, Huntress, and Orange Cyberdefense, not by any vendor advisory. `index.html` and `recaptcha-verify` are unmodified, byte-identical copies of the upstream files (verified via `diff`); `upstream-README.md` preserves the original repository README for reference.
+
+**Distribution note:** `index.html` and `recaptcha-verify` are packaged as `poc-files.zip` (password: `infected`, the standard convention used across the malware/threat-research community, e.g. MalwareBazaar and VX-Underground) rather than committed as plaintext files. ClickFix is a heavily fingerprinted technique — browsing the plaintext files directly on GitHub triggered AV/browser heuristic blocking (ESET and Chromium-based Safe Browsing signatures) for at least one user, even though nothing executes just from viewing source on GitHub. Zipping avoids automated signature scanning of the archive while keeping the verified, byte-identical content available to anyone doing legitimate research (unzip with the password above).
