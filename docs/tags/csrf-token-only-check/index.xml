@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Csrf-Token-Only-Check on PoC Archive</title><link>https://poc.intelseclab.com/tags/csrf-token-only-check/</link><description>Recent content in Csrf-Token-Only-Check on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 27 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/csrf-token-only-check/index.xml" rel="self" type="application/rss+xml"/><item><title>Joomla Helix Ultimate Framework — Unauthenticated Arbitrary File Deletion (CVE-2026-57830)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-57830-joomla-helix-ultimate-file-deletion/</link><pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-57830-joomla-helix-ultimate-file-deletion/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Is4yev (Amin İsayev)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-57830&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.1 (CVSSv3)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>joomla, helix-ultimate, joomshaper, arbitrary-file-deletion, cwe-862, unauthenticated, csrf-token-only-check&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Helix Ultimate Framework (&lt;code>plg_system_helixultimate&lt;/code>), the JoomShaper Joomla template framework bundled with virtually every JoomShaper Joomla template&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>1.0 – 2.2.6 (fixed in 2.2.7)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP / Joomla CMS (system plugin, &lt;code>com_ajax&lt;/code> dispatch)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — any HTTP(S) reachability to the target site&amp;rsquo;s &lt;code>index.php&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Helix Ultimate&amp;rsquo;s &lt;code>plugins/system/helixultimate/src/Platform/Media.php&lt;/code> exposes &lt;code>deleteMedia()&lt;/code> and &lt;code>getFolders()&lt;/code> through the Joomla &lt;code>com_ajax&lt;/code> dispatch hook (&lt;code>onAfterRoute()&lt;/code>), reachable via &lt;code>option=com_ajax&amp;amp;helix=ultimate&amp;amp;action=delete-media&lt;/code>/&lt;code>view-media&lt;/code>. These methods only call &lt;code>Session::checkToken()&lt;/code> — a plain CSRF check — with no &lt;code>authorise()&lt;/code>/login check at all (CWE-862, Missing Authorization). Because a valid CSRF token is trivially harvestable from the site&amp;rsquo;s own public homepage HTML by any anonymous visitor, this &amp;ldquo;protection&amp;rdquo; authorizes nobody in particular: it just proves the request came from a browser that loaded the page once. The result is unauthenticated arbitrary file deletion (and, as a side effect of the same code path, unauthenticated folder/image listing), on any site running a Helix-Ultimate-based JoomShaper template — which is the default, always-enabled state for that whole product line. Fixed in 2.2.7 by confining file operations to validated paths via &lt;code>Helper::resolveMediaPath()&lt;/code>.&lt;/p></description></item></channel></rss>

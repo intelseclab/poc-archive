@@ -1,4 +1,89 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Crash on PoC Archive</title><link>https://poc.intelseclab.com/tags/crash/</link><description>Recent content in Crash on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Fri, 03 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/crash/index.xml" rel="self" type="application/rss+xml"/><item><title>VLC Bundled FFmpeg VP9 Decoder Resolution-Change Heap Crash</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-03_vlc-vp9-reschange-crash/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-03_vlc-vp9-reschange-crash/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Crash on PoC Archive</title><link>https://poc.intelseclab.com/tags/crash/</link><description>Recent content in Crash on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 27 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/crash/index.xml" rel="self" type="application/rss+xml"/><item><title>Windows Message Queuing (MSMQ) Queue Manager Heap-Based Buffer Overflow (CVE-2026-54992)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-27_cve-2026-54992-windows-msmq-heap-overflow/</link><pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-27_cve-2026-54992-windows-msmq-heap-overflow/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>DavidCarliez&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-54992&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>8.4&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC (crash/DoS confirmed, no RCE demonstrated)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>windows, msmq, message-queuing, heap-overflow, integer-overflow, rpc, dos, crash&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Windows Message Queuing (MSMQ) — Queue Manager (&lt;code>mqqm.dll&lt;/code>, hosted in &lt;code>mqsvc.exe&lt;/code>), reached via the MS-MQRR (&lt;code>RemoteRead&lt;/code>) RPC interface&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Windows builds with the MSMQ-Server optional feature enabled and vulnerable &lt;code>mqqm.dll&lt;/code> (per vendor advisory; not independently version-fingerprinted beyond the PoC&amp;rsquo;s tested build)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Windows x64, MS-RPC (&lt;code>ncacn_ip_tcp&lt;/code>), C&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (client-side trigger runs as a normal, non-elevated user; the malicious MS-MQRR &lt;em>response&lt;/em> comes from an attacker-controlled remote host acting as the queue owner)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — the target must be induced to open a remote queue (&lt;code>DIRECT=OS:&amp;lt;attacker&amp;gt;\private$\&amp;lt;queue&amp;gt;&lt;/code>) served by the attacker&amp;rsquo;s MS-MQRR listener on TCP 2105&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>MSMQ&amp;rsquo;s Queue Manager processes &lt;code>R_StartReceive&lt;/code>/&lt;code>R_StartTransactionalReceive&lt;/code> responses from the MS-MQRR RPC interface as a set of &lt;code>SectionBuffer&lt;/code> structures, each carrying its own &lt;code>SectionSizeAlloc&lt;/code>. When a remote-read response is split into multiple sections, &lt;code>mqqm.dll&lt;/code> sums their allocation sizes using a 32-bit addition with no aggregate-overflow check. A malicious MS-MQRR server can return two sections whose &lt;code>SectionSizeAlloc&lt;/code> values are &lt;code>0x2000&lt;/code> and &lt;code>0xffffe010&lt;/code>; their true sum, &lt;code>0x100000010&lt;/code>, wraps to &lt;code>0x10&lt;/code> in 32-bit arithmetic. MSMQ allocates a buffer using the wrapped (&lt;code>0x10&lt;/code>-byte) size but then copies/processes data according to the original, much larger section sizes, producing a heap-based out-of-bounds write. NVD and MSRC list this with a code-execution-capable CVSS vector, but the verified public PoC only reaches — and only claims to reach — an out-of-bounds write that reliably crashes &lt;code>mqsvc.exe&lt;/code>; no working code-execution chain has been publicly demonstrated (see &lt;strong>Notes&lt;/strong> for the impact-framing correction).&lt;/p></description></item><item><title>VLC Bundled FFmpeg VP9 Decoder Resolution-Change Heap Crash</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-03_vlc-vp9-reschange-crash/</link><pubDate>Fri, 03 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-03_vlc-vp9-reschange-crash/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>

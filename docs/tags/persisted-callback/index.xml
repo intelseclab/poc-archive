@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Persisted-Callback on PoC Archive</title><link>https://poc.intelseclab.com/tags/persisted-callback/</link><description>Recent content in Persisted-Callback on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 27 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/persisted-callback/index.xml" rel="self" type="application/rss+xml"/><item><title>Windows WalletService Known-Folder Redirection → ESE Persisted-Callback DLL Load Local Privilege Escalation (CVE-2026-49176)</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-27_cve-2026-49176-windows-walletservice-lpe/</link><pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-27_cve-2026-49176-windows-walletservice-lpe/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>DavidCarliez&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-49176&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>7.8 (CVSS 3.1, &lt;code>AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized — SYSTEM shell confirmed against a real, vulnerable Windows 11 build&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>windows, walletservice, lpe, privilege-escalation, ese, extensible-storage-engine, known-folder-redirection, persisted-callback, local&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Windows WalletService (&lt;code>Windows.ApplicationModel.Wallet&lt;/code> WinRT API, backed by an ESE/Jet Blue database under the caller&amp;rsquo;s &lt;code>Documents\Wallet&lt;/code> folder)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Windows 11 builds prior to 26200.8875; PoC developed and tested against vulnerable build &lt;strong>26200.8737&lt;/strong> (25H2)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C (Win32 API, ESENT/Jet Blue API), PowerShell, Windows x64&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — requires a local, low-privilege (&amp;ldquo;PR:L&amp;rdquo;) authenticated session&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Local only&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Windows WalletService — which runs as &lt;code>LocalSystem&lt;/code> — resolves the caller&amp;rsquo;s &lt;code>FOLDERID_Documents&lt;/code> known folder while impersonating the calling user, then reverts to the &lt;code>LocalSystem&lt;/code> token before opening &lt;code>&amp;lt;Documents&amp;gt;\Wallet\wallet.db&lt;/code>. Because the folder resolution happens under impersonation but the file access happens as &lt;code>LocalSystem&lt;/code>, a standard user can redirect their own &lt;code>Documents&lt;/code> known folder (via &lt;code>SHSetKnownFolderPath&lt;/code>, CWE-59 Link Following) to a directory containing an attacker-seeded ESE database. That database defines a &lt;code>Cards&lt;/code> table column with &lt;code>JET_bitColumnUserDefinedDefault&lt;/code> (an ESE &amp;ldquo;persisted callback&amp;rdquo;) pointing at an attacker-controlled DLL. When WalletService opens the table with ESE persisted callbacks enabled, the Jet Blue engine loads and invokes the attacker&amp;rsquo;s DLL — as &lt;code>LocalSystem&lt;/code>. The DLL then creates and starts a throwaway Windows service whose binary spawns &lt;code>cmd.exe&lt;/code> in the active console session via &lt;code>CreateProcessAsUserW&lt;/code>, yielding a &lt;code>nt authority\system&lt;/code> shell as a fully unprivileged local user. Microsoft fixed this in build 26200.8875 (CWE-59 + CWE-269).&lt;/p></description></item></channel></rss>

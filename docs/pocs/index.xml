@@ -83,7 +83,92 @@
 &lt;/table>
 &lt;hr>
 &lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>CertiGhost (CVE-2026-54121) abuses a &amp;ldquo;chase&amp;rdquo; mechanism in AD CS certificate enrollment: when a certificate request carries a &lt;code>cdc&lt;/code> (chase domain controller) attribute pointing at an attacker-controlled IP alongside an &lt;code>rmd&lt;/code> (remote machine DNS) attribute naming a target machine, the Enterprise CA will connect back to that attacker-controlled host over SMB/LDAP to resolve the named machine&amp;rsquo;s identity (sAMAccountName, SID, dNSHostName) instead of querying a real, trusted source. A low-privileged domain user can stand up rogue LDAP/SMB listeners, request a machine certificate as a self-created computer account, set &lt;code>cdc&lt;/code> to their own IP and &lt;code>rmd&lt;/code> to a real Domain Controller&amp;rsquo;s DNS name, and have the CA issue a certificate for a computer object whose identity was fabricated by the attacker&amp;rsquo;s rogue listener — a certificate that authenticates as the Domain Controller itself. That certificate is then used with PKINIT to log on as the DC, extract its NT hash/PAC via a U2U ticket, and pivot to DCSync/krbtgt theft for full domain compromise.&lt;/p></description></item><item><title>Budibase Unauthenticated NoSQL Operator Injection (CVE-2026-54350)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-54350-budibase-nosql-injection/</link><pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-54350-budibase-nosql-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;p>CertiGhost (CVE-2026-54121) abuses a &amp;ldquo;chase&amp;rdquo; mechanism in AD CS certificate enrollment: when a certificate request carries a &lt;code>cdc&lt;/code> (chase domain controller) attribute pointing at an attacker-controlled IP alongside an &lt;code>rmd&lt;/code> (remote machine DNS) attribute naming a target machine, the Enterprise CA will connect back to that attacker-controlled host over SMB/LDAP to resolve the named machine&amp;rsquo;s identity (sAMAccountName, SID, dNSHostName) instead of querying a real, trusted source. A low-privileged domain user can stand up rogue LDAP/SMB listeners, request a machine certificate as a self-created computer account, set &lt;code>cdc&lt;/code> to their own IP and &lt;code>rmd&lt;/code> to a real Domain Controller&amp;rsquo;s DNS name, and have the CA issue a certificate for a computer object whose identity was fabricated by the attacker&amp;rsquo;s rogue listener — a certificate that authenticates as the Domain Controller itself. That certificate is then used with PKINIT to log on as the DC, extract its NT hash/PAC via a U2U ticket, and pivot to DCSync/krbtgt theft for full domain compromise.&lt;/p></description></item><item><title>Apache APISIX `jwe-decrypt` Integrity-Check Bypass → Unauthenticated Gateway Auth Bypass (CVE-2026-49230)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-49230-apisix-jwe-decrypt-auth-bypass/</link><pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-49230-apisix-jwe-decrypt-auth-bypass/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>BiiTts (Caio Fabrício)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-49230&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.1 (CVSSv3.1, &lt;code>AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>apache-apisix, jwe, jwt, integrity-bypass, cwe-354, unauthenticated, api-gateway, lua&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Apache APISIX — &lt;code>jwe-decrypt&lt;/code> auth plugin (&lt;code>apisix/plugins/jwe-decrypt.lua&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>3.8.0 – 3.16.0&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Lua (OpenResty/Nginx), via &lt;code>resty.aes&lt;/code> / OpenSSL AES-256-GCM&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No — attacker needs only a valid consumer &lt;code>kid&lt;/code> (public, rides unencrypted in every legitimate token&amp;rsquo;s header), never the AES secret&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — direct HTTP(S) access to a route protected by &lt;code>jwe-decrypt&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The &lt;code>jwe-decrypt&lt;/code> plugin is an &lt;code>auth&lt;/code>-type APISIX plugin that decrypts an incoming JWE token with a per-consumer AES-256-GCM secret and forwards the plaintext upstream as proof of authentication. Its internal helper &lt;code>jwe_decrypt_with_obj()&lt;/code> returns only the decrypted value from &lt;code>aes:decrypt()&lt;/code>, discarding OpenSSL&amp;rsquo;s GCM-tag verification result. The call site binds a second &lt;code>err&lt;/code> variable that is therefore always &lt;code>nil&lt;/code>, so the guard &lt;code>if err ~= nil then return 400&lt;/code> never triggers. An attacker who knows any consumer&amp;rsquo;s &lt;code>kid&lt;/code> (public metadata, present in cleartext in every legitimate token) can submit a JWE with a valid &lt;code>kid&lt;/code> but completely garbage ciphertext and tag, and the gateway authenticates the request anyway — forwarding it (with an empty identity header) to the upstream. No knowledge of the AES secret is required, fully defeating the authentication boundary the plugin exists to enforce.&lt;/p></description></item><item><title>Budibase Unauthenticated NoSQL Operator Injection (CVE-2026-54350)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-54350-budibase-nosql-injection/</link><pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-54350-budibase-nosql-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>
@@ -423,7 +508,92 @@
 &lt;/table>
 &lt;hr>
 &lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>GreatXML abuses the trust boundary around Microsoft Defender&amp;rsquo;s Offline Scan feature, which reboots a Windows machine into WinRE (Windows PE) and runs &lt;code>OfflineScannerShell.exe&lt;/code> with elevated, pre-BitLocker-unlock trust. The &lt;code>ReAgent.xml&lt;/code> recovery-configuration file specifies exactly which &lt;code>OperationParam&lt;/code> command WinRE will execute during this offline-scan operation — and an attacker with physical access (and a mountable recovery/EFI partition, or the ability to have Defender Offline Scan already initiated on the box) can overwrite this file along with a companion &lt;code>unattend.xml&lt;/code> that provisions blank-password local Admin/User accounts with autologon and runs attacker-controlled PowerShell during Windows setup/specialize passes. If Defender Offline Scan has ever been triggered on the victim machine, the attacker does not even need to log in first — simply replacing these files and rebooting to WinRE (Shift+Click &amp;ldquo;Restart&amp;rdquo;) is sufficient to spawn a shell with unrestricted access to the BitLocker-protected volume, bypassing the disk encryption&amp;rsquo;s intended protection against offline/physical tampering. No CVE has been assigned and no Microsoft patch exists as of this writing.&lt;/p></description></item><item><title>Joomla Balbooa Forms Unauthenticated Arbitrary File Upload → RCE (CVE-2026-56291)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-56291-joomla-balbooa-forms-file-upload-rce/</link><pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-56291-joomla-balbooa-forms-file-upload-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;p>GreatXML abuses the trust boundary around Microsoft Defender&amp;rsquo;s Offline Scan feature, which reboots a Windows machine into WinRE (Windows PE) and runs &lt;code>OfflineScannerShell.exe&lt;/code> with elevated, pre-BitLocker-unlock trust. The &lt;code>ReAgent.xml&lt;/code> recovery-configuration file specifies exactly which &lt;code>OperationParam&lt;/code> command WinRE will execute during this offline-scan operation — and an attacker with physical access (and a mountable recovery/EFI partition, or the ability to have Defender Offline Scan already initiated on the box) can overwrite this file along with a companion &lt;code>unattend.xml&lt;/code> that provisions blank-password local Admin/User accounts with autologon and runs attacker-controlled PowerShell during Windows setup/specialize passes. If Defender Offline Scan has ever been triggered on the victim machine, the attacker does not even need to log in first — simply replacing these files and rebooting to WinRE (Shift+Click &amp;ldquo;Restart&amp;rdquo;) is sufficient to spawn a shell with unrestricted access to the BitLocker-protected volume, bypassing the disk encryption&amp;rsquo;s intended protection against offline/physical tampering. No CVE has been assigned and no Microsoft patch exists as of this writing.&lt;/p></description></item><item><title>ITScape — KVM/arm64 vGIC-ITS Guest-to-Host VM Escape (CVE-2026-46316)</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-27_cve-2026-46316-itscape-kvm-arm64-vgic-its-escape/</link><pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-27_cve-2026-46316-itscape-kvm-arm64-vgic-its-escape/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Hyunwoo Kim (@V4bel)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-46316 (GHSA-qcxh-2cm7-9fcc)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.3 (CVSSv3.1, CNA/kernel.org: &lt;code>AV:L/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H&lt;/code>) — the Red Hat ADP scoring rates it lower, 7.0 High (&lt;code>AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H&lt;/code>); NVD had not published its own v4.0 assessment at verification time&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>linux-kernel, kvm, arm64, vgic-its, guest-to-host-escape, vm-escape, double-free, use-after-free, kaslr-bypass, heap-grooming, virtualization&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A (author&amp;rsquo;s prior work: &amp;ldquo;Dirty Frag&amp;rdquo; Linux LPE family; &amp;ldquo;Januscape&amp;rdquo; / CVE-2026-53359, an x86 KVM guest-to-host escape via Google kvmCTF)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Linux kernel, KVM/arm64 in-kernel vGIC-ITS (Interrupt Translation Service) emulation (&lt;code>arch/arm64/kvm/vgic/vgic-its.c&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Commit &lt;code>8201d1028caa&lt;/code> (2024-04-25, introduction of the ITS translation cache) through commit &lt;code>13031fb6b835&lt;/code> (2026-06-05, the fix). Confirmed against Linux v7.1-rc6 (the release immediately preceding the patch).&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C, Linux kernel, arm64, KVM (in-kernel emulation — independent of QEMU userspace)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — requires guest kernel (EL1) privilege inside an existing, otherwise unprivileged, guest VM&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Local only — no network access needed; entirely guest-VM-local MMIO/hypercall activity against the host&amp;rsquo;s KVM&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>ITScape (CVE-2026-46316) is a use-after-free in the KVM/arm64 in-kernel vGIC-ITS (Interrupt Translation Service) emulation that lets an unprivileged-but-rooted guest VM escape to the host and execute code as the host kernel (i.e., as root on the host), on any arm64 KVM host that exposes GICv3 ITS to guests. Because the bug lives in &lt;code>arch/arm64/kvm/vgic/vgic-its.c&lt;/code> inside the host kernel itself — not in QEMU userspace — it is triggered purely by guest-side MMIO/ITS-command activity, is independent of the VMM&amp;rsquo;s emulation code, and grants host &lt;strong>kernel&lt;/strong> privilege rather than the privilege of a userspace VMM process. To the best of public knowledge this is the first published guest-to-host escape exploit that directly targets in-kernel KVM/arm64, making it a serious threat to any multi-tenant arm64 public cloud or virtualization host that accepts untrusted guest workloads.&lt;/p></description></item><item><title>Joomla Balbooa Forms Unauthenticated Arbitrary File Upload → RCE (CVE-2026-56291)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-56291-joomla-balbooa-forms-file-upload-rce/</link><pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-56291-joomla-balbooa-forms-file-upload-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>
@@ -508,7 +678,92 @@
 &lt;/table>
 &lt;hr>
 &lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>Balbooa Forms is a popular drag-and-drop form builder extension for Joomla!. Its &lt;code>form.uploadAttachmentFile&lt;/code> task — reachable via the unauthenticated &lt;code>com_baforms&lt;/code> component entry point — accepts multipart file uploads for form attachments but performs neither a Joomla &lt;code>Session::checkToken()&lt;/code> CSRF/session check nor any file-extension whitelist/blacklist validation. An unauthenticated attacker can therefore POST a &lt;code>.php&lt;/code> or &lt;code>.phtml&lt;/code> file disguised as an image attachment directly to the task handler; the file is stored under a predictable, web-reachable path (&lt;code>/images/baforms/uploads/form-{id}/&lt;/code>) and is immediately executable by the PHP interpreter, yielding full remote code execution as the web server user. CISA added this to the KEV catalog on 2026-07-10 with active in-the-wild exploitation observed; EPSS is approximately 0.76.&lt;/p></description></item><item><title>Microsoft SharePoint Server WS-Federation SecurityContextToken Deserialization → Unauthenticated RCE (CVE-2026-50522)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-50522-sharepoint-preauth-rce/</link><pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-50522-sharepoint-preauth-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;p>Balbooa Forms is a popular drag-and-drop form builder extension for Joomla!. Its &lt;code>form.uploadAttachmentFile&lt;/code> task — reachable via the unauthenticated &lt;code>com_baforms&lt;/code> component entry point — accepts multipart file uploads for form attachments but performs neither a Joomla &lt;code>Session::checkToken()&lt;/code> CSRF/session check nor any file-extension whitelist/blacklist validation. An unauthenticated attacker can therefore POST a &lt;code>.php&lt;/code> or &lt;code>.phtml&lt;/code> file disguised as an image attachment directly to the task handler; the file is stored under a predictable, web-reachable path (&lt;code>/images/baforms/uploads/form-{id}/&lt;/code>) and is immediately executable by the PHP interpreter, yielding full remote code execution as the web server user. CISA added this to the KEV catalog on 2026-07-10 with active in-the-wild exploitation observed; EPSS is approximately 0.76.&lt;/p></description></item><item><title>Joomla Helix Ultimate Framework — Unauthenticated Arbitrary File Deletion (CVE-2026-57830)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-57830-joomla-helix-ultimate-file-deletion/</link><pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-57830-joomla-helix-ultimate-file-deletion/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Is4yev (Amin İsayev)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-57830&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.1 (CVSSv3)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>joomla, helix-ultimate, joomshaper, arbitrary-file-deletion, cwe-862, unauthenticated, csrf-token-only-check&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Helix Ultimate Framework (&lt;code>plg_system_helixultimate&lt;/code>), the JoomShaper Joomla template framework bundled with virtually every JoomShaper Joomla template&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>1.0 – 2.2.6 (fixed in 2.2.7)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP / Joomla CMS (system plugin, &lt;code>com_ajax&lt;/code> dispatch)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — any HTTP(S) reachability to the target site&amp;rsquo;s &lt;code>index.php&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Helix Ultimate&amp;rsquo;s &lt;code>plugins/system/helixultimate/src/Platform/Media.php&lt;/code> exposes &lt;code>deleteMedia()&lt;/code> and &lt;code>getFolders()&lt;/code> through the Joomla &lt;code>com_ajax&lt;/code> dispatch hook (&lt;code>onAfterRoute()&lt;/code>), reachable via &lt;code>option=com_ajax&amp;amp;helix=ultimate&amp;amp;action=delete-media&lt;/code>/&lt;code>view-media&lt;/code>. These methods only call &lt;code>Session::checkToken()&lt;/code> — a plain CSRF check — with no &lt;code>authorise()&lt;/code>/login check at all (CWE-862, Missing Authorization). Because a valid CSRF token is trivially harvestable from the site&amp;rsquo;s own public homepage HTML by any anonymous visitor, this &amp;ldquo;protection&amp;rdquo; authorizes nobody in particular: it just proves the request came from a browser that loaded the page once. The result is unauthenticated arbitrary file deletion (and, as a side effect of the same code path, unauthenticated folder/image listing), on any site running a Helix-Ultimate-based JoomShaper template — which is the default, always-enabled state for that whole product line. Fixed in 2.2.7 by confining file operations to validated paths via &lt;code>Helper::resolveMediaPath()&lt;/code>.&lt;/p></description></item><item><title>Microsoft SharePoint Server WS-Federation SecurityContextToken Deserialization → Unauthenticated RCE (CVE-2026-50522)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-50522-sharepoint-preauth-rce/</link><pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-50522-sharepoint-preauth-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>
@@ -593,7 +848,262 @@
 &lt;/table>
 &lt;hr>
 &lt;h2 id="summary">Summary&lt;/h2>
-&lt;p>SharePoint&amp;rsquo;s WS-Federation passive sign-in endpoint (&lt;code>/_trust/default.aspx&lt;/code>) accepts a &lt;code>wresult&lt;/code> parameter containing a WS-Trust &lt;code>RequestSecurityTokenResponse&lt;/code> that can carry a &lt;code>SecurityContextToken&lt;/code> with an embedded &lt;code>Cookie&lt;/code> value. Windows Identity Foundation&amp;rsquo;s &lt;code>SessionSecurityTokenHandler&lt;/code> decodes that cookie (via &lt;code>DeflateCookieTransform&lt;/code>) and deserializes the resulting bytes using the legacy, unsafe &lt;code>BinaryFormatter&lt;/code> — before any authentication has taken place. An attacker who crafts this cookie to contain a &lt;code>ysoserial.exe&lt;/code>-generated &lt;code>.NET&lt;/code> gadget chain (e.g. &lt;code>TypeConfuseDelegate&lt;/code>) achieves arbitrary code execution as soon as the server processes the POST, with zero credentials and zero prior session state required. This is a sibling flaw to CVE-2026-58644 from the same July 2026 patch wave — same WS-Federation/WIF deserialization surface, different vulnerable path — but unlike CVE-2026-58644 (which has no public PoC and is known only via private threat-actor chains), CVE-2026-50522 has a real, working, publicly released weaponized PoC.&lt;/p></description></item><item><title>Adobe ColdFusion RDS Path Traversal → Arbitrary File Read/Write → RCE (CVE-2026-48282)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-19_cve-2026-48282-coldfusion-rds-path-traversal-rce/</link><pubDate>Sun, 19 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-19_cve-2026-48282-coldfusion-rds-path-traversal-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;p>SharePoint&amp;rsquo;s WS-Federation passive sign-in endpoint (&lt;code>/_trust/default.aspx&lt;/code>) accepts a &lt;code>wresult&lt;/code> parameter containing a WS-Trust &lt;code>RequestSecurityTokenResponse&lt;/code> that can carry a &lt;code>SecurityContextToken&lt;/code> with an embedded &lt;code>Cookie&lt;/code> value. Windows Identity Foundation&amp;rsquo;s &lt;code>SessionSecurityTokenHandler&lt;/code> decodes that cookie (via &lt;code>DeflateCookieTransform&lt;/code>) and deserializes the resulting bytes using the legacy, unsafe &lt;code>BinaryFormatter&lt;/code> — before any authentication has taken place. An attacker who crafts this cookie to contain a &lt;code>ysoserial.exe&lt;/code>-generated &lt;code>.NET&lt;/code> gadget chain (e.g. &lt;code>TypeConfuseDelegate&lt;/code>) achieves arbitrary code execution as soon as the server processes the POST, with zero credentials and zero prior session state required. This is a sibling flaw to CVE-2026-58644 from the same July 2026 patch wave — same WS-Federation/WIF deserialization surface, different vulnerable path — but unlike CVE-2026-58644 (which has no public PoC and is known only via private threat-actor chains), CVE-2026-50522 has a real, working, publicly released weaponized PoC.&lt;/p></description></item><item><title>MISP Core `deleteSelection` Broken Access Control — Bulk Deletion of Foreign Event Reports &amp; Sharing Groups (CVE-2026-56423)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-56423-misp-core-deleteselection-broken-access-control/</link><pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-56423-misp-core-deleteselection-broken-access-control/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>BiiTts (Caio Fabrício)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-56423&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>8.8 (CVSS 3.1, &lt;code>AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized — contributor-level bulk hard-delete of a foreign organizations Event Report confirmed against a real MISP core build; denied on the patched build&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>misp, misp-core, broken-access-control, cwe-862, bulk-deletion, authenticated, threat-intel-platform&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>MISP (Malware Information Sharing Platform) Core — &lt;code>EventReportsController::deleteSelection&lt;/code> and &lt;code>SharingGroupsController::deleteSelection&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>MISP Core up to and including 2.5.41 (fixed in 2.5.42)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP (CakePHP), MISP core application&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — any authenticated account whose role has &lt;code>perm_add&lt;/code> (the default built-in &amp;ldquo;User&amp;rdquo;/contributor role qualifies)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — direct HTTP(S) access to the MISP web/API interface&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>MISP&amp;rsquo;s bulk-deletion endpoints for Event Reports (&lt;code>/eventReports/deleteSelection&lt;/code>) and Sharing Groups (&lt;code>/sharingGroups/deleteSelection&lt;/code>) authorize each selected item using a &lt;code>checkModifyCallback&lt;/code> that discards the item id and instead returns the acting user&amp;rsquo;s &lt;strong>global role permission&lt;/strong> (&lt;code>$this-&amp;gt;userRole['perm_add']&lt;/code> / &lt;code>perm_sharing_group&lt;/code>). The equivalent single-item endpoint (&lt;code>/eventReports/delete/{id}&lt;/code>) correctly performs a per-object check via &lt;code>fetchIfAuthorized&lt;/code>/ownership resolution. As a result, any low-privileged authenticated contributor (default &amp;ldquo;User&amp;rdquo; role) can submit report or sharing-group IDs belonging to &lt;strong>any organisation&lt;/strong> on the instance and hard-delete them in bulk, even though the per-item delete path for the exact same object is properly denied. This is a cross-tenant integrity/availability break in a platform CERTs, ISACs, and SOCs use to share sensitive threat intelligence.&lt;/p></description></item><item><title>Windows Message Queuing (MSMQ) Queue Manager Heap-Based Buffer Overflow (CVE-2026-54992)</title><link>https://poc.intelseclab.com/pocs/network/2026-07-27_cve-2026-54992-windows-msmq-heap-overflow/</link><pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/network/2026-07-27_cve-2026-54992-windows-msmq-heap-overflow/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>DavidCarliez&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-54992&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>network&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>8.4&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC (crash/DoS confirmed, no RCE demonstrated)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>windows, msmq, message-queuing, heap-overflow, integer-overflow, rpc, dos, crash&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Windows Message Queuing (MSMQ) — Queue Manager (&lt;code>mqqm.dll&lt;/code>, hosted in &lt;code>mqsvc.exe&lt;/code>), reached via the MS-MQRR (&lt;code>RemoteRead&lt;/code>) RPC interface&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Windows builds with the MSMQ-Server optional feature enabled and vulnerable &lt;code>mqqm.dll&lt;/code> (per vendor advisory; not independently version-fingerprinted beyond the PoC&amp;rsquo;s tested build)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Windows x64, MS-RPC (&lt;code>ncacn_ip_tcp&lt;/code>), C&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (client-side trigger runs as a normal, non-elevated user; the malicious MS-MQRR &lt;em>response&lt;/em> comes from an attacker-controlled remote host acting as the queue owner)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — the target must be induced to open a remote queue (&lt;code>DIRECT=OS:&amp;lt;attacker&amp;gt;\private$\&amp;lt;queue&amp;gt;&lt;/code>) served by the attacker&amp;rsquo;s MS-MQRR listener on TCP 2105&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>MSMQ&amp;rsquo;s Queue Manager processes &lt;code>R_StartReceive&lt;/code>/&lt;code>R_StartTransactionalReceive&lt;/code> responses from the MS-MQRR RPC interface as a set of &lt;code>SectionBuffer&lt;/code> structures, each carrying its own &lt;code>SectionSizeAlloc&lt;/code>. When a remote-read response is split into multiple sections, &lt;code>mqqm.dll&lt;/code> sums their allocation sizes using a 32-bit addition with no aggregate-overflow check. A malicious MS-MQRR server can return two sections whose &lt;code>SectionSizeAlloc&lt;/code> values are &lt;code>0x2000&lt;/code> and &lt;code>0xffffe010&lt;/code>; their true sum, &lt;code>0x100000010&lt;/code>, wraps to &lt;code>0x10&lt;/code> in 32-bit arithmetic. MSMQ allocates a buffer using the wrapped (&lt;code>0x10&lt;/code>-byte) size but then copies/processes data according to the original, much larger section sizes, producing a heap-based out-of-bounds write. NVD and MSRC list this with a code-execution-capable CVSS vector, but the verified public PoC only reaches — and only claims to reach — an out-of-bounds write that reliably crashes &lt;code>mqsvc.exe&lt;/code>; no working code-execution chain has been publicly demonstrated (see &lt;strong>Notes&lt;/strong> for the impact-framing correction).&lt;/p></description></item><item><title>Windows WalletService Known-Folder Redirection → ESE Persisted-Callback DLL Load Local Privilege Escalation (CVE-2026-49176)</title><link>https://poc.intelseclab.com/pocs/binary/2026-07-27_cve-2026-49176-windows-walletservice-lpe/</link><pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/binary/2026-07-27_cve-2026-49176-windows-walletservice-lpe/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>DavidCarliez&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-49176&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>binary&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>7.8 (CVSS 3.1, &lt;code>AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized — SYSTEM shell confirmed against a real, vulnerable Windows 11 build&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>windows, walletservice, lpe, privilege-escalation, ese, extensible-storage-engine, known-folder-redirection, persisted-callback, local&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Windows WalletService (&lt;code>Windows.ApplicationModel.Wallet&lt;/code> WinRT API, backed by an ESE/Jet Blue database under the caller&amp;rsquo;s &lt;code>Documents\Wallet&lt;/code> folder)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Windows 11 builds prior to 26200.8875; PoC developed and tested against vulnerable build &lt;strong>26200.8737&lt;/strong> (25H2)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>C (Win32 API, ESENT/Jet Blue API), PowerShell, Windows x64&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — requires a local, low-privilege (&amp;ldquo;PR:L&amp;rdquo;) authenticated session&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Local only&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Windows WalletService — which runs as &lt;code>LocalSystem&lt;/code> — resolves the caller&amp;rsquo;s &lt;code>FOLDERID_Documents&lt;/code> known folder while impersonating the calling user, then reverts to the &lt;code>LocalSystem&lt;/code> token before opening &lt;code>&amp;lt;Documents&amp;gt;\Wallet\wallet.db&lt;/code>. Because the folder resolution happens under impersonation but the file access happens as &lt;code>LocalSystem&lt;/code>, a standard user can redirect their own &lt;code>Documents&lt;/code> known folder (via &lt;code>SHSetKnownFolderPath&lt;/code>, CWE-59 Link Following) to a directory containing an attacker-seeded ESE database. That database defines a &lt;code>Cards&lt;/code> table column with &lt;code>JET_bitColumnUserDefinedDefault&lt;/code> (an ESE &amp;ldquo;persisted callback&amp;rdquo;) pointing at an attacker-controlled DLL. When WalletService opens the table with ESE persisted callbacks enabled, the Jet Blue engine loads and invokes the attacker&amp;rsquo;s DLL — as &lt;code>LocalSystem&lt;/code>. The DLL then creates and starts a throwaway Windows service whose binary spawns &lt;code>cmd.exe&lt;/code> in the active console session via &lt;code>CreateProcessAsUserW&lt;/code>, yielding a &lt;code>nt authority\system&lt;/code> shell as a fully unprivileged local user. Microsoft fixed this in build 26200.8875 (CWE-59 + CWE-269).&lt;/p></description></item><item><title>Adobe ColdFusion RDS Path Traversal → Arbitrary File Read/Write → RCE (CVE-2026-48282)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-19_cve-2026-48282-coldfusion-rds-path-traversal-rce/</link><pubDate>Sun, 19 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-19_cve-2026-48282-coldfusion-rds-path-traversal-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
 &lt;table>
  &lt;thead>
  &lt;tr>
