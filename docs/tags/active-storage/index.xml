@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Active-Storage on PoC Archive</title><link>https://poc.intelseclab.com/tags/active-storage/</link><description>Recent content in Active-Storage on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 27 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/active-storage/index.xml" rel="self" type="application/rss+xml"/><item><title>Rails Active Storage Arbitrary File Read to RCE via libvips Unfuzzed Loaders (CVE-2026-66066)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-66066-rails-activestorage-libvips-rce/</link><pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-66066-rails-activestorage-libvips-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Zer0SumGam3 (unverified, new GitHub account)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-66066 (GHSA-xr9x-r78c-5hrm)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.5 (CVSSv3)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>ruby-on-rails, active-storage, libvips, arbitrary-file-read, marshal-deserialization, rce, unauthenticated, cwe-22&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Ruby on Rails — Active Storage (image variant processing via &lt;code>:vips&lt;/code>/libvips)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>activestorage &amp;lt; 7.2.3.2; 8.0-8.0.5.0; 8.1-8.1.3.0&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Ruby (Rails), libvips (native image processing library, C)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — any HTTP endpoint that accepts an image upload and later generates an Active Storage variant/representation&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Rails Active Storage hands untrusted, attacker-supplied image uploads directly to libvips for variant/representation generation without disabling libvips&amp;rsquo; &amp;ldquo;unfuzzed&amp;rdquo; (i.e. not hardened against malicious input) loaders, specifically the MATLAB/HDF5 &lt;code>matload&lt;/code> operation. An unauthenticated attacker can upload a file crafted to be sniffed as a MATLAB/HDF5 container whose data is backed by HDF5 external storage pointing at an arbitrary target-side path (e.g. &lt;code>/proc/1/environ&lt;/code>), and trigger Active Storage to render it as an image variant. libvips reads the external file and returns its bytes embedded in the resulting PNG pixel data, letting the attacker recover process environment variables — including &lt;code>SECRET_KEY_BASE&lt;/code>. With that secret, the attacker derives Active Storage&amp;rsquo;s HMAC verifier key and forges a signed &amp;ldquo;variation&amp;rdquo; transformation containing a Ruby Marshal deserialization gadget chain, which Rails deserializes and executes when the forged representation is requested — yielding unauthenticated remote code execution.&lt;/p></description></item></channel></rss>
