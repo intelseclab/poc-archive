@@ -1,26 +1,171 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>Budibase on PoC Archive</title>
-    <link>http://192.168.0.124:1313/tags/budibase/</link>
-    <description>Recent content in Budibase on PoC Archive</description>
-    <generator>Hugo</generator>
-    <language>en-us</language>
-    <lastBuildDate>Mon, 27 Jul 2026 00:00:00 +0000</lastBuildDate>
-    <atom:link href="http://192.168.0.124:1313/tags/budibase/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>Budibase Unauthenticated NoSQL Operator Injection (CVE-2026-54350)</title>
-      <link>http://192.168.0.124:1313/pocs/web/2026-07-27_cve-2026-54350-budibase-nosql-injection/</link>
-      <pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate>
-      <guid>http://192.168.0.124:1313/pocs/web/2026-07-27_cve-2026-54350-budibase-nosql-injection/</guid>
-      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-27&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-27&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;BiiTts (Caio Fabrício)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-54350 (GHSA-8qv3-p479-cj62)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;10.0 (CVSS 3.1, &lt;code&gt;AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:N&lt;/code&gt;)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Weaponized — reproduced end-to-end against a real &lt;code&gt;budibase/budibase:3.39.0&lt;/code&gt; instance&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;budibase, nosql-injection, mongodb, unauthenticated, low-code, json-injection&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Budibase (open-source low-code application platform) — &lt;code&gt;POST /api/v2/queries/:queryId&lt;/code&gt;&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Vendor advisory / NVD range &lt;code&gt;&amp;lt; 3.39.12&lt;/code&gt;; empirically the bare-quote injection vector used by this PoC is only exploitable on &lt;code&gt;&amp;lt;= 3.39.0&lt;/code&gt; — from &lt;code&gt;3.39.1&lt;/code&gt; the templating layer already escapes injected quotes, and the explicit fix (&lt;code&gt;processJsonStringSync&lt;/code&gt;) lands in &lt;code&gt;3.39.9&lt;/code&gt;&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Node.js / TypeScript backend, MongoDB (and other document datasources: CouchDB, Elasticsearch, DynamoDB-PartiQL, REST-with-JSON-body)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes — direct HTTP(S) reachability to a Budibase instance that has at least one published app with a &lt;strong&gt;PUBLIC&lt;/strong&gt;-role query&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;Budibase queries interpolate user-supplied parameters directly into a query&amp;rsquo;s raw JSON body via Handlebars, then &lt;code&gt;JSON.parse&lt;/code&gt; the result. The only input filter blocks Handlebars markers (&lt;code&gt;{{&lt;/code&gt;/&lt;code&gt;}}&lt;/code&gt;) but does not block &lt;code&gt;&amp;quot;&lt;/code&gt;, &lt;code&gt;\&lt;/code&gt;, &lt;code&gt;}&lt;/code&gt; or &lt;code&gt;$&lt;/code&gt; — so a parameter value containing a closing quote breaks out of its intended string slot and injects a sibling JSON key. Supplying a duplicate key whose value is a MongoDB operator object (e.g. &lt;code&gt;{&amp;quot;$exists&amp;quot;:true}&lt;/code&gt;) wins the &lt;code&gt;JSON.parse&lt;/code&gt; duplicate-key merge and is passed straight into &lt;code&gt;collection.find()&lt;/code&gt; or &lt;code&gt;collection.updateMany()&lt;/code&gt;. Because any query whose access role is set to &lt;strong&gt;PUBLIC&lt;/strong&gt; bypasses both session authentication and CSRF checks in the &lt;code&gt;authorized()&lt;/code&gt; middleware, and the &lt;code&gt;x-budibase-app-id&lt;/code&gt; header needed to reach it is public (embedded in every published-app URL), an unauthenticated remote attacker can dump or mass-modify every document in the backing collection with a single HTTP request. &lt;strong&gt;This is NoSQL operator injection (CWE-943 / CWE-89-adjacent), not remote code execution&lt;/strong&gt; — some summaries of this CVE frame it as RCE, which is incorrect; the confirmed impact is unauthenticated bulk read/write of database contents, not arbitrary code execution on the server.&lt;/p&gt;</description>
-    </item>
-    <item>
-      <title>Budibase Authentication Bypass to Plugin-Upload Reverse Shell — CVE-2026-31816</title>
-      <link>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-31816-budibase-auth-bypass-rce/</link>
-      <pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate>
-      <guid>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-31816-budibase-auth-bypass-rce/</guid>
-      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-05&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-03&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;imjdl&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-31816&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Not specified in source&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Weaponized&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;budibase, auth-bypass, rce, plugin-upload, reverse-shell, low-code, python, datasource-plugin&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Budibase (low-code platform)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Versions vulnerable to the documented &lt;code&gt;/api/integrations&lt;/code&gt; authentication-bypass endpoint&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Python 3 (PoC), Budibase (Node.js server)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;Budibase exposes an integrations/webhooks-related endpoint pattern (&lt;code&gt;/api/integrations?/webhooks/trigger&lt;/code&gt;) that can be reached without authentication, and a plugin-upload endpoint (&lt;code&gt;/api/plugin/upload?/webhooks/trigger&lt;/code&gt;) that shares the same bypass pattern. By uploading a crafted DATASOURCE-type plugin containing a JavaScript reverse-shell payload, an attacker can get Budibase to execute the payload server-side during plugin validation, without needing valid credentials — achieving unauthenticated remote code execution and a full reverse shell on the Budibase server.&lt;/p&gt;</description>
-    </item>
-  </channel>
-</rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Budibase on PoC Archive</title><link>https://poc.intelseclab.com/tags/budibase/</link><description>Recent content in Budibase on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 27 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/budibase/index.xml" rel="self" type="application/rss+xml"/><item><title>Budibase Unauthenticated NoSQL Operator Injection (CVE-2026-54350)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-54350-budibase-nosql-injection/</link><pubDate>Mon, 27 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-27_cve-2026-54350-budibase-nosql-injection/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-27&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>BiiTts (Caio Fabrício)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-54350 (GHSA-8qv3-p479-cj62)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>10.0 (CVSS 3.1, &lt;code>AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:N&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized — reproduced end-to-end against a real &lt;code>budibase/budibase:3.39.0&lt;/code> instance&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>budibase, nosql-injection, mongodb, unauthenticated, low-code, json-injection&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Budibase (open-source low-code application platform) — &lt;code>POST /api/v2/queries/:queryId&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Vendor advisory / NVD range &lt;code>&amp;lt; 3.39.12&lt;/code>; empirically the bare-quote injection vector used by this PoC is only exploitable on &lt;code>&amp;lt;= 3.39.0&lt;/code> — from &lt;code>3.39.1&lt;/code> the templating layer already escapes injected quotes, and the explicit fix (&lt;code>processJsonStringSync&lt;/code>) lands in &lt;code>3.39.9&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Node.js / TypeScript backend, MongoDB (and other document datasources: CouchDB, Elasticsearch, DynamoDB-PartiQL, REST-with-JSON-body)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — direct HTTP(S) reachability to a Budibase instance that has at least one published app with a &lt;strong>PUBLIC&lt;/strong>-role query&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Budibase queries interpolate user-supplied parameters directly into a query&amp;rsquo;s raw JSON body via Handlebars, then &lt;code>JSON.parse&lt;/code> the result. The only input filter blocks Handlebars markers (&lt;code>{{&lt;/code>/&lt;code>}}&lt;/code>) but does not block &lt;code>&amp;quot;&lt;/code>, &lt;code>\&lt;/code>, &lt;code>}&lt;/code> or &lt;code>$&lt;/code> — so a parameter value containing a closing quote breaks out of its intended string slot and injects a sibling JSON key. Supplying a duplicate key whose value is a MongoDB operator object (e.g. &lt;code>{&amp;quot;$exists&amp;quot;:true}&lt;/code>) wins the &lt;code>JSON.parse&lt;/code> duplicate-key merge and is passed straight into &lt;code>collection.find()&lt;/code> or &lt;code>collection.updateMany()&lt;/code>. Because any query whose access role is set to &lt;strong>PUBLIC&lt;/strong> bypasses both session authentication and CSRF checks in the &lt;code>authorized()&lt;/code> middleware, and the &lt;code>x-budibase-app-id&lt;/code> header needed to reach it is public (embedded in every published-app URL), an unauthenticated remote attacker can dump or mass-modify every document in the backing collection with a single HTTP request. &lt;strong>This is NoSQL operator injection (CWE-943 / CWE-89-adjacent), not remote code execution&lt;/strong> — some summaries of this CVE frame it as RCE, which is incorrect; the confirmed impact is unauthenticated bulk read/write of database contents, not arbitrary code execution on the server.&lt;/p></description></item><item><title>Budibase Authentication Bypass to Plugin-Upload Reverse Shell — CVE-2026-31816</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-31816-budibase-auth-bypass-rce/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-31816-budibase-auth-bypass-rce/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>imjdl&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-31816&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>Not specified in source&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>budibase, auth-bypass, rce, plugin-upload, reverse-shell, low-code, python, datasource-plugin&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Budibase (low-code platform)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Versions vulnerable to the documented &lt;code>/api/integrations&lt;/code> authentication-bypass endpoint&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python 3 (PoC), Budibase (Node.js server)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Budibase exposes an integrations/webhooks-related endpoint pattern (&lt;code>/api/integrations?/webhooks/trigger&lt;/code>) that can be reached without authentication, and a plugin-upload endpoint (&lt;code>/api/plugin/upload?/webhooks/trigger&lt;/code>) that shares the same bypass pattern. By uploading a crafted DATASOURCE-type plugin containing a JavaScript reverse-shell payload, an attacker can get Budibase to execute the payload server-side during plugin validation, without needing valid credentials — achieving unauthenticated remote code execution and a full reverse shell on the Budibase server.&lt;/p></description></item></channel></rss>

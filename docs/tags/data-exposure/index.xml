@@ -1,26 +1,171 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>Data-Exposure on PoC Archive</title>
-    <link>http://192.168.0.124:1313/tags/data-exposure/</link>
-    <description>Recent content in Data-Exposure on PoC Archive</description>
-    <generator>Hugo</generator>
-    <language>en-us</language>
-    <lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate>
-    <atom:link href="http://192.168.0.124:1313/tags/data-exposure/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>Django QuerySet/Q Object SQL Injection via `_connector` Kwarg (CVE-2025-64459)</title>
-      <link>http://192.168.0.124:1313/pocs/web/2026-07-06_cve-2025-64459-django-queryset-connector-sqli/</link>
-      <pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate>
-      <guid>http://192.168.0.124:1313/pocs/web/2026-07-06_cve-2025-64459-django-queryset-connector-sqli/</guid>
-      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-06&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Joshua Lent (joshualent)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2025-64459&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Critical&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;9.1 (per NVD)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Weaponized&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;django, python, sql-injection, queryset, q-object, orm, cwe-89, data-exposure, sqlite&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Django ORM (&lt;code&gt;QuerySet.filter()&lt;/code&gt; / &lt;code&gt;Q&lt;/code&gt; object construction)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Multiple Django versions prior to the official security-patch release (per source repository); this demo pins &lt;code&gt;django==5.2.7&lt;/code&gt; to reproduce the issue&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Python / Django 5.2, demo blog app served via &lt;code&gt;manage.py runserver&lt;/code&gt; or Gunicorn&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes (standard HTTP access to the vulnerable route)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;This is a SQL injection vulnerability in Django&amp;rsquo;s &lt;code&gt;QuerySet&lt;/code&gt;/&lt;code&gt;Q&lt;/code&gt; object construction: when application code builds a &lt;code&gt;Q(**kwargs)&lt;/code&gt; filter directly from user-controlled input (such as a raw &lt;code&gt;request.GET&lt;/code&gt; &lt;code&gt;QueryDict&lt;/code&gt;) without allow-listing keys, an attacker can supply the reserved &lt;code&gt;_connector&lt;/code&gt; (and &lt;code&gt;_negated&lt;/code&gt;) keyword that Django&amp;rsquo;s &lt;code&gt;Q&lt;/code&gt; constructor uses internally to choose the raw SQL boolean join operator (&lt;code&gt;AND&lt;/code&gt;/&lt;code&gt;OR&lt;/code&gt;) between conditions. Because that value is spliced into the compiled SQL as a literal keyword rather than being validated against &lt;code&gt;AND&lt;/code&gt;/&lt;code&gt;OR&lt;/code&gt;/&lt;code&gt;XOR&lt;/code&gt;, an attacker-supplied string is inserted verbatim into the &lt;code&gt;WHERE&lt;/code&gt; clause. The bundled demo app is a small Django blog whose &lt;code&gt;post_list&lt;/code&gt; view builds its filter dict straight from &lt;code&gt;request.GET&lt;/code&gt;, blocking only a handful of named fields (&lt;code&gt;status&lt;/code&gt;, &lt;code&gt;is_archived&lt;/code&gt;, &lt;code&gt;id&lt;/code&gt;, &lt;code&gt;pk&lt;/code&gt;) — leaving &lt;code&gt;_connector&lt;/code&gt; open. Visiting the home route with &lt;code&gt;?_connector=OR 1=1 OR&lt;/code&gt; turns the intended &amp;ldquo;published, non-archived posts only&amp;rdquo; filter into an always-true condition, exposing draft and archived posts that should not be publicly visible, and demonstrates a general primitive for SQL fragment injection through the ORM.&lt;/p&gt;</description>
-    </item>
-    <item>
-      <title>Realtime Collaboration Platform — CORS Misconfiguration Leading to Authenticated Data Exposure (CVE-2026-27579)</title>
-      <link>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-27579-cors-misconfig-data-exposure/</link>
-      <pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate>
-      <guid>http://192.168.0.124:1313/pocs/web/2026-07-05_cve-2026-27579-cors-misconfig-data-exposure/</guid>
-      <description>&lt;h2 id=&#34;metadata&#34;&gt;Metadata&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Date Added&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-07-05&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Last Updated&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;2026-03&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Author / Researcher&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;AdityaBhatt3010&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVE / Advisory&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;CVE-2026-27579 (GHSA-qh5m-p8jh-hx88)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Category&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;web&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Severity&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;High&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;CVSS Score&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;7.4 (CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:H/I:N/A:N)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Status&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;PoC&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Tags&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;cors, misconfiguration, appwrite, cross-origin, credentials, data-exposure, session-hijack, javascript&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Related&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;N/A&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;affected-target&#34;&gt;Affected Target&lt;/h2&gt;&#xA;&lt;table&gt;&#xA;  &lt;thead&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;th&gt;Field&lt;/th&gt;&#xA;          &lt;th&gt;Value&lt;/th&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/thead&gt;&#xA;  &lt;tbody&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Software / System&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;realtime-collaboration-platform (karnop), backed by Appwrite&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Versions Affected&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Version deploying the vulnerable Appwrite CORS configuration (per GHSA-qh5m-p8jh-hx88)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Language / Platform&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;JavaScript (browser fetch), targeting an Appwrite backend REST API&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Authentication Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;No (attacker), Yes (victim must have an active session)&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;      &lt;tr&gt;&#xA;          &lt;td&gt;&lt;strong&gt;Network Access Required&lt;/strong&gt;&lt;/td&gt;&#xA;          &lt;td&gt;Yes&lt;/td&gt;&#xA;      &lt;/tr&gt;&#xA;  &lt;/tbody&gt;&#xA;&lt;/table&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;&#xA;&lt;p&gt;The &lt;code&gt;realtime-collaboration-platform&lt;/code&gt; project configured its Appwrite backend to allow arbitrary cross-origin requests while also enabling &lt;code&gt;Access-Control-Allow-Credentials: true&lt;/code&gt;. Because the origin allow-list was effectively unrestricted, an attacker-controlled webpage could issue a credentialed &lt;code&gt;fetch()&lt;/code&gt; request to the platform&amp;rsquo;s &lt;code&gt;/v1/account&lt;/code&gt; endpoint, which the victim&amp;rsquo;s browser would automatically attach the session cookie to. The response — containing the victim&amp;rsquo;s email address, account identifiers, and MFA status — would then be readable by the malicious origin due to the permissive CORS headers. The included PoC is a single-line &lt;code&gt;fetch&lt;/code&gt; call demonstrating the cross-origin credentialed read.&lt;/p&gt;</description>
-    </item>
-  </channel>
-</rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Data-Exposure on PoC Archive</title><link>https://poc.intelseclab.com/tags/data-exposure/</link><description>Recent content in Data-Exposure on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Mon, 06 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/data-exposure/index.xml" rel="self" type="application/rss+xml"/><item><title>Django QuerySet/Q Object SQL Injection via `_connector` Kwarg (CVE-2025-64459)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-64459-django-queryset-connector-sqli/</link><pubDate>Mon, 06 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-06_cve-2025-64459-django-queryset-connector-sqli/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-06&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Joshua Lent (joshualent)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2025-64459&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>Critical&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>9.1 (per NVD)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Weaponized&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>django, python, sql-injection, queryset, q-object, orm, cwe-89, data-exposure, sqlite&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Django ORM (&lt;code>QuerySet.filter()&lt;/code> / &lt;code>Q&lt;/code> object construction)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Multiple Django versions prior to the official security-patch release (per source repository); this demo pins &lt;code>django==5.2.7&lt;/code> to reproduce the issue&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>Python / Django 5.2, demo blog app served via &lt;code>manage.py runserver&lt;/code> or Gunicorn&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes (standard HTTP access to the vulnerable route)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>This is a SQL injection vulnerability in Django&amp;rsquo;s &lt;code>QuerySet&lt;/code>/&lt;code>Q&lt;/code> object construction: when application code builds a &lt;code>Q(**kwargs)&lt;/code> filter directly from user-controlled input (such as a raw &lt;code>request.GET&lt;/code> &lt;code>QueryDict&lt;/code>) without allow-listing keys, an attacker can supply the reserved &lt;code>_connector&lt;/code> (and &lt;code>_negated&lt;/code>) keyword that Django&amp;rsquo;s &lt;code>Q&lt;/code> constructor uses internally to choose the raw SQL boolean join operator (&lt;code>AND&lt;/code>/&lt;code>OR&lt;/code>) between conditions. Because that value is spliced into the compiled SQL as a literal keyword rather than being validated against &lt;code>AND&lt;/code>/&lt;code>OR&lt;/code>/&lt;code>XOR&lt;/code>, an attacker-supplied string is inserted verbatim into the &lt;code>WHERE&lt;/code> clause. The bundled demo app is a small Django blog whose &lt;code>post_list&lt;/code> view builds its filter dict straight from &lt;code>request.GET&lt;/code>, blocking only a handful of named fields (&lt;code>status&lt;/code>, &lt;code>is_archived&lt;/code>, &lt;code>id&lt;/code>, &lt;code>pk&lt;/code>) — leaving &lt;code>_connector&lt;/code> open. Visiting the home route with &lt;code>?_connector=OR 1=1 OR&lt;/code> turns the intended &amp;ldquo;published, non-archived posts only&amp;rdquo; filter into an always-true condition, exposing draft and archived posts that should not be publicly visible, and demonstrates a general primitive for SQL fragment injection through the ORM.&lt;/p></description></item><item><title>Realtime Collaboration Platform — CORS Misconfiguration Leading to Authenticated Data Exposure (CVE-2026-27579)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-27579-cors-misconfig-data-exposure/</link><pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-27579-cors-misconfig-data-exposure/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-05&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-03&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>AdityaBhatt3010&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-27579 (GHSA-qh5m-p8jh-hx88)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>7.4 (CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:H/I:N/A:N)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>PoC&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>cors, misconfiguration, appwrite, cross-origin, credentials, data-exposure, session-hijack, javascript&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>realtime-collaboration-platform (karnop), backed by Appwrite&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Version deploying the vulnerable Appwrite CORS configuration (per GHSA-qh5m-p8jh-hx88)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>JavaScript (browser fetch), targeting an Appwrite backend REST API&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No (attacker), Yes (victim must have an active session)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>The &lt;code>realtime-collaboration-platform&lt;/code> project configured its Appwrite backend to allow arbitrary cross-origin requests while also enabling &lt;code>Access-Control-Allow-Credentials: true&lt;/code>. Because the origin allow-list was effectively unrestricted, an attacker-controlled webpage could issue a credentialed &lt;code>fetch()&lt;/code> request to the platform&amp;rsquo;s &lt;code>/v1/account&lt;/code> endpoint, which the victim&amp;rsquo;s browser would automatically attach the session cookie to. The response — containing the victim&amp;rsquo;s email address, account identifiers, and MFA status — would then be readable by the malicious origin due to the permissive CORS headers. The included PoC is a single-line &lt;code>fetch&lt;/code> call demonstrating the cross-origin credentialed read.&lt;/p></description></item></channel></rss>
