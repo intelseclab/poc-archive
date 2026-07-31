@@ -1,0 +1,48 @@
+{{- $pages := .Pages -}}
+{{- with .RegularPagesRecursive }}{{ $pages = . }}{{ end -}}
+{{- $pages = $pages.ByDate.Reverse -}}
+{{- $limit := 50 -}}
+{{- if gt (len $pages) $limit }}{{ $pages = $pages | first $limit }}{{ end -}}
+{{- $title := .Title -}}
+{{- if .IsHome }}{{ $title = .Site.Title }}{{ end -}}
+{{- printf "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>" | safeHTML }}
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>{{ $title }}{{ if not .IsHome }} — {{ .Site.Title }}{{ end }}</title>
+    <link>{{ .Permalink }}</link>
+    <description>{{ if .IsHome }}{{ .Site.Params.description }}{{ else }}Latest proof-of-concept entries{{ with .Params.category }} in the {{ . }} category{{ end }}.{{ end }}</description>
+    <generator>Hugo</generator>
+    <language>{{ .Site.LanguageCode | default "en-us" }}</language>
+    <lastBuildDate>{{ with $pages }}{{ (index . 0).Date.Format "Mon, 02 Jan 2006 15:04:05 -0700" }}{{ end }}</lastBuildDate>
+    {{- $feedURL := .Permalink }}
+    {{- with .OutputFormats.Get "rss" }}{{ $feedURL = .Permalink }}{{ end }}
+    <atom:link href="{{ $feedURL }}" rel="self" type="application/rss+xml" />
+    {{- range $pages }}
+    {{- $sev := .Params.severity -}}
+    {{- $cvss := .Params.cvss_score -}}
+    {{- $cat := .Params.category -}}
+    {{- $cve := .Params.cve -}}
+    {{- $status := .Params.status -}}
+    {{- $product := .Params.affected_product -}}
+    {{- $tags := .Params.tags | default slice -}}
+    {{- $desc := "" -}}
+    {{- with $sev }}{{ $desc = printf "%s severity" . }}{{ end -}}
+    {{- with $cvss }}{{ $desc = printf "%s (CVSS %v)" $desc . }}{{ end -}}
+    {{- with $cat }}{{ $desc = printf "%s — %s" $desc . }}{{ end -}}
+    {{- with $cve }}{{ $desc = printf "%s · %s" $desc . }}{{ end -}}
+    {{- with $status }}{{ $desc = printf "%s. Status: %s." $desc . }}{{ end -}}
+    {{- with $product }}{{ $desc = printf "%s Affects: %s." $desc . }}{{ end -}}
+    {{- with $tags }}{{ $desc = printf "%s Tags: %s." $desc (delimit . ", ") }}{{ end -}}
+    <item>
+      <title>{{ .Title }}</title>
+      <link>{{ .Permalink }}</link>
+      <pubDate>{{ .Date.Format "Mon, 02 Jan 2006 15:04:05 -0700" }}</pubDate>
+      <guid>{{ .Permalink }}</guid>
+      <description>{{ $desc }}</description>
+      {{- with $cat }}<category>{{ . }}</category>{{ end -}}
+      {{- with $sev }}<category>{{ . }}</category>{{ end -}}
+      {{- range $tags }}<category>{{ . }}</category>{{ end -}}
+    </item>
+    {{- end }}
+  </channel>
+</rss>
