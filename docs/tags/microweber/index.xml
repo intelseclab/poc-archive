@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Microweber on PoC Archive</title><link>https://poc.intelseclab.com/tags/microweber/</link><description>Recent content in Microweber on PoC Archive</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Fri, 31 Jul 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://poc.intelseclab.com/tags/microweber/index.xml" rel="self" type="application/rss+xml"/><item><title>Microweber CMS Unauthenticated Path Traversal → Arbitrary File Read (CVE-2026-65694)</title><link>https://poc.intelseclab.com/pocs/web/2026-07-31_cve-2026-65694-microweber-path-traversal/</link><pubDate>Fri, 31 Jul 2026 00:00:00 +0000</pubDate><guid>https://poc.intelseclab.com/pocs/web/2026-07-31_cve-2026-65694-microweber-path-traversal/</guid><description>&lt;h2 id="metadata">Metadata&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Date Added&lt;/strong>&lt;/td>
+ &lt;td>2026-07-31&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Last Updated&lt;/strong>&lt;/td>
+ &lt;td>2026-07-31&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Author / Researcher&lt;/strong>&lt;/td>
+ &lt;td>Bobur Abdugafforov (Mahadsec)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVE / Advisory&lt;/strong>&lt;/td>
+ &lt;td>CVE-2026-65694 (VulnCheck advisory)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Category&lt;/strong>&lt;/td>
+ &lt;td>web&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Severity&lt;/strong>&lt;/td>
+ &lt;td>High&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>CVSS Score&lt;/strong>&lt;/td>
+ &lt;td>7.5 (CVSS 3.1, AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N); 8.7 (CVSS 4.0)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Status&lt;/strong>&lt;/td>
+ &lt;td>Unpatched&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Tags&lt;/strong>&lt;/td>
+ &lt;td>microweber, path-traversal, cwe-22, unauthenticated, arbitrary-file-read, laravel, query-string-override&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Related&lt;/strong>&lt;/td>
+ &lt;td>N/A&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="affected-target">Affected Target&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Field&lt;/th>
+ &lt;th>Value&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>Software / System&lt;/strong>&lt;/td>
+ &lt;td>Microweber CMS — &lt;code>ServeStaticFileContoller::serveFromUserfiles()&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Versions Affected&lt;/strong>&lt;/td>
+ &lt;td>Microweber 0 through 2.0.20 (all released versions); vulnerable line still present on current &lt;code>master&lt;/code> as of ingestion&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Language / Platform&lt;/strong>&lt;/td>
+ &lt;td>PHP / Laravel&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Authentication Required&lt;/strong>&lt;/td>
+ &lt;td>No&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>Network Access Required&lt;/strong>&lt;/td>
+ &lt;td>Yes — any reachable HTTP(S) endpoint serving the app&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="summary">Summary&lt;/h2>
+&lt;p>Microweber CMS exposes an unauthenticated &lt;code>GET /userfiles/{path}&lt;/code> route intended to serve files from its &lt;code>userfiles/&lt;/code> upload directory. The controller reads the path via &lt;code>$request-&amp;gt;path&lt;/code> — a Laravel magic-property accessor that falls back to the request&amp;rsquo;s query-string bag rather than the route-bound segment — so an attacker-supplied &lt;code>?path=&lt;/code> query parameter silently overrides the intended &lt;code>{path}&lt;/code> route value. The resulting path is passed through &lt;code>normalize_path()&lt;/code>, which does not strip &lt;code>..&lt;/code> sequences, and the route carries no auth middleware. The combination lets any unauthenticated remote attacker read arbitrary files off the filesystem, including the Laravel &lt;code>.env&lt;/code> (leaking &lt;code>APP_KEY&lt;/code>, database credentials, mail/cloud secrets) and OS files such as &lt;code>/etc/passwd&lt;/code>.&lt;/p></description></item></channel></rss>
