@@ -288,9 +288,9 @@ def main():
             f.write('\n')
             f.write(content)
 
-        # Copy bundled exploit files (non-README, non-hidden) into the content dir
+        # Copy bundled exploit files (non-README, non-index, non-hidden) into the content dir
         for src in sorted(readme.parent.iterdir()):
-            if src.name == "README.md" or src.name.startswith('.') or not src.is_file():
+            if src.name in ("README.md", "index.md") or src.name.startswith('.') or not src.is_file():
                 continue
             shutil.copy2(src, out_dir / src.name)
 
