@@ -29,6 +29,15 @@
     <!-- Mobile metadata (sidebar collapses here) -->
     <div class="mt-6 lg:hidden">{{ partial "poc-meta.html" . }}</div>
 
+    {{- if .TableOfContents }}
+    <details class="mt-6 lg:hidden group rounded-lg border border-zinc-200 dark:border-zinc-800">
+      <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400 select-none">On this page</summary>
+      <div class="toc px-4 pb-3 text-sm leading-relaxed border-t border-zinc-100 dark:border-zinc-800">
+        {{ .TableOfContents }}
+      </div>
+    </details>
+    {{- end }}
+
     <div class="prose prose-zinc mt-8 max-w-none dark:prose-invert
                 prose-headings:font-mono prose-headings:tracking-tight
                 prose-a:text-emerald-600 dark:prose-a:text-emerald-400
@@ -147,7 +156,16 @@
 
   <!-- Sidebar (desktop) -->
   <aside class="hidden lg:order-2 lg:block">
-    <div class="sticky top-20">{{ partial "poc-meta.html" . }}</div>
+    <div class="sticky top-20">
+      {{- if .TableOfContents }}
+      <nav class="mb-6">
+        <p class="font-mono text-xs uppercase tracking-wide text-zinc-400 dark:text-zinc-500 mb-2">On this page</p>
+        <div class="toc text-sm leading-relaxed">
+          {{ .TableOfContents }}
+        </div>
+      </nav>
+      {{- end }}
+      {{ partial "poc-meta.html" . }}
   </aside>
 </article>
 {{ end }}

@@ -90,6 +90,18 @@
           </div>
         </a>
       {{ end }}
+      {{- $std := 0 -}}
+      {{- range $sevOrder }}{{ $std = add $std (len (where $pocs "Params.severity" .)) }}{{ end -}}
+      {{- $other := sub $total $std -}}
+      {{- if gt $other 0 }}
+        <div class="flex items-center justify-between font-mono text-xs">
+          <span class="text-zinc-600 dark:text-zinc-300">Other</span>
+          <span class="text-zinc-500 dark:text-zinc-400">{{ $other }}</span>
+        </div>
+        <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+          <div class="h-full rounded-full bg-zinc-400" style="width: {{ printf "%.0f" (mul (div (float $other) (float $total)) 100) }}%"></div>
+        </div>
+      {{- end }}
     </div>
   </div>
 

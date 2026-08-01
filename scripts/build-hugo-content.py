@@ -75,6 +75,81 @@ def determine_patched(text):
     return False
 
 
+def normalize_severity(sev):
+    """Map non-standard severity values to the canonical enum set."""
+    if not sev:
+        return sev
+    # Strip parenthetical suffixes: "Critical (per vendor advisory)" → "Critical"
+    s = re.sub(r'\s*\([^)]*\)\s*$', '', sev).strip()
+    lower = s.lower()
+    # Known non-standard vendor severities → canonical
+    if lower.startswith('not disclosed'):
+        return 'Info'
+    if lower == 'important':
+        return 'High'
+    if lower == 'moderate':
+        return 'Medium'
+    # Standard values pass through
+    if lower in ('critical', 'high', 'medium', 'low', 'info'):
+        return s
+    # Unknown — keep as-is but warn
+    print(f"  WARN unrecognized severity '{sev}'", file=sys.stderr)
+    return sev
+
+
+def strip_placeholder_sections(text):
+    """Remove Screenshots/Evidence sections that contain only placeholder content."""
+    # Match: ## Screenshots / Evidence  ... through to the next --- or ## heading
+    # Only strip if the body contains only placeholder text (no real images/URLs/evidence)
+    lines = text.split('\n')
+    result = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        m = re.match(r'^##\s+Screenshots\s*/\s*Evidence\s*$', line, re.IGNORECASE)
+        if not m:
+            result.append(line)
+            i += 1
+            continue
+
+        # Collect the section body
+        j = i + 1
+        body_lines = []
+        while j < len(lines):
+            if re.match(r'^##\s+', lines[j]) or lines[j].strip() == '---':
+                break
+            body_lines.append(lines[j])
+            j += 1
+
+        body = '\n'.join(body_lines)
+
+        # Heuristic: if the body has no real evidence (image, http link, or file reference), strip
+        has_real = bool(
+            re.search(r'!\[', body) or                         # markdown image
+            re.search(r'https?://', body) or                   # external URL
+            re.search(r'\.(png|jpg|jpeg|gif|svg|webp|pdf)', body, re.IGNORECASE)
+        )
+        # Also check for meaningful text beyond placeholder patterns
+        meaningful = re.sub(
+            r'<!--.*?-->|screenshots/\s*—.*|`screenshots/`\s*—.*|- N/A|None included.*|'
+            r'- `[^`]+` — add authorized.*|- Add authorized.*',
+            '', body, flags=re.IGNORECASE | re.DOTALL
+        ).strip()
+        if not has_real and not meaningful:
+            # Skip this section entirely
+            i = j
+            # Skip trailing --- if present
+            if i < len(lines) and lines[i].strip() == '---':
+                i += 1
+            continue
+        else:
+            result.append(line)
+            result.extend(body_lines)
+            i = j
+
+    return '\n'.join(result)
+
+
 def strip_h1(text):
     """Remove H1 heading and the immediately following --- separator."""
     lines = text.split('\n')
@@ -137,7 +212,7 @@ def process(readme_path):
     author = extract_field(text, "Author / Researcher")
     cve = extract_field(text, "CVE / Advisory")
     category = extract_field(text, "Category")
-    severity = extract_field(text, "Severity")
+    severity = normalize_severity(extract_field(text, "Severity"))
     cvss_str = extract_field(text, "CVSS Score")
     status = extract_field(text, "Status")
     tags_str = extract_field(text, "Tags")
@@ -182,6 +257,7 @@ def process(readme_path):
     fm['patched'] = patched
 
     content = strip_h1(text)
+    content = strip_placeholder_sections(content)
     return fm, content
 
 
@@ -219,6 +295,24 @@ def main():
             shutil.copy2(src, out_dir / src.name)
 
         count += 1
+
+    # Generate _index.md for the root pocs section and each category sub-section.
+    categories = set()
+    for content_dir in CONTENT_DIR.iterdir():
+        if content_dir.is_dir() and not content_dir.name.startswith('.'):
+            categories.add(content_dir.name)
+
+    # Root pocs section
+    root_index = CONTENT_DIR / "_index.md"
+    with root_index.open('w', encoding='utf-8') as f:
+        write_frontmatter(f, {'title': 'PoCs'})
+        f.write('\nAll proof-of-concept entries in the archive.\n')
+
+    # Per-category section
+    for cat in sorted(categories):
+        cat_index = CONTENT_DIR / cat / "_index.md"
+        with cat_index.open('w', encoding='utf-8') as f:
+            write_frontmatter(f, {'title': cat})
 
     print(f"Generated {count} Hugo content pages ({errors} errors).")
 

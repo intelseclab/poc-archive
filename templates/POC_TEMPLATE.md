@@ -136,7 +136,8 @@ uid=33(www-data) gid=33(www-data) groups=33(www-data)
 
 ## Screenshots / Evidence
 
-<!-- Add paths to screenshots or embed them -->
+<!-- OPTIONAL: delete this entire section if you have no real screenshots or evidence files. -->
+<!-- Placeholder-only sections are stripped at build time. -->
 - `screenshots/01_initial_request.png` — Initial crafted request in Burp
 - `screenshots/02_rce_proof.png` — RCE confirmed via reverse shell
 

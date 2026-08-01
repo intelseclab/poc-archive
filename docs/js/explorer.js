@@ -254,6 +254,27 @@
   }
 
   // ---- Sync controls to state ----
+  function updateActiveIndicator() {
+    var n = 0;
+    if (!fixedCategory) n += state.categories.length;
+    n += state.severities.length;
+    if (state.patched !== "all") n++;
+    if (state.from || state.to) n++;
+    if (state.sort !== "date") n++;
+
+    var badge = document.getElementById("filter-count");
+    if (badge) {
+      if (n > 0) { badge.textContent = n + " filter" + (n > 1 ? "s" : ""); badge.classList.remove("hidden"); }
+      else badge.classList.add("hidden");
+    }
+    if (clearEl) clearEl.classList.toggle("hidden", n === 0);
+
+    // Highlight date inputs when they hold a value
+    var activeInputCls = "!border-emerald-400";
+    if (fromEl) fromEl.classList.toggle(activeInputCls, !!state.from);
+    if (toEl)   toEl.classList.toggle(activeInputCls,   !!state.to);
+  }
+
   function syncControls() {
     if (searchEl) searchEl.value = state.q;
     if (fromEl) fromEl.value = state.from;
@@ -273,6 +294,8 @@
     });
     var dirBtn = document.getElementById("sort-dir");
     if (dirBtn) dirBtn.textContent = state.dir === "asc" ? "↑" : "↓";
+
+    updateActiveIndicator();
   }
 
   // ---- Events ----
