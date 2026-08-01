@@ -1,0 +1,20 @@
+{{- /* Exploitation-signal chips. Context (.) is the page.
+       Each chip corresponds to a component of Params.priority, so the
+       ranking always explains itself. Pass a dict with "compact" true
+       for the dense row variant. */ -}}
+{{- $p := .page -}}
+{{- $compact := .compact | default false -}}
+{{- $cls := "inline-flex items-center gap-1 rounded border px-1.5 font-mono text-[10px] uppercase tracking-wide" -}}
+{{- if not $compact }}{{ $cls = "inline-flex items-center gap-1 rounded border px-2 py-0.5 font-mono text-[11px] uppercase tracking-wide" }}{{ end -}}
+
+{{- if $p.Params.kev }}
+<span class="{{ $cls }} border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400" title="Listed in the CISA Known Exploited Vulnerabilities catalog{{ with $p.Params.kev_added }} — added {{ . }}{{ end }}">KEV</span>
+{{- end }}
+{{- if $p.Params.kev_ransomware }}
+<span class="{{ $cls }} border-fuchsia-500/40 bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400" title="Known use in ransomware campaigns">Ransomware</span>
+{{- end }}
+{{- with $p.Params.epss }}
+  {{- if ge . 0.10 }}
+<span class="{{ $cls }} border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400" title="FIRST EPSS — probability of exploitation in the next 30 days">EPSS {{ printf "%.0f%%" (mul . 100) }}</span>
+  {{- end }}
+{{- end }}

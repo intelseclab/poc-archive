@@ -9,6 +9,13 @@
   data-patched="{{ $p.Params.patched }}"
   data-date="{{ $p.Date.Format "2006-01-02" }}"
   data-permalink="{{ $p.RelPermalink }}"
+  data-kev="{{ if $p.Params.kev }}true{{ else }}false{{ end }}"
+  data-ransomware="{{ if $p.Params.kev_ransomware }}true{{ else }}false{{ end }}"
+  data-overdue="{{ if $p.Params.kev_overdue }}true{{ else }}false{{ end }}"
+  data-epss="{{ $p.Params.epss | default 0 }}"
+  data-priority="{{ $p.Params.priority | default 0 }}"
+  data-title="{{ $p.Title }}"
+  data-cve="{{ $p.Params.cve | default "" }}"
 >
   <div class="order-2 sm:order-1">{{ partial "severity-chip.html" $p.Params.severity }}</div>
 
@@ -24,6 +31,8 @@
       {{ else }}
         <span class="inline-flex items-center gap-1 rounded border border-amber-400/40 px-1.5 text-[10px] uppercase text-amber-600 dark:text-amber-400">unpatched</span>
       {{ end }}
+      {{ partial "signal-chips.html" (dict "page" $p "compact" true) }}
+      <span class="poc-new-badge hidden inline-flex items-center gap-1 rounded border border-emerald-400/50 bg-emerald-400/10 px-1.5 text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400">new</span>
     </div>
   </div>
 

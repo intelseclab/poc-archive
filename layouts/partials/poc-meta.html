@@ -2,6 +2,24 @@
 <div class="space-y-5 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
   {{ with .Params.cvss_score }}{{ partial "cvss-gauge.html" . }}{{ end }}
 
+  {{- $signals := or .Params.kev .Params.kev_ransomware (and .Params.epss (ge .Params.epss 0.10)) -}}
+  {{- if $signals }}
+  <div class="rounded-md border border-red-500/25 bg-red-500/5 p-3">
+    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Exploitation signals</p>
+    <div class="mt-2 flex flex-wrap gap-1.5">{{ partial "signal-chips.html" (dict "page" . "compact" false) }}</div>
+    {{- if .Params.kev }}
+    <p class="mt-2 font-mono text-[11px] leading-relaxed text-zinc-600 dark:text-zinc-400">
+      Confirmed exploited in the wild.{{ with .Params.kev_added }} Added to CISA KEV {{ . }}.{{ end }}{{ with .Params.kev_due }} Federal remediation deadline {{ . }}.{{ end }}
+    </p>
+    {{- end }}
+    {{- with .Params.epss }}
+    <p class="mt-1 font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
+      EPSS {{ printf "%.1f%%" (mul . 100) }}{{ with $.Params.epss_percentile }} · {{ printf "%.0f" (mul . 100) }}th percentile{{ end }}
+    </p>
+    {{- end }}
+  </div>
+  {{- end }}
+
   <dl class="space-y-3 font-mono text-xs">
     <div>
       <dt class="text-zinc-500 dark:text-zinc-400">Severity</dt>

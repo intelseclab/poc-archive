@@ -45,6 +45,15 @@
     </div>
 
     <div>
+      <p class="mb-2 font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Exploitation signals</p>
+      <div class="flex flex-wrap gap-1.5" id="filter-signal">
+        <button type="button" data-value="kev" class="filter-pill rounded-md border border-zinc-300 px-2.5 py-1 font-mono text-xs text-zinc-600 transition hover:border-red-400 hover:text-red-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-red-400 dark:hover:text-red-400" title="Listed in the CISA Known Exploited Vulnerabilities catalog">KEV</button>
+        <button type="button" data-value="ransomware" class="filter-pill rounded-md border border-zinc-300 px-2.5 py-1 font-mono text-xs text-zinc-600 transition hover:border-fuchsia-400 hover:text-fuchsia-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-fuchsia-400 dark:hover:text-fuchsia-400" title="Known ransomware campaign use">Ransomware</button>
+        <button type="button" data-value="epss" class="filter-pill rounded-md border border-zinc-300 px-2.5 py-1 font-mono text-xs text-zinc-600 transition hover:border-amber-400 hover:text-amber-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-amber-400 dark:hover:text-amber-400" title="EPSS probability of 50% or higher">High EPSS</button>
+      </div>
+    </div>
+
+    <div>
       <p class="mb-2 font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Patch status</p>
       <div class="flex flex-wrap gap-1.5" id="filter-patched">
         <button type="button" data-value="all" class="filter-radio rounded-md border border-emerald-400 bg-emerald-400/10 px-2.5 py-1 font-mono text-xs text-emerald-600 dark:text-emerald-400">all</button>
@@ -67,6 +76,7 @@
   <div class="mt-3 flex flex-wrap items-center gap-2">
     <span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500">Sort</span>
     <div class="flex gap-1" id="sort-controls">
+      <button type="button" data-sort="priority" class="sort-btn rounded-md border border-zinc-300 px-2.5 py-1 font-mono text-xs text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400" title="Composite urgency: KEV + ransomware + overdue + EPSS + unpatched + CVSS + recency">Priority</button>
       <button type="button" data-sort="date"     class="sort-btn rounded-md border border-zinc-300 px-2.5 py-1 font-mono text-xs text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">Date</button>
       <button type="button" data-sort="cvss"     class="sort-btn rounded-md border border-zinc-300 px-2.5 py-1 font-mono text-xs text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">CVSS</button>
       <button type="button" data-sort="severity" class="sort-btn rounded-md border border-zinc-300 px-2.5 py-1 font-mono text-xs text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">Severity</button>
@@ -80,8 +90,20 @@
       <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">
         <span id="poc-count">{{ len $pages }}</span> result(s)
         <span id="filter-count" class="ml-2 hidden rounded-full bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] text-emerald-600 dark:text-emerald-400"></span>
+        <button type="button" id="new-since" class="ml-2 hidden rounded-full border border-emerald-400/50 bg-emerald-400/10 px-2 py-0.5 font-mono text-[10px] text-emerald-600 transition hover:bg-emerald-400/20 dark:text-emerald-400" title="Show only entries added since your last visit"></button>
       </p>
-      <button type="button" id="filter-clear" class="hidden font-mono text-xs text-zinc-500 underline-offset-2 transition hover:text-emerald-600 hover:underline dark:text-zinc-400 dark:hover:text-emerald-400">clear filters</button>
+      <div class="flex items-center gap-3">
+        <div class="relative">
+          <button type="button" id="export-toggle" class="font-mono text-xs text-zinc-500 underline-offset-2 transition hover:text-emerald-600 hover:underline dark:text-zinc-400 dark:hover:text-emerald-400">export ▾</button>
+          <div id="export-menu" class="absolute right-0 z-20 mt-1 hidden w-44 overflow-hidden rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+            <button type="button" data-fmt="csv"  class="export-opt block w-full px-3 py-1.5 text-left font-mono text-xs text-zinc-600 transition hover:bg-zinc-100 hover:text-emerald-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-emerald-400">CSV</button>
+            <button type="button" data-fmt="json" class="export-opt block w-full px-3 py-1.5 text-left font-mono text-xs text-zinc-600 transition hover:bg-zinc-100 hover:text-emerald-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-emerald-400">JSON</button>
+            <button type="button" data-fmt="cves" class="export-opt block w-full px-3 py-1.5 text-left font-mono text-xs text-zinc-600 transition hover:bg-zinc-100 hover:text-emerald-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-emerald-400">CVE list (.txt)</button>
+            <button type="button" data-fmt="stix" class="export-opt block w-full px-3 py-1.5 text-left font-mono text-xs text-zinc-600 transition hover:bg-zinc-100 hover:text-emerald-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-emerald-400">STIX 2.1 bundle</button>
+          </div>
+        </div>
+        <button type="button" id="filter-clear" class="hidden font-mono text-xs text-zinc-500 underline-offset-2 transition hover:text-emerald-600 hover:underline dark:text-zinc-400 dark:hover:text-emerald-400">clear filters</button>
+      </div>
     </div>
     <div id="poc-stats" class="mt-2 flex flex-wrap gap-1.5"></div>
   </div>

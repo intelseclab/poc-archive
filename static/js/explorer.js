@@ -27,15 +27,26 @@
   };
 
   var state = {
-    q: "", categories: [], severities: [], patched: "all",
-    from: "", to: "",
+    q: "", categories: [], severities: [], signals: [], patched: "all",
+    from: "", to: "", newOnly: false,
     sort: "date", dir: "desc",
     page: 1, perPage: 25,
   };
 
+  // ---- "new since last visit" ----
+  var LAST_VISIT_KEY = "poc:lastVisit";
+  var lastVisit = null;
+  try { lastVisit = localStorage.getItem(LAST_VISIT_KEY); } catch (e) {}
+  function stampVisit() {
+    try { localStorage.setItem(LAST_VISIT_KEY, new Date().toISOString().slice(0, 10)); } catch (e) {}
+  }
+  window.addEventListener("pagehide", stampVisit);
+  window.addEventListener("beforeunload", stampVisit);
+
   var fuse = null;
   var indexData = null;
   var searchMatches = null;
+  var lastVisible = [];
 
   function setPillActive(btn, active) {
     if (active) ACTIVE.forEach(function (c) { btn.classList.add(c); });
@@ -48,6 +59,7 @@
     state.q          = p.get("q") || "";
     state.categories = (p.get("category") || "").split(",").filter(Boolean);
     state.severities = (p.get("severity") || "").split(",").filter(Boolean);
+    state.signals    = (p.get("signal") || "").split(",").filter(Boolean);
     state.patched    = p.get("patched") || "all";
     state.from       = p.get("from") || "";
     state.to         = p.get("to") || "";
@@ -64,6 +76,7 @@
     if (state.q) p.set("q", state.q);
     if (!fixedCategory && state.categories.length) p.set("category", state.categories.join(","));
     if (state.severities.length) p.set("severity", state.severities.join(","));
+    if (state.signals.length) p.set("signal", state.signals.join(","));
     if (state.patched !== "all") p.set("patched", state.patched);
     if (state.from) p.set("from", state.from);
     if (state.to) p.set("to", state.to);
@@ -88,6 +101,15 @@
       av = SEV_ORDER[a.getAttribute("data-severity")] || 0;
       bv = SEV_ORDER[b.getAttribute("data-severity")] || 0;
       return (av - bv) * mul;
+    }
+    if (state.sort === "priority") {
+      av = parseInt(a.getAttribute("data-priority")) || 0;
+      bv = parseInt(b.getAttribute("data-priority")) || 0;
+      if (av !== bv) return (av - bv) * mul;
+      // tie-break on date so equal-priority entries stay stable and recent-first
+      av = a.getAttribute("data-date") || "";
+      bv = b.getAttribute("data-date") || "";
+      return (av < bv ? -1 : av > bv ? 1 : 0) * mul;
     }
     // date
     av = a.getAttribute("data-date") || "";
@@ -178,6 +200,120 @@
     });
   }
 
+  // ---- Export ----
+  // One row -> one plain object. Every format below derives from this, so
+  // adding a field means touching exactly one place.
+  function rowToObj(row) {
+    return {
+      title: row.getAttribute("data-title") || "",
+      cve: row.getAttribute("data-cve") || "",
+      category: row.getAttribute("data-category") || "",
+      severity: row.getAttribute("data-severity") || "",
+      cvss: parseFloat(row.getAttribute("data-cvss")) || 0,
+      epss: parseFloat(row.getAttribute("data-epss")) || 0,
+      kev: row.getAttribute("data-kev") === "true",
+      ransomware: row.getAttribute("data-ransomware") === "true",
+      overdue: row.getAttribute("data-overdue") === "true",
+      patched: row.getAttribute("data-patched") === "true",
+      priority: parseInt(row.getAttribute("data-priority")) || 0,
+      date: row.getAttribute("data-date") || "",
+      url: location.origin + (row.getAttribute("data-permalink") || ""),
+    };
+  }
+
+  function download(name, mime, text) {
+    var blob = new Blob([text], { type: mime });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  function csvCell(v) {
+    var s = String(v == null ? "" : v);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+
+  function exportAs(fmt, items) {
+    var stamp = new Date().toISOString().slice(0, 10);
+    if (!items.length) return;
+
+    if (fmt === "csv") {
+      var cols = ["cve", "title", "category", "severity", "cvss", "epss", "kev",
+                  "ransomware", "overdue", "patched", "priority", "date", "url"];
+      var lines = [cols.join(",")];
+      items.forEach(function (o) {
+        lines.push(cols.map(function (c) { return csvCell(o[c]); }).join(","));
+      });
+      download("poc-archive-" + stamp + ".csv", "text/csv", lines.join("\n"));
+
+    } else if (fmt === "json") {
+      download("poc-archive-" + stamp + ".json", "application/json",
+        JSON.stringify({ generated: new Date().toISOString(), count: items.length,
+                         source: location.origin, pocs: items }, null, 2));
+
+    } else if (fmt === "cves") {
+      var seen = {}, out = [];
+      items.forEach(function (o) {
+        var m = (o.cve || "").match(/CVE-\d{4}-\d{4,7}/gi);
+        if (m) m.forEach(function (c) {
+          c = c.toUpperCase();
+          if (!seen[c]) { seen[c] = 1; out.push(c); }
+        });
+      });
+      download("cve-list-" + stamp + ".txt", "text/plain", out.join("\n") + "\n");
+
+    } else if (fmt === "stix") {
+      var now = new Date().toISOString();
+      var objs = [{
+        type: "identity", spec_version: "2.1",
+        id: "identity--7c3f5a10-0000-4000-8000-poc0archive01",
+        created: now, modified: now,
+        name: "intelseclab PoC Archive", identity_class: "organization",
+      }];
+      items.forEach(function (o, i) {
+        var m = (o.cve || "").match(/CVE-\d{4}-\d{4,7}/i);
+        if (!m) return;
+        var cve = m[0].toUpperCase();
+        objs.push({
+          type: "vulnerability", spec_version: "2.1",
+          id: "vulnerability--" + uuidFrom(cve + i),
+          created: now, modified: now,
+          created_by_ref: objs[0].id,
+          name: cve,
+          description: o.title,
+          external_references: [
+            { source_name: "cve", external_id: cve },
+            { source_name: "poc-archive", url: o.url },
+          ],
+          labels: [o.severity.toLowerCase()].concat(
+            o.kev ? ["cisa-kev"] : []).concat(
+            o.ransomware ? ["ransomware"] : []),
+        });
+      });
+      download("poc-archive-stix-" + stamp + ".json", "application/json",
+        JSON.stringify({ type: "bundle", id: "bundle--" + uuidFrom(stamp), objects: objs }, null, 2));
+    }
+  }
+
+  // Deterministic RFC-4122-shaped v4 id from a seed (no crypto dependency).
+  function uuidFrom(seed) {
+    var h = 0x811c9dc5;
+    for (var i = 0; i < seed.length; i++) {
+      h ^= seed.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    var hex = "";
+    for (var j = 0; j < 8; j++) {
+      h = (h * 1664525 + 1013904223) >>> 0;
+      hex += ("00000000" + h.toString(16)).slice(-8);
+    }
+    return hex.slice(0, 8) + "-" + hex.slice(8, 12) + "-4" + hex.slice(13, 16) +
+           "-a" + hex.slice(17, 20) + "-" + hex.slice(20, 32);
+  }
+
   // ---- Filtering + sorting + pagination ----
   function applyFilters() {
     // Determine which rows pass the current filters
@@ -194,6 +330,17 @@
       if (ok && state.patched !== "all" && patched !== state.patched) ok = false;
       if (ok && state.from && date < state.from) ok = false;
       if (ok && state.to && date > state.to) ok = false;
+      // Signals are AND-ed: "KEV + Ransomware" means both must hold.
+      if (ok && state.signals.length) {
+        for (var si = 0; si < state.signals.length; si++) {
+          var sg = state.signals[si];
+          if (sg === "kev" && row.getAttribute("data-kev") !== "true") { ok = false; break; }
+          if (sg === "ransomware" && row.getAttribute("data-ransomware") !== "true") { ok = false; break; }
+          if (sg === "overdue" && row.getAttribute("data-overdue") !== "true") { ok = false; break; }
+          if (sg === "epss" && (parseFloat(row.getAttribute("data-epss")) || 0) < 0.5) { ok = false; break; }
+        }
+      }
+      if (ok && state.newOnly && lastVisit && date <= lastVisit) ok = false;
       if (ok && searchMatches && !searchMatches.has(link)) ok = false;
       if (ok) matchSet.add(row);
     });
@@ -203,6 +350,7 @@
     var visible = sorted.filter(function (r) { return matchSet.has(r); });
 
     updateStats(visible);
+    lastVisible = visible;
 
     var total = visible.length;
     var totalPages = Math.max(1, Math.ceil(total / state.perPage));
@@ -258,8 +406,10 @@
     var n = 0;
     if (!fixedCategory) n += state.categories.length;
     n += state.severities.length;
+    n += state.signals.length;
     if (state.patched !== "all") n++;
     if (state.from || state.to) n++;
+    if (state.newOnly) n++;
     if (state.sort !== "date") n++;
 
     var badge = document.getElementById("filter-count");
@@ -285,6 +435,9 @@
     });
     document.querySelectorAll("#filter-severity .filter-pill").forEach(function (btn) {
       setPillActive(btn, state.severities.indexOf(btn.getAttribute("data-value")) !== -1);
+    });
+    document.querySelectorAll("#filter-signal .filter-pill").forEach(function (btn) {
+      setPillActive(btn, state.signals.indexOf(btn.getAttribute("data-value")) !== -1);
     });
     document.querySelectorAll("#filter-patched .filter-radio").forEach(function (btn) {
       setPillActive(btn, btn.getAttribute("data-value") === state.patched);
@@ -318,6 +471,45 @@
       update();
     });
   });
+
+  document.querySelectorAll("#filter-signal .filter-pill").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var v = btn.getAttribute("data-value");
+      var i = state.signals.indexOf(v);
+      if (i === -1) state.signals.push(v); else state.signals.splice(i, 1);
+      setPillActive(btn, i === -1);
+      update();
+    });
+  });
+
+  // Export menu
+  var exportToggle = document.getElementById("export-toggle");
+  var exportMenu = document.getElementById("export-menu");
+  if (exportToggle && exportMenu) {
+    exportToggle.addEventListener("click", function (e) {
+      e.stopPropagation();
+      exportMenu.classList.toggle("hidden");
+    });
+    document.addEventListener("click", function () { exportMenu.classList.add("hidden"); });
+    exportMenu.addEventListener("click", function (e) { e.stopPropagation(); });
+    exportMenu.querySelectorAll(".export-opt").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        exportAs(btn.getAttribute("data-fmt"), lastVisible.map(rowToObj));
+        exportMenu.classList.add("hidden");
+      });
+    });
+  }
+
+  // "N new since last visit" — click to filter down to just those
+  var newSinceEl = document.getElementById("new-since");
+  if (newSinceEl) {
+    newSinceEl.addEventListener("click", function () {
+      state.newOnly = !state.newOnly;
+      newSinceEl.classList.toggle("ring-1", state.newOnly);
+      newSinceEl.classList.toggle("ring-emerald-400", state.newOnly);
+      update();
+    });
+  }
 
   document.querySelectorAll("#filter-patched .filter-radio").forEach(function (btn) {
     btn.addEventListener("click", function () {
@@ -373,17 +565,34 @@
 
   if (clearEl) {
     clearEl.addEventListener("click", function () {
-      state.q = ""; state.categories = []; state.severities = [];
-      state.patched = "all"; state.from = ""; state.to = "";
+      state.q = ""; state.categories = []; state.severities = []; state.signals = [];
+      state.patched = "all"; state.from = ""; state.to = ""; state.newOnly = false;
       state.sort = "date"; state.dir = "desc";
       state.page = 1; state.perPage = 25;
       searchMatches = null;
+      if (newSinceEl) newSinceEl.classList.remove("ring-1", "ring-emerald-400");
       syncControls();
       update();
     });
   }
 
   // ---- Init ----
+  // Flag entries added since the previous visit, before the first render.
+  if (lastVisit) {
+    var newCount = 0;
+    rows.forEach(function (row) {
+      if ((row.getAttribute("data-date") || "") > lastVisit) {
+        newCount++;
+        var b = row.querySelector(".poc-new-badge");
+        if (b) b.classList.remove("hidden");
+      }
+    });
+    if (newCount && newSinceEl) {
+      newSinceEl.textContent = "✨ " + newCount + " new since last visit";
+      newSinceEl.classList.remove("hidden");
+    }
+  }
+
   readURL();
   syncControls();
   applyFilters();

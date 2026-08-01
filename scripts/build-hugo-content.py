@@ -1,12 +1,110 @@
 #!/usr/bin/env python3
 """Convert pocs/*/README.md into Hugo content pages under content/pocs/."""
 
-import re, sys, datetime, shutil
+import re, sys, json, datetime, shutil
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
 POCS_DIR = REPO_ROOT / "pocs"
 CONTENT_DIR = REPO_ROOT / "content" / "pocs"
+INTEL_FILE = REPO_ROOT / "data" / "cve-intel.json"
+
+
+# Vendor/technology tokens used to group free-text affected_product values.
+# Order matters: more specific names must precede the generic ones they contain.
+VENDOR_TOKENS = [
+    'PAN-OS', 'Palo Alto', 'Check Point', 'SonicWall', 'FortiOS', 'Fortinet',
+    'ManageEngine', 'SolarWinds', 'Atlassian', 'Confluence', 'Jira', 'MOVEit',
+    'SharePoint', 'Exchange', 'Outlook', 'Windows', 'Microsoft', 'Azure',
+    'WordPress', 'Joomla', 'Drupal', 'Magento', 'Ghost', 'Craft', 'Sitecore',
+    'Next.js', 'Node.js', 'React', 'Laravel', 'Django', 'Rails', 'Spring',
+    'Tomcat', 'Struts', 'Log4j', 'Fastjson', 'Jenkins', 'GitLab', 'TeamCity',
+    'JetBrains', 'Kubernetes', 'Docker', 'Elastic', 'Grafana', 'Redis',
+    'PostgreSQL', 'MySQL', 'MongoDB', 'Apache', 'Nginx', 'OpenSSL',
+    'Cisco', 'Ivanti', 'Citrix', 'VMware', 'Veeam', 'Juniper', 'BIG-IP', 'F5',
+    'QNAP', 'Synology', 'TP-Link', 'D-Link', 'Netgear', 'Zyxel',
+    'Adobe', 'Oracle', 'SAP', 'IBM', 'Zoho', 'Salesforce', 'ServiceNow',
+    'Splunk', 'Nagios', 'Zabbix', 'pfSense', 'Zimbra', 'Roundcube',
+    'Google', 'Chrome', 'Android', 'Linux', 'Langflow', 'Ollama',
+    'PHP', 'Java', 'Python', 'Git',
+]
+
+
+def extract_vendor(product):
+    """Collapse a free-text affected_product into a groupable vendor label.
+
+    affected_product is ~97% unique across the archive, so it cannot be
+    grouped directly; the vendor prefix concentrates it usefully
+    (top-15 vendors cover ~44% of entries).
+    """
+    if not product:
+        return ""
+    low = product.lower()
+    for v in VENDOR_TOKENS:
+        if v.lower() in low:
+            return v
+    m = re.match(r'[\s"]*([A-Za-z][\w.\-]+)', product)
+    return m.group(1) if m else ""
+
+
+def load_intel():
+    """Load the KEV/EPSS snapshot written by scripts/enrich-cve-intel.py.
+
+    Absent or malformed snapshot is not fatal — the site simply builds
+    without exploitation signals rather than failing.
+    """
+    if not INTEL_FILE.exists():
+        print("  note: data/cve-intel.json absent — building without KEV/EPSS signals",
+              file=sys.stderr)
+        return {"kev": {}, "epss": {}, "generated": ""}
+    try:
+        with INTEL_FILE.open(encoding="utf-8") as f:
+            data = json.load(f)
+        return {
+            "kev": data.get("kev", {}),
+            "epss": data.get("epss", {}),
+            "generated": data.get("generated", ""),
+        }
+    except Exception as e:
+        print(f"  WARN could not read data/cve-intel.json ({e}) — building without signals",
+              file=sys.stderr)
+        return {"kev": {}, "epss": {}, "generated": ""}
+
+
+def compute_priority(kev, kev_ransomware, epss, patched, cvss, date_added):
+    """Single 0-230ish urgency score. Every component is shown to the user as
+    a signal chip, so the ranking is always self-explaining.
+
+      +100  listed in CISA KEV (confirmed exploited in the wild)
+      + 50  known ransomware campaign use
+      +  0..60  EPSS probability (score * 60)
+      + 25  no vendor patch available
+      + 15  CVSS >= 9.0   (+8 for >= 7.0)
+      +  0..30  recency, decaying over ~60 days
+
+    Deliberately NOT scored: the CISA remediation deadline. Effectively every
+    KEV entry in this archive is already past it (CISA allows ~2 weeks; these
+    CVEs are months old), so it is a constant across the KEV cohort and adds
+    no discriminating signal. kev_due is still recorded as reference data.
+    """
+    score = 0
+    if kev:
+        score += 100
+    if kev_ransomware:
+        score += 50
+    if epss:
+        score += round(epss * 60)
+    if not patched:
+        score += 25
+    if cvss is not None:
+        if cvss >= 9.0:
+            score += 15
+        elif cvss >= 7.0:
+            score += 8
+    if date_added:
+        age_days = (datetime.date.today() - date_added).days
+        score += max(0, 30 - (age_days // 2))
+    return score
 
 
 def extract_field(text, field_name):
@@ -203,7 +301,8 @@ def write_frontmatter(f, fm):
     f.write('---\n')
 
 
-def process(readme_path):
+def process(readme_path, intel=None):
+    intel = intel or {"kev": {}, "epss": {}}
     text = readme_path.read_text(encoding='utf-8', errors='replace')
 
     title = extract_title(text)
@@ -246,6 +345,9 @@ def process(readme_path):
         fm['status'] = status
     if affected_product:
         fm['affected_product'] = affected_product
+        vendor = extract_vendor(affected_product)
+        if vendor:
+            fm['vendor'] = vendor
     if affected_versions:
         fm['affected_versions'] = affected_versions
     if tags:
@@ -256,15 +358,124 @@ def process(readme_path):
         fm['related'] = related
     fm['patched'] = patched
 
+    # ── Exploitation signals (CISA KEV + FIRST EPSS) ──
+    kev_rec = None
+    epss_rec = None
+    cve_m = re.search(r'CVE-\d{4}-\d{4,7}', cve or '', re.IGNORECASE)
+    if cve_m:
+        cve_id = cve_m.group(0).upper()
+        kev_rec = intel['kev'].get(cve_id)
+        epss_rec = intel['epss'].get(cve_id)
+
+    kev_overdue = False
+    if kev_rec:
+        fm['kev'] = True
+        if kev_rec.get('added'):
+            fm['kev_added'] = kev_rec['added']
+        if kev_rec.get('due'):
+            fm['kev_due'] = kev_rec['due']
+            due = parse_date(kev_rec['due'])
+            if due and due < datetime.date.today():
+                kev_overdue = True
+                fm['kev_overdue'] = True
+        if kev_rec.get('ransomware'):
+            fm['kev_ransomware'] = True
+
+    epss_score = None
+    if epss_rec:
+        epss_score = epss_rec.get('score')
+        if epss_score is not None:
+            fm['epss'] = epss_score
+            fm['epss_percentile'] = epss_rec.get('percentile')
+
+    fm['priority'] = compute_priority(
+        kev=bool(kev_rec),
+        kev_ransomware=bool(kev_rec and kev_rec.get('ransomware')),
+        epss=epss_score,
+        patched=patched,
+        cvss=cvss_score,
+        date_added=date_added,
+    )
+
     content = strip_h1(text)
     content = strip_placeholder_sections(content)
     return fm, content
 
 
+def write_chart_data(entries):
+    """Precompute homepage chart datasets into data/homepage_charts.json.
+
+    Hugo auto-loads data/*.json, so templates read this as
+    site.Data.homepage_charts — no client-side charting library needed.
+    """
+    from collections import Counter, OrderedDict
+
+    today = datetime.date.today()
+
+    # ── 1. Archive entries entering CISA KEV, bucketed by month over ~6 months ──
+    months = OrderedDict()
+    for i in range(5, -1, -1):
+        y, m = today.year, today.month - i
+        while m <= 0:
+            m += 12
+            y -= 1
+        months[f"{y:04d}-{m:02d}"] = 0
+    kev_recent = 0
+    for e in entries:
+        added = e.get('kev_added') or ''
+        if len(added) < 7:
+            continue
+        key = added[:7]
+        if key in months:
+            months[key] += 1
+        try:
+            if (today - datetime.date.fromisoformat(added)).days <= 90:
+                kev_recent += 1
+        except ValueError:
+            pass
+    kev_timeline = [{"label": k[5:7] + "/" + k[2:4], "month": k, "count": v}
+                    for k, v in months.items()]
+
+    # ── 2. Top vendors, with the KEV-confirmed share of each ──
+    vend_all = Counter(e['vendor'] for e in entries if e.get('vendor'))
+    vend_kev = Counter(e['vendor'] for e in entries if e.get('vendor') and e.get('kev'))
+    top_vendors = [{"name": v, "count": c, "kev": vend_kev.get(v, 0)}
+                   for v, c in vend_all.most_common(12)]
+
+    # ── 3. Highest EPSS entries ──
+    scored = [e for e in entries if e.get('epss')]
+    scored.sort(key=lambda e: e['epss'], reverse=True)
+    epss_top = [{
+        "cve": e.get('cve', '') or '—',
+        "title": e.get('title', ''),
+        "epss": round(e['epss'], 4),
+        "kev": e.get('kev', False),
+        "url": e['url'],
+    } for e in scored[:15]]
+
+    payload = {
+        "generated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "kev_total": sum(1 for e in entries if e.get('kev')),
+        "kev_last_90d": kev_recent,
+        "kev_timeline": kev_timeline,
+        "top_vendors": top_vendors,
+        "epss_top": epss_top,
+    }
+
+    out = REPO_ROOT / "data" / "homepage_charts.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with out.open('w', encoding='utf-8') as f:
+        json.dump(payload, f, indent=2)
+        f.write("\n")
+
+
 def main():
     CONTENT_DIR.mkdir(parents=True, exist_ok=True)
+    intel = load_intel()
     count = 0
     errors = 0
+    kev_hits = 0
+    entries = []
 
     for readme in sorted(POCS_DIR.rglob("README.md")):
         parts = readme.relative_to(POCS_DIR).parts
@@ -277,7 +488,9 @@ def main():
         out_file = out_dir / "index.md"
 
         try:
-            fm, content = process(readme)
+            fm, content = process(readme, intel)
+            if fm.get('kev'):
+                kev_hits += 1
         except Exception as e:
             print(f"  ERROR {readme.parent.name}: {e}", file=sys.stderr)
             errors += 1
@@ -294,7 +507,20 @@ def main():
                 continue
             shutil.copy2(src, out_dir / src.name)
 
+        entries.append({
+            'title': fm.get('title', ''),
+            'cve': fm.get('cve', ''),
+            'vendor': fm.get('vendor', ''),
+            'kev': bool(fm.get('kev')),
+            'kev_added': fm.get('kev_added', ''),
+            'epss': fm.get('epss'),
+            'priority': fm.get('priority', 0),
+            'url': f"/pocs/{category}/{dirname}/",
+        })
+
         count += 1
+
+    write_chart_data(entries)
 
     # Generate _index.md for the root pocs section and each category sub-section.
     categories = set()
@@ -314,7 +540,10 @@ def main():
         with cat_index.open('w', encoding='utf-8') as f:
             write_frontmatter(f, {'title': cat})
 
-    print(f"Generated {count} Hugo content pages ({errors} errors).")
+    intel_note = ""
+    if intel.get('generated'):
+        intel_note = f" — {kev_hits} in CISA KEV (intel as of {intel['generated']})"
+    print(f"Generated {count} Hugo content pages ({errors} errors){intel_note}.")
 
 
 if __name__ == '__main__':
