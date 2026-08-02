@@ -1,0 +1,76 @@
+name: Trigger monitor sweep
+
+# Kicks the CVE monitor (monitor.intelseclab.com) into running a sweep now,
+# instead of waiting for its own 06:17 UTC cron.
+#
+# Why this exists: the sweep endpoint needs a Bearer token. Running it from
+# here keeps that token in GitHub Secrets and out of anybody's laptop — the
+# public site never touches it, because the watchlist page reads the
+# unauthenticated /list endpoint instead.
+#
+# Deliberately manual-only: the Worker already sweeps daily on its own cron,
+# so adding a schedule here would just duplicate it.
+
+on:
+  workflow_dispatch:
+
+permissions: {}          # this job needs no repository access at all
+
+concurrency:
+  group: monitor-sweep
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Request a sweep
+        env:
+          MONITOR_API_KEY: ${{ secrets.MONITOR_API_KEY }}
+        run: |
+          if [ -z "$MONITOR_API_KEY" ]; then
+            echo "::error::MONITOR_API_KEY secret is not set."
+            exit 1
+          fi
+
+          code=$(curl -sS -o /tmp/resp.json -w '%{http_code}' \
+            -X POST "https://monitor.intelseclab.com/sweep" \
+            -H "Authorization: Bearer $MONITOR_API_KEY")
+
+          echo "HTTP $code"
+          cat /tmp/resp.json
+          echo
+
+          case "$code" in
+            202) echo "Sweep started." ;;
+            409) echo "::warning::A sweep is already running — nothing to do."; exit 0 ;;
+            401) echo "::error::Rejected. Is MONITOR_API_KEY current?"; exit 1 ;;
+            *)   echo "::error::Unexpected response $code"; exit 1 ;;
+          esac
+
+      - name: Wait for it to finish, then report
+        run: |
+          # The sweep runs detached on the Worker (ctx.waitUntil), so poll
+          # /health rather than holding the HTTP connection open.
+          for i in $(seq 1 28); do
+            sleep 30
+            curl -sS "https://monitor.intelseclab.com/health?cb=$i" -o /tmp/h.json || continue
+            finished=$(python3 -c "import json;d=json.load(open('/tmp/h.json'));r=d.get('lastRun') or {};print(r.get('finished_at') or '')" 2>/dev/null || echo "")
+            if [ -n "$finished" ]; then
+              echo "Finished at $finished"
+              python3 - <<'PY'
+import json
+r = (json.load(open('/tmp/h.json')).get('lastRun') or {})
+print(f"  new CVEs        : {r.get('new_cves')}")
+print(f"  new critical    : {r.get('new_critical_cves')}")
+print(f"  CVEs searched   : {r.get('cves_searched')}")
+print(f"  new repos found : {r.get('new_repos_found')}")
+if r.get('error'):
+    print(f"::error::sweep reported: {r['error']}")
+PY
+              exit 0
+            fi
+            echo "  still running… (${i}/28)"
+          done
+          echo "::warning::Sweep did not report completion within 14 minutes; check /health later."

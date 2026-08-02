@@ -1,0 +1,338 @@
+{{ define "main" }}
+{{- /* Triage view over the CVE monitor worker (monitor.intelseclab.com).
+       Candidates are raw GitHub search hits — automatically discovered, NOT
+       verified. State is derived client-side:
+         ingested     — the CVE exists in this archive
+         reviewed     — worker marked it reviewed but it was not ingested
+         needs review — neither
+       The archive side of that comparison comes from /index.json, which is
+       same-origin, so only the worker call is cross-origin. */ -}}
+
+<header class="border-b border-zinc-200 pb-6 dark:border-mono-border">
+  <nav class="mb-3 font-mono text-xs text-zinc-500 dark:text-mono-muted">
+    <a href="{{ "/" | relURL }}" class="hover:text-emerald-600 dark:hover:text-white">home</a>
+    <span class="text-zinc-300 dark:text-zinc-700"> / </span>
+    <span class="text-zinc-700 dark:text-slate-300">watchlist</span>
+  </nav>
+  <h1 class="font-mono text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white">Watchlist</h1>
+  <p class="mt-2 max-w-3xl text-sm leading-relaxed text-zinc-600 dark:text-mono-muted">
+    Critical CVEs (CVSS ≥ 9.0) our monitor is tracking, together with candidate PoC
+    repositories it found on GitHub. This is the queue that feeds the archive — everything
+    here is awaiting review, has been reviewed, or has already been ingested.
+  </p>
+</header>
+
+<div class="mt-5 rounded border border-amber-500/40 bg-amber-500/5 p-3 font-mono text-xs text-amber-700 dark:text-amber-400">
+  <span class="font-bold">[!] Unverified.</span>
+  These are automated GitHub search results, not archive entries. They have not been opened,
+  read, or screened for scams, stubs or malware. Only entries marked
+  <span class="font-bold">ingested</span> have passed verification and live in
+  <a href="{{ "/pocs/" | relURL }}" class="underline">the archive</a>. Treat every repo linked
+  here as untrusted until reviewed.
+</div>
+
+<!-- Stats -->
+<section id="wl-stats" class="grid grid-cols-2 gap-3 py-6 md:grid-cols-4">
+  {{- range slice
+    (dict "id" "wl-total"    "label" "Candidates" "accent" "")
+    (dict "id" "wl-ingested" "label" "Ingested"   "accent" "text-emerald-600 dark:text-brand")
+    (dict "id" "wl-reviewed" "label" "Reviewed"   "accent" "text-blue-600 dark:text-blue-400")
+    (dict "id" "wl-pending"  "label" "Needs review" "accent" "text-amber-600 dark:text-amber-400") }}
+  <div class="rounded border border-zinc-200 bg-white p-3.5 dark:border-mono-border dark:bg-mono-card">
+    <p class="font-mono text-[10px] uppercase tracking-wider text-zinc-500 dark:text-mono-muted">{{ .label }}</p>
+    <h3 id="{{ .id }}" class="mt-1 font-mono text-xl font-bold {{ if .accent }}{{ .accent }}{{ else }}text-zinc-900 dark:text-white{{ end }}">—</h3>
+  </div>
+  {{- end }}
+</section>
+
+<!-- Controls -->
+<div class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card">
+  <div class="relative">
+    <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 dark:text-mono-muted" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <input type="search" id="wl-search" autocomplete="off"
+      placeholder="Search CVE ID, repository or description…"
+      class="w-full rounded border border-zinc-300 bg-zinc-50 py-2.5 pl-9 pr-3 font-mono text-xs text-zinc-900 transition placeholder:text-zinc-400 focus:border-emerald-400 focus:outline-none dark:border-mono-border dark:bg-mono-bg dark:text-white dark:placeholder:text-mono-muted dark:focus:border-brand" />
+  </div>
+  <div class="flex flex-wrap items-center gap-1.5">
+    <span class="mr-1 font-mono text-[11px] text-zinc-500 dark:text-mono-muted">Status:</span>
+    <div class="flex flex-wrap gap-1.5" id="wl-filter">
+      <button type="button" data-v="all"      class="wl-pill rounded border border-emerald-400 bg-emerald-400/10 px-2.5 py-1 font-mono text-[11px] text-emerald-600 dark:text-brand">all</button>
+      <button type="button" data-v="pending"  class="wl-pill rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">needs review</button>
+      <button type="button" data-v="reviewed" class="wl-pill rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">reviewed</button>
+      <button type="button" data-v="ingested" class="wl-pill rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">ingested</button>
+    </div>
+    <span class="ml-auto font-mono text-[11px] text-zinc-400 dark:text-mono-muted" id="wl-updated"></span>
+  </div>
+</div>
+
+<!-- Owner mode -->
+<div class="mt-4 rounded border border-zinc-200 bg-white p-3 dark:border-mono-border dark:bg-mono-card">
+  <div class="flex flex-wrap items-center gap-2 font-mono text-xs">
+    <button type="button" id="wl-owner-toggle"
+      class="rounded border border-zinc-300 px-2.5 py-1 text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-mono-muted dark:hover:border-brand dark:hover:text-brand">
+      owner mode
+    </button>
+    <span id="wl-owner-state" class="text-zinc-400 dark:text-mono-muted">locked — marking disabled</span>
+    <button type="button" id="wl-owner-lock"
+      class="ml-auto hidden rounded border border-red-400/50 px-2.5 py-1 text-red-600 transition hover:bg-red-500/10 dark:text-red-400">
+      lock
+    </button>
+  </div>
+  <div id="wl-owner-form" class="mt-2 hidden">
+    <div class="flex flex-wrap gap-2">
+      <input type="password" id="wl-key" autocomplete="off" spellcheck="false"
+        placeholder="monitor API key — kept in memory only, never stored"
+        class="min-w-0 flex-1 rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1.5 font-mono text-xs text-zinc-900 focus:border-emerald-400 focus:outline-none dark:border-mono-border dark:bg-mono-bg dark:text-white dark:placeholder:text-mono-muted" />
+      <button type="button" id="wl-key-go"
+        class="rounded bg-emerald-500 px-3 py-1.5 font-mono text-xs font-semibold text-zinc-950 transition hover:bg-emerald-400">unlock</button>
+    </div>
+    <p class="mt-2 font-mono text-[10px] leading-relaxed text-zinc-400 dark:text-mono-muted">
+      The key is held in a JavaScript variable for this page view only — never written to
+      localStorage, sessionStorage or a cookie, so reloading or closing the tab discards it.
+      This page renders every candidate field as text rather than markup, so repository
+      descriptions cannot inject script. Only unlock on a machine you trust.
+    </p>
+  </div>
+</div>
+
+<div id="wl-state" class="mt-4 rounded border border-dashed border-zinc-300 p-10 text-center font-mono text-sm text-zinc-500 dark:border-mono-border dark:text-mono-muted">
+  Loading candidates from the monitor…
+</div>
+
+<ul id="wl-rows" class="m-0 mt-4 hidden list-none space-y-2 p-0"></ul>
+
+<div id="wl-more" class="mt-4 hidden text-center">
+  <button type="button" id="wl-more-btn" class="rounded border border-zinc-300 px-4 py-1.5 font-mono text-xs text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-mono-muted dark:hover:border-brand dark:hover:text-brand">Show more</button>
+</div>
+
+<script>
+(function () {
+  var MONITOR = "https://monitor.intelseclab.com";
+  var rowsEl   = document.getElementById("wl-rows");
+  var stateEl  = document.getElementById("wl-state");
+  var searchEl = document.getElementById("wl-search");
+  var moreWrap = document.getElementById("wl-more");
+  var moreBtn  = document.getElementById("wl-more-btn");
+  var ACTIVE   = ["border-emerald-400", "bg-emerald-400/10", "text-emerald-600", "dark:text-brand"];
+
+  var all = [], filter = "all", query = "", shown = 50;
+
+  // ---- Owner mode -----------------------------------------------------
+  // The key lives ONLY in this closure variable. Nothing writes it to
+  // localStorage, sessionStorage or a cookie, so a reload discards it and
+  // there is no persisted copy for a future script to read.
+  var ownerKey = null;
+  var toggleEl = document.getElementById("wl-owner-toggle");
+  var formEl   = document.getElementById("wl-owner-form");
+  var keyEl    = document.getElementById("wl-key");
+  var goEl     = document.getElementById("wl-key-go");
+  var lockEl   = document.getElementById("wl-owner-lock");
+  var ownerMsg = document.getElementById("wl-owner-state");
+
+  function setOwner(on, note) {
+    ownerMsg.textContent = note;
+    ownerMsg.className = on
+      ? "text-emerald-600 dark:text-brand"
+      : "text-zinc-400 dark:text-mono-muted";
+    lockEl.classList.toggle("hidden", !on);
+    formEl.classList.toggle("hidden", on);
+    render();
+  }
+
+  toggleEl.addEventListener("click", function () {
+    if (ownerKey) return;
+    formEl.classList.toggle("hidden");
+    if (!formEl.classList.contains("hidden")) keyEl.focus();
+  });
+
+  function unlock() {
+    var v = keyEl.value.trim();
+    keyEl.value = "";                     // don't leave it in the DOM
+    if (!v) return;
+    ownerMsg.textContent = "checking…";
+    // Validate by attempting a no-op: an invalid id returns 400 when the token
+    // is good and 401 when it is not, which distinguishes the two safely.
+    fetch(MONITOR + "/reviewed", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + v, "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    }).then(function (r) {
+      if (r.status === 401) { setOwner(false, "rejected — wrong key"); return; }
+      ownerKey = v;
+      setOwner(true, "unlocked — marking enabled for this page view");
+    }).catch(function () { setOwner(false, "could not reach the monitor"); });
+  }
+  goEl.addEventListener("click", unlock);
+  keyEl.addEventListener("keydown", function (e) { if (e.key === "Enter") unlock(); });
+  lockEl.addEventListener("click", function () {
+    ownerKey = null;
+    setOwner(false, "locked — marking disabled");
+  });
+
+  function markReviewed(cand, btn) {
+    if (!ownerKey) return;
+    btn.disabled = true;
+    btn.textContent = "marking…";
+    fetch(MONITOR + "/reviewed", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + ownerKey, "Content-Type": "application/json" },
+      body: JSON.stringify({ id: cand.id }),
+    }).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    }).then(function () {
+      cand.reviewed = 1;
+      cand.reviewed_at = new Date().toISOString();
+      render();
+    }).catch(function (e) {
+      btn.disabled = false;
+      btn.textContent = "retry";
+      btn.title = String(e.message || e);
+    });
+  }
+
+  // ---- Rendering ------------------------------------------------------
+  // Built with DOM APIs and textContent throughout. Candidate descriptions
+  // come from arbitrary GitHub repositories, i.e. they are attacker-supplied;
+  // never assemble them into an HTML string.
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = String(text);
+    return n;
+  }
+
+  function statusOf(c) {
+    if (c._archiveURL) return "ingested";
+    return c.reviewed ? "reviewed" : "pending";
+  }
+
+  var BADGE = {
+    ingested: ["border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-brand", "ingested"],
+    reviewed: ["border-blue-500/40 bg-blue-500/10 text-blue-600 dark:text-blue-400", "reviewed"],
+    pending:  ["border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400", "needs review"],
+  };
+
+  function card(c) {
+    var st = statusOf(c), b = BADGE[st];
+    var li = el("li", "rounded border border-zinc-200 bg-white p-3.5 transition hover:border-emerald-500/50 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand/50");
+    var wrap = el("div", "flex flex-col gap-3 md:flex-row md:items-center md:justify-between");
+    var left = el("div", "min-w-0 flex-1 space-y-1");
+
+    var meta = el("div", "flex flex-wrap items-center gap-2 font-mono text-[11px]");
+    meta.appendChild(el("span", "rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-[1px] font-bold text-emerald-600 dark:text-brand", c.cve_id));
+    meta.appendChild(el("span", "font-bold text-red-600 dark:text-red-400", "CVSS " + (c.cvss_score != null ? c.cvss_score : "—")));
+    var cwe = (c.cwe_names || []).slice(0, 2).join(", ");
+    if (cwe) meta.appendChild(el("span", "rounded border border-zinc-200 bg-zinc-50 px-2 py-[1px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted", cwe));
+    meta.appendChild(el("span", "rounded border px-1.5 py-[1px] text-[10px] uppercase tracking-wide " + b[0], b[1]));
+    left.appendChild(meta);
+
+    var h = el("p", "font-mono text-sm font-bold text-zinc-900 dark:text-white");
+    var a = el("a", "hover:text-emerald-600 dark:hover:text-brand", c.repo_full_name + " ↗");
+    a.href = c.repo_url;                      // href is set as a property, not parsed as markup
+    a.target = "_blank";
+    a.rel = "noopener noreferrer nofollow";
+    h.appendChild(a);
+    left.appendChild(h);
+
+    left.appendChild(el("p", "line-clamp-1 font-mono text-xs text-zinc-500 dark:text-mono-muted",
+      c.description || "No description"));
+
+    var right = el("div", "flex shrink-0 items-center justify-between gap-3 border-t border-zinc-200/60 pt-2 font-mono text-[11px] md:flex-col md:items-end md:border-t-0 md:pt-0 dark:border-mono-border/40");
+    right.appendChild(el("span", "text-zinc-400 dark:text-mono-muted",
+      "★ " + (c.stars || 0) + " · " + String(c.discovered_at || "").slice(0, 10)));
+
+    if (c._archiveURL) {
+      var v = el("a", "rounded border border-emerald-500/40 px-2 py-0.5 text-emerald-600 transition hover:bg-emerald-500/10 dark:text-brand", "View entry →");
+      v.href = c._archiveURL;
+      right.appendChild(v);
+    } else if (ownerKey && !c.reviewed) {
+      var mb = el("button", "rounded border border-blue-500/50 px-2 py-0.5 text-blue-600 transition hover:bg-blue-500/10 dark:text-blue-400", "Mark reviewed");
+      mb.type = "button";
+      mb.addEventListener("click", function () { markReviewed(c, mb); });
+      right.appendChild(mb);
+    } else {
+      right.appendChild(el("span", "text-zinc-300 dark:text-zinc-700",
+        c.reviewed ? "reviewed" : "not ingested"));
+    }
+
+    wrap.appendChild(left);
+    wrap.appendChild(right);
+    li.appendChild(wrap);
+    return li;
+  }
+
+  function render() {
+    var q = query.toLowerCase();
+    var list = all.filter(function (c) {
+      if (filter !== "all" && statusOf(c) !== filter) return false;
+      return !q || c._blob.indexOf(q) !== -1;
+    });
+
+    document.getElementById("wl-total").textContent    = all.length;
+    document.getElementById("wl-ingested").textContent = all.filter(function (c) { return statusOf(c) === "ingested"; }).length;
+    document.getElementById("wl-reviewed").textContent = all.filter(function (c) { return statusOf(c) === "reviewed"; }).length;
+    document.getElementById("wl-pending").textContent  = all.filter(function (c) { return statusOf(c) === "pending"; }).length;
+
+    rowsEl.textContent = "";
+    if (!list.length) {
+      rowsEl.classList.add("hidden");
+      moreWrap.classList.add("hidden");
+      stateEl.textContent = "No candidates match the current filter.";
+      stateEl.classList.remove("hidden");
+      return;
+    }
+    stateEl.classList.add("hidden");
+    rowsEl.classList.remove("hidden");
+    list.slice(0, shown).forEach(function (c) { rowsEl.appendChild(card(c)); });
+
+    moreWrap.classList.toggle("hidden", list.length <= shown);
+    moreBtn.textContent = "Show more (" + (list.length - shown) + " remaining)";
+  }
+
+  function fail(msg) {
+    rowsEl.classList.add("hidden");
+    moreWrap.classList.add("hidden");
+    stateEl.classList.remove("hidden");
+    stateEl.textContent = "Could not reach the monitor: " + msg +
+      " — the archive itself is unaffected, this page reads a separate live service.";
+  }
+
+  Promise.all([
+    fetch(MONITOR + "/list?sort=discovered_desc").then(function (r) {
+      if (!r.ok) throw new Error("monitor HTTP " + r.status); return r.json();
+    }),
+    fetch("{{ "/index.json" | relURL }}").then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; })
+  ]).then(function (res) {
+    var data = res[0], archive = res[1] || [];
+    var byCve = {};
+    archive.forEach(function (e) {
+      var m = String(e.cve || "").match(/CVE-\d{4}-\d{4,7}/i);
+      if (m) byCve[m[0].toUpperCase()] = e.permalink;
+    });
+    all = (data.candidates || []).map(function (c) {
+      c._archiveURL = byCve[String(c.cve_id || "").toUpperCase()] || null;
+      c._blob = [c.cve_id, c.repo_full_name, c.description, (c.cwe_names || []).join(" ")].join(" ").toLowerCase();
+      return c;
+    });
+    var u = document.getElementById("wl-updated");
+    if (all.length) u.textContent = "monitor data · " + String(all[0].discovered_at || "").slice(0, 10);
+    render();
+  }).catch(function (e) { fail(e.message || String(e)); });
+
+  searchEl.addEventListener("input", function () { query = searchEl.value.trim(); shown = 50; render(); });
+  moreBtn.addEventListener("click", function () { shown += 50; render(); });
+  document.querySelectorAll("#wl-filter .wl-pill").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      filter = btn.getAttribute("data-v"); shown = 50;
+      document.querySelectorAll("#wl-filter .wl-pill").forEach(function (b) {
+        ACTIVE.forEach(function (c) { b.classList.toggle(c, b === btn); });
+        b.classList.toggle("border-zinc-300", b !== btn);
+        b.classList.toggle("dark:border-mono-border", b !== btn);
+      });
+      render();
+    });
+  });
+})();
+</script>
+{{ end }}
