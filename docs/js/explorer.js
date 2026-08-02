@@ -8,6 +8,7 @@
   var indexURL = root.getAttribute("data-search-index");
 
   var rowsEl = document.getElementById("poc-rows");
+  var tableEl = document.getElementById("poc-table");
   var rows = Array.prototype.slice.call(rowsEl.querySelectorAll(".poc-row"));
   var countEl = document.getElementById("poc-count");
   var emptyEl = document.getElementById("poc-empty");
@@ -365,8 +366,11 @@
     });
 
     if (countEl) countEl.textContent = String(total);
+    var inlineCount = document.getElementById("poc-count-inline");
+    if (inlineCount) inlineCount.textContent = String(total);
     if (emptyEl) emptyEl.classList.toggle("hidden", total !== 0);
-    if (rowsEl)  rowsEl.classList.toggle("hidden", total === 0);
+    // Hide the whole table (not just the tbody) so no stranded header remains.
+    if (tableEl) tableEl.classList.toggle("hidden", total === 0);
     renderPagination(total, totalPages);
   }
 

@@ -125,6 +125,33 @@ def extract_title(text):
     return m.group(1).strip() if m else ""
 
 
+def extract_summary(text, limit=260):
+    """First real paragraph of the '## Summary' section.
+
+    Hugo's built-in .Summary is useless here — it flattens the leading
+    Metadata table into 'Metadata Field Value Date Added ...'.
+    """
+    m = re.search(r'^##\s+Summary\s*$(.*?)(?=^##\s|\Z)', text, re.MULTILINE | re.DOTALL)
+    if not m:
+        return ""
+    body = m.group(1)
+    for para in body.split('\n\n'):
+        p = para.strip()
+        if not p or p.startswith(('|', '#', '```', '<!--', '---')):
+            continue
+        p = re.sub(r'<!--.*?-->', '', p, flags=re.DOTALL)
+        p = re.sub(r'\[([^\]]+)\]\([^)]*\)', r'\1', p)   # links → text
+        p = re.sub(r'[`*_]', '', p)                       # inline markdown
+        p = re.sub(r'\s+', ' ', p).strip()
+        if not p:
+            continue
+        if len(p) > limit:
+            cut = p[:limit].rsplit(' ', 1)[0]
+            p = cut + '…'
+        return p
+    return ""
+
+
 def extract_references(text):
     refs = []
     in_refs = False
@@ -319,6 +346,7 @@ def process(readme_path, intel=None):
     affected_product = extract_field(text, "Software / System")
     affected_versions = extract_field(text, "Versions Affected")
 
+    summary = extract_summary(text)
     references = extract_references(text)
     tags = parse_tags(tags_str)
     cvss_score = parse_cvss(cvss_str)
@@ -343,6 +371,8 @@ def process(readme_path, intel=None):
         fm['cvss_score'] = cvss_score
     if status:
         fm['status'] = status
+    if summary:
+        fm['summary'] = summary
     if affected_product:
         fm['affected_product'] = affected_product
         vendor = extract_vendor(affected_product)

@@ -1,0 +1,26 @@
+{{- /* Wraps every fenced code block in a console-style frame with a
+       language label and a copy button. Highlighting still goes through
+       Hugo's Chroma config in hugo.toml. */ -}}
+{{- $lang := .Type | default "" -}}
+{{- $label := $lang | default "text" -}}
+{{- $labels := dict
+    "bash" "Shell script" "sh" "Shell script" "shell" "Shell script" "console" "Console"
+    "python" "Python" "py" "Python" "c" "C source" "cpp" "C++ source" "go" "Go source"
+    "java" "Java source" "javascript" "JavaScript" "js" "JavaScript" "php" "PHP"
+    "powershell" "PowerShell" "ps1" "PowerShell" "ruby" "Ruby" "rust" "Rust"
+    "json" "JSON" "yaml" "YAML" "xml" "XML" "html" "HTML" "sql" "SQL" "http" "HTTP request"
+    "text" "Output" "" "Output" -}}
+{{- with index $labels $lang }}{{ $label = . }}{{ end -}}
+<div class="poc-code group/code my-4 overflow-hidden rounded border border-zinc-200 dark:border-mono-border">
+  <div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50 px-3 py-1.5 font-mono text-[11px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">
+    <span>{{ $label }}</span>
+    <button type="button" class="code-copy transition hover:text-emerald-600 dark:hover:text-brand" aria-label="Copy code to clipboard">Copy</button>
+  </div>
+  <div class="poc-code-body overflow-x-auto bg-white dark:bg-[#05080a]">
+    {{- if $lang -}}
+      {{ highlight (trim .Inner "\n") $lang .Options }}
+    {{- else -}}
+      <pre class="px-3 py-2 font-mono text-[11px] leading-normal text-zinc-700 dark:text-slate-300"><code>{{ trim .Inner "\n" }}</code></pre>
+    {{- end }}
+  </div>
+</div>

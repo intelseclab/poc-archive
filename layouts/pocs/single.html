@@ -1,171 +1,176 @@
 {{ define "main" }}
 {{- $cat := .Params.category -}}
-<article class="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_18rem]">
-  <!-- Body column -->
-  <div class="min-w-0 lg:order-1">
-    <nav class="mb-4 font-mono text-xs text-zinc-500 dark:text-zinc-400">
-      <a href="{{ "/pocs/" | relURL }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">pocs</a>
-      <span class="text-zinc-300 dark:text-zinc-700"> / </span>
-      <a href="{{ printf "/pocs/%s/" $cat | relURL }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">{{ $cat }}</a>
-    </nav>
+{{- $cveShort := "" }}{{ with .Params.cve }}{{ $cveShort = replaceRE `\s*\(.*$` "" . }}{{ end }}
 
+<!-- ─── Breadcrumb + back ─── -->
+<nav class="mb-4 flex flex-wrap items-center justify-between gap-2 font-mono text-xs">
+  <div class="flex min-w-0 items-center gap-2 text-zinc-500 dark:text-mono-muted">
+    <a href="{{ "/pocs/" | relURL }}" class="transition hover:text-emerald-600 dark:hover:text-white">pocs</a>
+    <span>/</span>
+    <a href="{{ printf "/pocs/%s/" $cat | relURL }}" class="transition hover:text-emerald-600 dark:hover:text-white">{{ $cat }}</a>
+    <span>/</span>
+    <span class="truncate text-emerald-600 dark:text-brand">{{ with $cveShort }}{{ . }}{{ else }}entry{{ end }}</span>
+  </div>
+  <a href="{{ "/pocs/" | relURL }}" class="flex shrink-0 items-center gap-1 text-zinc-500 transition hover:text-emerald-600 dark:text-mono-muted dark:hover:text-white">
+    <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    <span class="hidden sm:inline">Back to catalogue</span>
+  </a>
+</nav>
+
+<!-- ─── Header card ─── -->
+<div class="space-y-4 rounded-lg border border-zinc-200 bg-white p-5 dark:border-mono-border dark:bg-mono-card">
+
+  <div class="flex flex-wrap items-center justify-between gap-2 font-mono text-xs">
     <div class="flex flex-wrap items-center gap-2">
-      {{ partial "severity-chip.html" .Params.severity }}
-      {{ with .Params.cve }}<span class="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400">{{ . }}</span>{{ end }}
-      {{ if .Params.patched }}
-        <span class="rounded-md border border-emerald-500/30 px-2 py-0.5 font-mono text-xs uppercase text-emerald-600 dark:text-emerald-400">patched</span>
-      {{ else }}
-        <span class="rounded-md border border-amber-400/40 px-2 py-0.5 font-mono text-xs uppercase text-amber-600 dark:text-amber-400">unpatched</span>
-      {{ end }}
+      {{- with $cveShort }}
+      <span class="rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-bold text-emerald-600 dark:text-brand">{{ . }}</span>
+      {{- end }}
+      <span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">category: {{ $cat }}</span>
+      <span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-0.5 font-bold text-zinc-900 dark:border-mono-border dark:bg-mono-bg dark:text-white">
+        {{ with .Params.cvss_score }}CVSS {{ . }} {{ end }}({{ upper .Params.severity }})
+      </span>
+      {{ partial "signal-chips.html" (dict "page" . "compact" false) }}
     </div>
+    <span class="flex items-center gap-1.5 text-xs font-medium {{ if .Params.patched }}text-emerald-600 dark:text-brand{{ else }}text-red-500 dark:text-red-400{{ end }}">
+      <span class="h-2 w-2 rounded-full {{ if .Params.patched }}bg-emerald-500{{ else }}animate-pulse bg-red-500{{ end }}"></span>
+      {{ if .Params.patched }}Patched{{ else }}Unpatched{{ end }}
+    </span>
+  </div>
 
-    <h1 class="mt-4 text-balance font-mono text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-100">
-      {{ .Title }}
-    </h1>
-    <p class="mt-2 font-mono text-xs text-zinc-500 dark:text-zinc-400">
-      {{ with .Params.author }}by {{ . }} · {{ end }}{{ .Date.Format "2006-01-02" }}
+  <div class="space-y-1">
+    <h1 class="text-balance font-mono text-lg font-bold tracking-tight text-zinc-900 sm:text-xl dark:text-white">{{ .Title }}</h1>
+    <p class="font-mono text-xs text-zinc-500 dark:text-mono-muted">
+      Published: <span class="text-zinc-700 dark:text-slate-300">{{ .Date.Format "2006-01-02" }}</span>
+      {{- with .Params.author }} • Researcher: <span class="text-emerald-600 dark:text-brand">{{ . }}</span>{{ end }}
     </p>
+  </div>
 
-    <!-- Mobile metadata (sidebar collapses here) -->
-    <div class="mt-6 lg:hidden">{{ partial "poc-meta.html" . }}</div>
+  {{/* Key technical specs */}}
+  <div class="grid grid-cols-2 gap-3 border-t border-zinc-200/60 pt-3 font-mono text-xs sm:grid-cols-4 dark:border-mono-border/60">
+    {{- $specs := slice
+      (dict "k" "Target software"   "v" (.Params.affected_product  | default "—"))
+      (dict "k" "Affected versions" "v" (.Params.affected_versions | default "—"))
+      (dict "k" "Status"            "v" (.Params.status            | default "—"))
+      (dict "k" "Severity"          "v" (printf "%s%s" .Params.severity (cond (isset .Params "cvss_score") (printf " · CVSS %v" .Params.cvss_score) "")))
+    -}}
+    {{- range $specs }}
+    <div class="min-w-0">
+      <span class="block text-[10px] uppercase text-zinc-400 dark:text-mono-muted">{{ .k }}</span>
+      <span class="block break-words text-zinc-800 dark:text-slate-300">{{ .v }}</span>
+    </div>
+    {{- end }}
+  </div>
+</div>
 
+<!-- ─── Two-column body ─── -->
+<div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-4">
+
+  <div class="min-w-0 space-y-4 lg:col-span-3">
+
+    {{/* Mobile metadata + TOC */}}
+    <div class="lg:hidden">{{ partial "poc-meta.html" . }}</div>
     {{- if .TableOfContents }}
-    <details class="mt-6 lg:hidden group rounded-lg border border-zinc-200 dark:border-zinc-800">
-      <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400 select-none">On this page</summary>
-      <div class="toc px-4 pb-3 text-sm leading-relaxed border-t border-zinc-100 dark:border-zinc-800">
-        {{ .TableOfContents }}
-      </div>
+    <details class="rounded-lg border border-zinc-200 lg:hidden dark:border-mono-border dark:bg-mono-card">
+      <summary class="cursor-pointer select-none px-4 py-2 font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-mono-muted">On this page</summary>
+      <div class="toc border-t border-zinc-100 px-4 pb-3 text-sm leading-relaxed dark:border-mono-border">{{ .TableOfContents }}</div>
     </details>
     {{- end }}
 
-    <div class="prose prose-zinc mt-8 max-w-none dark:prose-invert
-                prose-headings:font-mono prose-headings:tracking-tight
-                prose-a:text-emerald-600 dark:prose-a:text-emerald-400
-                prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
-                prose-code:before:content-[''] prose-code:after:content-['']">
-      {{ .Content }}
-    </div>
-
-    {{/* ── VS Code–style exploit file viewer ── */}}
-    {{- $exploit := false -}}
-    {{- $lang    := "" -}}
-    {{- $extKey  := "" -}}
-    {{- with .Resources.GetMatch "*.py"   -}}{{- $exploit = . -}}{{- $lang = "python"     -}}{{- $extKey = "py"   -}}{{- end -}}
-    {{- if not $exploit -}}{{- with .Resources.GetMatch "*.c"   -}}{{- $exploit = . -}}{{- $lang = "c"          -}}{{- $extKey = "c"    -}}{{- end -}}{{- end -}}
-    {{- if not $exploit -}}{{- with .Resources.GetMatch "*.cpp" -}}{{- $exploit = . -}}{{- $lang = "cpp"        -}}{{- $extKey = "cpp"  -}}{{- end -}}{{- end -}}
-    {{- if not $exploit -}}{{- with .Resources.GetMatch "*.go"  -}}{{- $exploit = . -}}{{- $lang = "go"         -}}{{- $extKey = "go"   -}}{{- end -}}{{- end -}}
-    {{- if not $exploit -}}{{- with .Resources.GetMatch "*.rb"  -}}{{- $exploit = . -}}{{- $lang = "ruby"       -}}{{- $extKey = "rb"   -}}{{- end -}}{{- end -}}
-    {{- if not $exploit -}}{{- with .Resources.GetMatch "*.java" -}}{{- $exploit = . -}}{{- $lang = "java"       -}}{{- $extKey = "java" -}}{{- end -}}{{- end -}}
-    {{- if not $exploit -}}{{- with .Resources.GetMatch "*.js"  -}}{{- $exploit = . -}}{{- $lang = "javascript" -}}{{- $extKey = "js"   -}}{{- end -}}{{- end -}}
-    {{- if not $exploit -}}{{- with .Resources.GetMatch "*.php" -}}{{- $exploit = . -}}{{- $lang = "php"        -}}{{- $extKey = "php"  -}}{{- end -}}{{- end -}}
-    {{- if not $exploit -}}{{- with .Resources.GetMatch "*.pl"  -}}{{- $exploit = . -}}{{- $lang = "perl"       -}}{{- $extKey = "pl"   -}}{{- end -}}{{- end -}}
-    {{- if not $exploit -}}{{- with .Resources.GetMatch "*.ps1" -}}{{- $exploit = . -}}{{- $lang = "powershell" -}}{{- $extKey = "ps1"  -}}{{- end -}}{{- end -}}
-    {{- if not $exploit -}}{{- with .Resources.GetMatch "*.sh"  -}}{{- $exploit = . -}}{{- $lang = "bash"       -}}{{- $extKey = "sh"   -}}{{- end -}}{{- end -}}
-    {{- if not $exploit -}}{{- with .Resources.GetMatch "*.bat" -}}{{- $exploit = . -}}{{- $lang = "bat"        -}}{{- $extKey = "bat"  -}}{{- end -}}{{- end -}}
-    {{- if not $exploit -}}{{- with .Resources.GetMatch "*.rs"  -}}{{- $exploit = . -}}{{- $lang = "rust"       -}}{{- $extKey = "rs"   -}}{{- end -}}{{- end -}}
-    {{- if not $exploit -}}{{- with .Resources.GetMatch "*.mjs" -}}{{- $exploit = . -}}{{- $lang = "javascript" -}}{{- $extKey = "js"   -}}{{- end -}}{{- end -}}
-    {{- if not $exploit -}}{{- with .Resources.GetMatch "*.html" -}}{{- $exploit = . -}}{{- $lang = "html"       -}}{{- $extKey = "html" -}}{{- end -}}{{- end -}}
-    {{- if $exploit -}}
-    {{- $ghBase    := printf "%s/blob/master/%s%s" .Site.Params.repoURL .File.Dir $exploit.Name -}}
-    {{- $ghRaw     := printf "https://raw.githubusercontent.com/intelseclab/poc-archive/master/%s%s" .File.Dir $exploit.Name -}}
-    {{- $extColors := dict
-        "py"   "#3b82f6"
-        "sh"   "#22c55e"
-        "rb"   "#ef4444"
-        "c"    "#94a3b8"
-        "cpp"  "#60a5fa"
-        "go"   "#06b6d4"
-        "js"   "#eab308"
-        "php"  "#a78bfa"
-        "pl"   "#f97316"
-        "ps1"  "#818cf8"
-        "java" "#f59e0b"
-        "bat"  "#6b7280"
-        "rs"   "#dea584"
-        "html" "#e34c26" -}}
-    {{- $color := index $extColors $extKey | default "#6b7280" -}}
-    <div class="mt-10 overflow-hidden rounded-lg border border-zinc-700/60 shadow-2xl">
-
-      {{/* Title bar */}}
-      <div class="flex items-center gap-3 bg-zinc-800 px-3 py-2">
-        {{/* macOS traffic lights */}}
-        <div class="flex shrink-0 items-center gap-1.5">
-          <span class="h-3 w-3 rounded-full bg-red-500"></span>
-          <span class="h-3 w-3 rounded-full bg-yellow-400"></span>
-          <span class="h-3 w-3 rounded-full bg-green-500"></span>
+    {{/* Split the rendered content on <h2> so each section becomes its own card. */}}
+    {{- $prose := `prose prose-sm prose-zinc max-w-none dark:prose-invert
+        prose-headings:font-mono prose-headings:tracking-tight
+        prose-a:text-emerald-600 dark:prose-a:text-emerald-400
+        prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
+        prose-code:before:content-[''] prose-code:after:content-['']
+        prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0` -}}
+    {{- $chunks := split .Content "<h2" -}}
+    {{- range $i, $chunk := $chunks -}}
+      {{- if eq $i 0 -}}
+        {{- $lead := trim $chunk " \n\r\t" -}}
+        {{- if and $lead (ne $lead "<hr>") -}}
+        <div class="rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card">
+          <div class="{{ $prose }}">{{ $lead | safeHTML }}</div>
         </div>
-        {{/* Filename tab */}}
-        <div class="flex flex-1 justify-center">
-          <div class="flex items-center gap-1.5 rounded-t border-x border-t border-zinc-700 bg-zinc-950 px-3 py-1">
-            <span class="h-2.5 w-2.5 shrink-0 rounded-sm" style="background-color:{{ $color }}"></span>
-            <span class="font-mono text-xs text-zinc-200">{{ $exploit.Name }}</span>
-          </div>
-        </div>
-        {{/* Language badge + download */}}
-        <div class="flex shrink-0 items-center gap-2">
-          <span class="rounded border border-zinc-600 bg-zinc-700/40 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-zinc-400">{{ $lang }}</span>
-          <a href="{{ $ghRaw }}" target="_blank" rel="noopener"
-             class="font-mono text-xs text-zinc-400 hover:text-zinc-200 transition">raw</a>
-          <a href="{{ $ghBase }}" target="_blank" rel="noopener"
-             class="font-mono text-xs text-zinc-400 hover:text-zinc-200 transition">GitHub</a>
-          <a href="{{ $ghRaw }}" download="{{ $exploit.Name }}"
-             class="rounded bg-emerald-600 px-2.5 py-1 font-mono text-xs font-medium text-white transition hover:bg-emerald-500">↓ Download</a>
-        </div>
-      </div>
-
-      {{/* Editor body — truncate to 500 lines to keep HTML manageable */}}
-      {{- $allLines  := split $exploit.Content "\n" -}}
-      {{- $lineCount := len $allLines -}}
-      {{- $maxLines  := 500 -}}
-      {{- $content   := $exploit.Content -}}
-      {{- $truncated := false -}}
-      {{- if gt $lineCount $maxLines -}}
-        {{- $content  = delimit (first $maxLines $allLines) "\n" -}}
-        {{- $truncated = true -}}
+        {{- end -}}
+      {{- else -}}
+        {{- $full := printf "<h2%s" $chunk -}}
+        {{- /* Trailing <hr> is the markdown --- separator between sections. */ -}}
+        {{- $full = replaceRE `(?s)\s*<hr\s*/?>\s*$` "" $full -}}
+        {{- $heading := "" -}}
+        {{- with (findRE `<h2[^>]*>(.*?)</h2>` $full 1) -}}
+          {{- $heading = replaceRE `<[^>]+>` "" (index . 0) -}}
+        {{- end -}}
+        {{- $body := replaceRE `(?s)^<h2[^>]*>.*?</h2>` "" $full -}}
+        <section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card">
+          <h2 id="{{ $heading | urlize }}" class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white">
+            {{ partial "section-icon.html" $heading }}
+            {{/* $heading is lifted out of already-rendered HTML, so entities
+                 like &amp; are escaped once already — don't escape twice. */}}
+            {{ $heading | safeHTML }}
+          </h2>
+          <div class="{{ $prose }}">{{ $body | safeHTML }}</div>
+        </section>
       {{- end -}}
-      <div class="poc-viewer overflow-x-auto">
-        {{ highlight $content $lang "lineNos=true,lineNumbersInTable=true" }}
-      </div>
-      {{- if $truncated }}
-      <div class="flex items-center justify-between border-t border-zinc-700 bg-zinc-900 px-4 py-2">
-        <span class="font-mono text-xs text-zinc-500">Showing 500 of {{ $lineCount }} lines</span>
-        <a href="{{ $ghBase }}" target="_blank" rel="noopener"
-           class="font-mono text-xs text-emerald-400 hover:underline">View full file on GitHub →</a>
-      </div>
-      {{- end }}
-
-    </div>
     {{- end }}
 
+    {{ partial "exploit-viewer.html" . }}
+
     <!-- Prev / next within category -->
-    <nav class="mt-12 grid grid-cols-1 gap-3 border-t border-zinc-200 pt-6 sm:grid-cols-2 dark:border-zinc-800">
+    <nav class="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2">
       {{ with .PrevInSection }}
-        <a href="{{ .RelPermalink }}" class="group rounded-lg border border-zinc-200 p-3 transition hover:border-emerald-400 dark:border-zinc-800">
-          <span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400">← previous in {{ $cat }}</span>
-          <span class="mt-1 block truncate text-sm text-zinc-700 group-hover:text-emerald-600 dark:text-zinc-300 dark:group-hover:text-emerald-400">{{ .Title }}</span>
+        <a href="{{ .RelPermalink }}" class="group rounded-lg border border-zinc-200 p-3 transition hover:border-emerald-400 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand">
+          <span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-mono-muted">← previous in {{ $cat }}</span>
+          <span class="mt-1 block truncate font-mono text-xs text-zinc-700 group-hover:text-emerald-600 dark:text-slate-300 dark:group-hover:text-brand">{{ .Title }}</span>
         </a>
       {{ else }}<span></span>{{ end }}
       {{ with .NextInSection }}
-        <a href="{{ .RelPermalink }}" class="group rounded-lg border border-zinc-200 p-3 text-right transition hover:border-emerald-400 dark:border-zinc-800">
-          <span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400">next in {{ $cat }} →</span>
-          <span class="mt-1 block truncate text-sm text-zinc-700 group-hover:text-emerald-600 dark:text-zinc-300 dark:group-hover:text-emerald-400">{{ .Title }}</span>
+        <a href="{{ .RelPermalink }}" class="group rounded-lg border border-zinc-200 p-3 text-right transition hover:border-emerald-400 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand">
+          <span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-mono-muted">next in {{ $cat }} →</span>
+          <span class="mt-1 block truncate font-mono text-xs text-zinc-700 group-hover:text-emerald-600 dark:text-slate-300 dark:group-hover:text-brand">{{ .Title }}</span>
         </a>
       {{ end }}
     </nav>
   </div>
 
-  <!-- Sidebar (desktop) -->
-  <aside class="hidden lg:order-2 lg:block">
-    <div class="sticky top-20">
+  <!-- Sidebar -->
+  <aside class="hidden lg:block">
+    <div class="sticky top-20 space-y-4">
       {{- if .TableOfContents }}
-      <nav class="mb-6">
-        <p class="font-mono text-xs uppercase tracking-wide text-zinc-400 dark:text-zinc-500 mb-2">On this page</p>
-        <div class="toc text-sm leading-relaxed">
-          {{ .TableOfContents }}
-        </div>
+      <nav class="rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card">
+        <p class="mb-2 border-b border-zinc-200 pb-2 font-mono text-xs font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white">On this page</p>
+        <div class="toc text-sm leading-relaxed">{{ .TableOfContents }}</div>
       </nav>
       {{- end }}
       {{ partial "poc-meta.html" . }}
+
+      <div class="rounded border border-zinc-200 bg-zinc-50 p-3 font-mono text-[11px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">
+        <span class="block font-bold text-zinc-900 dark:text-white">[!] Legal notice</span>
+        <p class="mt-1 leading-relaxed">Published for defensive and educational use only. Running this against systems you do not own or have written authorisation to test is illegal.</p>
+      </div>
+    </div>
   </aside>
-</article>
+</div>
+
+<script>
+  // Copy-to-clipboard for the code-block frames emitted by render-codeblock.html
+  document.querySelectorAll('.code-copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var frame = btn.closest('.poc-code');
+      var code = frame && frame.querySelector('code');
+      if (!code) return;
+      navigator.clipboard.writeText(code.innerText).then(function () {
+        var prev = btn.textContent;
+        btn.textContent = 'Copied';
+        btn.classList.add('text-emerald-600', 'dark:text-brand');
+        setTimeout(function () {
+          btn.textContent = prev;
+          btn.classList.remove('text-emerald-600', 'dark:text-brand');
+        }, 1500);
+      }).catch(function () {
+        btn.textContent = 'Failed';
+        setTimeout(function () { btn.textContent = 'Copy'; }, 1500);
+      });
+    });
+  });
+</script>
 {{ end }}

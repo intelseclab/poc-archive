@@ -4,7 +4,7 @@
 {{- $fixedCategory := strings.TrimPrefix "/" $rel -}}
 {{- $pages := .RegularPagesRecursive.ByDate.Reverse -}}
 
-<header class="border-b border-zinc-200 pb-6 dark:border-zinc-800">
+<header class="border-b border-zinc-200 pb-6 dark:border-mono-border">
   <nav class="mb-3 font-mono text-xs text-zinc-500 dark:text-zinc-400">
     <a href="{{ "/pocs/" | relURL }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">pocs</a>
     {{ if $fixedCategory }}<span class="text-zinc-300 dark:text-zinc-700"> / </span><span class="text-zinc-700 dark:text-zinc-300">{{ $fixedCategory }}</span>{{ end }}
@@ -14,7 +14,7 @@
       {{ if $fixedCategory }}{{ $fixedCategory }} PoCs{{ else }}All PoCs{{ end }}
     </h1>
     {{ with .OutputFormats.Get "rss" }}
-    <a href="{{ .Permalink }}" target="_blank" rel="noopener noreferrer" class="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-200 px-2.5 py-1 font-mono text-xs text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">
+    <a href="{{ .Permalink }}" target="_blank" rel="noopener noreferrer" class="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-200 px-2.5 py-1 font-mono text-xs text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">
       <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
       subscribe (RSS)
     </a>
@@ -25,7 +25,29 @@
   </p>
 </header>
 
-<div class="mt-6">
-  {{ partial "poc-explorer.html" (dict "pages" $pages "fixedCategory" $fixedCategory) }}
-</div>
+{{/* ── KPI strip, scoped to whatever this page lists ── */}}
+{{- $n := len $pages -}}
+{{- $kev := len (where $pages "Params.kev" true) -}}
+{{- $ransom := len (where $pages "Params.kev_ransomware" true) -}}
+{{- $unpatched := len (where $pages "Params.patched" false) -}}
+{{- $critical := len (where $pages "Params.severity" "Critical") -}}
+{{- $scope := "the archive" }}{{ if $fixedCategory }}{{ $scope = $fixedCategory }}{{ end -}}
+<section class="grid grid-cols-2 gap-3 py-6 md:grid-cols-5">
+  {{- $kpis := slice
+    (dict "label" "Entries"    "value" (string $n)         "sub" (printf "in %s" $scope)                      "accent" false)
+    (dict "label" "CISA KEV"   "value" (string $kev)       "sub" "exploited in the wild"                      "accent" true)
+    (dict "label" "Ransomware" "value" (string $ransom)    "sub" "known campaign use"                         "accent" true)
+    (dict "label" "Unpatched"  "value" (string $unpatched) "sub" "no vendor fix"                              "accent" false)
+    (dict "label" "Critical"   "value" (string $critical)  "sub" (printf "%.0f%% of listed" (mul (div (float $critical) (float (or $n 1))) 100)) "accent" false)
+  -}}
+  {{- range $kpis }}
+  <div class="rounded border border-zinc-200 bg-white p-3.5 dark:border-mono-border dark:bg-mono-card">
+    <p class="font-mono text-[10px] uppercase tracking-wider text-zinc-500 dark:text-mono-muted">{{ .label }}</p>
+    <h3 class="mt-1 font-mono text-xl font-bold {{ if .accent }}text-emerald-600 dark:text-brand{{ else }}text-zinc-900 dark:text-white{{ end }}">{{ .value }}</h3>
+    <p class="mt-1 font-mono text-[10px] text-zinc-500 dark:text-mono-muted">{{ .sub }}</p>
+  </div>
+  {{- end }}
+</section>
+
+{{ partial "poc-explorer.html" (dict "pages" $pages "fixedCategory" $fixedCategory) }}
 {{ end }}

@@ -2,12 +2,16 @@
 {{- $pocs := where .Site.RegularPages "Section" "pocs" -}}
 {{- $total := len $pocs -}}
 {{- $patched := len (where $pocs "Params.patched" true) -}}
+{{- $unpatched := sub $total $patched -}}
 {{- $sevOrder := slice "Critical" "High" "Medium" "Low" "Info" -}}
+{{- $cats := slice "web" "network" "binary" "crypto" "cloud" "hardware" "social-engineering" "misc" -}}
+{{- $d := site.Data.homepage_charts -}}
+{{- $kevTotal := 0 }}{{ with $d }}{{ $kevTotal = .kev_total }}{{ end }}
+{{- $kev90 := 0 }}{{ with $d }}{{ $kev90 = .kev_last_90d }}{{ end }}
 
-<!-- Hero -->
-<section class="border-b border-zinc-200 pb-10 dark:border-zinc-800">
+<!-- ─── Hero ─── -->
+<section class="border-b border-zinc-200 pb-10 dark:border-mono-border">
   <div class="flex items-center gap-1">
-    <!-- Text -->
     <div class="min-w-0">
       <div class="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 font-mono text-xs text-emerald-600 dark:text-emerald-400">
         <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"></span>
@@ -22,6 +26,9 @@
       <div class="mt-6 flex flex-wrap gap-3">
         <a href="{{ "/pocs/" | relURL }}" class="inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2 font-mono text-sm font-semibold text-zinc-950 transition hover:bg-emerald-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
           Browse all PoCs
+        </a>
+        <a href="{{ "/pocs/" | relURL }}?signal=kev" class="inline-flex items-center gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 font-mono text-sm font-semibold text-red-600 transition hover:bg-red-500/20 dark:text-red-400">
+          {{ $kevTotal }} exploited in the wild
         </a>
       </div>
     </div>
@@ -52,87 +59,200 @@
   </div>
 </section>
 
-<!-- Stats -->
-<section class="grid grid-cols-1 gap-6 py-10 lg:grid-cols-3">
-  <!-- Totals -->
-  <div class="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900/40">
-    <p class="font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Total PoCs</p>
-    <p class="mt-2 font-mono text-4xl font-semibold text-emerald-600 dark:text-emerald-400">{{ $total }}</p>
-    <div class="mt-4 grid grid-cols-2 gap-3 font-mono text-xs">
-      <div class="rounded-md border border-zinc-200 p-2 dark:border-zinc-800">
-        <span class="block text-zinc-500 dark:text-zinc-400">patched</span>
-        <span class="text-emerald-600 dark:text-emerald-400">{{ $patched }}</span>
+{{/* Dominant category, computed rather than hardcoded */}}
+{{- $domCat := "" }}{{ $domN := 0 -}}
+{{- range $cats }}{{ $n := len (where $pocs "Params.category" .) }}{{ if gt $n $domN }}{{ $domN = $n }}{{ $domCat = . }}{{ end }}{{ end -}}
+{{- $critical := len (where $pocs "Params.severity" "Critical") -}}
+{{- $ransom := len (where $pocs "Params.kev_ransomware" true) -}}
+
+<!-- ─── KPI strip ─── -->
+<section class="grid grid-cols-2 gap-3 py-6 md:grid-cols-5">
+  {{- $kpis := slice
+    (dict "label" "Total PoCs"      "value" (string $total)                              "sub" (printf "%d added in the last 90 days" $kev90) "accent" false "href" "/pocs/")
+    (dict "label" "Patch status"    "value" (printf "%d / %d" $unpatched $patched)       "sub" "unpatched / patched"                          "accent" false "href" "/pocs/?patched=false")
+    (dict "label" "CISA KEV"        "value" (string $kevTotal)                           "sub" (printf "%.1f%% of the archive" (mul (div (float $kevTotal) (float $total)) 100)) "accent" true "href" "/pocs/?signal=kev")
+    (dict "label" "Dominant vector" "value" (upper $domCat)                              "sub" (printf "%d entries · %.1f%%" $domN (mul (div (float $domN) (float $total)) 100)) "accent" false "href" (printf "/pocs/%s/" $domCat))
+    (dict "label" "Ransomware"      "value" (string $ransom)                             "sub" "known campaign use"                            "accent" true "href" "/pocs/?signal=kev,ransomware")
+  -}}
+  {{- range $kpis }}
+  <a href="{{ .href | relURL }}" class="group rounded border border-zinc-200 bg-white p-3.5 transition hover:border-emerald-400 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand">
+    <p class="font-mono text-[10px] uppercase tracking-wider text-zinc-500 dark:text-mono-muted">{{ .label }}</p>
+    <h3 class="mt-1 font-mono text-xl font-bold {{ if .accent }}text-emerald-600 dark:text-brand{{ else }}text-zinc-900 dark:text-white{{ end }}">{{ .value }}</h3>
+    <p class="mt-1 font-mono text-[10px] text-zinc-500 dark:text-mono-muted">{{ .sub }}</p>
+  </a>
+  {{- end }}
+</section>
+
+<!-- ─── Main grid ─── -->
+<div class="grid grid-cols-1 gap-6 pb-10 lg:grid-cols-4">
+
+  <!-- LEFT: table + KEV timeline -->
+  <div class="space-y-4 lg:col-span-3">
+
+    <div class="overflow-hidden rounded border border-zinc-200 bg-white dark:border-mono-border dark:bg-mono-card">
+      <div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50/60 p-3 dark:border-mono-border dark:bg-mono-bg/50">
+        <span class="flex items-center gap-2 font-mono text-xs font-bold text-zinc-900 dark:text-white">
+          <svg class="h-4 w-4 text-emerald-600 dark:text-brand" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+          LATEST ENTRIES
+        </span>
+        <a href="{{ "/pocs/" | relURL }}" class="font-mono text-[11px] text-zinc-500 transition hover:text-emerald-600 dark:text-mono-muted dark:hover:text-brand">view all {{ $total }} →</a>
       </div>
-      <div class="rounded-md border border-zinc-200 p-2 dark:border-zinc-800">
-        <span class="block text-zinc-500 dark:text-zinc-400">unpatched</span>
-        <span class="text-amber-600 dark:text-amber-400">{{ sub $total $patched }}</span>
+
+      <div class="overflow-x-auto">
+        <table class="w-full table-fixed text-left font-mono text-xs">
+          <thead class="border-b border-zinc-200 bg-zinc-50 text-[10px] uppercase text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">
+            <tr>
+              <th class="px-3 py-2.5">PoC title</th>
+              <th class="hidden w-40 px-3 py-2.5 sm:table-cell">CVE</th>
+              <th class="hidden w-28 px-3 py-2.5 lg:table-cell">Category</th>
+              <th class="w-28 px-3 py-2.5">Severity</th>
+              <th class="hidden w-24 px-3 py-2.5 md:table-cell">Patch</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-zinc-200 text-zinc-700 dark:divide-mono-border/40 dark:text-slate-300">
+            {{- range first 8 $pocs }}
+            <tr class="group transition hover:bg-zinc-50 dark:hover:bg-mono-hover">
+              <td class="max-w-0 px-3 py-2.5">
+                <a href="{{ .RelPermalink }}" class="flex flex-wrap items-center gap-1.5">
+                  <span class="line-clamp-1 min-w-0 font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand">{{ .Title }}</span>
+                  {{- if .Params.kev }}
+                  <span class="shrink-0 rounded border border-red-500/40 bg-red-500/10 px-1 py-[1px] text-[9px] text-red-600 dark:text-red-400">CISA KEV</span>
+                  {{- else if and .Params.epss (ge .Params.epss 0.5) }}
+                  <span class="shrink-0 rounded border border-amber-500/40 bg-amber-500/10 px-1 py-[1px] text-[9px] text-amber-600 dark:text-amber-400">EPSS {{ printf "%.0f%%" (mul .Params.epss 100) }}</span>
+                  {{- end }}
+                </a>
+                {{/* Columns hidden at this breakpoint fold into a secondary line. */}}
+                <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-zinc-500 sm:hidden dark:text-mono-muted">
+                  {{ with .Params.cve }}<span class="text-emerald-600 dark:text-brand">{{ . }}</span>{{ end }}
+                  <span>{{ .Params.category }}</span>
+                  <span>{{ if .Params.patched }}Patched{{ else }}Unpatched{{ end }}</span>
+                </div>
+              </td>
+              <td class="hidden truncate whitespace-nowrap px-3 py-2.5 font-bold text-emerald-600 sm:table-cell dark:text-brand" title="{{ .Params.cve }}">{{ with .Params.cve }}{{ replaceRE `\s*\(.*$` "" . }}{{ else }}—{{ end }}</td>
+              <td class="hidden px-3 py-2.5 text-zinc-500 lg:table-cell dark:text-mono-muted">{{ .Params.category }}</td>
+              <td class="whitespace-nowrap px-3 py-2.5 font-bold
+                {{- if eq .Params.severity "Critical" }} text-red-600 dark:text-red-400
+                {{- else if eq .Params.severity "High" }} text-orange-600 dark:text-orange-400
+                {{- else if eq .Params.severity "Medium" }} text-yellow-600 dark:text-yellow-500
+                {{- else }} text-zinc-500 dark:text-mono-muted{{ end }}">
+                {{ upper .Params.severity }}{{ with .Params.cvss_score }} <span class="font-normal">{{ . }}</span>{{ end }}
+              </td>
+              <td class="hidden px-3 py-2.5 md:table-cell">
+                {{ if .Params.patched }}<span class="text-emerald-600 dark:text-brand">Patched</span>{{ else }}<span class="text-red-500 dark:text-red-400">Unpatched</span>{{ end }}
+              </td>
+            </tr>
+            {{- end }}
+          </tbody>
+        </table>
       </div>
     </div>
+
+    {{/* KEV timeline */}}
+    {{- with $d }}
+    {{- $tl := .kev_timeline -}}
+    {{- $tlMax := 1 -}}
+    {{- range $tl }}{{ if gt .count $tlMax }}{{ $tlMax = .count }}{{ end }}{{ end -}}
+    <div class="rounded border border-zinc-200 bg-white p-3.5 dark:border-mono-border dark:bg-mono-card">
+      <div class="flex items-baseline justify-between border-b border-zinc-200 pb-2 dark:border-mono-border">
+        <span class="font-mono text-xs font-bold uppercase tracking-wider text-zinc-900 dark:text-white">Entering CISA KEV</span>
+        <span class="font-mono text-[10px] text-zinc-500 dark:text-mono-muted">{{ .kev_last_90d }} in the last 90 days</span>
+      </div>
+      <div class="mt-3 flex gap-2">
+        {{- range $tl }}
+        {{- $h := 0.0 }}{{ if gt $tlMax 0 }}{{ $h = div (mul .count 100.0) $tlMax }}{{ end }}
+        {{- $isCurrent := eq .month (now.Format "2006-01") -}}
+        <div class="flex flex-1 flex-col items-center gap-1" title="{{ .month }}: {{ .count }} entries added to KEV{{ if $isCurrent }} (month in progress){{ end }}">
+          <span class="font-mono text-[10px] font-semibold text-zinc-500 dark:text-mono-muted">{{ .count }}</span>
+          <div class="relative h-16 w-full rounded-sm bg-zinc-100 dark:bg-mono-bg">
+            <div class="absolute bottom-0 left-0 right-0 rounded-sm {{ if $isCurrent }}bg-red-500/40{{ else }}bg-red-500/80{{ end }} transition hover:bg-red-500"
+                 style="height: {{ if gt .count 0 }}{{ printf "%.1f" $h }}%{{ else }}3px{{ end }}"></div>
+          </div>
+          <span class="font-mono text-[9px] {{ if $isCurrent }}text-zinc-300 dark:text-zinc-600{{ else }}text-zinc-400 dark:text-mono-muted{{ end }}">{{ .label }}</span>
+        </div>
+        {{- end }}
+      </div>
+    </div>
+    {{- end }}
+
+    {{/* EPSS top */}}
+    {{- with $d }}
+    <div class="rounded border border-zinc-200 bg-white p-3.5 dark:border-mono-border dark:bg-mono-card">
+      <div class="flex items-baseline justify-between border-b border-zinc-200 pb-2 dark:border-mono-border">
+        <span class="font-mono text-xs font-bold uppercase tracking-wider text-zinc-900 dark:text-white">Highest exploit probability</span>
+        <a href="{{ "/pocs/" | relURL }}?signal=epss" class="font-mono text-[10px] text-emerald-600 hover:underline dark:text-brand">filter →</a>
+      </div>
+      <div class="mt-3 grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2">
+        {{- range first 10 .epss_top }}
+        <a href="{{ .url | relURL }}" class="group flex items-center gap-2" title="{{ .title }}">
+          <span class="w-[6.5rem] shrink-0 truncate font-mono text-[10px] text-zinc-600 group-hover:text-emerald-600 dark:text-slate-300 dark:group-hover:text-brand">{{ .cve }}</span>
+          <span class="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-mono-bg">
+            <span class="block h-full rounded-full {{ if .kev }}bg-red-500{{ else }}bg-amber-500{{ end }}" style="width: {{ printf "%.0f" (mul .epss 100) }}%"></span>
+          </span>
+          <span class="w-8 shrink-0 text-right font-mono text-[10px] text-zinc-500 dark:text-mono-muted">{{ printf "%.0f%%" (mul .epss 100) }}</span>
+        </a>
+        {{- end }}
+      </div>
+      <p class="mt-2 font-mono text-[10px] text-zinc-400 dark:text-mono-muted">FIRST EPSS — probability of exploitation within 30 days. Red = also in CISA KEV.</p>
+    </div>
+    {{- end }}
   </div>
 
-  <!-- Severity breakdown -->
-  <div class="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900/40">
-    <p class="font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">By severity</p>
-    <div class="mt-3 space-y-2">
-      {{ range $sevOrder }}
-        {{ $sev := . }}
-        {{ $n := len (where $pocs "Params.severity" $sev) }}
-        {{ $pct := 0 }}{{ if gt $total 0 }}{{ $pct = mul (div (float $n) (float $total)) 100 }}{{ end }}
+  <!-- RIGHT: sidebar stats -->
+  <div class="space-y-4">
+
+    {{/* Severity */}}
+    <div class="space-y-3 rounded border border-zinc-200 bg-white p-3.5 dark:border-mono-border dark:bg-mono-card">
+      <span class="block border-b border-zinc-200 pb-2 font-mono text-xs font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white">Severity spread</span>
+      <div class="space-y-2 font-mono text-xs">
+        {{- range $sevOrder }}
+        {{- $sev := . }}
+        {{- $n := len (where $pocs "Params.severity" $sev) }}
+        {{- if gt $n 0 }}
+        {{- $pct := mul (div (float $n) (float $total)) 100 }}
         <a href="{{ "/pocs/" | relURL }}?severity={{ $sev }}" class="block">
-          <div class="flex items-center justify-between font-mono text-xs">
-            <span class="text-zinc-600 dark:text-zinc-300">{{ $sev }}</span>
-            <span class="text-zinc-500 dark:text-zinc-400">{{ $n }}</span>
+          <div class="mb-1 flex justify-between">
+            <span class="text-zinc-700 dark:text-slate-300">{{ $sev }}</span>
+            <span class="text-zinc-500 dark:text-mono-muted">{{ $n }} <span class="text-zinc-400 dark:text-mono-muted">({{ printf "%.0f%%" $pct }})</span></span>
           </div>
-          <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
-            <div class="h-full rounded-full
-              {{ if eq $sev "Critical" }}bg-red-500{{ else if eq $sev "High" }}bg-orange-500{{ else if eq $sev "Medium" }}bg-yellow-500{{ else if eq $sev "Low" }}bg-blue-400{{ else }}bg-zinc-400{{ end }}"
-              style="width: {{ printf "%.0f" $pct }}%"></div>
+          <div class="h-1.5 w-full overflow-hidden rounded bg-zinc-200 dark:bg-mono-bg">
+            <div class="h-full {{ if eq $sev "Critical" }}bg-red-500{{ else if eq $sev "High" }}bg-orange-500{{ else if eq $sev "Medium" }}bg-yellow-500{{ else if eq $sev "Low" }}bg-blue-400{{ else }}bg-zinc-400{{ end }}" style="width: {{ printf "%.0f" $pct }}%"></div>
           </div>
         </a>
-      {{ end }}
-      {{- $std := 0 -}}
-      {{- range $sevOrder }}{{ $std = add $std (len (where $pocs "Params.severity" .)) }}{{ end -}}
-      {{- $other := sub $total $std -}}
-      {{- if gt $other 0 }}
-        <div class="flex items-center justify-between font-mono text-xs">
-          <span class="text-zinc-600 dark:text-zinc-300">Other</span>
-          <span class="text-zinc-500 dark:text-zinc-400">{{ $other }}</span>
-        </div>
-        <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
-          <div class="h-full rounded-full bg-zinc-400" style="width: {{ printf "%.0f" (mul (div (float $other) (float $total)) 100) }}%"></div>
-        </div>
-      {{- end }}
+        {{- end }}
+        {{- end }}
+      </div>
     </div>
-  </div>
 
-  <!-- Category breakdown -->
-  <div class="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900/40">
-    <p class="font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">By category</p>
-    <div class="mt-3 grid grid-cols-2 gap-2">
-      {{ range (slice "web" "network" "binary" "crypto" "cloud" "hardware" "social-engineering" "misc") }}
-        {{ $cat := . }}
-        {{ $n := len (where $pocs "Params.category" $cat) }}
-        <a href="{{ printf "/pocs/%s/" $cat | relURL }}" class="flex items-center justify-between rounded-md border border-zinc-200 px-2.5 py-1.5 font-mono text-xs text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">
-          <span class="truncate">{{ $cat }}</span>
-          <span class="ml-2 rounded bg-zinc-100 px-1.5 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">{{ $n }}</span>
+    {{/* Target technologies */}}
+    {{- with $d }}
+    <div class="space-y-3 rounded border border-zinc-200 bg-white p-3.5 dark:border-mono-border dark:bg-mono-card">
+      <span class="block border-b border-zinc-200 pb-2 font-mono text-xs font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white">Target technologies</span>
+      <div class="space-y-1.5 font-mono text-xs">
+        {{- range first 10 .top_vendors }}
+        <a href="{{ "/pocs/" | relURL }}?q={{ .name | urlquery }}" class="flex items-center justify-between text-zinc-700 transition hover:text-emerald-600 dark:text-slate-300 dark:hover:text-brand">
+          <span class="truncate">{{ .name }}</span>
+          <span class="ml-2 shrink-0 text-emerald-600 dark:text-brand">{{ .count }}{{ if .kev }} <span class="text-red-500 dark:text-red-400">·{{ .kev }}</span>{{ end }}</span>
         </a>
-      {{ end }}
+        {{- end }}
+      </div>
+      <p class="font-mono text-[10px] text-zinc-400 dark:text-mono-muted">Red = confirmed exploited in the wild.</p>
     </div>
-  </div>
-</section>
+    {{- end }}
 
-{{ partial "homepage-charts.html" . }}
+    {{/* Categories */}}
+    <div class="space-y-3 rounded border border-zinc-200 bg-white p-3.5 dark:border-mono-border dark:bg-mono-card">
+      <span class="block border-b border-zinc-200 pb-2 font-mono text-xs font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white">Categories</span>
+      <div class="grid grid-cols-2 gap-1.5">
+        {{- range $cats }}
+        {{- $n := len (where $pocs "Params.category" .) }}
+        <a href="{{ printf "/pocs/%s/" . | relURL }}" class="flex items-center justify-between rounded border border-zinc-200 px-2 py-1 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-mono-muted dark:hover:border-brand dark:hover:text-brand">
+          <span class="truncate">{{ . }}</span>
+          <span class="ml-1 text-zinc-500 dark:text-slate-300">{{ $n }}</span>
+        </a>
+        {{- end }}
+      </div>
+    </div>
 
-<!-- Recent -->
-<section class="pb-4">
-  <div class="flex items-center justify-between">
-    <h2 class="font-mono text-lg font-semibold text-zinc-900 dark:text-zinc-100">Recent additions</h2>
-    <a href="{{ "/pocs/" | relURL }}" class="font-mono text-xs text-emerald-600 hover:underline dark:text-emerald-400">view all →</a>
   </div>
-  <div class="mt-4 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
-    {{ range first 10 $pocs }}
-      {{ partial "poc-row.html" . }}
-    {{ end }}
-  </div>
-</section>
+</div>
 {{ end }}
