@@ -125,7 +125,7 @@
                 <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-zinc-500 sm:hidden dark:text-mono-muted">
                   {{ with .Params.cve }}<span class="text-emerald-600 dark:text-brand">{{ . }}</span>{{ end }}
                   <span>{{ .Params.category }}</span>
-                  <span>{{ if .Params.patched }}Patched{{ else }}Unpatched{{ end }}</span>
+                  <span>{{ partial "patch-status.html" (dict "page" . "style" "text") }}</span>
                 </div>
               </td>
               <td class="hidden truncate whitespace-nowrap px-3 py-2.5 font-bold text-emerald-600 sm:table-cell dark:text-brand" title="{{ .Params.cve }}">{{ with .Params.cve }}{{ replaceRE `\s*\(.*$` "" . }}{{ else }}—{{ end }}</td>
@@ -138,7 +138,7 @@
                 {{ upper .Params.severity }}{{ with .Params.cvss_score }} <span class="font-normal">{{ . }}</span>{{ end }}
               </td>
               <td class="hidden px-3 py-2.5 md:table-cell">
-                {{ if .Params.patched }}<span class="text-emerald-600 dark:text-brand">Patched</span>{{ else }}<span class="text-red-500 dark:text-red-400">Unpatched</span>{{ end }}
+                {{ partial "patch-status.html" (dict "page" . "style" "text") }}
               </td>
             </tr>
             {{- end }}

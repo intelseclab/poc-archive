@@ -1,0 +1,34 @@
+{{- /* Tri-state patch indicator. Context (.) is a dict:
+         page  — the page
+         style — "text" (default), "dot", or "chip"
+       patch_status is set by build-hugo-content.py from an authoritative
+       fix record (OSV / NVD) where one exists, and only falls back to
+       reading the README when no source knows the CVE. "unknown" is a real
+       answer here — it is not the same as "unpatched". */ -}}
+{{- $p := .page -}}
+{{- $style := .style | default "text" -}}
+{{- $s := $p.Params.patch_status | default (cond $p.Params.patched "patched" "unknown") -}}
+
+{{- $label := "Unverified" -}}{{- $cls := "text-zinc-500 dark:text-mono-muted" -}}{{- $dot := "bg-zinc-400" -}}
+{{- if eq $s "patched" }}{{ $label = "Patched" }}{{ $cls = "text-emerald-600 dark:text-brand" }}{{ $dot = "bg-emerald-500" }}
+{{- else if eq $s "unpatched" }}{{ $label = "Unpatched" }}{{ $cls = "text-red-500 dark:text-red-400" }}{{ $dot = "animate-pulse bg-red-500" }}{{ end -}}
+
+{{- $title := "" -}}
+{{- if eq $s "patched" }}
+  {{- if $p.Params.fix_source }}{{ $title = printf "Fix confirmed via %s%s" (upper $p.Params.fix_source) (cond (ne (string ($p.Params.fix_detail | default "")) "") (printf ": %s" $p.Params.fix_detail) "") }}
+  {{- else }}{{ $title = "Vendor fix documented in this entry" }}{{ end }}
+{{- else if eq $s "unpatched" }}{{ $title = "No vendor fix at the time of writing" }}
+{{- else }}{{ $title = "No authoritative fix record found; status not confirmed either way" }}{{ end -}}
+
+{{- if eq $style "dot" -}}
+<span class="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium {{ $cls }}" title="{{ $title }}">
+  <span class="h-2 w-2 rounded-full {{ $dot }}"></span>{{ $label }}
+</span>
+{{- else if eq $style "chip" -}}
+<span class="inline-flex shrink-0 items-center gap-1 rounded border px-1.5 py-[1px] text-[10px] uppercase tracking-wide
+  {{- if eq $s "patched" }} border-emerald-500/30 {{ $cls }}
+  {{- else if eq $s "unpatched" }} border-red-400/40 {{ $cls }}
+  {{- else }} border-zinc-300/60 dark:border-mono-border {{ $cls }}{{ end }}" title="{{ $title }}">{{ $label }}</span>
+{{- else -}}
+<span class="{{ $cls }}" title="{{ $title }}">{{ $label }}</span>
+{{- end -}}

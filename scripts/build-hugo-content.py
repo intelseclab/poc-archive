@@ -56,19 +56,20 @@ def load_intel():
     if not INTEL_FILE.exists():
         print("  note: data/cve-intel.json absent — building without KEV/EPSS signals",
               file=sys.stderr)
-        return {"kev": {}, "epss": {}, "generated": ""}
+        return {"kev": {}, "epss": {}, "fixes": {}, "generated": ""}
     try:
         with INTEL_FILE.open(encoding="utf-8") as f:
             data = json.load(f)
         return {
             "kev": data.get("kev", {}),
             "epss": data.get("epss", {}),
+            "fixes": data.get("fixes", {}),
             "generated": data.get("generated", ""),
         }
     except Exception as e:
         print(f"  WARN could not read data/cve-intel.json ({e}) — building without signals",
               file=sys.stderr)
-        return {"kev": {}, "epss": {}, "generated": ""}
+        return {"kev": {}, "epss": {}, "fixes": {}, "generated": ""}
 
 
 def compute_priority(kev, kev_ransomware, epss, patched, cvss, date_added):
@@ -94,8 +95,12 @@ def compute_priority(kev, kev_ransomware, epss, patched, cvss, date_added):
         score += 50
     if epss:
         score += round(epss * 60)
-    if not patched:
+    # Confirmed-unpatched is a real urgency signal; "unknown" only earns half,
+    # so absence of evidence is not scored as evidence of absence.
+    if patched is False:
         score += 25
+    elif patched is None:
+        score += 12
     if cvss is not None:
         if cvss >= 9.0:
             score += 15
@@ -184,20 +189,43 @@ def parse_date(s):
         return None
 
 
-def determine_patched(text):
+NEGATIVE_PATCH_SIGNALS = (
+    'no patch available', 'no patch yet', 'no fix', 'no official patch',
+    'no cve or official patch', 'no workaround', 'no patch; no workaround',
+    '"future release, no workaround"', 'future release', 'unpatched',
+)
+POSITIVE_PATCH_SIGNALS = (
+    'fixed in', 'patched in', 'upgrade to', 'update to', 'resolved in',
+    'apply microsoft', 'apply cisco', 'apply check point',
+    'apply the patch', 'install the patch', 'install cisco',
+    'security update', 'hotfix', 'patch released',
+)
+
+
+def determine_patched(text, fix_rec=None):
+    """Tri-state patch status: True / False / None (unknown).
+
+    An authoritative fix record (OSV "fixed" event, or an NVD Patch-tagged
+    reference) always wins — a vendor shipping a fix is a fact, whereas the
+    Status line in a README is a point-in-time human judgement that goes
+    stale. Only if no source knows the CVE do we fall back to reading the
+    text, and an inconclusive read returns None rather than asserting
+    "unpatched", which is what the previous version did: it defaulted to
+    False, so any entry phrased outside a fixed keyword list was silently
+    mislabelled. An audit against OSV/NVD found that wrong for 117 of the
+    117 verifiable cases.
+    """
+    if fix_rec and fix_rec.get('patched'):
+        return True
+
     lower = text.lower()
-    for sig in ('no patch available', 'no patch yet', 'no fix', 'no official patch',
-                'no cve or official patch', 'no workaround', 'no patch; no workaround',
-                '"future release, no workaround"', 'future release'):
-        if sig in lower:
-            return False
-    for sig in ('fixed in', 'patched in', 'upgrade to', 'update to',
-                'apply microsoft', 'apply cisco', 'apply check point',
-                'apply the patch', 'install the patch', 'install cisco',
-                'security update'):
-        if sig in lower:
-            return True
-    return False
+    neg = any(sig in lower for sig in NEGATIVE_PATCH_SIGNALS)
+    pos = any(sig in lower for sig in POSITIVE_PATCH_SIGNALS)
+    if neg and not pos:
+        return False
+    if pos and not neg:
+        return True
+    return None
 
 
 def normalize_severity(sev):
@@ -350,7 +378,11 @@ def process(readme_path, intel=None):
     references = extract_references(text)
     tags = parse_tags(tags_str)
     cvss_score = parse_cvss(cvss_str)
-    patched = determine_patched(text)
+
+    cve_m = re.search(r'CVE-\d{4}-\d{4,7}', cve or '', re.IGNORECASE)
+    cve_id = cve_m.group(0).upper() if cve_m else None
+    fix_rec = intel.get('fixes', {}).get(cve_id) if cve_id else None
+    patched = determine_patched(text, fix_rec)
 
     fm = {}
     if title:
@@ -386,14 +418,24 @@ def process(readme_path, intel=None):
         fm['references'] = references
     if related and related.upper() != 'N/A':
         fm['related'] = related
-    fm['patched'] = patched
+    # Tri-state: true / false / unknown. Hugo templates read patch_status,
+    # while `patched` stays boolean for backwards-compatible filtering.
+    if patched is True:
+        fm['patch_status'] = 'patched'
+    elif patched is False:
+        fm['patch_status'] = 'unpatched'
+    else:
+        fm['patch_status'] = 'unknown'
+    fm['patched'] = bool(patched)
+    if fix_rec:
+        fm['fix_source'] = fix_rec.get('source', '')
+        if fix_rec.get('detail'):
+            fm['fix_detail'] = fix_rec['detail']
 
     # ── Exploitation signals (CISA KEV + FIRST EPSS) ──
     kev_rec = None
     epss_rec = None
-    cve_m = re.search(r'CVE-\d{4}-\d{4,7}', cve or '', re.IGNORECASE)
-    if cve_m:
-        cve_id = cve_m.group(0).upper()
+    if cve_id:
         kev_rec = intel['kev'].get(cve_id)
         epss_rec = intel['epss'].get(cve_id)
 

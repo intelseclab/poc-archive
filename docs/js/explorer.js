@@ -328,7 +328,18 @@
       var ok = true;
       if (state.categories.length && state.categories.indexOf(cat) === -1) ok = false;
       if (ok && state.severities.length && state.severities.indexOf(sev) === -1) ok = false;
-      if (ok && state.patched !== "all" && patched !== state.patched) ok = false;
+      if (ok && state.patched !== "all") {
+        // Tri-state: "true"/"false" match the boolean, "unknown" matches
+        // entries where no authoritative fix record was found.
+        var ps = row.getAttribute("data-patch-status") || "unknown";
+        if (state.patched === "unknown") {
+          if (ps !== "unknown") ok = false;
+        } else if (state.patched === "true") {
+          if (ps !== "patched") ok = false;
+        } else if (state.patched === "false") {
+          if (ps !== "unpatched") ok = false;
+        }
+      }
       if (ok && state.from && date < state.from) ok = false;
       if (ok && state.to && date > state.to) ok = false;
       // Signals are AND-ed: "KEV + Ransomware" means both must hold.

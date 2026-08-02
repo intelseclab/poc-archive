@@ -8,6 +8,7 @@
   data-severity="{{ $p.Params.severity }}"
   data-cvss="{{ $p.Params.cvss_score | default 0 }}"
   data-patched="{{ $p.Params.patched }}"
+  data-patch-status="{{ $p.Params.patch_status | default "unknown" }}"
   data-date="{{ $p.Date.Format "2006-01-02" }}"
   data-permalink="{{ $p.RelPermalink }}"
   data-kev="{{ if $p.Params.kev }}true{{ else }}false{{ end }}"
@@ -51,9 +52,7 @@
     </div>
 
     <div class="flex items-center justify-between gap-2 border-t border-zinc-200/60 pt-2 font-mono text-xs md:flex-col md:items-end md:border-t-0 md:pt-0 dark:border-mono-border/40">
-      <span class="whitespace-nowrap text-[11px] font-medium {{ if $p.Params.patched }}text-emerald-600 dark:text-brand{{ else }}text-red-500 dark:text-red-400{{ end }}">
-        ● {{ if $p.Params.patched }}Patched{{ else }}Unpatched{{ end }}
-      </span>
+      {{ partial "patch-status.html" (dict "page" $p "style" "dot") }}
       <span class="whitespace-nowrap text-[11px] text-zinc-400 dark:text-mono-muted">{{ $p.Date.Format "2006-01-02" }}</span>
     </div>
 
