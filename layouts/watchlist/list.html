@@ -61,6 +61,11 @@
       <button type="button" data-v="reviewed" class="wl-pill rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">reviewed</button>
       <button type="button" data-v="ingested" class="wl-pill rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">ingested</button>
     </div>
+    <button type="button" id="wl-signal"
+      class="rounded border border-emerald-400 bg-emerald-400/10 px-2.5 py-1 font-mono text-[11px] text-emerald-600 dark:text-brand"
+      title="GitHub search matches any repo mentioning a CVE ID — most are dependency manifests, scanners or NVD mirrors rather than exploits">
+      likely PoCs only
+    </button>
     <span class="ml-auto font-mono text-[11px] text-zinc-400 dark:text-mono-muted" id="wl-updated"></span>
   </div>
 </div>
@@ -116,6 +121,10 @@
   var ACTIVE   = ["border-emerald-400", "bg-emerald-400/10", "text-emerald-600", "dark:text-brand"];
 
   var all = [], filter = "all", query = "", shown = 50;
+  // Default to candidates that actually look like PoCs. GitHub search matches
+  // any repo merely mentioning a CVE, so ~70% are dependency manifests,
+  // scanners or NVD mirrors. Score is computed by the monitor.
+  var MIN_SCORE = 50, onlyLikely = true;
 
   // ---- Owner mode -----------------------------------------------------
   // The key lives ONLY in this closure variable. Nothing writes it to
@@ -225,6 +234,12 @@
     var cwe = (c.cwe_names || []).slice(0, 2).join(", ");
     if (cwe) meta.appendChild(el("span", "rounded border border-zinc-200 bg-zinc-50 px-2 py-[1px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted", cwe));
     meta.appendChild(el("span", "rounded border px-1.5 py-[1px] text-[10px] uppercase tracking-wide " + b[0], b[1]));
+    if ((c.poc_score || 0) >= 60) {
+      meta.appendChild(el("span", "rounded border border-emerald-500/30 px-1.5 py-[1px] text-[10px] uppercase tracking-wide text-emerald-600 dark:text-brand", "likely poc"));
+    }
+    if (c.cve_span > 2) {
+      meta.appendChild(el("span", "rounded border border-zinc-300/60 px-1.5 py-[1px] text-[10px] uppercase tracking-wide text-zinc-400 dark:border-mono-border dark:text-mono-muted", "collection"));
+    }
     left.appendChild(meta);
 
     var h = el("p", "font-mono text-sm font-bold text-zinc-900 dark:text-white");
@@ -240,7 +255,9 @@
 
     var right = el("div", "flex shrink-0 items-center justify-between gap-3 border-t border-zinc-200/60 pt-2 font-mono text-[11px] md:flex-col md:items-end md:border-t-0 md:pt-0 dark:border-mono-border/40");
     right.appendChild(el("span", "text-zinc-400 dark:text-mono-muted",
-      "★ " + (c.stars || 0) + " · " + String(c.discovered_at || "").slice(0, 10)));
+      "★ " + (c.stars || 0) +
+      (c.pushed_at ? " · pushed " + String(c.pushed_at).slice(0, 10) : "") +
+      " · seen " + String(c.discovered_at || "").slice(0, 10)));
 
     if (c._archiveURL) {
       var v = el("a", "rounded border border-emerald-500/40 px-2 py-0.5 text-emerald-600 transition hover:bg-emerald-500/10 dark:text-brand", "View entry →");
@@ -265,14 +282,16 @@
   function render() {
     var q = query.toLowerCase();
     var list = all.filter(function (c) {
+      if (onlyLikely && (c.poc_score || 0) < MIN_SCORE) return false;
       if (filter !== "all" && statusOf(c) !== filter) return false;
       return !q || c._blob.indexOf(q) !== -1;
     });
 
-    document.getElementById("wl-total").textContent    = all.length;
-    document.getElementById("wl-ingested").textContent = all.filter(function (c) { return statusOf(c) === "ingested"; }).length;
-    document.getElementById("wl-reviewed").textContent = all.filter(function (c) { return statusOf(c) === "reviewed"; }).length;
-    document.getElementById("wl-pending").textContent  = all.filter(function (c) { return statusOf(c) === "pending"; }).length;
+    var pool = onlyLikely ? all.filter(function (c) { return (c.poc_score || 0) >= MIN_SCORE; }) : all;
+    document.getElementById("wl-total").textContent    = pool.length;
+    document.getElementById("wl-ingested").textContent = pool.filter(function (c) { return statusOf(c) === "ingested"; }).length;
+    document.getElementById("wl-reviewed").textContent = pool.filter(function (c) { return statusOf(c) === "reviewed"; }).length;
+    document.getElementById("wl-pending").textContent  = pool.filter(function (c) { return statusOf(c) === "pending"; }).length;
 
     rowsEl.textContent = "";
     if (!list.length) {
@@ -299,7 +318,7 @@
   }
 
   Promise.all([
-    fetch(MONITOR + "/list?sort=discovered_desc").then(function (r) {
+    fetch(MONITOR + "/list?sort=poc_desc").then(function (r) {
       if (!r.ok) throw new Error("monitor HTTP " + r.status); return r.json();
     }),
     fetch("{{ "/index.json" | relURL }}").then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; })
@@ -319,6 +338,17 @@
     if (all.length) u.textContent = "monitor data · " + String(all[0].discovered_at || "").slice(0, 10);
     render();
   }).catch(function (e) { fail(e.message || String(e)); });
+
+  var signalEl = document.getElementById("wl-signal");
+  signalEl.addEventListener("click", function () {
+    onlyLikely = !onlyLikely;
+    signalEl.textContent = onlyLikely ? "likely PoCs only" : "showing all candidates";
+    ACTIVE.forEach(function (c) { signalEl.classList.toggle(c, onlyLikely); });
+    signalEl.classList.toggle("border-zinc-300", !onlyLikely);
+    signalEl.classList.toggle("dark:border-mono-border", !onlyLikely);
+    shown = 50;
+    render();
+  });
 
   searchEl.addEventListener("input", function () { query = searchEl.value.trim(); shown = 50; render(); });
   moreBtn.addEventListener("click", function () { shown += 50; render(); });
