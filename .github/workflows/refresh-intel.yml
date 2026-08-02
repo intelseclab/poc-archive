@@ -1,0 +1,49 @@
+name: Refresh CVE intel
+
+# KEV grows weekly and EPSS is rescored daily, so the committed snapshot in
+# data/cve-intel.json goes stale. This job refreshes it and commits the result;
+# that push triggers "Build & deploy site", which rebuilds with the new
+# signals, priority scores and patch statuses.
+#
+# The site build itself never calls the network — it only reads the committed
+# snapshot — so a failure here degrades freshness, never the build.
+
+on:
+  schedule:
+    - cron: "17 4 * * 1"   # Mondays 04:17 UTC
+  workflow_dispatch:        # and on demand
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-intel
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Refresh KEV / EPSS / OSV / NVD
+        env:
+          # Optional. Without it the script falls back to the anonymous NVD
+          # tier (5 req/30s) and processes fewer CVEs per run; it never fails.
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: python3 scripts/enrich-cve-intel.py
+
+      - name: Commit refreshed snapshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/cve-intel.json
+          if git diff --cached --quiet; then
+            echo "Intel unchanged, nothing to commit."
+          else
+            git commit -m "chore: refresh CVE intel snapshot (KEV/EPSS/OSV/NVD)"
+            git push
+          fi
