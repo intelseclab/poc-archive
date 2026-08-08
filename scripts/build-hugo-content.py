@@ -374,6 +374,10 @@ def process(readme_path, intel=None):
     affected_product = extract_field(text, "Software / System")
     affected_versions = extract_field(text, "Versions Affected")
 
+    # A lab.yml sibling marks this entry as having a runnable poclab
+    # environment; the CLI and the site both key off this flag.
+    has_lab = (readme_path.parent / "lab.yml").exists()
+
     summary = extract_summary(text)
     references = extract_references(text)
     tags = parse_tags(tags_str)
@@ -427,6 +431,8 @@ def process(readme_path, intel=None):
     else:
         fm['patch_status'] = 'unknown'
     fm['patched'] = bool(patched)
+    if has_lab:
+        fm['lab'] = True
     if fix_rec:
         fm['fix_source'] = fix_rec.get('source', '')
         if fix_rec.get('detail'):
