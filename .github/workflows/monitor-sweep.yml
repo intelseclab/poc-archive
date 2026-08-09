@@ -1,20 +1,19 @@
 name: Trigger monitor sweep
 
-# Kicks the CVE monitor (monitor.intelseclab.com) into running a sweep now,
-# instead of waiting for its own 06:17 UTC cron.
+# Asks the CVE monitor (monitor.intelseclab.com) to sweep now instead of waiting
+# for its own 06:17 UTC cron, then reports what it found.
 #
-# Why this exists: the sweep endpoint needs a Bearer token. Running it from
-# here keeps that token in GitHub Secrets and out of anybody's laptop — the
-# public site never touches it, because the watchlist page reads the
-# unauthenticated /list endpoint instead.
+# Why this exists: the sweep endpoint needs a Bearer token. Running it from here
+# keeps that token in GitHub Secrets rather than on anyone's laptop. The public
+# site never touches it — the watchlist page reads the unauthenticated /list.
 #
-# Deliberately manual-only: the Worker already sweeps daily on its own cron,
-# so adding a schedule here would just duplicate it.
+# Deliberately manual-only: the Worker already sweeps daily, so a schedule here
+# would just duplicate it.
 
 on:
   workflow_dispatch:
 
-permissions: {}          # this job needs no repository access at all
+permissions: {}          # needs no repository access at all
 
 concurrency:
   group: monitor-sweep
@@ -23,7 +22,7 @@ concurrency:
 jobs:
   sweep:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Request a sweep
         env:
@@ -33,15 +32,11 @@ jobs:
             echo "::error::MONITOR_API_KEY secret is not set."
             exit 1
           fi
-
           code=$(curl -sS -o /tmp/resp.json -w '%{http_code}' \
             -X POST "https://monitor.intelseclab.com/sweep" \
             -H "Authorization: Bearer $MONITOR_API_KEY")
-
           echo "HTTP $code"
-          cat /tmp/resp.json
-          echo
-
+          cat /tmp/resp.json; echo
           case "$code" in
             202) echo "Sweep started." ;;
             409) echo "::warning::A sweep is already running — nothing to do."; exit 0 ;;
@@ -49,28 +44,29 @@ jobs:
             *)   echo "::error::Unexpected response $code"; exit 1 ;;
           esac
 
-      - name: Wait for it to finish, then report
+      - name: Wait for completion and report
         run: |
           # The sweep runs detached on the Worker (ctx.waitUntil), so poll
           # /health rather than holding the HTTP connection open.
-          for i in $(seq 1 28); do
+          #
+          # Note: no embedded heredoc here. A previous version indented a
+          # python3 <<'PY' body at column 0, which terminated the YAML block
+          # scalar and made the whole workflow unparseable — GitHub then showed
+          # it without a name and refused workflow_dispatch entirely.
+          for i in $(seq 1 36); do
             sleep 30
             curl -sS "https://monitor.intelseclab.com/health?cb=$i" -o /tmp/h.json || continue
-            finished=$(python3 -c "import json;d=json.load(open('/tmp/h.json'));r=d.get('lastRun') or {};print(r.get('finished_at') or '')" 2>/dev/null || echo "")
+            finished=$(jq -r '.lastRun.finished_at // ""' /tmp/h.json)
             if [ -n "$finished" ]; then
               echo "Finished at $finished"
-              python3 - <<'PY'
-import json
-r = (json.load(open('/tmp/h.json')).get('lastRun') or {})
-print(f"  new CVEs        : {r.get('new_cves')}")
-print(f"  new critical    : {r.get('new_critical_cves')}")
-print(f"  CVEs searched   : {r.get('cves_searched')}")
-print(f"  new repos found : {r.get('new_repos_found')}")
-if r.get('error'):
-    print(f"::error::sweep reported: {r['error']}")
-PY
+              jq -r '.lastRun | "  new CVEs        : \(.new_cves)\n  new critical    : \(.new_critical_cves)\n  CVEs searched   : \(.cves_searched)\n  new repos found : \(.new_repos_found)"' /tmp/h.json
+              err=$(jq -r '.lastRun.error // ""' /tmp/h.json)
+              if [ -n "$err" ]; then
+                echo "::error::sweep reported: $err"
+                exit 1
+              fi
               exit 0
             fi
-            echo "  still running… (${i}/28)"
+            echo "  still running… (${i}/36)"
           done
-          echo "::warning::Sweep did not report completion within 14 minutes; check /health later."
+          echo "::warning::No completion reported within 18 minutes; check /health later."
