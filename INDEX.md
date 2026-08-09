@@ -1,6 +1,7 @@
 # POC Archive — Index
 
 > Last updated: 2026-08-09 11:13:26
+> Last updated: 2026-08-09 19:50:54
 
 ---
 
@@ -591,10 +592,10 @@
 | 2026-07-31 | 2026-07-31 | [cve-2026-9198-langflow-auto-login-validate-code-rce](./pocs/web/2026-07-31_cve-2026-9198-langflow-auto-login-validate-code-rce/) | `web` | CVE-2026-9198 | Critical | langflow, ibm, auto-login, code-injection, cwe-94, unauthenticated, rce, python-exec, ai-agent-framework | Weaponized |
 | 2026-08-09 | 2026-08-09 | [cve-2026-60004-gitea-diffpatch-githook-rce](./pocs/web/2026-08-09_cve-2026-60004-gitea-diffpatch-githook-rce/) | `web` | CVE-2026-60004 | High | gitea, git, diffpatch, git-hook, post-index-change, three-way-merge, bare-repository, CWE-94, authenticated-rce, self-hosted, code-hosting | Patched |
 | 2026-08-09 | 2026-08-09 | [cve-2026-63077-teamcity-preauth-rce](./pocs/web/2026-08-09_cve-2026-63077-teamcity-preauth-rce/) | `web` | CVE-2026-63077 | Critical | jetbrains, teamcity, preauth-rce, xstream, deserialization, hsqldb, polyglot, jsp, CWE-502, agent-polling, ci-cd | Patched |
+| 2026-08-09 | 2026-08-09 | [cve-2026-64638-wordpress-xss2shell-pre-auth-xss-to-rce](./pocs/web/2026-08-09_cve-2026-64638-wordpress-xss2shell-pre-auth-xss-to-rce/) | `web` | CVE-2026-64638 | High | wordpress, wordpress-core, pre-auth, xss, reflected-xss, xss2shell, rce, parser-differential, dom-clobbering, some, jsonp, rest-api, application-password, plugin-upload, CWE-79, CWE-94, cms | Patched |
 
----
 
-*Total POCs: 724*
+*Total POCs: 725*
 
 ## By Category
 
@@ -605,7 +606,7 @@
 - **`misc`** — 33 entries
 - **`network`** — 125 entries
 - **`social-engineering`** — 6 entries
-- **`web`** — 431 entries
+- **`web`** — 432 entries
 
 ## Archives
 

