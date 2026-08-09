@@ -18,15 +18,15 @@ VENDOR_TOKENS = [
     'SharePoint', 'Exchange', 'Outlook', 'Windows', 'Microsoft', 'Azure',
     'WordPress', 'Joomla', 'Drupal', 'Magento', 'Ghost', 'Craft', 'Sitecore',
     'Next.js', 'Node.js', 'React', 'Laravel', 'Django', 'Rails', 'Spring',
-    'Tomcat', 'Struts', 'Log4j', 'Fastjson', 'Jenkins', 'GitLab', 'TeamCity',
-    'JetBrains', 'Kubernetes', 'Docker', 'Elastic', 'Grafana', 'Redis',
+    'Tomcat', 'Struts', 'Log4j', 'Fastjson', 'Jenkins', 'GitLab', 'JetBrains',
+    'TeamCity', 'Kubernetes', 'Docker', 'Elastic', 'Grafana', 'Redis',
     'PostgreSQL', 'MySQL', 'MongoDB', 'Apache', 'Nginx', 'OpenSSL',
     'Cisco', 'Ivanti', 'Citrix', 'VMware', 'Veeam', 'Juniper', 'BIG-IP', 'F5',
     'QNAP', 'Synology', 'TP-Link', 'D-Link', 'Netgear', 'Zyxel',
     'Adobe', 'Oracle', 'SAP', 'IBM', 'Zoho', 'Salesforce', 'ServiceNow',
     'Splunk', 'Nagios', 'Zabbix', 'pfSense', 'Zimbra', 'Roundcube',
     'Google', 'Chrome', 'Android', 'Linux', 'Langflow', 'Ollama',
-    'PHP', 'Java', 'Python', 'Git',
+    'PHP', 'Java', 'Python', 'Gitea', 'Git',
 ]
 
 

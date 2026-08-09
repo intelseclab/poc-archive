@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-08-09 09:35:07
+> Last updated: 2026-08-09 12:59:51
 
 ---
 
@@ -104,6 +104,7 @@
 | 2026-07-27 | 2026-07-27 | [cve-2026-49176-windows-walletservice-lpe](./pocs/binary/2026-07-27_cve-2026-49176-windows-walletservice-lpe/) | `binary` | CVE-2026-49176 | High | windows, walletservice, lpe, privilege-escalation, ese, extensible-storage-engine, known-folder-redirection, persisted-callback, local | Weaponized — SYSTEM shell confirmed against a real, vulnerable Windows 11 build |
 | 2026-07-27 | 2026-06-11 | [greatxml-winre-bitlocker-bypass](./pocs/binary/2026-07-27_greatxml-winre-bitlocker-bypass/) | `binary` | N/A (no CVE assigned, no Microsoft advisory as of 2026-07-27) | High | windows, bitlocker, winre, defender, offline-scan, trust-boundary-bypass, zero-day, unpatched, physical-access, local | Unpatched |
 | 2026-08-01 | 2026-07-25 | [notcve-2026-0010-barrier-daemon-lpe](./pocs/binary/2026-08-01_notcve-2026-0010-barrier-daemon-lpe/) | `binary` | NotCVE-2026-0010 (disputed CVE assignment — author contests the identifier) | High | barrier, barrierd, windows, ipc, tcp-24801, unauthenticated, lpe, privilege-escalation, system, cwe-306, local | Unpatched — Barrier is unmaintained with no vendor fix; patched successor Deskflow covers the same issue via CVE-2026-41477 / GHSA-6rx5-g478-775c |
+| 2026-08-09 | 2026-08-06 | [cve-2026-64561-zapscape-kvm-shadow-mmu-guest-to-host](./pocs/binary/2026-08-09_cve-2026-64561-zapscape-kvm-shadow-mmu-guest-to-host/) | `binary` | CVE-2026-64561 | High | linux-kernel, kvm, x86, shadow-mmu, nested-virtualization, svm, npt, ept, guest-to-host-escape, vm-escape, use-after-free, CWE-416, cross-cache, kaslr-bypass, usermode-helper, virtualization | Patched |
 | 2026-07-03 | 2026-06 | [docker-cp-copyout-destination-escape](./pocs/cloud/2026-07-03_docker-cp-copyout-destination-escape/) | `cloud` | None assigned as of 2026-07-03 | Medium | docker, container-escape, toctou, symlink-race, docker-cp, path-traversal, archive-extraction, host-file-write | PoC |
 | 2026-07-03 | 2026-06 | [floci-apigateway-vtl-rce](./pocs/cloud/2026-07-03_floci-apigateway-vtl-rce/) | `cloud` | None assigned as of 2026-07-03 | Critical | floci, api-gateway, velocity-template-language, rce, iam-bypass, sigv4, java-reflection, localstack-alternative | Weaponized |
 | 2026-07-03 | 2026-07 | [gitea-act-runner-container-options-escape](./pocs/cloud/2026-07-03_gitea-act-runner-container-options-escape/) | `cloud` | None assigned as of 2026-07-03 | High | gitea, act-runner, ci-cd, docker, container-escape, host-namespace, privilege-escalation, capabilities | PoC |
@@ -119,6 +120,7 @@
 | 2026-07-05 | 2026-07 | [cve-2026-4660-go-getter-terraform-pathspec-injection](./pocs/cloud/2026-07-05_cve-2026-4660-go-getter-terraform-pathspec-injection/) | `cloud` | CVE-2026-4660 / HCSEC-2026-04 | High | terraform, go-getter, git, pathspec-injection, arbitrary-file-read, ci-cd, supply-chain, iac | PoC |
 | 2026-07-05 | 2026-07 | [cve-2026-46680-k8s-runasnonroot-uid-overflow](./pocs/cloud/2026-07-05_cve-2026-46680-k8s-runasnonroot-uid-overflow/) | `cloud` | CVE-2026-46680 | High | kubernetes, container-escape, runasnonroot, uid-overflow, security-context-bypass, privilege-escalation | PoC |
 | 2026-07-05 | 2026-05 | [cve-2026-7791-aws-workspaces-skylight-lpe](./pocs/cloud/2026-07-05_cve-2026-7791-aws-workspaces-skylight-lpe/) | `cloud` | CVE-2026-7791 | High | aws, amazon-workspaces, skylight, toctou, privilege-escalation, arbitrary-file-write, windows, directory-junction | PoC |
+| 2026-08-09 | 2026-08-09 | [cve-2026-64640-apache-polaris-cross-tenant-credential-vending](./pocs/cloud/2026-08-09_cve-2026-64640-apache-polaris-cross-tenant-credential-vending/) | `cloud` | CVE-2026-64640 | High | apache-polaris, iceberg, apache-iceberg, credential-vending, confused-deputy, authorization-bypass, cross-tenant, s3, storage, allowed-locations, CWE-441, CWE-639, CWE-918, ssrf, server-side-read, information-disclosure, register-table, register-view | Patched |
 | 2026-07-05 | 2026-06 | [cve-2026-39031-lansweeper-lsrunase-rc4-key-recovery](./pocs/crypto/2026-07-05_cve-2026-39031-lansweeper-lsrunase-rc4-key-recovery/) | `crypto` | CVE-2026-39031 | High | lansweeper, rc4, hardcoded-key, password-recovery, cryptography, offline-decryption, cwe-321 | Weaponized |
 | 2026-07-05 | 2026-07 | [cve-2026-45091-sealed-env-totp-leak](./pocs/crypto/2026-07-05_cve-2026-45091-sealed-env-totp-leak/) | `crypto` | CVE-2026-45091 | High | jwt, sealed-env, totp, secret-disclosure, base64, token-forgery | PoC |
 | 2026-07-05 | 2026-05 | [cve-2026-31156-openplc-glue-generator-traversal](./pocs/hardware/2026-07-05_cve-2026-31156-openplc-glue-generator-traversal/) | `hardware` | CVE-2026-31156 | High | openplc, ics, path-traversal, arbitrary-file-write, glue-generator, cpp, plc, industrial-control | PoC |
@@ -152,6 +154,7 @@
 | 2026-07-05 | 2026-06 | [cve-2026-6130-local-mcp-exec-sandbox-bypass](./pocs/misc/2026-07-05_cve-2026-6130-local-mcp-exec-sandbox-bypass/) | `misc` | CVE-2026-6130 | Medium | mcp, model-context-protocol, sandbox-bypass, command-execution, exec-restriction-bypass | PoC |
 | 2026-07-05 | 2026-05 | [cve-2026-7482-poc](./pocs/misc/2026-07-05_cve-2026-7482-poc/) | `misc` | CVE-2026-7482 | Medium | ollama, gguf, heap-overflow, out-of-bounds-read, quantization, llm-serving, docker | PoC |
 | 2026-07-05 | 2026-05 | [cve-2026-8161-multiparty-prototype-pollution-dos](./pocs/misc/2026-07-05_cve-2026-8161-multiparty-prototype-pollution-dos/) | `misc` | CVE-2026-8161 / GHSA-qxch-whhj-8956 | Medium | multiparty, nodejs, prototype-pollution, denial-of-service, cwe-1321, uncaught-exception, multipart-parser | PoC |
+| 2026-08-09 | 2026-08-09 | [cve-2026-18718-ghidra-swift-demangler-code-execution](./pocs/misc/2026-08-09_cve-2026-18718-ghidra-swift-demangler-code-execution/) | `misc` | CVE-2026-18718 | High | ghidra, nsa, reverse-engineering, swift, demangler, code-execution, project-file, analyzer, CWE-427, CWE-494, uncontrolled-search-path, supply-chain, research-tool, shared-project | Patched |
 | 2026-05-18 | N/A | [tossup-terramaster-redis-rce](./pocs/network/2026-05-18_tossup-terramaster-redis-rce/) | `network` | N/A (vendor confirmed TOS4 is EOL; no fix planned) | Critical | RCE, unauthenticated, Redis, TerraMaster, NAS, AArch64, root, module-loading, replication-abuse, NFS, no_root_squash, LPE, network | Weaponized |
 | 2026-06-04 | 2026-06-04 | [netlogon-cldap-stack-buffer-overflow](./pocs/network/2026-06-04_netlogon-cldap-stack-buffer-overflow/) | `network` | CVE-2026-41089 | Critical | Netlogon, CLDAP, Windows Server, stack-overflow, unauthenticated, DoS, potential-RCE | Weaponized |
 | 2026-06-28 | 2026-06-09 | [cve-2026-10520-ivanti-sentry-rce](./pocs/network/2026-06-28_cve-2026-10520-ivanti-sentry-rce/) | `network` | CVE-2026-10520, CVE-2026-10523 | Critical | pre-auth, RCE, OS-command-injection, Ivanti, Sentry, MICS-API, auth-bypass, admin-creation, CISA-KEV | PoC |
@@ -399,8 +402,8 @@
 | 2026-07-05 | 2026-03 | [cve-2026-3228-nextscripts-wp-stored-xss](./pocs/web/2026-07-05_cve-2026-3228-nextscripts-wp-stored-xss/) | `web` | CVE-2026-3228 | Medium | wordpress, xss, stored-xss, plugin, contributor-privilege, shortcode, session-hijacking | PoC |
 | 2026-07-05 | 2026-03 | [cve-2026-32731-apostrophecms-tar-path-traversal](./pocs/web/2026-07-05_cve-2026-32731-apostrophecms-tar-path-traversal/) | `web` | CVE-2026-32731 | High | apostrophecms, cms, path-traversal, tar-slip, arbitrary-file-write, import, node-js | PoC |
 | 2026-07-05 | 2026-05 | [cve-2026-3296-everest-forms-object-injection](./pocs/web/2026-07-05_cve-2026-3296-everest-forms-object-injection/) | `web` | CVE-2026-3296 | Critical | wordpress, everest-forms, php-object-injection, deserialization, unserialize, rce, cwe-502 | PoC (functional two-phase injection/trigger tool; RCE requires supplying a real POP gadget chain via PHPGGC) |
-| 2026-07-05 | 2026-06 | [cve-2026-3300-everest-forms-code-injection](./pocs/web/2026-07-05_cve-2026-3300-everest-forms-code-injection/) | `web` | CVE-2026-3300 | Critical | wordpress, everest-forms-pro, php-code-injection, rce, reverse-shell, form-calculation, unauthenticated | Weaponized (includes working reverse-shell payload builder and listener) |
 | 2026-07-05 | 2026-05 | [cve-2026-33006-apache-mod-auth-digest-timing](./pocs/web/2026-07-05_cve-2026-33006-apache-mod-auth-digest-timing/) | `web` | CVE-2026-33006 | Medium | apache, mod_auth_digest, timing-attack, authentication-bypass, digest-auth, http, side-channel | PoC |
+| 2026-07-05 | 2026-06 | [cve-2026-3300-everest-forms-code-injection](./pocs/web/2026-07-05_cve-2026-3300-everest-forms-code-injection/) | `web` | CVE-2026-3300 | Critical | wordpress, everest-forms-pro, php-code-injection, rce, reverse-shell, form-calculation, unauthenticated | Weaponized (includes working reverse-shell payload builder and listener) |
 | 2026-07-05 | 2026-07 | [cve-2026-33017-langflow-rce](./pocs/web/2026-07-05_cve-2026-33017-langflow-rce/) | `web` | CVE-2026-33017 | Critical | langflow, rce, custom-component, code-execution, flow-builder, reverse-shell, curl | PoC |
 | 2026-07-05 | 2026-04 | [cve-2026-33033-django-multipartparser-dos](./pocs/web/2026-07-05_cve-2026-33033-django-multipartparser-dos/) | `web` | CVE-2026-33033 | Medium | django, dos, multipart, base64, cpu-amplification, python, file-upload | PoC |
 | 2026-07-05 | 2026-03 | [cve-2026-3304-multer-orphaned-file-dos](./pocs/web/2026-07-05_cve-2026-3304-multer-orphaned-file-dos/) | `web` | CVE-2026-3304 | High | multer, nodejs, express, dos, file-upload, orphaned-file, disk-exhaustion, multipart | PoC |
@@ -527,8 +530,8 @@
 | 2026-07-05 | 2026-07 | [cve-2026-52813-gogs-path-traversal-hook-rce](./pocs/web/2026-07-05_cve-2026-52813-gogs-path-traversal-hook-rce/) | `web` | CVE-2026-52813 | Not disclosed | gogs, path-traversal, git-hooks, rce, authenticated, account-takeover, self-hosted-git | PoC |
 | 2026-07-05 | 2026-06 | [cve-2026-53435-jenkins-deser-file-read](./pocs/web/2026-07-05_cve-2026-53435-jenkins-deser-file-read/) | `web` | CVE-2026-53435 (Jenkins SECURITY-3707) | High (advisory also describes user impersonation and Script Console RCE via the same primitive; this PoC demonstrates file-read impact only) | jenkins, deserialization, classfilter-bypass, xstream, config-xml, stapler, arbitrary-file-read, docker-lab, cwe-502 | PoC |
 | 2026-07-05 | Unknown | [cve-2026-53519-nezha-path-traversal-jwt-forgery](./pocs/web/2026-07-05_cve-2026-53519-nezha-path-traversal-jwt-forgery/) | `web` | CVE-2026-53519 (GHSA-5c25-7vpj-9mqh) | Not disclosed (unauthenticated path traversal leading to full admin JWT forgery) | nezha, path-traversal, jwt-forgery, unauthenticated, config-disclosure, sqlite, privilege-escalation, cwe-22, cwe-347 | PoC |
-| 2026-07-05 | 2026-04 | [cve-2026-5364-cf7-dnd-upload-rce](./pocs/web/2026-07-05_cve-2026-5364-cf7-dnd-upload-rce/) | `web` | CVE-2026-5364 | High | wordpress, contact-form-7, file-upload, webshell, rce, sanitize-file-name-bypass, admin-ajax, cwe-434 | PoC |
 | 2026-07-05 | 2026-06 | [cve-2026-53647-fossbilling-chained-rce](./pocs/web/2026-07-05_cve-2026-53647-fossbilling-chained-rce/) | `web` | CVE-2026-53647 (also documents chained CVE-2026-53646) | Moderate | fossbilling, api-key-disclosure, password-reset, token-reuse, account-takeover, unauthenticated, ghsa, php | PoC |
+| 2026-07-05 | 2026-04 | [cve-2026-5364-cf7-dnd-upload-rce](./pocs/web/2026-07-05_cve-2026-5364-cf7-dnd-upload-rce/) | `web` | CVE-2026-5364 | High | wordpress, contact-form-7, file-upload, webshell, rce, sanitize-file-name-bypass, admin-ajax, cwe-434 | PoC |
 | 2026-07-05 | 2026-06 | [cve-2026-5366-prefect-git-argument-injection](./pocs/web/2026-07-05_cve-2026-5366-prefect-git-argument-injection/) | `web` | CVE-2026-5366 (Huntr bounty e2e88a0f-a8f6-49c9-94c5-e98dc385f07a) | High | prefect, git, argument-injection, rce, upload-pack, workflow-orchestration, supply-chain, python | PoC |
 | 2026-07-05 | 2026-06 | [cve-2026-5415-wp-captcha-pro-auth-bypass](./pocs/web/2026-07-05_cve-2026-5415-wp-captcha-pro-auth-bypass/) | `web` | CVE-2026-5415 | High | wordpress, wp-captcha-pro, auth-bypass, privilege-escalation, nonce, ajax, account-takeover, plugin | PoC |
 | 2026-07-05 | 2026-06 | [cve-2026-5426-knowledgedeliver-viewstate-rce](./pocs/web/2026-07-05_cve-2026-5426-knowledgedeliver-viewstate-rce/) | `web` | CVE-2026-5426 | Critical | aspnet, viewstate, deserialization, rce, hardcoded-keys, machinekey, knowledgedeliver, webshell, python | PoC |
@@ -586,21 +589,23 @@
 | 2026-07-31 | 2026-07-30 | [cve-2026-16723-fastjson-rce](./pocs/web/2026-07-31_cve-2026-16723-fastjson-rce/) | `web` | CVE-2026-16723 | Critical | fastjson, deserialization, rce, java, spring-boot, autotype-bypass, jar-protocol, ssrf | PoC (no vendor patch, Fastjson 1.x line unpatched) |
 | 2026-07-31 | 2026-07-31 | [cve-2026-65694-microweber-path-traversal](./pocs/web/2026-07-31_cve-2026-65694-microweber-path-traversal/) | `web` | CVE-2026-65694 (VulnCheck advisory) | High | microweber, path-traversal, cwe-22, unauthenticated, arbitrary-file-read, laravel, query-string-override | Unpatched |
 | 2026-07-31 | 2026-07-31 | [cve-2026-9198-langflow-auto-login-validate-code-rce](./pocs/web/2026-07-31_cve-2026-9198-langflow-auto-login-validate-code-rce/) | `web` | CVE-2026-9198 | Critical | langflow, ibm, auto-login, code-injection, cwe-94, unauthenticated, rce, python-exec, ai-agent-framework | Weaponized |
+| 2026-08-09 | 2026-08-09 | [cve-2026-60004-gitea-diffpatch-githook-rce](./pocs/web/2026-08-09_cve-2026-60004-gitea-diffpatch-githook-rce/) | `web` | CVE-2026-60004 | High | gitea, git, diffpatch, git-hook, post-index-change, three-way-merge, bare-repository, CWE-94, authenticated-rce, self-hosted, code-hosting | Patched |
+| 2026-08-09 | 2026-08-09 | [cve-2026-63077-teamcity-preauth-rce](./pocs/web/2026-08-09_cve-2026-63077-teamcity-preauth-rce/) | `web` | CVE-2026-63077 | Critical | jetbrains, teamcity, preauth-rce, xstream, deserialization, hsqldb, polyglot, jsp, CWE-502, agent-polling, ci-cd | Patched |
 
 ---
 
-*Total POCs: 719*
+*Total POCs: 724*
 
 ## By Category
 
-- **`binary`** — 108 entries
-- **`cloud`** — 21 entries
+- **`binary`** — 109 entries
+- **`cloud`** — 23 entries
 - **`crypto`** — 3 entries
 - **`hardware`** — 8 entries
-- **`misc`** — 32 entries
+- **`misc`** — 33 entries
 - **`network`** — 125 entries
 - **`social-engineering`** — 6 entries
-- **`web`** — 429 entries
+- **`web`** — 431 entries
 
 ## Archives
 
