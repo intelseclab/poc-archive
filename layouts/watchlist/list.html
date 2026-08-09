@@ -104,6 +104,8 @@
   Loading candidates from the monitor…
 </div>
 
+<p id="wl-hidden" class="mt-3 hidden font-mono text-[11px] text-zinc-400 dark:text-mono-muted"></p>
+
 <ul id="wl-rows" class="m-0 mt-4 hidden list-none space-y-2 p-0"></ul>
 
 <div id="wl-more" class="mt-4 hidden text-center">
@@ -307,6 +309,17 @@
 
     moreWrap.classList.toggle("hidden", list.length <= shown);
     moreBtn.textContent = "Show more (" + (list.length - shown) + " remaining)";
+
+    var hidden = onlyLikely
+      ? all.filter(function (c) { return (c.poc_score || 0) < MIN_SCORE; }).length
+      : 0;
+    var note = document.getElementById("wl-hidden");
+    if (note) {
+      note.textContent = hidden
+        ? hidden + " lower-signal candidate" + (hidden === 1 ? "" : "s") + " hidden — click “likely PoCs only” to include them"
+        : "";
+      note.classList.toggle("hidden", hidden === 0);
+    }
   }
 
   function fail(msg) {
@@ -318,7 +331,7 @@
   }
 
   Promise.all([
-    fetch(MONITOR + "/list?sort=poc_desc").then(function (r) {
+    fetch(MONITOR + "/list?sort=discovered_desc&limit=2000").then(function (r) {
       if (!r.ok) throw new Error("monitor HTTP " + r.status); return r.json();
     }),
     fetch("{{ "/index.json" | relURL }}").then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; })
@@ -335,7 +348,14 @@
       return c;
     });
     var u = document.getElementById("wl-updated");
-    if (all.length) u.textContent = "monitor data · " + String(all[0].discovered_at || "").slice(0, 10);
+    if (all.length) {
+      var newest = all.reduce(function (m, c) {
+        var d = String(c.discovered_at || "");
+        return d > m ? d : m;
+      }, "");
+      u.textContent = "last discovery · " + newest.slice(0, 10) +
+        "  ·  " + (data.total || all.length) + " tracked";
+    }
     render();
   }).catch(function (e) { fail(e.message || String(e)); });
 
