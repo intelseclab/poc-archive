@@ -1,6 +1,7 @@
 # POC Archive — Index
 
 > Last updated: 2026-08-09 18:18:04
+> Last updated: 2026-08-12 18:53:59
 
 ---
 
@@ -106,6 +107,7 @@
 | 2026-08-01 | 2026-07-25 | [notcve-2026-0010-barrier-daemon-lpe](./pocs/binary/2026-08-01_notcve-2026-0010-barrier-daemon-lpe/) | `binary` | NotCVE-2026-0010 (disputed CVE assignment — author contests the identifier) | High | barrier, barrierd, windows, ipc, tcp-24801, unauthenticated, lpe, privilege-escalation, system, cwe-306, local | Unpatched — Barrier is unmaintained with no vendor fix; patched successor Deskflow covers the same issue via CVE-2026-41477 / GHSA-6rx5-g478-775c |
 | 2026-08-09 | 2026-08-06 | [cve-2026-64561-zapscape-kvm-shadow-mmu-guest-to-host](./pocs/binary/2026-08-09_cve-2026-64561-zapscape-kvm-shadow-mmu-guest-to-host/) | `binary` | CVE-2026-64561 | High | linux-kernel, kvm, x86, shadow-mmu, nested-virtualization, svm, npt, ept, guest-to-host-escape, vm-escape, use-after-free, CWE-416, cross-cache, kaslr-bypass, usermode-helper, virtualization | Patched |
 | 2026-08-09 | 2026-08-09 | [mariadb-low-priv-rce-st-area-cursor-uaf](./pocs/binary/2026-08-09_mariadb-low-priv-rce-st-area-cursor-uaf/) | `binary` | MDEV-40328 (ST_Area OOB read); cursor-array UAF has no assigned CVE yet | Critical | mariadb, database, rce, low-privilege, heap, oob-read, use-after-free, aslr-bypass, pie-bypass, coop, vtable, cursor, st-area, multipolygon, CWE-125, CWE-416, docker, v12-security | Unpatched |
+| 2026-08-11 | 2026-08-11 | [shieldbreak-defender-rogueplanet-patch-bypass](./pocs/binary/2026-08-11_shieldbreak-defender-rogueplanet-patch-bypass/) | `binary` | Bypass of CVE-2026-50656 (RoguePlanet); no CVE assigned to ShieldBreak as of 2026-08-11 | High | windows, windows-defender, lpe, privilege-escalation, 0day, patch-bypass, cloud-files, cfapi, object-manager, symlink, wer, dll-sideload, CWE-59, CWE-426, microsoft, rogueplanet, shieldbreak | Unpatched |
 | 2026-07-03 | 2026-06 | [docker-cp-copyout-destination-escape](./pocs/cloud/2026-07-03_docker-cp-copyout-destination-escape/) | `cloud` | None assigned as of 2026-07-03 | Medium | docker, container-escape, toctou, symlink-race, docker-cp, path-traversal, archive-extraction, host-file-write | PoC |
 | 2026-07-03 | 2026-06 | [floci-apigateway-vtl-rce](./pocs/cloud/2026-07-03_floci-apigateway-vtl-rce/) | `cloud` | None assigned as of 2026-07-03 | Critical | floci, api-gateway, velocity-template-language, rce, iam-bypass, sigv4, java-reflection, localstack-alternative | Weaponized |
 | 2026-07-03 | 2026-07 | [gitea-act-runner-container-options-escape](./pocs/cloud/2026-07-03_gitea-act-runner-container-options-escape/) | `cloud` | None assigned as of 2026-07-03 | High | gitea, act-runner, ci-cd, docker, container-escape, host-namespace, privilege-escalation, capabilities | PoC |
@@ -245,6 +247,8 @@
 | 2026-07-27 | 2026-07-24 | [cve-2026-54121-certighost-adcs-dc-impersonation](./pocs/network/2026-07-27_cve-2026-54121-certighost-adcs-dc-impersonation/) | `network` | CVE-2026-54121 | High | active-directory, adcs, certificate-services, dcsync, pkinit, kerberos, privilege-escalation, domain-controller-impersonation, windows | Weaponized |
 | 2026-07-27 | 2026-07-27 | [cve-2026-54992-windows-msmq-heap-overflow](./pocs/network/2026-07-27_cve-2026-54992-windows-msmq-heap-overflow/) | `network` | CVE-2026-54992 | High | windows, msmq, message-queuing, heap-overflow, integer-overflow, rpc, dos, crash | PoC (crash/DoS confirmed, no RCE demonstrated) |
 | 2026-08-09 | 2026-07-28 | [cve-2026-16232-checkpoint-smartconsole-auth-bypass](./pocs/network/2026-08-09_cve-2026-16232-checkpoint-smartconsole-auth-bypass/) | `network` | CVE-2026-16232 | Critical | check-point, smartconsole, security-management-server, multi-domain-server, cpmi, sic, fwm, authentication-bypass, CWE-287, improper-authentication, privilege-escalation, sso-token-forgery, soap, dle, cisa-kev, bod-26-04, python, firewall-management | Patched |
+| 2026-08-11 | 2026-08-11 | [cve-2026-25177-ad-spn-unicode-collision-detector](./pocs/network/2026-08-11_cve-2026-25177-ad-spn-unicode-collision-detector/) | `network` | CVE-2026-25177 | High | windows, active-directory, kerberos, spn, unicode, homoglyph, privilege-escalation, detection, scanner, ldap, CWE-641, microsoft, CVE-2026-25177 | Patched |
+| 2026-08-11 | 2026-08-11 | [cve-2026-27912-resetnightmare-kerberos-changepw-password-reset](./pocs/network/2026-08-11_cve-2026-27912-resetnightmare-kerberos-changepw-password-reset/) | `network` | CVE-2026-27912 | High | windows, kerberos, active-directory, privilege-escalation, password-reset, domain-controller, upn, rubeus, changepw, krbtgt, CWE-285, microsoft, CVE-2026-27912 | Patched |
 | 2026-07-05 | 2026-05 | [cve-2026-21510-lnk-stomping-generator](./pocs/social-engineering/2026-07-05_cve-2026-21510-lnk-stomping-generator/) | `social-engineering` | CVE-2026-21510 | High | lnk-stomping, shelllink, cve-2026-21510, windows, initial-access, phishing, anti-forensics, red-team | Weaponized |
 | 2026-07-05 | 2026-05 | [cve-2026-21514-cve-2026-21510-rtf-lnk-builder](./pocs/social-engineering/2026-07-05_cve-2026-21514-cve-2026-21510-rtf-lnk-builder/) | `social-engineering` | CVE-2026-21514, CVE-2026-21510 | High | rtf, lnk, ole-object, protected-view-bypass, cve-2026-21514, cve-2026-21510, phishing, initial-access | PoC |
 | 2026-07-27 | N/A | [clickfix-cloudflare-turnstile-lure](./pocs/social-engineering/2026-07-27_clickfix-cloudflare-turnstile-lure/) | `social-engineering` | N/A (social-engineering technique, not a software vulnerability) | High | clickfix, fake-captcha, cloudflare-turnstile-lure, clipboard-injection, social-engineering, phishing, run-dialog, multilingual-lure | PoC (benign placeholder payload) |
@@ -596,16 +600,16 @@
 
 ---
 
-*Total POCs: 726*
+*Total POCs: 729*
 
 ## By Category
 
-- **`binary`** — 110 entries
+- **`binary`** — 111 entries
 - **`cloud`** — 23 entries
 - **`crypto`** — 3 entries
 - **`hardware`** — 8 entries
 - **`misc`** — 33 entries
-- **`network`** — 125 entries
+- **`network`** — 127 entries
 - **`social-engineering`** — 6 entries
 - **`web`** — 432 entries
 
