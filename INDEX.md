@@ -2,11 +2,9 @@
 
 > Last updated: 2026-08-16 10:22:33
 > Last updated: 2026-08-16 14:16:55
-
+> Last updated: 2026-08-16 14:20:21
 ---
-
 ## 2026
-
 | Date Added | Last Updated | Name | Category | CVE | Severity | Tags | Status |
 |---|---|---|---|---|---|---|---|
 | 2026-05-14 | — | [linux-xfrm-fragnesia-lpe](./pocs/binary/2026-05-14_linux-xfrm-fragnesia-lpe/) | `binary` | CVE-2026-46300 | High | LPE, privilege-escalation, kernel, XFRM, ESP-in-TCP, page-cache, write-primitive, unprivileged | Weaponized |
@@ -113,9 +111,10 @@
 | 2026-08-15 | 2026-08-15 | [cve-2026-64564-sctphantom-sctp-asconf-uaf-lpe](./pocs/binary/2026-08-15_cve-2026-64564-sctphantom-sctp-asconf-uaf-lpe/) | `binary` | CVE-2026-64564 | High | linux, kernel, lpe, sctp, use-after-free, asconf, del-ip, heap-spray, packet-tx-ring, kaslr-bypass, credential-overwrite, debian, CWE-416, CVE-2026-64564 | Patched |
 | 2026-08-15 | 2026-08-15 | [cve-2026-68138-linux-qdisc-ratetable-race-lpe](./pocs/binary/2026-08-15_cve-2026-68138-linux-qdisc-ratetable-race-lpe/) | `binary` | CVE-2026-68138 | High | linux, kernel, lpe, race-condition, use-after-free, qdisc, traffic-control, flower, bpf, pipe, page-cache, modprobe, CWE-362, CWE-416, CVE-2026-68138 | Patched |
 | 2026-08-16 | 2026-08-16 | [cve-2026-21508-windows-mediaplayer-dll-hijack-lpe](./pocs/binary/2026-08-16_cve-2026-21508-windows-mediaplayer-dll-hijack-lpe/) | `binary` | CVE-2026-21508 | High | windows, dll-hijack, lpe, privilege-escalation, media-player, wudfhost, session0, com-hijack, CVE-2026-21508 | Patched |
-| 2026-08-16 | 2026-08-16 | [cve-2026-23111-nftables-catchall-uaf-lpe](./pocs/binary/2026-08-16_cve-2026-23111-nftables-catchall-uaf-lpe/) | `binary` | CVE-2026-23111 | High | linux, kernel, nftables, nf-tables, uaf, catchall, lpe, privilege-escalation, slab-spray, kaslr-bypass, rop, CVE-2026-23111 | Patched |
-| 2026-08-16 | 2026-08-16 | [cve-2026-2764-firefox-jit-uaf](./pocs/binary/2026-08-16_cve-2026-2764-firefox-jit-uaf/) | `binary` | CVE-2026-2764 | High | firefox, spidermonkey, jit, uaf, type-confusion, wasm, browser, exploit, CVE-2026-2764 | Patched |
+| 2026-08-16 | 2026-08-16 | [cve-2026-23111-nftables-catchall-uaf-lpe](./pocs/binary/2026-08-16_cve-2026-23111-nftables-catchall-uaf-lpe/) | `binary` | CVE-2026-23111 | High | linux, kernel, nftables, nf-tables, uaf, catchall, lpe, privilege-escalation, slab-spray, kaslr-bypass, rop, namespace, CVE-2026-23111 | Patched |
+| 2026-08-16 | 2026-08-16 | [cve-2026-2764-firefox-jit-uaf](./pocs/binary/2026-08-16_cve-2026-2764-firefox-jit-uaf/) | `binary` | CVE-2026-2764 / MFSA 2026-13 | High | firefox, spidermonkey, jit, uaf, type-confusion, wasm, browser, ionmonkey, baseline, proxy, CVE-2026-2764 | Patched |
 | 2026-08-16 | 2026-08-16 | [cve-2026-53361-afunix-gc-peek-uaf-container-escape](./pocs/binary/2026-08-16_cve-2026-53361-afunix-gc-peek-uaf-container-escape/) | `binary` | CVE-2026-53361 | Critical | linux, kernel, af-unix, garbage-collector, msg-peek, uaf, container-escape, lpe, slub, dirty-pagetable, CVE-2026-53361 | Patched |
+| 2026-08-16 | 2026-08-16 | [cve-2026-68398-ubuntu-pppol2tp-uaf-lpe](./pocs/binary/2026-08-16_cve-2026-68398-ubuntu-pppol2tp-uaf-lpe/) | `binary` | CVE-2026-68398 | High | linux, kernel, ubuntu, pppol2tp, l2tp, ppp, uaf, use-after-free, race-condition, lpe, privilege-escalation, kaslr-bypass, apparmor-bypass, suid, heap-spray, kmalloc-256, CVE-2026-68398 | Patched |
 | 2026-07-03 | 2026-06 | [docker-cp-copyout-destination-escape](./pocs/cloud/2026-07-03_docker-cp-copyout-destination-escape/) | `cloud` | None assigned as of 2026-07-03 | Medium | docker, container-escape, toctou, symlink-race, docker-cp, path-traversal, archive-extraction, host-file-write | PoC |
 | 2026-07-03 | 2026-06 | [floci-apigateway-vtl-rce](./pocs/cloud/2026-07-03_floci-apigateway-vtl-rce/) | `cloud` | None assigned as of 2026-07-03 | Critical | floci, api-gateway, velocity-template-language, rce, iam-bypass, sigv4, java-reflection, localstack-alternative | Weaponized |
 | 2026-07-03 | 2026-07 | [gitea-act-runner-container-options-escape](./pocs/cloud/2026-07-03_gitea-act-runner-container-options-escape/) | `cloud` | None assigned as of 2026-07-03 | High | gitea, act-runner, ci-cd, docker, container-escape, host-namespace, privilege-escalation, capabilities | PoC |
@@ -609,40 +608,27 @@
 | 2026-08-09 | 2026-08-09 | [cve-2026-60004-gitea-diffpatch-githook-rce](./pocs/web/2026-08-09_cve-2026-60004-gitea-diffpatch-githook-rce/) | `web` | CVE-2026-60004 | High | gitea, git, diffpatch, git-hook, post-index-change, three-way-merge, bare-repository, CWE-94, authenticated-rce, self-hosted, code-hosting | Patched |
 | 2026-08-09 | 2026-08-09 | [cve-2026-63077-teamcity-preauth-rce](./pocs/web/2026-08-09_cve-2026-63077-teamcity-preauth-rce/) | `web` | CVE-2026-63077 | Critical | jetbrains, teamcity, preauth-rce, xstream, deserialization, hsqldb, polyglot, jsp, CWE-502, agent-polling, ci-cd | Patched |
 | 2026-08-09 | 2026-08-09 | [cve-2026-64638-wordpress-xss2shell-pre-auth-xss-to-rce](./pocs/web/2026-08-09_cve-2026-64638-wordpress-xss2shell-pre-auth-xss-to-rce/) | `web` | CVE-2026-64638 | High | wordpress, wordpress-core, pre-auth, xss, reflected-xss, xss2shell, rce, parser-differential, dom-clobbering, some, jsonp, rest-api, application-password, plugin-upload, CWE-79, CWE-94, cms | Patched |
-
----
-
 *Total POCs: 735*
-
 ## By Category
-
 - **`binary`** — 115 entries
 | 2026-08-16 | 2026-08-16 | [cve-2026-17544-php-bcmath-oob-write](./pocs/web/2026-08-16_cve-2026-17544-php-bcmath-oob-write/) | `web` | CVE-2026-17544 / GHSA-x692-q9x7-8c3f | Critical | php, bcmath, oob-write, stack-smashing, rce, cwe-787, CVE-2026-17544 | Patched (PHP 8.4.24 / 8.5.9) |
 | 2026-08-16 | 2026-08-16 | [cve-2026-33267-apache-trafficserver-header-spoof](./pocs/web/2026-08-16_cve-2026-33267-apache-trafficserver-header-spoof/) | `web` | CVE-2026-33267 / GHSA-jrh6-9hgv-mqm7 | Critical | apache, traffic-server, ats, header-injection, metadata-spoof, cache-poisoning, acl-bypass, plugin, CVE-2026-33267 | Patched (9.2.15 / 10.1.4) |
 | 2026-08-16 | 2026-08-16 | [cve-2026-42533-nginx-pcre-heap-overflow-rce](./pocs/web/2026-08-16_cve-2026-42533-nginx-pcre-heap-overflow-rce/) | `web` | CVE-2026-42533 | Critical | nginx, pcre, heap-overflow, rce, preauth, info-leak, capture-variable, map-directive, aslr-bypass, CVE-2026-42533 | Patched |
-
----
-
-*Total POCs: 744*
-
-## By Category
-
-- **`binary`** — 119 entries
+*Total POCs: 745*
+- **`binary`** — 120 entries
 - **`cloud`** — 23 entries
 - **`crypto`** — 3 entries
 - **`hardware`** — 8 entries
 - **`misc`** — 33 entries
-- **`network`** — 131 entries
+- **`network`** — 132 entries
 - **`social-engineering`** — 6 entries
 - **`web`** — 432 entries
 - **`web`** — 435 entries
-
+- **`web`** — 436 entries
 ## Archives
-
 - [2025](./archive/2025.md) — 115 entries
 - [2024](./archive/2024.md) — 13 entries
 - [2023](./archive/2023.md) — 4 entries
 - [2022](./archive/2022.md) — 2 entries
 - [2021](./archive/2021.md) — 6 entries
 - [2020](./archive/2020.md) — 1 entries
-
