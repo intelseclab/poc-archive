@@ -1,11 +1,9 @@
 # POC Archive — Index
 
 > Last updated: 2026-08-15 11:50:14
-
+> Last updated: 2026-08-16 12:20:02
 ---
-
 ## 2026
-
 | Date Added | Last Updated | Name | Category | CVE | Severity | Tags | Status |
 |---|---|---|---|---|---|---|---|
 | 2026-05-14 | — | [linux-xfrm-fragnesia-lpe](./pocs/binary/2026-05-14_linux-xfrm-fragnesia-lpe/) | `binary` | CVE-2026-46300 | High | LPE, privilege-escalation, kernel, XFRM, ESP-in-TCP, page-cache, write-primitive, unprivileged | Weaponized |
@@ -253,6 +251,7 @@
 | 2026-08-11 | 2026-08-11 | [cve-2026-25177-ad-spn-unicode-collision-detector](./pocs/network/2026-08-11_cve-2026-25177-ad-spn-unicode-collision-detector/) | `network` | CVE-2026-25177 | High | windows, active-directory, kerberos, spn, unicode, homoglyph, privilege-escalation, detection, scanner, ldap, CWE-641, microsoft, CVE-2026-25177 | Patched |
 | 2026-08-11 | 2026-08-11 | [cve-2026-27912-resetnightmare-kerberos-changepw-password-reset](./pocs/network/2026-08-11_cve-2026-27912-resetnightmare-kerberos-changepw-password-reset/) | `network` | CVE-2026-27912 | High | windows, kerberos, active-directory, privilege-escalation, password-reset, domain-controller, upn, rubeus, changepw, krbtgt, CWE-285, microsoft, CVE-2026-27912 | Patched |
 | 2026-08-15 | 2026-08-15 | [cve-2026-47301-sccm-adminservice-cab-rce](./pocs/network/2026-08-15_cve-2026-47301-sccm-adminservice-cab-rce/) | `network` | CVE-2026-47301 | Critical | windows, sccm, configmgr, rce, cab, path-traversal, dll-hijacking, dll-proxy, arbitrary-file-write, system, microsoft, CVE-2026-47301 | Patched |
+| 2026-08-16 | 2026-08-16 | [cve-2026-8452-citrix-netscaler-saml-preauth-rce](./pocs/network/2026-08-16_cve-2026-8452-citrix-netscaler-saml-preauth-rce/) | `network` | CVE-2026-8452 | Critical | citrix, netscaler, adc, gateway, saml, heap-overflow, preauth, rce, shellcode, webshell, freebsd, xml-signature, c14n, CVE-2026-8452 | Patched |
 | 2026-07-05 | 2026-05 | [cve-2026-21510-lnk-stomping-generator](./pocs/social-engineering/2026-07-05_cve-2026-21510-lnk-stomping-generator/) | `social-engineering` | CVE-2026-21510 | High | lnk-stomping, shelllink, cve-2026-21510, windows, initial-access, phishing, anti-forensics, red-team | Weaponized |
 | 2026-07-05 | 2026-05 | [cve-2026-21514-cve-2026-21510-rtf-lnk-builder](./pocs/social-engineering/2026-07-05_cve-2026-21514-cve-2026-21510-rtf-lnk-builder/) | `social-engineering` | CVE-2026-21514, CVE-2026-21510 | High | rtf, lnk, ole-object, protected-view-bypass, cve-2026-21514, cve-2026-21510, phishing, initial-access | PoC |
 | 2026-07-27 | N/A | [clickfix-cloudflare-turnstile-lure](./pocs/social-engineering/2026-07-27_clickfix-cloudflare-turnstile-lure/) | `social-engineering` | N/A (social-engineering technique, not a software vulnerability) | High | clickfix, fake-captcha, cloudflare-turnstile-lure, clipboard-injection, social-engineering, phishing, run-dialog, multilingual-lure | PoC (benign placeholder payload) |
@@ -601,28 +600,21 @@
 | 2026-08-09 | 2026-08-09 | [cve-2026-60004-gitea-diffpatch-githook-rce](./pocs/web/2026-08-09_cve-2026-60004-gitea-diffpatch-githook-rce/) | `web` | CVE-2026-60004 | High | gitea, git, diffpatch, git-hook, post-index-change, three-way-merge, bare-repository, CWE-94, authenticated-rce, self-hosted, code-hosting | Patched |
 | 2026-08-09 | 2026-08-09 | [cve-2026-63077-teamcity-preauth-rce](./pocs/web/2026-08-09_cve-2026-63077-teamcity-preauth-rce/) | `web` | CVE-2026-63077 | Critical | jetbrains, teamcity, preauth-rce, xstream, deserialization, hsqldb, polyglot, jsp, CWE-502, agent-polling, ci-cd | Patched |
 | 2026-08-09 | 2026-08-09 | [cve-2026-64638-wordpress-xss2shell-pre-auth-xss-to-rce](./pocs/web/2026-08-09_cve-2026-64638-wordpress-xss2shell-pre-auth-xss-to-rce/) | `web` | CVE-2026-64638 | High | wordpress, wordpress-core, pre-auth, xss, reflected-xss, xss2shell, rce, parser-differential, dom-clobbering, some, jsonp, rest-api, application-password, plugin-upload, CWE-79, CWE-94, cms | Patched |
-
----
-
 *Total POCs: 734*
-
+*Total POCs: 735*
 ## By Category
-
 - **`binary`** — 115 entries
 - **`cloud`** — 23 entries
 - **`crypto`** — 3 entries
 - **`hardware`** — 8 entries
 - **`misc`** — 33 entries
-- **`network`** — 128 entries
+- **`network`** — 129 entries
 - **`social-engineering`** — 6 entries
 - **`web`** — 432 entries
-
 ## Archives
-
 - [2025](./archive/2025.md) — 115 entries
 - [2024](./archive/2024.md) — 13 entries
 - [2023](./archive/2023.md) — 4 entries
 - [2022](./archive/2022.md) — 2 entries
 - [2021](./archive/2021.md) — 6 entries
 - [2020](./archive/2020.md) — 1 entries
-
