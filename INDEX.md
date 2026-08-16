@@ -1,9 +1,11 @@
 # POC Archive — Index
 
-> Last updated: 2026-08-15 11:50:14
-> Last updated: 2026-08-16 12:20:02
+> Last updated: 2026-08-16 10:22:33
+
 ---
+
 ## 2026
+
 | Date Added | Last Updated | Name | Category | CVE | Severity | Tags | Status |
 |---|---|---|---|---|---|---|---|
 | 2026-05-14 | — | [linux-xfrm-fragnesia-lpe](./pocs/binary/2026-05-14_linux-xfrm-fragnesia-lpe/) | `binary` | CVE-2026-46300 | High | LPE, privilege-escalation, kernel, XFRM, ESP-in-TCP, page-cache, write-primitive, unprivileged | Weaponized |
@@ -600,9 +602,13 @@
 | 2026-08-09 | 2026-08-09 | [cve-2026-60004-gitea-diffpatch-githook-rce](./pocs/web/2026-08-09_cve-2026-60004-gitea-diffpatch-githook-rce/) | `web` | CVE-2026-60004 | High | gitea, git, diffpatch, git-hook, post-index-change, three-way-merge, bare-repository, CWE-94, authenticated-rce, self-hosted, code-hosting | Patched |
 | 2026-08-09 | 2026-08-09 | [cve-2026-63077-teamcity-preauth-rce](./pocs/web/2026-08-09_cve-2026-63077-teamcity-preauth-rce/) | `web` | CVE-2026-63077 | Critical | jetbrains, teamcity, preauth-rce, xstream, deserialization, hsqldb, polyglot, jsp, CWE-502, agent-polling, ci-cd | Patched |
 | 2026-08-09 | 2026-08-09 | [cve-2026-64638-wordpress-xss2shell-pre-auth-xss-to-rce](./pocs/web/2026-08-09_cve-2026-64638-wordpress-xss2shell-pre-auth-xss-to-rce/) | `web` | CVE-2026-64638 | High | wordpress, wordpress-core, pre-auth, xss, reflected-xss, xss2shell, rce, parser-differential, dom-clobbering, some, jsonp, rest-api, application-password, plugin-upload, CWE-79, CWE-94, cms | Patched |
-*Total POCs: 734*
+
+---
+
 *Total POCs: 735*
+
 ## By Category
+
 - **`binary`** — 115 entries
 - **`cloud`** — 23 entries
 - **`crypto`** — 3 entries
@@ -611,10 +617,13 @@
 - **`network`** — 129 entries
 - **`social-engineering`** — 6 entries
 - **`web`** — 432 entries
+
 ## Archives
+
 - [2025](./archive/2025.md) — 115 entries
 - [2024](./archive/2024.md) — 13 entries
 - [2023](./archive/2023.md) — 4 entries
 - [2022](./archive/2022.md) — 2 entries
 - [2021](./archive/2021.md) — 6 entries
 - [2020](./archive/2020.md) — 1 entries
+
