@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Request a sweep
+      - name: Run sweep
         env:
           MONITOR_API_KEY: ${{ secrets.MONITOR_API_KEY }}
         run: |
@@ -32,33 +32,30 @@ jobs:
             echo "::error::MONITOR_API_KEY secret is not set."
             exit 1
           fi
-          code=$(curl -sS -o /tmp/resp.json -w '%{http_code}' \
-            -X POST "https://monitor.intelseclab.com/sweep" \
-            -H "Authorization: Bearer $MONITOR_API_KEY")
-          echo "HTTP $code"
-          cat /tmp/resp.json; echo
-          case "$code" in
-            202) echo "Sweep started." ;;
-            409) echo "::warning::A sweep is already running — nothing to do."; exit 0 ;;
-            401) echo "::error::Rejected. Is MONITOR_API_KEY current?"; exit 1 ;;
-            *)   echo "::error::Unexpected response $code"; exit 1 ;;
-          esac
 
-      - name: Wait for completion and report
-        run: |
-          # The sweep runs detached on the Worker (ctx.waitUntil), so poll
-          # /health rather than holding the HTTP connection open.
-          #
-          # Note: no embedded heredoc here. A previous version indented a
-          # python3 <<'PY' body at column 0, which terminated the YAML block
-          # scalar and made the whole workflow unparseable — GitHub then showed
-          # it without a name and refused workflow_dispatch entirely.
-          for i in $(seq 1 36); do
-            sleep 30
-            curl -sS "https://monitor.intelseclab.com/health?cb=$i" -o /tmp/h.json || continue
+          # The sweep endpoint streams keep-alive comments while working and
+          # emits a single "data: {...}" line with the result at the end.
+          # --max-time caps the total duration; --no-buffer ensures lines
+          # print as they arrive.
+          curl -sS --no-buffer --max-time 1080 \
+            -X POST "https://monitor.intelseclab.com/sweep" \
+            -H "Authorization: Bearer $MONITOR_API_KEY" \
+            -o /tmp/sweep.log -w '\nHTTP %{http_code}\n'
+          code=$?
+
+          cat /tmp/sweep.log
+
+          # Extract the final data line (SSE format)
+          result=$(grep '^data: ' /tmp/sweep.log | tail -1 | sed 's/^data: //')
+
+          if [ -z "$result" ]; then
+            # Fallback: check /health in case the stream was interrupted
+            # but the sweep completed server-side.
+            echo "No result in stream — checking /health fallback..."
+            curl -sS "https://monitor.intelseclab.com/health" -o /tmp/h.json
             finished=$(jq -r '.lastRun.finished_at // ""' /tmp/h.json)
             if [ -n "$finished" ]; then
-              echo "Finished at $finished"
+              echo "Sweep completed (from /health):"
               jq -r '.lastRun | "  new CVEs        : \(.new_cves)\n  new critical    : \(.new_critical_cves)\n  CVEs searched   : \(.cves_searched)\n  new repos found : \(.new_repos_found)"' /tmp/h.json
               err=$(jq -r '.lastRun.error // ""' /tmp/h.json)
               if [ -n "$err" ]; then
@@ -67,6 +64,17 @@ jobs:
               fi
               exit 0
             fi
-            echo "  still running… (${i}/36)"
-          done
-          echo "::warning::No completion reported within 18 minutes; check /health later."
+            echo "::error::Sweep produced no result and /health shows no completion."
+            exit 1
+          fi
+
+          # Parse the SSE result JSON
+          ok=$(echo "$result" | jq -r '.ok // false')
+          if [ "$ok" = "true" ]; then
+            echo "Sweep completed successfully:"
+            echo "$result" | jq -r '"  new CVEs        : \(.newCves)\n  new critical    : \(.newCriticalCves)\n  CVEs searched   : \(.cvesSearched)\n  new repos found : \(.newReposFound)"'
+          else
+            err=$(echo "$result" | jq -r '.error // "unknown"')
+            echo "::error::sweep failed: $err"
+            exit 1
+          fi
