@@ -1,21 +1,337 @@
-<!doctype html><html lang=en class="dark scroll-smooth"><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Ntlm-Relay · PoC Archive</title><meta name=description content="A curated archive of security research proof-of-concept exploits. Reproducible writeups across web, network, binary, crypto, cloud, hardware, and social-engineering categories."><meta name=author content="intelseclab"><meta name=theme-color content="#09090b"><link rel=canonical href=https://poc.intelseclab.com/tags/ntlm-relay/><meta property="og:title" content="Ntlm-Relay · PoC Archive"><meta property="og:description" content="A curated archive of security research proof-of-concept exploits. Reproducible writeups across web, network, binary, crypto, cloud, hardware, and social-engineering categories."><meta property="og:type" content="article"><meta property="og:url" content="https://poc.intelseclab.com/tags/ntlm-relay/"><meta property="og:site_name" content="PoC Archive"><meta property="og:locale" content="en_US"><meta property="og:image" content="https://poc.intelseclab.com/og-image.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name=twitter:image content="https://poc.intelseclab.com/og-image.png"><meta name=twitter:card content="summary_large_image"><meta name=twitter:title content="Ntlm-Relay · PoC Archive"><meta name=twitter:description content="A curated archive of security research proof-of-concept exploits. Reproducible writeups across web, network, binary, crypto, cloud, hardware, and social-engineering categories."><meta name=twitter:site content="@intelseclab"><meta name=geo.region content="US"><meta name=geo.placename content="United States"><meta name=language content="en"><meta name=revisit-after content="3 days"><meta name=robots content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"><script>(function(){try{var e=localStorage.getItem("theme");e==="light"?document.documentElement.classList.remove("dark"):document.documentElement.classList.add("dark")}catch{}})()</script><script src="https://cdn.tailwindcss.com?plugins=typography"></script><script>tailwind.config={darkMode:"class",theme:{extend:{fontFamily:{sans:["Inter","ui-sans-serif","system-ui","sans-serif"],mono:['"JetBrains Mono"',"ui-monospace","SFMono-Regular","monospace"]},colors:{mono:{bg:"#0b0f12",card:"#12181d",border:"#1e262c",hover:"#182129",muted:"#64748b"},brand:{DEFAULT:"#10b981",dim:"#064e3b",light:"#a7f3d0"}}}}}</script><link rel=preconnect href=https://fonts.googleapis.com><link rel=preconnect href=https://fonts.gstatic.com crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel=stylesheet><link rel=stylesheet href=/css/syntax.css><style>html.dark body{background-color:#0b0f12}body,body *{transition:background-color .15s ease,border-color .15s ease,color .15s ease}html,body{overflow-x:hidden;max-width:100%}.prose :where(p,li,blockquote,td,th){overflow-wrap:break-word;word-break:break-word}.prose :where(code):not(pre code){overflow-wrap:break-word;word-break:break-word}.prose table th:first-child,.prose table td:first-child{width:1%;white-space:nowrap}.poc-code-body pre{margin:0 !important;padding:.55rem .85rem !important;background:0 0 !important}.poc-code-body .chroma{background:0 0 !important}.poc-code-body table{margin:0 !important;width:100%;border:0}.poc-code-body td{padding:0 !important;border:0 !important}.poc-code-body td:first-child{width:1%;white-space:nowrap}.toc #TableOfContents ul,.toc>nav ul{list-style:none;padding-left:0;margin:0}.toc #TableOfContents li,.toc>nav li{margin-top:.25rem}.toc #TableOfContents li li,.toc>nav li li{padding-left:.75rem}.toc #TableOfContents a,.toc>nav a{color:#71717a;text-decoration:none;font-family:var(--font-mono,"JetBrains Mono",ui-monospace,monospace);font-size:.75rem;transition:color .15s}.toc #TableOfContents a:hover,.toc>nav a:hover{color:#059669}.dark .toc #TableOfContents a,.dark .toc>nav a{color:#a1a1aa}.dark .toc #TableOfContents a:hover,.dark .toc>nav a:hover{color:#34d399}</style><link rel=alternate type=application/rss+xml href=https://poc.intelseclab.com/index.xml title="PoC Archive — all new PoCs"><link rel=alternate type=application/rss+xml href=https://poc.intelseclab.com/tags/ntlm-relay/index.xml title="Ntlm-Relay · PoC Archive — RSS feed"><link rel=icon type=image/svg+xml href=/favicon.svg></head><body class="min-h-screen bg-white text-zinc-900 font-sans antialiased selection:bg-emerald-400/20 selection:text-emerald-900 dark:bg-mono-bg dark:text-zinc-100 dark:selection:text-emerald-200"><header class="sticky top-0 z-40 border-b border-zinc-200/80 bg-white/80 backdrop-blur dark:border-mono-border dark:bg-mono-bg/80"><div class="mx-auto flex w-full max-w-6xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8"><a href=/ class="flex items-center gap-2 font-mono text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100"><img src=/favicon.svg width=36 height=36 alt="PoC Archive">
-<span>PoC Archive</span></a><nav class="ml-2 hidden items-center gap-1 text-sm sm:flex"><a href=/ class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-mono-hover dark:hover:text-zinc-100">home</a>
-<a href=/pocs/ class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-mono-hover dark:hover:text-zinc-100">pocs</a>
-<a href=/watchlist/ class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-mono-hover dark:hover:text-zinc-100">watchlist</a></nav><div class="ml-auto hidden items-center gap-3 font-mono text-xs sm:flex"><span class="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400"><span class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"></span>
-<strong class="font-semibold text-zinc-800 dark:text-zinc-100">745</strong> PoCs
-</span><span class="text-zinc-300 dark:text-zinc-700">|</span>
-<a href="/pocs/?signal=kev" class="font-semibold text-red-600 transition hover:underline dark:text-red-400">116 CISA KEV</a></div><div class="ml-auto flex items-center gap-2 sm:ml-3"><a href=https://poc.intelseclab.com/index.xml target=_blank rel="noopener noreferrer" title="RSS feed of new PoCs" aria-label="RSS feed" class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 dark:border-mono-border dark:text-zinc-300 dark:hover:bg-mono-hover"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 019 9"/><path d="M4 4a16 16 0 0116 16"/><circle cx="5" cy="19" r="1"/></svg>
-</a><a href=https://github.com/intelseclab/poc-archive target=_blank rel="noopener noreferrer" class="hidden rounded-md border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 sm:inline-flex dark:border-mono-border dark:text-zinc-300 dark:hover:bg-mono-hover">GitHub
-</a><button type=button id=theme-toggle aria-label="Toggle color theme" class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 dark:border-mono-border dark:text-zinc-300 dark:hover:bg-mono-hover">
-<svg class="hidden h-4 w-4 dark:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-<svg class="block h-4 w-4 dark:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 009 9 9 9 0 11-9-9z"/></svg></button></div></div><nav class="flex items-center gap-1 border-t border-zinc-200 px-4 py-2 text-sm sm:hidden dark:border-mono-border"><a href=/ class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">home</a>
-<a href=/pocs/ class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">pocs</a>
-<a href=/watchlist/ class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">watchlist</a></nav><script>(function(){var e=document.getElementById("theme-toggle");if(!e)return;e.addEventListener("click",function(){var e=document.documentElement,t=e.classList.toggle("dark");try{localStorage.setItem("theme",t?"dark":"light")}catch{}})})()</script></header><main class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8"><header class="border-b border-zinc-200 pb-6 dark:border-mono-border"><p class="font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">tag</p><h1 class="mt-1 font-mono text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">Ntlm-Relay</h1></header><div class="mt-6 overflow-hidden rounded-lg border border-zinc-200 dark:border-mono-border"><li class="poc-row group relative rounded border border-zinc-200 bg-white p-3.5 transition hover:border-emerald-500/60 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand/60" data-category=network data-severity=Critical data-cvss=0 data-patched=true data-patch-status=patched data-date=2026-07-05 data-permalink=/pocs/network/2026-07-05_cve-2026-24294-petitpotam-smb-ntlm-reflection-lpe/ data-kev=false data-ransomware=false data-overdue=false data-epss=0.04671 data-priority=12 data-title="Windows Server 2025 Local NTLM Reflection LPE via SMB Arbitrary Port + PetitPotam (CVE-2026-24294)" data-cve="CVE-2026-24294 (Microsoft Security Response Center)"><div class="flex flex-col justify-between gap-4 md:flex-row md:items-center"><div class="min-w-0 flex-1 space-y-1"><div class="flex flex-wrap items-center gap-2 font-mono text-[11px]"><span class="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-[1px] font-bold text-emerald-600 dark:text-brand" title="CVE-2026-24294 (Microsoft Security Response Center)">CVE-2026-24294</span>
-<span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-[1px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">network</span>
-<span class="font-bold text-red-600 dark:text-red-400">CRITICAL
-</span><span class="poc-new-badge hidden rounded border border-emerald-400/50 bg-emerald-400/10 px-1 py-[1px] text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400">new</span></div><h2 class="text-sm font-bold text-zinc-900 transition group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand"><a href=/pocs/network/2026-07-05_cve-2026-24294-petitpotam-smb-ntlm-reflection-lpe/ class="after:absolute after:inset-0">Windows Server 2025 Local NTLM Reflection LPE via SMB Arbitrary Port + PetitPotam (CVE-2026-24294)</a></h2><p class="line-clamp-1 font-mono text-xs text-zinc-500 dark:text-mono-muted">Windows 11 24H2 / Server 2025 introduced an SMB client capability allowing connections to arbitrary TCP ports via net use \\host\share /tcpport:PORT. Combined with SMB2 session multiplexing, this enables a local NTLM reflection attack: a low-privileged local…</p></div><div class="flex items-center justify-between gap-2 border-t border-zinc-200/60 pt-2 font-mono text-xs md:flex-col md:items-end md:border-t-0 md:pt-0 dark:border-mono-border/40"><span class="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-emerald-600 dark:text-brand" title="Vendor fix documented in this entry"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Patched
-</span><span class="whitespace-nowrap text-[11px] text-zinc-400 dark:text-mono-muted">2026-07-05</span></div></div></li><li class="poc-row group relative rounded border border-zinc-200 bg-white p-3.5 transition hover:border-emerald-500/60 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand/60" data-category=network data-severity=Critical data-cvss=0 data-patched=false data-patch-status=unknown data-date=2026-07-05 data-permalink=/pocs/network/2026-07-05_cve-2026-26128-adcs-kerberos-relay-unicode-spn/ data-kev=false data-ransomware=false data-overdue=false data-epss=0.00621 data-priority=21 data-title="Windows Kerberos Reflection via Unicode SPN Normalization Bypass (CVE-2026-26128)" data-cve=CVE-2026-26128><div class="flex flex-col justify-between gap-4 md:flex-row md:items-center"><div class="min-w-0 flex-1 space-y-1"><div class="flex flex-wrap items-center gap-2 font-mono text-[11px]"><span class="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-[1px] font-bold text-emerald-600 dark:text-brand" title=CVE-2026-26128>CVE-2026-26128</span>
-<span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-[1px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">network</span>
-<span class="font-bold text-red-600 dark:text-red-400">CRITICAL
-</span><span class="poc-new-badge hidden rounded border border-emerald-400/50 bg-emerald-400/10 px-1 py-[1px] text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400">new</span></div><h2 class="text-sm font-bold text-zinc-900 transition group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand"><a href=/pocs/network/2026-07-05_cve-2026-26128-adcs-kerberos-relay-unicode-spn/ class="after:absolute after:inset-0">Windows Kerberos Reflection via Unicode SPN Normalization Bypass (CVE-2026-26128)</a></h2><p class="line-clamp-1 font-mono text-xs text-zinc-500 dark:text-mono-muted">CVE-2026-26128 is a Kerberos relay vulnerability rooted in a mismatch between how two different Windows components normalize Unicode characters when resolving Service Principal Names. The client-side DnsCache service uses CompareStringW with NORMIGNORECASE,…</p></div><div class="flex items-center justify-between gap-2 border-t border-zinc-200/60 pt-2 font-mono text-xs md:flex-col md:items-end md:border-t-0 md:pt-0 dark:border-mono-border/40"><span class="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-zinc-500 dark:text-mono-muted" title="No authoritative fix record found; status not confirmed either way"><span class="h-2 w-2 rounded-full bg-zinc-400"></span>Unverified
-</span><span class="whitespace-nowrap text-[11px] text-zinc-400 dark:text-mono-muted">2026-07-05</span></div></div></li></div></main><footer class="mt-16 border-t border-zinc-200 dark:border-mono-border"><div class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-8 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8 dark:text-zinc-500"><p class=font-mono>PoC Archive — research artifacts for defensive and educational use only.</p><p class=font-mono>built with <a href=https://gohugo.io class="text-emerald-600 hover:underline dark:text-emerald-400">hugo</a> · deployed on github pages</p></div></footer></body></html>
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Ntlm-Relay · PoC Archive</title><meta name="description" content="A curated archive of security research proof-of-concept exploits. Reproducible writeups across web, network, binary, crypto, cloud, hardware, and social-engineering categories." />
+<meta name="author" content="intelseclab" />
+<meta name="theme-color" content="#09090b" /><link rel="canonical" href="https://poc.intelseclab.com/tags/ntlm-relay/" /><meta property="og:title"       content="Ntlm-Relay · PoC Archive" />
+<meta property="og:description" content="A curated archive of security research proof-of-concept exploits. Reproducible writeups across web, network, binary, crypto, cloud, hardware, and social-engineering categories." />
+<meta property="og:type"        content="article" />
+<meta property="og:url"         content="https://poc.intelseclab.com/tags/ntlm-relay/" />
+<meta property="og:site_name"   content="PoC Archive" />
+<meta property="og:locale"      content="en_US" />
+<meta property="og:image"       content="https://poc.intelseclab.com/og-image.png" />
+<meta property="og:image:width"  content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:image"      content="https://poc.intelseclab.com/og-image.png" />
+<meta name="twitter:card"       content="summary_large_image" />
+<meta name="twitter:title"       content="Ntlm-Relay · PoC Archive" />
+<meta name="twitter:description" content="A curated archive of security research proof-of-concept exploits. Reproducible writeups across web, network, binary, crypto, cloud, hardware, and social-engineering categories." />
+<meta name="twitter:site"        content="@intelseclab" /><meta name="geo.region"    content="US" />
+<meta name="geo.placename" content="United States" />
+<meta name="language"      content="en" />
+<meta name="revisit-after" content="3 days" />
+<meta name="robots"        content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('theme');
+      if (t === 'light') { document.documentElement.classList.remove('dark'); }
+      else { document.documentElement.classList.add('dark'); }
+    } catch (e) {}
+  })();
+</script>
+
+
+<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        },
+        colors: {
+          
+          mono: {
+            bg:     '#0b0f12',
+            card:   '#12181d',
+            border: '#1e262c',
+            hover:  '#182129',
+            muted:  '#64748b',
+          },
+          brand: {
+            DEFAULT: '#10b981',
+            dim:     '#064e3b',
+            light:   '#a7f3d0',
+          },
+        },
+      },
+    },
+  };
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+  rel="stylesheet"
+/>
+
+<link rel="stylesheet" href="/css/syntax.css" />
+
+<style>
+  html.dark body { background-color: #0b0f12; }
+   
+  body, body * { transition: background-color .15s ease, border-color .15s ease, color .15s ease; }
+
+   
+  html, body { overflow-x: hidden; max-width: 100%; }
+  .prose :where(p, li, blockquote, td, th) {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+  .prose :where(code):not(pre code) {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+   
+  .prose table th:first-child,
+  .prose table td:first-child {
+    width: 1%;
+    white-space: nowrap;
+  }
+
+   
+  .poc-code-body pre {
+    margin: 0 !important;
+    padding: 0.55rem 0.85rem !important;
+    background: transparent !important;
+  }
+  .poc-code-body .chroma { background: transparent !important; }
+   
+  .poc-code-body table { margin: 0 !important; width: 100%; border: 0; }
+  .poc-code-body td { padding: 0 !important; border: 0 !important; }
+  .poc-code-body td:first-child { width: 1%; white-space: nowrap; }
+
+   
+  .toc #TableOfContents ul,
+  .toc > nav ul { list-style: none; padding-left: 0; margin: 0; }
+  .toc #TableOfContents li,
+  .toc > nav li { margin-top: 0.25rem; }
+  .toc #TableOfContents li li,
+  .toc > nav li li { padding-left: 0.75rem; }
+  .toc #TableOfContents a,
+  .toc > nav a {
+    color: #71717a;
+    text-decoration: none;
+    font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
+    font-size: 0.75rem;
+    transition: color 0.15s;
+  }
+  .toc #TableOfContents a:hover,
+  .toc > nav a:hover { color: #059669; }
+  .dark .toc #TableOfContents a,
+  .dark .toc > nav a { color: #a1a1aa; }
+  .dark .toc #TableOfContents a:hover,
+  .dark .toc > nav a:hover { color: #34d399; }
+</style>
+
+
+<link rel="alternate" type="application/rss+xml" href="https://poc.intelseclab.com/index.xml" title="PoC Archive — all new PoCs" />
+
+<link rel="alternate" type="application/rss+xml" href="https://poc.intelseclab.com/tags/ntlm-relay/index.xml" title="Ntlm-Relay · PoC Archive — RSS feed" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+</head>
+<body class="min-h-screen bg-white text-zinc-900 font-sans antialiased selection:bg-emerald-400/20 selection:text-emerald-900 dark:bg-mono-bg dark:text-zinc-100 dark:selection:text-emerald-200">
+  <header class="sticky top-0 z-40 border-b border-zinc-200/80 bg-white/80 backdrop-blur dark:border-mono-border dark:bg-mono-bg/80">
+  <div class="mx-auto flex w-full max-w-6xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
+    <a href="/" class="flex items-center gap-2 font-mono text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+      <img src="/favicon.svg" width="36" height="36" alt="PoC Archive" />
+      <span>PoC Archive</span>
+    </a>
+
+    <nav class="ml-2 hidden items-center gap-1 text-sm sm:flex">
+      
+      <a href="/" class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-mono-hover dark:hover:text-zinc-100">home</a>
+      <a href="/pocs/" class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-mono-hover dark:hover:text-zinc-100">pocs</a>
+      <a href="/watchlist/" class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-mono-hover dark:hover:text-zinc-100">watchlist</a>
+    </nav>
+    <div class="ml-auto hidden items-center gap-3 font-mono text-xs sm:flex">
+      <span class="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400">
+        <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"></span>
+        <strong class="font-semibold text-zinc-800 dark:text-zinc-100">755</strong> PoCs
+      </span>
+      <span class="text-zinc-300 dark:text-zinc-700">|</span>
+      <a href="/pocs/?signal=kev" class="font-semibold text-red-600 transition hover:underline dark:text-red-400">116 CISA KEV</a>
+    </div>
+
+    <div class="ml-auto flex items-center gap-2 sm:ml-3">
+      
+      <a href="https://poc.intelseclab.com/index.xml" target="_blank" rel="noopener noreferrer" title="RSS feed of new PoCs" aria-label="RSS feed" class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 dark:border-mono-border dark:text-zinc-300 dark:hover:bg-mono-hover">
+        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
+      </a>
+      
+      <a href="https://github.com/intelseclab/poc-archive" target="_blank" rel="noopener noreferrer" class="hidden rounded-md border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 sm:inline-flex dark:border-mono-border dark:text-zinc-300 dark:hover:bg-mono-hover">
+        GitHub
+      </a>
+      <button
+        type="button"
+        id="theme-toggle"
+        aria-label="Toggle color theme"
+        class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 dark:border-mono-border dark:text-zinc-300 dark:hover:bg-mono-hover"
+      >
+        <svg class="hidden h-4 w-4 dark:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="block h-4 w-4 dark:hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  
+  <nav class="flex items-center gap-1 border-t border-zinc-200 px-4 py-2 text-sm sm:hidden dark:border-mono-border">
+    <a href="/" class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">home</a>
+    <a href="/pocs/" class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">pocs</a>
+    <a href="/watchlist/" class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">watchlist</a>
+  </nav>
+
+  <script>
+    (function () {
+      var btn = document.getElementById('theme-toggle');
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        var root = document.documentElement;
+        var isDark = root.classList.toggle('dark');
+        try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (e) {}
+      });
+    })();
+  </script>
+</header>
+
+  <main class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    
+<header class="border-b border-zinc-200 pb-6 dark:border-mono-border">
+  <p class="font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+    tag
+  </p>
+  <h1 class="mt-1 font-mono text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">Ntlm-Relay</h1>
+  
+</header>
+
+
+  <div class="mt-6 overflow-hidden rounded-lg border border-zinc-200 dark:border-mono-border">
+    
+      <li
+  class="poc-row group relative rounded border border-zinc-200 bg-white p-3.5 transition hover:border-emerald-500/60 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand/60"
+  data-category="network"
+  data-severity="Critical"
+  data-cvss="0"
+  data-patched="true"
+  data-patch-status="patched"
+  data-date="2026-07-05"
+  data-permalink="/pocs/network/2026-07-05_cve-2026-24294-petitpotam-smb-ntlm-reflection-lpe/"
+  data-kev="false"
+  data-ransomware="false"
+  data-overdue="false"
+  data-epss="0.04671"
+  data-priority="12"
+  data-title="Windows Server 2025 Local NTLM Reflection LPE via SMB Arbitrary Port &#43; PetitPotam (CVE-2026-24294)"
+  data-cve="CVE-2026-24294 (Microsoft Security Response Center)"
+>
+  <div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+
+    <div class="min-w-0 flex-1 space-y-1">
+      
+      <div class="flex flex-wrap items-center gap-2 font-mono text-[11px]">
+        <span class="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-[1px] font-bold text-emerald-600 dark:text-brand" title="CVE-2026-24294 (Microsoft Security Response Center)">CVE-2026-24294</span>
+        <span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-[1px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">network</span>
+        <span class="font-bold text-red-600 dark:text-red-400">
+          CRITICAL
+        </span>
+        
+
+        <span class="poc-new-badge hidden rounded border border-emerald-400/50 bg-emerald-400/10 px-1 py-[1px] text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400">new</span>
+      </div>
+
+      <h2 class="text-sm font-bold text-zinc-900 transition group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand">
+        <a href="/pocs/network/2026-07-05_cve-2026-24294-petitpotam-smb-ntlm-reflection-lpe/" class="after:absolute after:inset-0">Windows Server 2025 Local NTLM Reflection LPE via SMB Arbitrary Port &#43; PetitPotam (CVE-2026-24294)</a>
+      </h2>
+
+      <p class="line-clamp-1 font-mono text-xs text-zinc-500 dark:text-mono-muted">
+        Windows 11 24H2 / Server 2025 introduced an SMB client capability allowing connections to arbitrary TCP ports via net use \\host\share /tcpport:PORT. Combined with SMB2 session multiplexing, this enables a local NTLM reflection attack: a low-privileged local…
+      </p>
+    </div>
+
+    <div class="flex items-center justify-between gap-2 border-t border-zinc-200/60 pt-2 font-mono text-xs md:flex-col md:items-end md:border-t-0 md:pt-0 dark:border-mono-border/40">
+      <span class="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-emerald-600 dark:text-brand" title="Vendor fix documented in this entry">
+  <span class="h-2 w-2 rounded-full bg-emerald-500"></span>Patched
+</span>
+      <span class="whitespace-nowrap text-[11px] text-zinc-400 dark:text-mono-muted">2026-07-05</span>
+    </div>
+
+  </div>
+</li>
+
+    
+      <li
+  class="poc-row group relative rounded border border-zinc-200 bg-white p-3.5 transition hover:border-emerald-500/60 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand/60"
+  data-category="network"
+  data-severity="Critical"
+  data-cvss="0"
+  data-patched="false"
+  data-patch-status="unknown"
+  data-date="2026-07-05"
+  data-permalink="/pocs/network/2026-07-05_cve-2026-26128-adcs-kerberos-relay-unicode-spn/"
+  data-kev="false"
+  data-ransomware="false"
+  data-overdue="false"
+  data-epss="0.00621"
+  data-priority="21"
+  data-title="Windows Kerberos Reflection via Unicode SPN Normalization Bypass (CVE-2026-26128)"
+  data-cve="CVE-2026-26128"
+>
+  <div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+
+    <div class="min-w-0 flex-1 space-y-1">
+      
+      <div class="flex flex-wrap items-center gap-2 font-mono text-[11px]">
+        <span class="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-[1px] font-bold text-emerald-600 dark:text-brand" title="CVE-2026-26128">CVE-2026-26128</span>
+        <span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-[1px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">network</span>
+        <span class="font-bold text-red-600 dark:text-red-400">
+          CRITICAL
+        </span>
+        
+
+        <span class="poc-new-badge hidden rounded border border-emerald-400/50 bg-emerald-400/10 px-1 py-[1px] text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400">new</span>
+      </div>
+
+      <h2 class="text-sm font-bold text-zinc-900 transition group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand">
+        <a href="/pocs/network/2026-07-05_cve-2026-26128-adcs-kerberos-relay-unicode-spn/" class="after:absolute after:inset-0">Windows Kerberos Reflection via Unicode SPN Normalization Bypass (CVE-2026-26128)</a>
+      </h2>
+
+      <p class="line-clamp-1 font-mono text-xs text-zinc-500 dark:text-mono-muted">
+        CVE-2026-26128 is a Kerberos relay vulnerability rooted in a mismatch between how two different Windows components normalize Unicode characters when resolving Service Principal Names. The client-side DnsCache service uses CompareStringW with NORMIGNORECASE,…
+      </p>
+    </div>
+
+    <div class="flex items-center justify-between gap-2 border-t border-zinc-200/60 pt-2 font-mono text-xs md:flex-col md:items-end md:border-t-0 md:pt-0 dark:border-mono-border/40">
+      <span class="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-zinc-500 dark:text-mono-muted" title="No authoritative fix record found; status not confirmed either way">
+  <span class="h-2 w-2 rounded-full bg-zinc-400"></span>Unverified
+</span>
+      <span class="whitespace-nowrap text-[11px] text-zinc-400 dark:text-mono-muted">2026-07-05</span>
+    </div>
+
+  </div>
+</li>
+
+    
+  </div>
+
+
+  </main>
+  <footer class="mt-16 border-t border-zinc-200 dark:border-mono-border">
+  <div class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-8 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8 dark:text-zinc-500">
+    <p class="font-mono">
+      PoC Archive — research artifacts for defensive and educational use only.
+    </p>
+    <p class="font-mono">
+      built with <a href="https://gohugo.io" class="text-emerald-600 hover:underline dark:text-emerald-400">hugo</a> · deployed on github pages
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>
