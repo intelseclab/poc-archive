@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-09-02 22:24:17
+> Last updated: 2026-09-04 19:03:36
 
 ---
 
@@ -126,6 +126,16 @@
 | 2026-09-03 | — | [cve-2026-52923-ipc-msg-uaf](./pocs/binary/2026-09-03_cve-2026-52923-ipc-msg-uaf/) | `binary` | CVE-2026-52923 | High | LPE, Linux kernel, IPC, msg_msg, SHM, RHEL, C | Weaponized |
 | 2026-09-03 | — | [cve-2026-5865-chrome-v8-type-confusion](./pocs/binary/2026-09-03_cve-2026-5865-chrome-v8-type-confusion/) | `binary` | CVE-2026-5865 | High | RCE, Chrome, V8, type confusion, JavaScript | PoC |
 | 2026-09-03 | — | [cve-2026-64560-posix-cpu-timers-uaf](./pocs/binary/2026-09-03_cve-2026-64560-posix-cpu-timers-uaf/) | `binary` | CVE-2026-64560 | High | LPE, Linux kernel, posix-cpu-timers, UAF, Android, Pixel, N-day, C | Weaponized |
+| 2026-09-04 | — | [cve-2026-31678-openvswitch-tunnel-uaf](./pocs/binary/2026-09-04_cve-2026-31678-openvswitch-tunnel-uaf/) | `binary` | CVE-2026-31678 | High | LPE, Linux kernel, openvswitch, OVS, tunnel, netdev, UAF, Fedora, C | Weaponized |
+| 2026-09-04 | — | [cve-2026-52924-sctp-cookie-echo-uaf](./pocs/binary/2026-09-04_cve-2026-52924-sctp-cookie-echo-uaf/) | `binary` | CVE-2026-52924 | Critical | LPE, Linux kernel, SCTP, COOKIE-ECHO, UAF, C | Weaponized |
+| 2026-09-04 | — | [cve-2026-52929-sctp-stream-rollback-uaf](./pocs/binary/2026-09-04_cve-2026-52929-sctp-stream-rollback-uaf/) | `binary` | CVE-2026-52929 | High | LPE, Linux kernel, SCTP, stream, rollback, UAF, Ubuntu, C | Weaponized |
+| 2026-09-04 | — | [cve-2026-52933-io-uring-poll-uaf](./pocs/binary/2026-09-04_cve-2026-52933-io-uring-poll-uaf/) | `binary` | CVE-2026-52933 | High | LPE, Linux kernel, io_uring, poll, signed comparison, Fedora, C | Weaponized |
+| 2026-09-04 | — | [cve-2026-68162-sctp-auth-sysctl-uaf](./pocs/binary/2026-09-04_cve-2026-68162-sctp-auth-sysctl-uaf/) | `binary` | CVE-2026-68162 | High | LPE, Linux kernel, SCTP, auth_enable, sysctl, UAF, Ubuntu, C | Weaponized |
+| 2026-09-04 | — | [cve-2026-72137-xfrm-nat-keepalive-double-free](./pocs/binary/2026-09-04_cve-2026-72137-xfrm-nat-keepalive-double-free/) | `binary` | CVE-2026-72137 | High | LPE, Linux kernel, xfrm, nat_keepalive, double-free, Ubuntu, C | Weaponized |
+| 2026-09-04 | — | [cve-2026-72255-nfqueue-bridge-uaf](./pocs/binary/2026-09-04_cve-2026-72255-nfqueue-bridge-uaf/) | `binary` | CVE-2026-72255 | High | LPE, Linux kernel, netfilter, nf_queue, bridge, UAF, Ubuntu, C | Weaponized |
+| 2026-09-04 | — | [cve-2026-74480-bridge-fast-leave-uaf](./pocs/binary/2026-09-04_cve-2026-74480-bridge-fast-leave-uaf/) | `binary` | CVE-2026-74480 | Critical | LPE, Linux kernel, bridge, fast-leave, UAF, RHEL, core_pattern, C | Weaponized |
+| 2026-09-04 | — | [cve-2026-74581-ipv6-fib6-rule-uaf](./pocs/binary/2026-09-04_cve-2026-74581-ipv6-fib6-rule-uaf/) | `binary` | CVE-2026-74581 | High | LPE, Linux kernel, IPv6, fib6, routing rules, UAF, Debian, core_pattern, C | Weaponized |
+| 2026-09-04 | — | [cve-2026-80714-ipvs-propagation-uaf](./pocs/binary/2026-09-04_cve-2026-80714-ipvs-propagation-uaf/) | `binary` | CVE-2026-80714 | Critical | LPE, Linux kernel, IPVS, ip_vs, sync, UAF, Debian, C | Weaponized |
 | 2026-07-03 | 2026-06 | [docker-cp-copyout-destination-escape](./pocs/cloud/2026-07-03_docker-cp-copyout-destination-escape/) | `cloud` | None assigned as of 2026-07-03 | Medium | docker, container-escape, toctou, symlink-race, docker-cp, path-traversal, archive-extraction, host-file-write | PoC |
 | 2026-07-03 | 2026-06 | [floci-apigateway-vtl-rce](./pocs/cloud/2026-07-03_floci-apigateway-vtl-rce/) | `cloud` | None assigned as of 2026-07-03 | Critical | floci, api-gateway, velocity-template-language, rce, iam-bypass, sigv4, java-reflection, localstack-alternative | Weaponized |
 | 2026-07-03 | 2026-07 | [gitea-act-runner-container-options-escape](./pocs/cloud/2026-07-03_gitea-act-runner-container-options-escape/) | `cloud` | None assigned as of 2026-07-03 | High | gitea, act-runner, ci-cd, docker, container-escape, host-namespace, privilege-escalation, capabilities | PoC |
@@ -622,25 +632,28 @@
 | 2026-08-16 | 2026-08-16 | [cve-2026-17544-php-bcmath-oob-write](./pocs/web/2026-08-16_cve-2026-17544-php-bcmath-oob-write/) | `web` | CVE-2026-17544 / GHSA-x692-q9x7-8c3f | Critical | php, bcmath, oob-write, stack-smashing, rce, cwe-787, CVE-2026-17544 | Patched (PHP 8.4.24 / 8.5.9) |
 | 2026-08-16 | 2026-08-16 | [cve-2026-33267-apache-trafficserver-header-spoof](./pocs/web/2026-08-16_cve-2026-33267-apache-trafficserver-header-spoof/) | `web` | CVE-2026-33267 / GHSA-jrh6-9hgv-mqm7 | Critical | apache, traffic-server, ats, header-injection, metadata-spoof, cache-poisoning, acl-bypass, plugin, CVE-2026-33267 | Patched (9.2.15 / 10.1.4) |
 | 2026-08-16 | 2026-08-16 | [cve-2026-42533-nginx-pcre-heap-overflow-rce](./pocs/web/2026-08-16_cve-2026-42533-nginx-pcre-heap-overflow-rce/) | `web` | CVE-2026-42533 | Critical | nginx, pcre, heap-overflow, rce, preauth, info-leak, capture-variable, map-directive, aslr-bypass, CVE-2026-42533 | Patched |
+| 2026-09-03 | — | [cve-2026-49869-kestra-auth-bypass-rce](./pocs/web/2026-09-03_cve-2026-49869-kestra-auth-bypass-rce/) | `web` | CVE-2026-49869, CVE-2026-53576 | Critical | RCE, authentication bypass, Kestra, unauthenticated, Python | Weaponized |
+| 2026-09-03 | — | [cve-2026-75604-nextjs-windows-rce](./pocs/web/2026-09-03_cve-2026-75604-nextjs-windows-rce/) | `web` | CVE-2026-75604 | Critical | RCE, Next.js, Windows, path traversal, cache poisoning, Python | Weaponized |
+| 2026-09-03 | — | [cve-2026-82970-wplp-cookie-consent-rce](./pocs/web/2026-09-03_cve-2026-82970-wplp-cookie-consent-rce/) | `web` | CVE-2026-82970 | Critical | RCE, WordPress, file upload, unauthenticated, PHP, webshell | Weaponized |
 
 ---
 
-*Total POCs: 755*
+*Total POCs: 770*
 
 ## By Category
 
-- **`binary`** — 130 entries
+- **`binary`** — 141 entries
 - **`cloud`** — 23 entries
 - **`crypto`** — 3 entries
 - **`hardware`** — 8 entries
 - **`misc`** — 33 entries
 - **`network`** — 131 entries
 - **`social-engineering`** — 6 entries
-- **`web`** — 435 entries
+- **`web`** — 439 entries
 
 ## Archives
 
-- [2025](./archive/2025.md) — 115 entries
+- [2025](./archive/2025.md) — 117 entries
 - [2024](./archive/2024.md) — 13 entries
 - [2023](./archive/2023.md) — 4 entries
 - [2022](./archive/2022.md) — 2 entries
