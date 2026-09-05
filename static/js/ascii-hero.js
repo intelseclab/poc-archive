@@ -84,20 +84,15 @@ if (mount) {
   mount.style.touchAction = 'none';
   mount.style.cursor = 'grab';
 
-  const clampPitch = (v) => Math.max(-Math.PI / 2, Math.min(Math.PI / 2, v));
-
   let dragging = false;
   let lastX = 0;
-  let lastY = 0;
-  let velX = 0;
   let velY = 0;
   let dirty = true;
 
   mount.addEventListener('pointerdown', (e) => {
     dragging = true;
     lastX = e.clientX;
-    lastY = e.clientY;
-    velX = velY = 0;
+    velY = 0;
     mount.style.cursor = 'grabbing';
     mount.setPointerCapture(e.pointerId);
   });
@@ -105,13 +100,9 @@ if (mount) {
   mount.addEventListener('pointermove', (e) => {
     if (!dragging) return;
     const dx = e.clientX - lastX;
-    const dy = e.clientY - lastY;
     lastX = e.clientX;
-    lastY = e.clientY;
     pivot.rotation.y += dx * 0.01;
-    pivot.rotation.x = clampPitch(pivot.rotation.x + dy * 0.01);
     velY = dx * 0.01;
-    velX = dy * 0.01;
     dirty = true;
   });
 
@@ -123,10 +114,8 @@ if (mount) {
   mount.addEventListener('pointercancel', endDrag);
 
   const tick = () => {
-    if (!dragging && (Math.abs(velX) > 0.0001 || Math.abs(velY) > 0.0001)) {
+    if (!dragging && Math.abs(velY) > 0.0001) {
       pivot.rotation.y += velY;
-      pivot.rotation.x = clampPitch(pivot.rotation.x + velX);
-      velX *= 0.95;
       velY *= 0.95;
       dirty = true;
     }
