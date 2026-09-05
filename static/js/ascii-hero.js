@@ -34,6 +34,7 @@ if (mount) {
     obj.position.set(-center.x, -center.y, -center.z);
     holder.add(obj);
     holder.scale.setScalar(2.8 / (Math.max(size.x, size.y, size.z) || 1));
+    holder.position.y = -0.25;
     return holder;
   };
 
