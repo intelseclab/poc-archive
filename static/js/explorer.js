@@ -17,14 +17,14 @@
   var toEl = document.getElementById("filter-to");
   var clearEl = document.getElementById("filter-clear");
 
-  var ACTIVE = ["border-emerald-400", "bg-emerald-400/10", "text-emerald-600", "dark:text-emerald-400"];
+  var ACTIVE = ["border-emerald-400", "bg-emerald-50", "text-emerald-600", "dark:text-emerald-400", "dark:bg-emerald-950", "dark:border-emerald-700"];
   var SEV_ORDER = { Critical: 5, High: 4, Medium: 3, Low: 2, Info: 1 };
   var SEV_COLORS = {
-    Critical: "border-red-400/40 text-red-600 dark:text-red-400",
-    High:     "border-orange-400/40 text-orange-600 dark:text-orange-400",
-    Medium:   "border-yellow-400/40 text-yellow-600 dark:text-yellow-400",
-    Low:      "border-blue-400/40 text-blue-600 dark:text-blue-400",
-    Info:     "border-zinc-400/40 text-zinc-500 dark:text-zinc-400",
+    Critical: "border-red-300 text-red-600 dark:border-red-800 dark:text-red-400",
+    High:     "border-orange-300 text-orange-600 dark:border-orange-800 dark:text-orange-400",
+    Medium:   "border-yellow-300 text-yellow-600 dark:border-yellow-800 dark:text-yellow-400",
+    Low:      "border-zinc-300 text-zinc-600 dark:border-zinc-700 dark:text-zinc-400",
+    Info:     "border-zinc-300 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400",
   };
 
   var state = {
@@ -140,8 +140,8 @@
     if (!el) return;
     if (totalPages <= 1) { el.innerHTML = ""; return; }
 
-    var btnCls = "rounded border border-zinc-300 px-2 py-0.5 font-mono text-xs text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400";
-    var activeCls = "rounded border border-emerald-400 bg-emerald-400/10 px-2 py-0.5 font-mono text-xs text-emerald-600 dark:text-emerald-400";
+    var btnCls = "rounded border border-zinc-300 px-2 py-0.5 font-mono text-xs text-zinc-600 hover:border-emerald-400 hover:text-emerald-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-emerald-700 dark:hover:text-emerald-400";
+    var activeCls = "rounded border border-emerald-400 bg-emerald-50 px-2 py-0.5 font-mono text-xs text-emerald-600 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-400";
 
     // Build page list with ellipsis
     var pages = [];

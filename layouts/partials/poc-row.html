@@ -1,9 +1,9 @@
-{{- /* One PoC as a catalogue card. Context (.) is the page.
-       explorer.js filters/sorts/paginates by toggling .hidden on these <li>
+{{- /* One PoC as a table row. Context (.) is the page.
+       explorer.js filters/sorts/paginates by toggling .hidden on these <tr>
        elements, so the data-* attributes below are load-bearing. */ -}}
 {{- $p := . -}}
-<li
-  class="poc-row group relative rounded border border-zinc-200 bg-white p-3.5 transition hover:border-emerald-500/60 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand/60"
+<tr
+  class="poc-row group hover:bg-zinc-50 dark:hover:bg-mono-hover"
   data-category="{{ $p.Params.category }}"
   data-severity="{{ $p.Params.severity }}"
   data-cvss="{{ $p.Params.cvss_score | default 0 }}"
@@ -19,42 +19,39 @@
   data-title="{{ $p.Title }}"
   data-cve="{{ $p.Params.cve | default "" }}"
 >
-  <div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-
-    <div class="min-w-0 flex-1 space-y-1">
-      {{/* Meta line: CVE · category · severity · signals */}}
-      <div class="flex flex-wrap items-center gap-2 font-mono text-[11px]">
-        {{- with $p.Params.cve }}
-        {{/* Some entries qualify the ID in parentheses; the badge shows only the identifier. */}}
-        {{- $short := replaceRE `\s*\(.*$` "" . -}}
-        <span class="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-[1px] font-bold text-emerald-600 dark:text-brand" title="{{ . }}">{{ $short }}</span>
-        {{- end }}
-        <span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-[1px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">{{ $p.Params.category }}</span>
-        <span class="font-bold
-          {{- if eq $p.Params.severity "Critical" }} text-red-600 dark:text-red-400
-          {{- else if eq $p.Params.severity "High" }} text-orange-600 dark:text-orange-400
-          {{- else if eq $p.Params.severity "Medium" }} text-yellow-600 dark:text-yellow-500
-          {{- else if eq $p.Params.severity "Low" }} text-blue-600 dark:text-blue-400
-          {{- else }} text-zinc-500 dark:text-mono-muted{{ end }}">
-          {{ upper $p.Params.severity }}{{ with $p.Params.cvss_score }} {{ . }}{{ end }}
-        </span>
-        {{ partial "signal-chips.html" (dict "page" $p "compact" true) }}
-        <span class="poc-new-badge hidden rounded border border-emerald-400/50 bg-emerald-400/10 px-1 py-[1px] text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400">new</span>
-      </div>
-
-      <h2 class="text-sm font-bold text-zinc-900 transition group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand">
-        <a href="{{ $p.RelPermalink }}" class="after:absolute after:inset-0">{{ $p.Title }}</a>
-      </h2>
-
-      <p class="line-clamp-1 font-mono text-xs text-zinc-500 dark:text-mono-muted">
-        {{ with $p.Params.summary }}{{ . }}{{ else }}{{ $p.Params.affected_product }}{{ end }}
-      </p>
+  <td class="max-w-0 px-3 py-2.5">
+    <a href="{{ $p.RelPermalink }}" class="flex flex-wrap items-center gap-1.5">
+      <span class="line-clamp-1 min-w-0 font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand">{{ $p.Title }}</span>
+      <span class="poc-new-badge hidden shrink-0 border border-emerald-300 bg-emerald-50 px-1 py-[1px] text-[9px] uppercase text-emerald-600 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">new</span>
+      {{- if $p.Params.kev }}
+      <span class="shrink-0 border border-red-300 bg-red-50 px-1 py-[1px] text-[9px] text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400">KEV</span>
+      {{- end }}
+      {{- if $p.Params.kev_ransomware }}
+      <span class="shrink-0 border border-red-300 bg-red-50 px-1 py-[1px] text-[9px] text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400">RW</span>
+      {{- end }}
+      {{- with $p.Params.epss }}{{ if ge . 0.10 }}
+      <span class="shrink-0 border border-zinc-300 bg-zinc-50 px-1 py-[1px] text-[9px] text-zinc-600 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">EPSS {{ printf "%.0f%%" (mul . 100) }}</span>
+      {{- end }}{{ end }}
+    </a>
+    <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-zinc-500 sm:hidden dark:text-mono-muted">
+      {{ with $p.Params.cve }}<span class="text-emerald-600 dark:text-brand">{{ . }}</span>{{ end }}
+      <span>{{ $p.Params.category }}</span>
+      <span>{{ partial "patch-status.html" (dict "page" $p "style" "text") }}</span>
     </div>
-
-    <div class="flex items-center justify-between gap-2 border-t border-zinc-200/60 pt-2 font-mono text-xs md:flex-col md:items-end md:border-t-0 md:pt-0 dark:border-mono-border/40">
-      {{ partial "patch-status.html" (dict "page" $p "style" "dot") }}
-      <span class="whitespace-nowrap text-[11px] text-zinc-400 dark:text-mono-muted">{{ $p.Date.Format "2006-01-02" }}</span>
-    </div>
-
-  </div>
-</li>
+  </td>
+  <td class="hidden truncate whitespace-nowrap px-3 py-2.5 font-bold text-emerald-600 sm:table-cell dark:text-brand" title="{{ $p.Params.cve }}">
+    {{- with $p.Params.cve }}{{ replaceRE `\s*\(.*$` "" . }}{{ else }}—{{ end -}}
+  </td>
+  <td class="hidden px-3 py-2.5 text-zinc-500 lg:table-cell dark:text-mono-muted">{{ $p.Params.category }}</td>
+  <td class="whitespace-nowrap px-3 py-2.5 font-bold
+    {{- if eq $p.Params.severity "Critical" }} text-red-600 dark:text-red-400
+    {{- else if eq $p.Params.severity "High" }} text-orange-600 dark:text-orange-400
+    {{- else if eq $p.Params.severity "Medium" }} text-yellow-600 dark:text-yellow-500
+    {{- else }} text-zinc-500 dark:text-mono-muted{{ end }}">
+    {{ upper $p.Params.severity }}{{ with $p.Params.cvss_score }} <span class="font-normal">{{ . }}</span>{{ end }}
+  </td>
+  <td class="hidden px-3 py-2.5 md:table-cell">
+    {{ partial "patch-status.html" (dict "page" $p "style" "text") }}
+  </td>
+  <td class="hidden whitespace-nowrap px-3 py-2.5 text-[11px] text-zinc-400 lg:table-cell dark:text-mono-muted">{{ $p.Date.Format "2006-01-02" }}</td>
+</tr>

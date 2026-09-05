@@ -22,7 +22,7 @@
   </p>
 </header>
 
-<div class="mt-5 rounded border border-amber-500/40 bg-amber-500/5 p-3 font-mono text-xs text-amber-700 dark:text-amber-400">
+<div class="mt-5 rounded border border-zinc-300 bg-zinc-50 p-3 font-mono text-xs text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-zinc-400">
   <span class="font-bold">[!] Unverified.</span>
   These are automated GitHub search results, not archive entries. They have not been opened,
   read, or screened for scams, stubs or malware. Only entries marked
@@ -36,8 +36,8 @@
   {{- range slice
     (dict "id" "wl-total"    "label" "Candidates" "accent" "")
     (dict "id" "wl-ingested" "label" "Ingested"   "accent" "text-emerald-600 dark:text-brand")
-    (dict "id" "wl-reviewed" "label" "Reviewed"   "accent" "text-blue-600 dark:text-blue-400")
-    (dict "id" "wl-pending"  "label" "Needs review" "accent" "text-amber-600 dark:text-amber-400") }}
+    (dict "id" "wl-reviewed" "label" "Reviewed"   "accent" "")
+    (dict "id" "wl-pending"  "label" "Needs review" "accent" "") }}
   <div class="rounded border border-zinc-200 bg-white p-3.5 dark:border-mono-border dark:bg-mono-card">
     <p class="font-mono text-[10px] uppercase tracking-wider text-zinc-500 dark:text-mono-muted">{{ .label }}</p>
     <h3 id="{{ .id }}" class="mt-1 font-mono text-xl font-bold {{ if .accent }}{{ .accent }}{{ else }}text-zinc-900 dark:text-white{{ end }}">—</h3>
@@ -51,18 +51,18 @@
     <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 dark:text-mono-muted" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
     <input type="search" id="wl-search" autocomplete="off"
       placeholder="Search CVE ID, repository or description…"
-      class="w-full rounded border border-zinc-300 bg-zinc-50 py-2.5 pl-9 pr-3 font-mono text-xs text-zinc-900 transition placeholder:text-zinc-400 focus:border-emerald-400 focus:outline-none dark:border-mono-border dark:bg-mono-bg dark:text-white dark:placeholder:text-mono-muted dark:focus:border-brand" />
+      class="w-full rounded border border-zinc-300 bg-zinc-50 py-2.5 pl-9 pr-3 font-mono text-xs text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-400 focus:outline-none dark:border-mono-border dark:bg-mono-bg dark:text-white dark:placeholder:text-mono-muted dark:focus:border-brand" />
   </div>
   <div class="flex flex-wrap items-center gap-1.5">
     <span class="mr-1 font-mono text-[11px] text-zinc-500 dark:text-mono-muted">Status:</span>
     <div class="flex flex-wrap gap-1.5" id="wl-filter">
-      <button type="button" data-v="all"      class="wl-pill rounded border border-emerald-400 bg-emerald-400/10 px-2.5 py-1 font-mono text-[11px] text-emerald-600 dark:text-brand">all</button>
+      <button type="button" data-v="all"      class="wl-pill rounded border border-emerald-400 bg-emerald-50 px-2.5 py-1 font-mono text-[11px] text-emerald-600 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">all</button>
       <button type="button" data-v="pending"  class="wl-pill rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">needs review</button>
       <button type="button" data-v="reviewed" class="wl-pill rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">reviewed</button>
       <button type="button" data-v="ingested" class="wl-pill rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">ingested</button>
     </div>
     <button type="button" id="wl-signal"
-      class="rounded border border-emerald-400 bg-emerald-400/10 px-2.5 py-1 font-mono text-[11px] text-emerald-600 dark:text-brand"
+      class="rounded border border-emerald-400 bg-emerald-50 px-2.5 py-1 font-mono text-[11px] text-emerald-600 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
       title="GitHub search matches any repo mentioning a CVE ID — most are dependency manifests, scanners or NVD mirrors rather than exploits">
       likely PoCs only
     </button>
@@ -74,12 +74,12 @@
 <div class="mt-4 rounded border border-zinc-200 bg-white p-3 dark:border-mono-border dark:bg-mono-card">
   <div class="flex flex-wrap items-center gap-2 font-mono text-xs">
     <button type="button" id="wl-owner-toggle"
-      class="rounded border border-zinc-300 px-2.5 py-1 text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-mono-muted dark:hover:border-brand dark:hover:text-brand">
+      class="rounded border border-zinc-300 px-2.5 py-1 text-zinc-600 hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-mono-muted dark:hover:border-brand dark:hover:text-brand">
       owner mode
     </button>
     <span id="wl-owner-state" class="text-zinc-400 dark:text-mono-muted">locked — marking disabled</span>
     <button type="button" id="wl-owner-lock"
-      class="ml-auto hidden rounded border border-red-400/50 px-2.5 py-1 text-red-600 transition hover:bg-red-500/10 dark:text-red-400">
+      class="ml-auto hidden rounded border border-zinc-300 px-2.5 py-1 text-zinc-600 hover:bg-zinc-100 dark:border-mono-border dark:text-zinc-400 dark:hover:bg-mono-hover">
       lock
     </button>
   </div>
@@ -89,7 +89,7 @@
         placeholder="monitor API key — kept in memory only, never stored"
         class="min-w-0 flex-1 rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1.5 font-mono text-xs text-zinc-900 focus:border-emerald-400 focus:outline-none dark:border-mono-border dark:bg-mono-bg dark:text-white dark:placeholder:text-mono-muted" />
       <button type="button" id="wl-key-go"
-        class="rounded bg-emerald-500 px-3 py-1.5 font-mono text-xs font-semibold text-zinc-950 transition hover:bg-emerald-400">unlock</button>
+        class="rounded bg-emerald-500 px-3 py-1.5 font-mono text-xs font-semibold text-zinc-950 hover:bg-emerald-400">unlock</button>
     </div>
     <p class="mt-2 font-mono text-[10px] leading-relaxed text-zinc-400 dark:text-mono-muted">
       The key is held in a JavaScript variable for this page view only — never written to
@@ -106,32 +106,53 @@
 
 <p id="wl-hidden" class="mt-3 hidden font-mono text-[11px] text-zinc-400 dark:text-mono-muted"></p>
 
-<ul id="wl-rows" class="m-0 mt-4 hidden list-none space-y-2 p-0"></ul>
+<div id="wl-table-wrap" class="mt-4 hidden">
+  <div class="overflow-hidden rounded border border-zinc-200 bg-white dark:border-mono-border dark:bg-mono-card">
+    <div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50/60 p-3 dark:border-mono-border dark:bg-mono-bg/50">
+      <span class="flex items-center gap-2 font-mono text-xs font-bold text-zinc-900 dark:text-white">
+        <svg class="h-4 w-4 text-emerald-600 dark:text-brand" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        WATCHLIST
+      </span>
+      <span class="font-mono text-xs text-zinc-500 dark:text-mono-muted" id="wl-table-count"></span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full table-fixed text-left font-mono text-xs">
+        <thead class="border-b border-zinc-200 bg-zinc-50 text-[10px] uppercase text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">
+          <tr>
+            <th class="px-3 py-2.5">Repository</th>
+            <th class="hidden w-40 px-3 py-2.5 sm:table-cell">CVE</th>
+            <th class="w-20 px-3 py-2.5">CVSS</th>
+            <th class="hidden w-28 px-3 py-2.5 md:table-cell">Status</th>
+            <th class="hidden w-24 px-3 py-2.5 lg:table-cell">Seen</th>
+          </tr>
+        </thead>
+        <tbody id="wl-rows" class="divide-y divide-zinc-200 text-zinc-700 dark:divide-mono-border/40 dark:text-slate-300">
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
 <div id="wl-more" class="mt-4 hidden text-center">
-  <button type="button" id="wl-more-btn" class="rounded border border-zinc-300 px-4 py-1.5 font-mono text-xs text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-mono-muted dark:hover:border-brand dark:hover:text-brand">Show more</button>
+  <button type="button" id="wl-more-btn" class="rounded border border-zinc-300 px-4 py-1.5 font-mono text-xs text-zinc-600 hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-mono-muted dark:hover:border-brand dark:hover:text-brand">Show more</button>
 </div>
 
 <script>
 (function () {
   var MONITOR = "https://monitor.intelseclab.com";
-  var rowsEl   = document.getElementById("wl-rows");
-  var stateEl  = document.getElementById("wl-state");
-  var searchEl = document.getElementById("wl-search");
-  var moreWrap = document.getElementById("wl-more");
-  var moreBtn  = document.getElementById("wl-more-btn");
-  var ACTIVE   = ["border-emerald-400", "bg-emerald-400/10", "text-emerald-600", "dark:text-brand"];
+  var rowsEl    = document.getElementById("wl-rows");
+  var tableWrap = document.getElementById("wl-table-wrap");
+  var stateEl   = document.getElementById("wl-state");
+  var searchEl  = document.getElementById("wl-search");
+  var moreWrap  = document.getElementById("wl-more");
+  var moreBtn   = document.getElementById("wl-more-btn");
+  var tblCount  = document.getElementById("wl-table-count");
+  var ACTIVE    = ["border-emerald-400", "bg-emerald-50", "text-emerald-600", "dark:text-emerald-400", "dark:bg-emerald-950", "dark:border-emerald-700"];
 
   var all = [], filter = "all", query = "", shown = 50;
-  // Default to candidates that actually look like PoCs. GitHub search matches
-  // any repo merely mentioning a CVE, so ~70% are dependency manifests,
-  // scanners or NVD mirrors. Score is computed by the monitor.
   var MIN_SCORE = 50, onlyLikely = true;
 
   // ---- Owner mode -----------------------------------------------------
-  // The key lives ONLY in this closure variable. Nothing writes it to
-  // localStorage, sessionStorage or a cookie, so a reload discards it and
-  // there is no persisted copy for a future script to read.
   var ownerKey = null;
   var toggleEl = document.getElementById("wl-owner-toggle");
   var formEl   = document.getElementById("wl-owner-form");
@@ -158,11 +179,9 @@
 
   function unlock() {
     var v = keyEl.value.trim();
-    keyEl.value = "";                     // don't leave it in the DOM
+    keyEl.value = "";
     if (!v) return;
     ownerMsg.textContent = "checking…";
-    // Validate by attempting a no-op: an invalid id returns 400 when the token
-    // is good and 401 when it is not, which distinguishes the two safely.
     fetch(MONITOR + "/reviewed", {
       method: "POST",
       headers: { "Authorization": "Bearer " + v, "Content-Type": "application/json" },
@@ -203,9 +222,6 @@
   }
 
   // ---- Rendering ------------------------------------------------------
-  // Built with DOM APIs and textContent throughout. Candidate descriptions
-  // come from arbitrary GitHub repositories, i.e. they are attacker-supplied;
-  // never assemble them into an HTML string.
   function el(tag, cls, text) {
     var n = document.createElement(tag);
     if (cls) n.className = cls;
@@ -218,67 +234,69 @@
     return c.reviewed ? "reviewed" : "pending";
   }
 
-  var BADGE = {
-    ingested: ["border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-brand", "ingested"],
-    reviewed: ["border-blue-500/40 bg-blue-500/10 text-blue-600 dark:text-blue-400", "reviewed"],
-    pending:  ["border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400", "needs review"],
+  var STATUS_LABEL = { ingested: "ingested", reviewed: "reviewed", pending: "needs review" };
+
+  var BADGE_CLS = {
+    ingested: "border-emerald-300 bg-emerald-50 text-emerald-600 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400",
+    reviewed: "border-zinc-300 bg-zinc-50 text-zinc-600 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+    pending:  "border-zinc-300 bg-zinc-50 text-zinc-600 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
   };
 
   function card(c) {
-    var st = statusOf(c), b = BADGE[st];
-    var li = el("li", "rounded border border-zinc-200 bg-white p-3.5 transition hover:border-emerald-500/50 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand/50");
-    var wrap = el("div", "flex flex-col gap-3 md:flex-row md:items-center md:justify-between");
-    var left = el("div", "min-w-0 flex-1 space-y-1");
+    var st = statusOf(c);
+    var tr = el("tr", "group hover:bg-zinc-50 dark:hover:bg-mono-hover");
 
-    var meta = el("div", "flex flex-wrap items-center gap-2 font-mono text-[11px]");
-    meta.appendChild(el("span", "rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-[1px] font-bold text-emerald-600 dark:text-brand", c.cve_id));
-    meta.appendChild(el("span", "font-bold text-red-600 dark:text-red-400", "CVSS " + (c.cvss_score != null ? c.cvss_score : "—")));
-    var cwe = (c.cwe_names || []).slice(0, 2).join(", ");
-    if (cwe) meta.appendChild(el("span", "rounded border border-zinc-200 bg-zinc-50 px-2 py-[1px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted", cwe));
-    meta.appendChild(el("span", "rounded border px-1.5 py-[1px] text-[10px] uppercase tracking-wide " + b[0], b[1]));
+    // Repo column
+    var td1 = el("td", "max-w-0 px-3 py-2.5");
+    var link = el("a", "flex flex-wrap items-center gap-1.5");
+    link.href = c.repo_url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer nofollow";
+    link.appendChild(el("span", "line-clamp-1 min-w-0 font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand", c.repo_full_name));
+    link.appendChild(el("span", "shrink-0 border px-1 py-[1px] text-[9px] uppercase " + BADGE_CLS[st], STATUS_LABEL[st]));
     if ((c.poc_score || 0) >= 60) {
-      meta.appendChild(el("span", "rounded border border-emerald-500/30 px-1.5 py-[1px] text-[10px] uppercase tracking-wide text-emerald-600 dark:text-brand", "likely poc"));
+      link.appendChild(el("span", "shrink-0 border border-zinc-300 bg-zinc-50 px-1 py-[1px] text-[9px] uppercase text-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400", "likely poc"));
     }
     if (c.cve_span > 2) {
-      meta.appendChild(el("span", "rounded border border-zinc-300/60 px-1.5 py-[1px] text-[10px] uppercase tracking-wide text-zinc-400 dark:border-mono-border dark:text-mono-muted", "collection"));
+      link.appendChild(el("span", "shrink-0 border border-zinc-300 bg-zinc-50 px-1 py-[1px] text-[9px] uppercase text-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400", "collection"));
     }
-    left.appendChild(meta);
+    td1.appendChild(link);
+    td1.appendChild(el("p", "line-clamp-1 mt-0.5 text-[11px] text-zinc-500 dark:text-mono-muted", c.description || "No description"));
+    // Mobile fold
+    var mf = el("div", "mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-zinc-500 sm:hidden dark:text-mono-muted");
+    mf.appendChild(el("span", "font-bold text-emerald-600 dark:text-brand", c.cve_id));
+    mf.appendChild(el("span", "font-bold", "CVSS " + (c.cvss_score != null ? c.cvss_score : "—")));
+    var cwe = (c.cwe_names || []).slice(0, 2).join(", ");
+    if (cwe) mf.appendChild(el("span", "", cwe));
+    td1.appendChild(mf);
+    tr.appendChild(td1);
 
-    var h = el("p", "font-mono text-sm font-bold text-zinc-900 dark:text-white");
-    var a = el("a", "hover:text-emerald-600 dark:hover:text-brand", c.repo_full_name + " ↗");
-    a.href = c.repo_url;                      // href is set as a property, not parsed as markup
-    a.target = "_blank";
-    a.rel = "noopener noreferrer nofollow";
-    h.appendChild(a);
-    left.appendChild(h);
+    // CVE column
+    tr.appendChild(el("td", "hidden truncate whitespace-nowrap px-3 py-2.5 font-bold text-emerald-600 sm:table-cell dark:text-brand", c.cve_id));
 
-    left.appendChild(el("p", "line-clamp-1 font-mono text-xs text-zinc-500 dark:text-mono-muted",
-      c.description || "No description"));
+    // CVSS column
+    tr.appendChild(el("td", "whitespace-nowrap px-3 py-2.5 font-bold text-zinc-900 dark:text-white", c.cvss_score != null ? String(c.cvss_score) : "—"));
 
-    var right = el("div", "flex shrink-0 items-center justify-between gap-3 border-t border-zinc-200/60 pt-2 font-mono text-[11px] md:flex-col md:items-end md:border-t-0 md:pt-0 dark:border-mono-border/40");
-    right.appendChild(el("span", "text-zinc-400 dark:text-mono-muted",
-      "★ " + (c.stars || 0) +
-      (c.pushed_at ? " · pushed " + String(c.pushed_at).slice(0, 10) : "") +
-      " · seen " + String(c.discovered_at || "").slice(0, 10)));
-
+    // Status column
+    var td4 = el("td", "hidden whitespace-nowrap px-3 py-2.5 md:table-cell text-zinc-500 dark:text-zinc-400");
     if (c._archiveURL) {
-      var v = el("a", "rounded border border-emerald-500/40 px-2 py-0.5 text-emerald-600 transition hover:bg-emerald-500/10 dark:text-brand", "View entry →");
-      v.href = c._archiveURL;
-      right.appendChild(v);
+      var va = el("a", "font-medium text-emerald-600 hover:underline dark:text-brand", "ingested →");
+      va.href = c._archiveURL;
+      td4.appendChild(va);
     } else if (ownerKey && !c.reviewed) {
-      var mb = el("button", "rounded border border-blue-500/50 px-2 py-0.5 text-blue-600 transition hover:bg-blue-500/10 dark:text-blue-400", "Mark reviewed");
+      var mb = el("button", "rounded border border-zinc-300 px-2 py-0.5 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-800", "mark");
       mb.type = "button";
       mb.addEventListener("click", function () { markReviewed(c, mb); });
-      right.appendChild(mb);
+      td4.appendChild(mb);
     } else {
-      right.appendChild(el("span", "text-zinc-300 dark:text-zinc-700",
-        c.reviewed ? "reviewed" : "not ingested"));
+      td4.textContent = STATUS_LABEL[st];
     }
+    tr.appendChild(td4);
 
-    wrap.appendChild(left);
-    wrap.appendChild(right);
-    li.appendChild(wrap);
-    return li;
+    // Seen date column
+    tr.appendChild(el("td", "hidden whitespace-nowrap px-3 py-2.5 text-[11px] text-zinc-400 lg:table-cell dark:text-mono-muted", String(c.discovered_at || "").slice(0, 10)));
+
+    return tr;
   }
 
   function render() {
@@ -297,14 +315,15 @@
 
     rowsEl.textContent = "";
     if (!list.length) {
-      rowsEl.classList.add("hidden");
+      tableWrap.classList.add("hidden");
       moreWrap.classList.add("hidden");
       stateEl.textContent = "No candidates match the current filter.";
       stateEl.classList.remove("hidden");
       return;
     }
     stateEl.classList.add("hidden");
-    rowsEl.classList.remove("hidden");
+    tableWrap.classList.remove("hidden");
+    if (tblCount) tblCount.textContent = list.length + " shown · " + pool.length + " tracked";
     list.slice(0, shown).forEach(function (c) { rowsEl.appendChild(card(c)); });
 
     moreWrap.classList.toggle("hidden", list.length <= shown);
@@ -316,14 +335,14 @@
     var note = document.getElementById("wl-hidden");
     if (note) {
       note.textContent = hidden
-        ? hidden + " lower-signal candidate" + (hidden === 1 ? "" : "s") + " hidden — click “likely PoCs only” to include them"
+        ? hidden + " lower-signal candidate" + (hidden === 1 ? "" : "s") + " hidden — click \"likely PoCs only\" to include them"
         : "";
       note.classList.toggle("hidden", hidden === 0);
     }
   }
 
   function fail(msg) {
-    rowsEl.classList.add("hidden");
+    tableWrap.classList.add("hidden");
     moreWrap.classList.add("hidden");
     stateEl.classList.remove("hidden");
     stateEl.textContent = "Could not reach the monitor: " + msg +

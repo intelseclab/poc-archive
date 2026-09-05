@@ -1,73 +1,833 @@
-<!doctype html><html lang=en class="dark scroll-smooth"><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Stored-Xss · PoC Archive</title><meta name=description content="A curated archive of security research proof-of-concept exploits. Reproducible writeups across web, network, binary, crypto, cloud, hardware, and social-engineering categories."><meta name=author content="intelseclab"><meta name=theme-color content="#09090b"><link rel=canonical href=https://poc.intelseclab.com/tags/stored-xss/><meta property="og:title" content="Stored-Xss · PoC Archive"><meta property="og:description" content="A curated archive of security research proof-of-concept exploits. Reproducible writeups across web, network, binary, crypto, cloud, hardware, and social-engineering categories."><meta property="og:type" content="article"><meta property="og:url" content="https://poc.intelseclab.com/tags/stored-xss/"><meta property="og:site_name" content="PoC Archive"><meta property="og:locale" content="en_US"><meta property="og:image" content="https://poc.intelseclab.com/og-image.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name=twitter:image content="https://poc.intelseclab.com/og-image.png"><meta name=twitter:card content="summary_large_image"><meta name=twitter:title content="Stored-Xss · PoC Archive"><meta name=twitter:description content="A curated archive of security research proof-of-concept exploits. Reproducible writeups across web, network, binary, crypto, cloud, hardware, and social-engineering categories."><meta name=twitter:site content="@intelseclab"><meta name=geo.region content="US"><meta name=geo.placename content="United States"><meta name=language content="en"><meta name=revisit-after content="3 days"><meta name=robots content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"><script>(function(){try{var e=localStorage.getItem("theme");e==="light"?document.documentElement.classList.remove("dark"):document.documentElement.classList.add("dark")}catch{}})()</script><script src="https://cdn.tailwindcss.com?plugins=typography"></script><script>tailwind.config={darkMode:"class",theme:{extend:{fontFamily:{sans:["Inter","ui-sans-serif","system-ui","sans-serif"],mono:['"JetBrains Mono"',"ui-monospace","SFMono-Regular","monospace"]},colors:{mono:{bg:"#0b0f12",card:"#12181d",border:"#1e262c",hover:"#182129",muted:"#64748b"},brand:{DEFAULT:"#10b981",dim:"#064e3b",light:"#a7f3d0"}}}}}</script><link rel=preconnect href=https://fonts.googleapis.com><link rel=preconnect href=https://fonts.gstatic.com crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel=stylesheet><link rel=stylesheet href=/css/syntax.css><style>html.dark body{background-color:#0b0f12}body,body *{transition:background-color .15s ease,border-color .15s ease,color .15s ease}html,body{overflow-x:hidden;max-width:100%}.prose :where(p,li,blockquote,td,th){overflow-wrap:break-word;word-break:break-word}.prose :where(code):not(pre code){overflow-wrap:break-word;word-break:break-word}.prose table th:first-child,.prose table td:first-child{width:1%;white-space:nowrap}.poc-code-body pre{margin:0 !important;padding:.55rem .85rem !important;background:0 0 !important}.poc-code-body .chroma{background:0 0 !important}.poc-code-body table{margin:0 !important;width:100%;border:0}.poc-code-body td{padding:0 !important;border:0 !important}.poc-code-body td:first-child{width:1%;white-space:nowrap}.toc #TableOfContents ul,.toc>nav ul{list-style:none;padding-left:0;margin:0}.toc #TableOfContents li,.toc>nav li{margin-top:.25rem}.toc #TableOfContents li li,.toc>nav li li{padding-left:.75rem}.toc #TableOfContents a,.toc>nav a{color:#71717a;text-decoration:none;font-family:var(--font-mono,"JetBrains Mono",ui-monospace,monospace);font-size:.75rem;transition:color .15s}.toc #TableOfContents a:hover,.toc>nav a:hover{color:#059669}.dark .toc #TableOfContents a,.dark .toc>nav a{color:#a1a1aa}.dark .toc #TableOfContents a:hover,.dark .toc>nav a:hover{color:#34d399}</style><link rel=alternate type=application/rss+xml href=https://poc.intelseclab.com/index.xml title="PoC Archive — all new PoCs"><link rel=alternate type=application/rss+xml href=https://poc.intelseclab.com/tags/stored-xss/index.xml title="Stored-Xss · PoC Archive — RSS feed"><link rel=icon type=image/svg+xml href=/favicon.svg></head><body class="min-h-screen bg-white text-zinc-900 font-sans antialiased selection:bg-emerald-400/20 selection:text-emerald-900 dark:bg-mono-bg dark:text-zinc-100 dark:selection:text-emerald-200"><header class="sticky top-0 z-40 border-b border-zinc-200/80 bg-white/80 backdrop-blur dark:border-mono-border dark:bg-mono-bg/80"><div class="mx-auto flex w-full max-w-6xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8"><a href=/ class="flex items-center gap-2 font-mono text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100"><img src=/favicon.svg width=36 height=36 alt="PoC Archive">
-<span>PoC Archive</span></a><nav class="ml-2 hidden items-center gap-1 text-sm sm:flex"><a href=/ class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-mono-hover dark:hover:text-zinc-100">home</a>
-<a href=/pocs/ class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-mono-hover dark:hover:text-zinc-100">pocs</a>
-<a href=/watchlist/ class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-mono-hover dark:hover:text-zinc-100">watchlist</a></nav><div class="ml-auto hidden items-center gap-3 font-mono text-xs sm:flex"><span class="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400"><span class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"></span>
-<strong class="font-semibold text-zinc-800 dark:text-zinc-100">772</strong> PoCs
-</span><span class="text-zinc-300 dark:text-zinc-700">|</span>
-<a href="/pocs/?signal=kev" class="font-semibold text-red-600 transition hover:underline dark:text-red-400">119 CISA KEV</a></div><div class="ml-auto flex items-center gap-2 sm:ml-3"><a href=https://poc.intelseclab.com/index.xml target=_blank rel="noopener noreferrer" title="RSS feed of new PoCs" aria-label="RSS feed" class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 dark:border-mono-border dark:text-zinc-300 dark:hover:bg-mono-hover"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 019 9"/><path d="M4 4a16 16 0 0116 16"/><circle cx="5" cy="19" r="1"/></svg>
-</a><a href=https://github.com/intelseclab/poc-archive target=_blank rel="noopener noreferrer" class="hidden rounded-md border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 sm:inline-flex dark:border-mono-border dark:text-zinc-300 dark:hover:bg-mono-hover">GitHub
-</a><button type=button id=theme-toggle aria-label="Toggle color theme" class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 dark:border-mono-border dark:text-zinc-300 dark:hover:bg-mono-hover">
-<svg class="hidden h-4 w-4 dark:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-<svg class="block h-4 w-4 dark:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 009 9 9 9 0 11-9-9z"/></svg></button></div></div><nav class="flex items-center gap-1 border-t border-zinc-200 px-4 py-2 text-sm sm:hidden dark:border-mono-border"><a href=/ class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">home</a>
-<a href=/pocs/ class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">pocs</a>
-<a href=/watchlist/ class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">watchlist</a></nav><script>(function(){var e=document.getElementById("theme-toggle");if(!e)return;e.addEventListener("click",function(){var e=document.documentElement,t=e.classList.toggle("dark");try{localStorage.setItem("theme",t?"dark":"light")}catch{}})})()</script></header><main class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8"><header class="border-b border-zinc-200 pb-6 dark:border-mono-border"><p class="font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">tag</p><h1 class="mt-1 font-mono text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">Stored-Xss</h1></header><div class="mt-6 overflow-hidden rounded-lg border border-zinc-200 dark:border-mono-border"><li class="poc-row group relative rounded border border-zinc-200 bg-white p-3.5 transition hover:border-emerald-500/60 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand/60" data-category=web data-severity=High data-cvss=7.2 data-patched=true data-patch-status=patched data-date=2026-07-05 data-permalink=/pocs/web/2026-07-05_cve-2026-40791-wp-time-slots-booking-xss/ data-kev=false data-ransomware=false data-overdue=false data-epss=0.0021 data-priority=8 data-title="WP Time Slots Booking Form Unauthenticated Stored XSS (CVE-2026-40791)" data-cve=CVE-2026-40791><div class="flex flex-col justify-between gap-4 md:flex-row md:items-center"><div class="min-w-0 flex-1 space-y-1"><div class="flex flex-wrap items-center gap-2 font-mono text-[11px]"><span class="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-[1px] font-bold text-emerald-600 dark:text-brand" title=CVE-2026-40791>CVE-2026-40791</span>
-<span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-[1px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">web</span>
-<span class="font-bold text-orange-600 dark:text-orange-400">HIGH 7.2
-</span><span class="poc-new-badge hidden rounded border border-emerald-400/50 bg-emerald-400/10 px-1 py-[1px] text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400">new</span></div><h2 class="text-sm font-bold text-zinc-900 transition group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand"><a href=/pocs/web/2026-07-05_cve-2026-40791-wp-time-slots-booking-xss/ class="after:absolute after:inset-0">WP Time Slots Booking Form Unauthenticated Stored XSS (CVE-2026-40791)</a></h2><p class="line-clamp-1 font-mono text-xs text-zinc-500 dark:text-mono-muted">The public booking form of the WP Time Slots Booking Form plugin parses a submitted appointment field by splitting on a literal space character, then stores the resulting substring as the booking's time-slot value. Because HTML treats a tab character as valid…</p></div><div class="flex items-center justify-between gap-2 border-t border-zinc-200/60 pt-2 font-mono text-xs md:flex-col md:items-end md:border-t-0 md:pt-0 dark:border-mono-border/40"><span class="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-emerald-600 dark:text-brand" title="Vendor fix documented in this entry"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Patched
-</span><span class="whitespace-nowrap text-[11px] text-zinc-400 dark:text-mono-muted">2026-07-05</span></div></div></li><li class="poc-row group relative rounded border border-zinc-200 bg-white p-3.5 transition hover:border-emerald-500/60 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand/60" data-category=web data-severity=High data-cvss=8.5 data-patched=true data-patch-status=patched data-date=2026-07-05 data-permalink=/pocs/web/2026-07-05_cve-2026-5615-vvvebjs-svg-stored-xss/ data-kev=false data-ransomware=false data-overdue=false data-epss=0.00773 data-priority=8 data-title="VvvebJs SVG Upload Stored Cross-Site Scripting — CVE-2026-5615" data-cve=CVE-2026-5615><div class="flex flex-col justify-between gap-4 md:flex-row md:items-center"><div class="min-w-0 flex-1 space-y-1"><div class="flex flex-wrap items-center gap-2 font-mono text-[11px]"><span class="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-[1px] font-bold text-emerald-600 dark:text-brand" title=CVE-2026-5615>CVE-2026-5615</span>
-<span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-[1px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">web</span>
-<span class="font-bold text-orange-600 dark:text-orange-400">HIGH 8.5
-</span><span class="poc-new-badge hidden rounded border border-emerald-400/50 bg-emerald-400/10 px-1 py-[1px] text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400">new</span></div><h2 class="text-sm font-bold text-zinc-900 transition group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand"><a href=/pocs/web/2026-07-05_cve-2026-5615-vvvebjs-svg-stored-xss/ class="after:absolute after:inset-0">VvvebJs SVG Upload Stored Cross-Site Scripting — CVE-2026-5615</a></h2><p class="line-clamp-1 font-mono text-xs text-zinc-500 dark:text-mono-muted">VvvebJs versions &lt;= 2.0.5 allow uploading SVG files without sanitizing their contents. Because SVG is XML that can embed &lt;script>-equivalent event handlers (e.g. onload), an attacker can upload an SVG containing JavaScript, which is stored server-side and…</p></div><div class="flex items-center justify-between gap-2 border-t border-zinc-200/60 pt-2 font-mono text-xs md:flex-col md:items-end md:border-t-0 md:pt-0 dark:border-mono-border/40"><span class="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: 8cac22cff99b8bc701c408aa8e887fa702755336"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Patched
-</span><span class="whitespace-nowrap text-[11px] text-zinc-400 dark:text-mono-muted">2026-07-05</span></div></div></li><li class="poc-row group relative rounded border border-zinc-200 bg-white p-3.5 transition hover:border-emerald-500/60 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand/60" data-category=web data-severity=Medium data-cvss=0 data-patched=true data-patch-status=patched data-date=2026-07-05 data-permalink=/pocs/web/2026-07-05_cve-2026-27621-typicms-svg-xss/ data-kev=false data-ransomware=false data-overdue=false data-epss=0.00188 data-priority=0 data-title="TypiCMS Core — Stored XSS via Unsanitized SVG File Upload (CVE-2026-27621)" data-cve="CVE-2026-27621 (GHSA-xfvg-8v67-j7wp)"><div class="flex flex-col justify-between gap-4 md:flex-row md:items-center"><div class="min-w-0 flex-1 space-y-1"><div class="flex flex-wrap items-center gap-2 font-mono text-[11px]"><span class="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-[1px] font-bold text-emerald-600 dark:text-brand" title="CVE-2026-27621 (GHSA-xfvg-8v67-j7wp)">CVE-2026-27621</span>
-<span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-[1px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">web</span>
-<span class="font-bold text-yellow-600 dark:text-yellow-500">MEDIUM
-</span><span class="poc-new-badge hidden rounded border border-emerald-400/50 bg-emerald-400/10 px-1 py-[1px] text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400">new</span></div><h2 class="text-sm font-bold text-zinc-900 transition group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand"><a href=/pocs/web/2026-07-05_cve-2026-27621-typicms-svg-xss/ class="after:absolute after:inset-0">TypiCMS Core — Stored XSS via Unsanitized SVG File Upload (CVE-2026-27621)</a></h2><p class="line-clamp-1 font-mono text-xs text-zinc-500 dark:text-mono-muted">TypiCMS Core allows users with file-upload permission to upload SVG files, validating only the MIME type without sanitizing the SVG's internal content. Because SVG is an XML-based format that can embed &lt;script> tags, an attacker can upload a malicious SVG…</p></div><div class="flex items-center justify-between gap-2 border-t border-zinc-200/60 pt-2 font-mono text-xs md:flex-col md:items-end md:border-t-0 md:pt-0 dark:border-mono-border/40"><span class="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: d480a0be1e8e7c0600bb9a325bb11920ee66497d"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Patched
-</span><span class="whitespace-nowrap text-[11px] text-zinc-400 dark:text-mono-muted">2026-07-05</span></div></div></li><li class="poc-row group relative rounded border border-zinc-200 bg-white p-3.5 transition hover:border-emerald-500/60 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand/60" data-category=web data-severity=High data-cvss=0 data-patched=true data-patch-status=patched data-date=2026-07-05 data-permalink=/pocs/web/2026-07-05_cve-2026-22804-termix-stored-xss/ data-kev=false data-ransomware=false data-overdue=false data-epss=0.00175 data-priority=0 data-title="Termix Stored XSS via Malicious SVG Upload -> LFI / Session Hijack (CVE-2026-22804 / GHSA-m3cv-5hgp-hv35)" data-cve="CVE-2026-22804 (GHSA-m3cv-5hgp-hv35)"><div class="flex flex-col justify-between gap-4 md:flex-row md:items-center"><div class="min-w-0 flex-1 space-y-1"><div class="flex flex-wrap items-center gap-2 font-mono text-[11px]"><span class="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-[1px] font-bold text-emerald-600 dark:text-brand" title="CVE-2026-22804 (GHSA-m3cv-5hgp-hv35)">CVE-2026-22804</span>
-<span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-[1px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">web</span>
-<span class="font-bold text-orange-600 dark:text-orange-400">HIGH
-</span><span class="poc-new-badge hidden rounded border border-emerald-400/50 bg-emerald-400/10 px-1 py-[1px] text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400">new</span></div><h2 class="text-sm font-bold text-zinc-900 transition group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand"><a href=/pocs/web/2026-07-05_cve-2026-22804-termix-stored-xss/ class="after:absolute after:inset-0">Termix Stored XSS via Malicious SVG Upload -> LFI / Session Hijack (CVE-2026-22804 / GHSA-m3cv-5hgp-hv35)</a></h2><p class="line-clamp-1 font-mono text-xs text-zinc-500 dark:text-mono-muted">Termix's built-in File Manager renders SVG files opened from a connected host using dangerouslySetInnerHTML, without stripping active content such as &lt;foreignObject>/&lt;img onerror=...>. An attacker who can place a crafted SVG on a filesystem reachable via…</p></div><div class="flex items-center justify-between gap-2 border-t border-zinc-200/60 pt-2 font-mono text-xs md:flex-col md:items-end md:border-t-0 md:pt-0 dark:border-mono-border/40"><span class="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: ad86c2040b70c1a8b2df3f83037c1b904a67bfe4"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Patched
-</span><span class="whitespace-nowrap text-[11px] text-zinc-400 dark:text-mono-muted">2026-07-05</span></div></div></li><li class="poc-row group relative rounded border border-zinc-200 bg-white p-3.5 transition hover:border-emerald-500/60 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand/60" data-category=web data-severity=High data-cvss=0 data-patched=true data-patch-status=patched data-date=2026-07-05 data-permalink=/pocs/web/2026-07-05_cve-2026-23499-saleor-file-upload-xss/ data-kev=false data-ransomware=false data-overdue=false data-epss=0.00232 data-priority=0 data-title="Saleor Stored XSS via Unrestricted File Upload (CVE-2026-23499)" data-cve=CVE-2026-23499><div class="flex flex-col justify-between gap-4 md:flex-row md:items-center"><div class="min-w-0 flex-1 space-y-1"><div class="flex flex-wrap items-center gap-2 font-mono text-[11px]"><span class="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-[1px] font-bold text-emerald-600 dark:text-brand" title=CVE-2026-23499>CVE-2026-23499</span>
-<span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-[1px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">web</span>
-<span class="font-bold text-orange-600 dark:text-orange-400">HIGH
-</span><span class="poc-new-badge hidden rounded border border-emerald-400/50 bg-emerald-400/10 px-1 py-[1px] text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400">new</span></div><h2 class="text-sm font-bold text-zinc-900 transition group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand"><a href=/pocs/web/2026-07-05_cve-2026-23499-saleor-file-upload-xss/ class="after:absolute after:inset-0">Saleor Stored XSS via Unrestricted File Upload (CVE-2026-23499)</a></h2><p class="line-clamp-1 font-mono text-xs text-zinc-500 dark:text-mono-muted">Saleor allowed authenticated staff users or Apps to upload arbitrary file types through its media-upload functionality, including HTML and SVG files containing embedded JavaScript. In deployments where uploaded media is served from the same origin as the…</p></div><div class="flex items-center justify-between gap-2 border-t border-zinc-200/60 pt-2 font-mono text-xs md:flex-col md:items-end md:border-t-0 md:pt-0 dark:border-mono-border/40"><span class="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: 0e590c8ef86a47443b9d264c8cc0c7b86677232e, 77f7927a0db9a216440df92c51012136f13e1d99"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Patched
-</span><span class="whitespace-nowrap text-[11px] text-zinc-400 dark:text-mono-muted">2026-07-05</span></div></div></li><li class="poc-row group relative rounded border border-zinc-200 bg-white p-3.5 transition hover:border-emerald-500/60 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand/60" data-category=web data-severity=High data-cvss=0 data-patched=true data-patch-status=patched data-date=2026-07-05 data-permalink=/pocs/web/2026-07-05_cve-2026-22849-saleor-richtext-stored-xss/ data-kev=false data-ransomware=false data-overdue=false data-epss=0.00209 data-priority=0 data-title="Saleor Rich Text (EditorJS) Field Stored XSS (CVE-2026-22849)" data-cve="CVE-2026-22849 (GHSA-8jcj-r5g2-qrpv)"><div class="flex flex-col justify-between gap-4 md:flex-row md:items-center"><div class="min-w-0 flex-1 space-y-1"><div class="flex flex-wrap items-center gap-2 font-mono text-[11px]"><span class="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-[1px] font-bold text-emerald-600 dark:text-brand" title="CVE-2026-22849 (GHSA-8jcj-r5g2-qrpv)">CVE-2026-22849</span>
-<span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-[1px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">web</span>
-<span class="font-bold text-orange-600 dark:text-orange-400">HIGH
-</span><span class="poc-new-badge hidden rounded border border-emerald-400/50 bg-emerald-400/10 px-1 py-[1px] text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400">new</span></div><h2 class="text-sm font-bold text-zinc-900 transition group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand"><a href=/pocs/web/2026-07-05_cve-2026-22849-saleor-richtext-stored-xss/ class="after:absolute after:inset-0">Saleor Rich Text (EditorJS) Field Stored XSS (CVE-2026-22849)</a></h2><p class="line-clamp-1 font-mono text-xs text-zinc-500 dark:text-mono-muted">Saleor stores rich text content (page bodies, product descriptions, etc.) as EditorJS block JSON, and is supposed to run this content through a server-side HTML cleaner before persisting and rendering it. In the affected versions that cleaning step was not…</p></div><div class="flex items-center justify-between gap-2 border-t border-zinc-200/60 pt-2 font-mono text-xs md:flex-col md:items-end md:border-t-0 md:pt-0 dark:border-mono-border/40"><span class="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: 0e590c8ef86a47443b9d264c8cc0c7b86677232e, 1085c7813224a0a65f1dac7275cbc3244e23c386"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Patched
-</span><span class="whitespace-nowrap text-[11px] text-zinc-400 dark:text-mono-muted">2026-07-05</span></div></div></li><li class="poc-row group relative rounded border border-zinc-200 bg-white p-3.5 transition hover:border-emerald-500/60 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand/60" data-category=web data-severity=High data-cvss=8.9 data-patched=true data-patch-status=patched data-date=2026-07-05 data-permalink=/pocs/web/2026-07-05_cve-2026-40487-postiz-svg-upload-xss/ data-kev=false data-ransomware=false data-overdue=false data-epss=0.00224 data-priority=8 data-title="Postiz Arbitrary File Upload to Stored XSS / Account Takeover (CVE-2026-40487)" data-cve="CVE-2026-40487 / GHSA-44wg-r34q-hvfx"><div class="flex flex-col justify-between gap-4 md:flex-row md:items-center"><div class="min-w-0 flex-1 space-y-1"><div class="flex flex-wrap items-center gap-2 font-mono text-[11px]"><span class="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-[1px] font-bold text-emerald-600 dark:text-brand" title="CVE-2026-40487 / GHSA-44wg-r34q-hvfx">CVE-2026-40487 / GHSA-44wg-r34q-hvfx</span>
-<span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-[1px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">web</span>
-<span class="font-bold text-orange-600 dark:text-orange-400">HIGH 8.9
-</span><span class="poc-new-badge hidden rounded border border-emerald-400/50 bg-emerald-400/10 px-1 py-[1px] text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400">new</span></div><h2 class="text-sm font-bold text-zinc-900 transition group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand"><a href=/pocs/web/2026-07-05_cve-2026-40487-postiz-svg-upload-xss/ class="after:absolute after:inset-0">Postiz Arbitrary File Upload to Stored XSS / Account Takeover (CVE-2026-40487)</a></h2><p class="line-clamp-1 font-mono text-xs text-zinc-500 dark:text-mono-muted">Postiz accepts file uploads for post media and validates the file type solely from the client-supplied Content-Type header, with no inspection of the actual file bytes. An attacker can upload an SVG (or HTML) file containing embedded JavaScript while…</p></div><div class="flex items-center justify-between gap-2 border-t border-zinc-200/60 pt-2 font-mono text-xs md:flex-col md:items-end md:border-t-0 md:pt-0 dark:border-mono-border/40"><span class="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: 3ea302202dc0daa3db577eb7c68374cdc1ddbc3c"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Patched
-</span><span class="whitespace-nowrap text-[11px] text-zinc-400 dark:text-mono-muted">2026-07-05</span></div></div></li><li class="poc-row group relative rounded border border-zinc-200 bg-white p-3.5 transition hover:border-emerald-500/60 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand/60" data-category=web data-severity=High data-cvss=0 data-patched=true data-patch-status=patched data-date=2026-07-05 data-permalink=/pocs/web/2026-07-05_cve-2026-33331-orpc-openapi-stored-xss/ data-kev=false data-ransomware=false data-overdue=false data-epss=0.00288 data-priority=0 data-title="oRPC OpenAPI Reference Plugin Stored XSS via Unescaped Spec Embedding (CVE-2026-33331)" data-cve="CVE-2026-33331 (GHSA-7f6v-3gx7-27q8)"><div class="flex flex-col justify-between gap-4 md:flex-row md:items-center"><div class="min-w-0 flex-1 space-y-1"><div class="flex flex-wrap items-center gap-2 font-mono text-[11px]"><span class="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-[1px] font-bold text-emerald-600 dark:text-brand" title="CVE-2026-33331 (GHSA-7f6v-3gx7-27q8)">CVE-2026-33331</span>
-<span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-[1px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">web</span>
-<span class="font-bold text-orange-600 dark:text-orange-400">HIGH
-</span><span class="poc-new-badge hidden rounded border border-emerald-400/50 bg-emerald-400/10 px-1 py-[1px] text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400">new</span></div><h2 class="text-sm font-bold text-zinc-900 transition group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand"><a href=/pocs/web/2026-07-05_cve-2026-33331-orpc-openapi-stored-xss/ class="after:absolute after:inset-0">oRPC OpenAPI Reference Plugin Stored XSS via Unescaped Spec Embedding (CVE-2026-33331)</a></h2><p class="line-clamp-1 font-mono text-xs text-zinc-500 dark:text-mono-muted">oRPC's OpenAPI reference plugin renders the generated API docs page by embedding the OpenAPI spec directly into an inline &lt;script id="spec" type="application/json"> block using JSON.stringify(spec), with no HTML-context encoding. Because JSON.stringify() does…</p></div><div class="flex items-center justify-between gap-2 border-t border-zinc-200/60 pt-2 font-mono text-xs md:flex-col md:items-end md:border-t-0 md:pt-0 dark:border-mono-border/40"><span class="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: 267a406c43bad6bfe0ee3b03d6d6bfbd56b6539a, 4f0efa8a1d3fa8e8317a4b03cc3945a5dfd68add"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Patched
-</span><span class="whitespace-nowrap text-[11px] text-zinc-400 dark:text-mono-muted">2026-07-05</span></div></div></li><li class="poc-row group relative rounded border border-zinc-200 bg-white p-3.5 transition hover:border-emerald-500/60 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand/60" data-category=web data-severity=Medium data-cvss=6.4 data-patched=false data-patch-status=unknown data-date=2026-07-05 data-permalink=/pocs/web/2026-07-05_cve-2026-3228-nextscripts-wp-stored-xss/ data-kev=false data-ransomware=false data-overdue=false data-epss=0.0366 data-priority=14 data-title="NextScripts Social Networks Auto-Poster — WordPress Stored XSS (CVE-2026-3228)" data-cve=CVE-2026-3228><div class="flex flex-col justify-between gap-4 md:flex-row md:items-center"><div class="min-w-0 flex-1 space-y-1"><div class="flex flex-wrap items-center gap-2 font-mono text-[11px]"><span class="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-[1px] font-bold text-emerald-600 dark:text-brand" title=CVE-2026-3228>CVE-2026-3228</span>
-<span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-[1px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">web</span>
-<span class="font-bold text-yellow-600 dark:text-yellow-500">MEDIUM 6.4
-</span><span class="poc-new-badge hidden rounded border border-emerald-400/50 bg-emerald-400/10 px-1 py-[1px] text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400">new</span></div><h2 class="text-sm font-bold text-zinc-900 transition group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand"><a href=/pocs/web/2026-07-05_cve-2026-3228-nextscripts-wp-stored-xss/ class="after:absolute after:inset-0">NextScripts Social Networks Auto-Poster — WordPress Stored XSS (CVE-2026-3228)</a></h2><p class="line-clamp-1 font-mono text-xs text-zinc-500 dark:text-mono-muted">The NextScripts Social Networks Auto-Poster plugin for WordPress fails to sanitize or escape the snapFB post-meta value that backs its [nxsfbembed] shortcode. A user with Contributor-level access (or higher) can store arbitrary JavaScript in this field when…</p></div><div class="flex items-center justify-between gap-2 border-t border-zinc-200/60 pt-2 font-mono text-xs md:flex-col md:items-end md:border-t-0 md:pt-0 dark:border-mono-border/40"><span class="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-zinc-500 dark:text-mono-muted" title="No authoritative fix record found; status not confirmed either way"><span class="h-2 w-2 rounded-full bg-zinc-400"></span>Unverified
-</span><span class="whitespace-nowrap text-[11px] text-zinc-400 dark:text-mono-muted">2026-07-05</span></div></div></li><li class="poc-row group relative rounded border border-zinc-200 bg-white p-3.5 transition hover:border-emerald-500/60 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand/60" data-category=web data-severity=High data-cvss=0 data-patched=true data-patch-status=patched data-date=2026-07-05 data-permalink=/pocs/web/2026-07-05_cve-2026-35455-immich-exfiltration/ data-kev=false data-ransomware=false data-overdue=false data-epss=0.00225 data-priority=0 data-title="Immich Stored XSS to API Key Exfiltration and Account Hijacking (CVE-2026-35455)" data-cve=CVE-2026-35455><div class="flex flex-col justify-between gap-4 md:flex-row md:items-center"><div class="min-w-0 flex-1 space-y-1"><div class="flex flex-wrap items-center gap-2 font-mono text-[11px]"><span class="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-[1px] font-bold text-emerald-600 dark:text-brand" title=CVE-2026-35455>CVE-2026-35455</span>
-<span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-[1px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">web</span>
-<span class="font-bold text-orange-600 dark:text-orange-400">HIGH
-</span><span class="poc-new-badge hidden rounded border border-emerald-400/50 bg-emerald-400/10 px-1 py-[1px] text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400">new</span></div><h2 class="text-sm font-bold text-zinc-900 transition group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand"><a href=/pocs/web/2026-07-05_cve-2026-35455-immich-exfiltration/ class="after:absolute after:inset-0">Immich Stored XSS to API Key Exfiltration and Account Hijacking (CVE-2026-35455)</a></h2><p class="line-clamp-1 font-mono text-xs text-zinc-500 dark:text-mono-muted">A stored XSS vulnerability in Immich allows an attacker to inject a malicious script (via a photo/asset field) that executes in a victim's authenticated session. The included demo automates generation of a new API key from within the hijacked session and…</p></div><div class="flex items-center justify-between gap-2 border-t border-zinc-200/60 pt-2 font-mono text-xs md:flex-col md:items-end md:border-t-0 md:pt-0 dark:border-mono-border/40"><span class="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: afec61addcbb14b54cb5dcc9dd7c8a101a6b72f3"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Patched
-</span><span class="whitespace-nowrap text-[11px] text-zinc-400 dark:text-mono-muted">2026-07-05</span></div></div></li><li class="poc-row group relative rounded border border-zinc-200 bg-white p-3.5 transition hover:border-emerald-500/60 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand/60" data-category=web data-severity=Medium data-cvss=0 data-patched=true data-patch-status=patched data-date=2026-07-05 data-permalink=/pocs/web/2026-07-05_cve-2026-33657-espocrm-stored-html-injection/ data-kev=false data-ransomware=false data-overdue=false data-epss=0.00176 data-priority=0 data-title="EspoCRM 9.3.3 Stored HTML Injection in Email Notifications — CVE-2026-33657" data-cve=CVE-2026-33657><div class="flex flex-col justify-between gap-4 md:flex-row md:items-center"><div class="min-w-0 flex-1 space-y-1"><div class="flex flex-wrap items-center gap-2 font-mono text-[11px]"><span class="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-[1px] font-bold text-emerald-600 dark:text-brand" title=CVE-2026-33657>CVE-2026-33657</span>
-<span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-[1px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">web</span>
-<span class="font-bold text-yellow-600 dark:text-yellow-500">MEDIUM
-</span><span class="poc-new-badge hidden rounded border border-emerald-400/50 bg-emerald-400/10 px-1 py-[1px] text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400">new</span></div><h2 class="text-sm font-bold text-zinc-900 transition group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand"><a href=/pocs/web/2026-07-05_cve-2026-33657-espocrm-stored-html-injection/ class="after:absolute after:inset-0">EspoCRM 9.3.3 Stored HTML Injection in Email Notifications — CVE-2026-33657</a></h2><p class="line-clamp-1 font-mono text-xs text-zinc-500 dark:text-mono-muted">EspoCRM 9.3.3 renders stream-post notification emails by converting a Note's Markdown body to HTML and inserting the result into the email template using an unescaped triple-brace placeholder ({{{post}}}), which skips HTML entity escaping normally applied by…</p></div><div class="flex items-center justify-between gap-2 border-t border-zinc-200/60 pt-2 font-mono text-xs md:flex-col md:items-end md:border-t-0 md:pt-0 dark:border-mono-border/40"><span class="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: f1763e732f34fbebf7f70f176eec1ccd8a272679"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Patched
-</span><span class="whitespace-nowrap text-[11px] text-zinc-400 dark:text-mono-muted">2026-07-05</span></div></div></li><li class="poc-row group relative rounded border border-zinc-200 bg-white p-3.5 transition hover:border-emerald-500/60 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand/60" data-category=web data-severity=Medium data-cvss=6.4 data-patched=true data-patch-status=patched data-date=2026-07-05 data-permalink=/pocs/web/2026-07-05_cve-2026-2600-elementskit-stored-xss/ data-kev=false data-ransomware=false data-overdue=false data-epss=0.00293 data-priority=0 data-title="ElementsKit Elementor Addons Authenticated Stored XSS via REST API (CVE-2026-2600)" data-cve=CVE-2026-2600><div class="flex flex-col justify-between gap-4 md:flex-row md:items-center"><div class="min-w-0 flex-1 space-y-1"><div class="flex flex-wrap items-center gap-2 font-mono text-[11px]"><span class="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-[1px] font-bold text-emerald-600 dark:text-brand" title=CVE-2026-2600>CVE-2026-2600</span>
-<span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-[1px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">web</span>
-<span class="font-bold text-yellow-600 dark:text-yellow-500">MEDIUM 6.4
-</span><span class="poc-new-badge hidden rounded border border-emerald-400/50 bg-emerald-400/10 px-1 py-[1px] text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400">new</span></div><h2 class="text-sm font-bold text-zinc-900 transition group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand"><a href=/pocs/web/2026-07-05_cve-2026-2600-elementskit-stored-xss/ class="after:absolute after:inset-0">ElementsKit Elementor Addons Authenticated Stored XSS via REST API (CVE-2026-2600)</a></h2><p class="line-clamp-1 font-mono text-xs text-zinc-500 dark:text-mono-muted">CVE-2026-2600 is a stored cross-site scripting vulnerability in the ElementsKit Elementor Addons plugin's Simple Tab widget. The widget renders tab titles (ekittabtitle) with echo and no output escaping in widgets/tab/tab.php. While Elementor's page-builder…</p></div><div class="flex items-center justify-between gap-2 border-t border-zinc-200/60 pt-2 font-mono text-xs md:flex-col md:items-end md:border-t-0 md:pt-0 dark:border-mono-border/40"><span class="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-emerald-600 dark:text-brand" title="Vendor fix documented in this entry"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Patched
-</span><span class="whitespace-nowrap text-[11px] text-zinc-400 dark:text-mono-muted">2026-07-05</span></div></div></li><li class="poc-row group relative rounded border border-zinc-200 bg-white p-3.5 transition hover:border-emerald-500/60 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand/60" data-category=web data-severity=High data-cvss=7.2 data-patched=true data-patch-status=patched data-date=2026-07-05 data-permalink=/pocs/web/2026-07-05_cve-2026-5513-bookly-cookie-stored-xss/ data-kev=false data-ransomware=false data-overdue=false data-epss=0.00437 data-priority=8 data-title="Bookly Booking Form Cookie-Based Stored XSS — CVE-2026-5513" data-cve=CVE-2026-5513><div class="flex flex-col justify-between gap-4 md:flex-row md:items-center"><div class="min-w-0 flex-1 space-y-1"><div class="flex flex-wrap items-center gap-2 font-mono text-[11px]"><span class="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-[1px] font-bold text-emerald-600 dark:text-brand" title=CVE-2026-5513>CVE-2026-5513</span>
-<span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-[1px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">web</span>
-<span class="font-bold text-orange-600 dark:text-orange-400">HIGH 7.2
-</span><span class="poc-new-badge hidden rounded border border-emerald-400/50 bg-emerald-400/10 px-1 py-[1px] text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400">new</span></div><h2 class="text-sm font-bold text-zinc-900 transition group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand"><a href=/pocs/web/2026-07-05_cve-2026-5513-bookly-cookie-stored-xss/ class="after:absolute after:inset-0">Bookly Booking Form Cookie-Based Stored XSS — CVE-2026-5513</a></h2><p class="line-clamp-1 font-mono text-xs text-zinc-500 dark:text-mono-muted">Bookly reads the bookly-customer-full-name cookie value and renders it directly into the booking form's HTML value attribute without sanitizing or escaping it, when the plugin's "Remember personal information in cookies" option is enabled. An unauthenticated…</p></div><div class="flex items-center justify-between gap-2 border-t border-zinc-200/60 pt-2 font-mono text-xs md:flex-col md:items-end md:border-t-0 md:pt-0 dark:border-mono-border/40"><span class="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-emerald-600 dark:text-brand" title="Vendor fix documented in this entry"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Patched
-</span><span class="whitespace-nowrap text-[11px] text-zinc-400 dark:text-mono-muted">2026-07-05</span></div></div></li><li class="poc-row group relative rounded border border-zinc-200 bg-white p-3.5 transition hover:border-emerald-500/60 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand/60" data-category=web data-severity=Critical data-cvss=0 data-patched=true data-patch-status=patched data-date=2026-07-05 data-permalink=/pocs/web/2026-07-05_cve-2026-41653-bentopdf-stored-xss-exfil/ data-kev=false data-ransomware=false data-overdue=false data-epss=0.00356 data-priority=0 data-title="BentoPDF Stored XSS to File Exfiltration (CVE-2026-41653)" data-cve=CVE-2026-41653><div class="flex flex-col justify-between gap-4 md:flex-row md:items-center"><div class="min-w-0 flex-1 space-y-1"><div class="flex flex-wrap items-center gap-2 font-mono text-[11px]"><span class="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-[1px] font-bold text-emerald-600 dark:text-brand" title=CVE-2026-41653>CVE-2026-41653</span>
-<span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-[1px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">web</span>
-<span class="font-bold text-red-600 dark:text-red-400">CRITICAL
-</span><span class="poc-new-badge hidden rounded border border-emerald-400/50 bg-emerald-400/10 px-1 py-[1px] text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400">new</span></div><h2 class="text-sm font-bold text-zinc-900 transition group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand"><a href=/pocs/web/2026-07-05_cve-2026-41653-bentopdf-stored-xss-exfil/ class="after:absolute after:inset-0">BentoPDF Stored XSS to File Exfiltration (CVE-2026-41653)</a></h2><p class="line-clamp-1 font-mono text-xs text-zinc-500 dark:text-mono-muted">BentoPDF's Markdown-to-PDF tool renders user-supplied Markdown through markdown-it with html: true enabled and injects the resulting HTML directly into the DOM via innerHTML, with no sanitizer (e.g. DOMPurify) in between. A crafted .md file containing an &lt;img…</p></div><div class="flex items-center justify-between gap-2 border-t border-zinc-200/60 pt-2 font-mono text-xs md:flex-col md:items-end md:border-t-0 md:pt-0 dark:border-mono-border/40"><span class="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: 28b4f3ebc4588836662f1fc0dd316ebe06ebe417"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Patched
-</span><span class="whitespace-nowrap text-[11px] text-zinc-400 dark:text-mono-muted">2026-07-05</span></div></div></li><li class="poc-row group relative rounded border border-zinc-200 bg-white p-3.5 transition hover:border-emerald-500/60 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand/60" data-category=web data-severity=Critical data-cvss=9.1 data-patched=true data-patch-status=patched data-date=2026-07-05 data-permalink=/pocs/web/2026-07-05_cve-2026-30862-appsmith-stored-xss-privesc/ data-kev=false data-ransomware=false data-overdue=false data-epss=0.00308 data-priority=15 data-title="Appsmith Table Widget Stored XSS to Admin Account Takeover — CVE-2026-30862" data-cve="CVE-2026-30862 (GHSA-5hw4-whxv-6794)"><div class="flex flex-col justify-between gap-4 md:flex-row md:items-center"><div class="min-w-0 flex-1 space-y-1"><div class="flex flex-wrap items-center gap-2 font-mono text-[11px]"><span class="rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-[1px] font-bold text-emerald-600 dark:text-brand" title="CVE-2026-30862 (GHSA-5hw4-whxv-6794)">CVE-2026-30862</span>
-<span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-[1px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">web</span>
-<span class="font-bold text-red-600 dark:text-red-400">CRITICAL 9.1
-</span><span class="poc-new-badge hidden rounded border border-emerald-400/50 bg-emerald-400/10 px-1 py-[1px] text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400">new</span></div><h2 class="text-sm font-bold text-zinc-900 transition group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand"><a href=/pocs/web/2026-07-05_cve-2026-30862-appsmith-stored-xss-privesc/ class="after:absolute after:inset-0">Appsmith Table Widget Stored XSS to Admin Account Takeover — CVE-2026-30862</a></h2><p class="line-clamp-1 font-mono text-xs text-zinc-500 dark:text-mono-muted">Appsmith's TableWidgetV2 component (BasicCell.tsx) fails to sanitize user-supplied cell values when the column type is URL or Plain Text, rendering raw HTML/attributes directly as React children and allowing stored XSS. Because Appsmith's XSRF-TOKEN cookie is…</p></div><div class="flex items-center justify-between gap-2 border-t border-zinc-200/60 pt-2 font-mono text-xs md:flex-col md:items-end md:border-t-0 md:pt-0 dark:border-mono-border/40"><span class="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: b207dbb84d4b985dd60ef5411c47d9bd8721fde9"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Patched
-</span><span class="whitespace-nowrap text-[11px] text-zinc-400 dark:text-mono-muted">2026-07-05</span></div></div></li></div></main><footer class="mt-16 border-t border-zinc-200 dark:border-mono-border"><div class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-8 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8 dark:text-zinc-500"><p class=font-mono>PoC Archive — research artifacts for defensive and educational use only.</p><p class=font-mono>built with <a href=https://gohugo.io class="text-emerald-600 hover:underline dark:text-emerald-400">hugo</a> · deployed on github pages</p></div></footer></body></html>
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Stored-Xss · PoC Archive</title><meta name="description" content="A curated archive of security research proof-of-concept exploits. Reproducible writeups across web, network, binary, crypto, cloud, hardware, and social-engineering categories." />
+<meta name="author" content="intelseclab" />
+<meta name="theme-color" content="#09090b" /><link rel="canonical" href="https://poc.intelseclab.com/tags/stored-xss/" /><meta property="og:title"       content="Stored-Xss · PoC Archive" />
+<meta property="og:description" content="A curated archive of security research proof-of-concept exploits. Reproducible writeups across web, network, binary, crypto, cloud, hardware, and social-engineering categories." />
+<meta property="og:type"        content="article" />
+<meta property="og:url"         content="https://poc.intelseclab.com/tags/stored-xss/" />
+<meta property="og:site_name"   content="PoC Archive" />
+<meta property="og:locale"      content="en_US" />
+<meta property="og:image"       content="https://poc.intelseclab.com/og-image.png" />
+<meta property="og:image:width"  content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:image"      content="https://poc.intelseclab.com/og-image.png" />
+<meta name="twitter:card"       content="summary_large_image" />
+<meta name="twitter:title"       content="Stored-Xss · PoC Archive" />
+<meta name="twitter:description" content="A curated archive of security research proof-of-concept exploits. Reproducible writeups across web, network, binary, crypto, cloud, hardware, and social-engineering categories." />
+<meta name="twitter:site"        content="@intelseclab" /><meta name="geo.region"    content="US" />
+<meta name="geo.placename" content="United States" />
+<meta name="language"      content="en" />
+<meta name="revisit-after" content="3 days" />
+<meta name="robots"        content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('theme');
+      if (t === 'light') { document.documentElement.classList.remove('dark'); }
+      else { document.documentElement.classList.add('dark'); }
+    } catch (e) {}
+  })();
+</script>
+
+
+<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        },
+        colors: {
+          
+          mono: {
+            bg:     '#0b0f12',
+            card:   '#12181d',
+            border: '#1e262c',
+            hover:  '#182129',
+            muted:  '#64748b',
+          },
+          brand: {
+            DEFAULT: '#10b981',
+            dim:     '#064e3b',
+            light:   '#a7f3d0',
+          },
+        },
+      },
+    },
+  };
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+  rel="stylesheet"
+/>
+
+<link rel="stylesheet" href="/css/syntax.css" />
+
+<style>
+  html.dark body { background-color: #0b0f12; }
+   
+  body, body * { transition: background-color .15s ease, border-color .15s ease, color .15s ease; }
+
+   
+  html, body { overflow-x: hidden; max-width: 100%; }
+  .prose :where(p, li, blockquote, td, th) {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+  .prose :where(code):not(pre code) {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+   
+  .prose table th:first-child,
+  .prose table td:first-child {
+    width: 1%;
+    white-space: nowrap;
+  }
+
+   
+  .poc-code-body pre {
+    margin: 0 !important;
+    padding: 0.55rem 0.85rem !important;
+    background: transparent !important;
+  }
+  .poc-code-body .chroma { background: transparent !important; }
+   
+  .poc-code-body table { margin: 0 !important; width: 100%; border: 0; }
+  .poc-code-body td { padding: 0 !important; border: 0 !important; }
+  .poc-code-body td:first-child { width: 1%; white-space: nowrap; }
+
+   
+  .toc #TableOfContents ul,
+  .toc > nav ul { list-style: none; padding-left: 0; margin: 0; }
+  .toc #TableOfContents li,
+  .toc > nav li { margin-top: 0.25rem; }
+  .toc #TableOfContents li li,
+  .toc > nav li li { padding-left: 0.75rem; }
+  .toc #TableOfContents a,
+  .toc > nav a {
+    color: #71717a;
+    text-decoration: none;
+    font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
+    font-size: 0.75rem;
+    transition: color 0.15s;
+  }
+  .toc #TableOfContents a:hover,
+  .toc > nav a:hover { color: #059669; }
+  .dark .toc #TableOfContents a,
+  .dark .toc > nav a { color: #a1a1aa; }
+  .dark .toc #TableOfContents a:hover,
+  .dark .toc > nav a:hover { color: #34d399; }
+</style>
+
+
+<link rel="alternate" type="application/rss+xml" href="https://poc.intelseclab.com/index.xml" title="PoC Archive — all new PoCs" />
+
+<link rel="alternate" type="application/rss+xml" href="https://poc.intelseclab.com/tags/stored-xss/index.xml" title="Stored-Xss · PoC Archive — RSS feed" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+</head>
+<body class="min-h-screen bg-white text-zinc-900 font-sans antialiased selection:bg-emerald-400/20 selection:text-emerald-900 dark:bg-mono-bg dark:text-zinc-100 dark:selection:text-emerald-200">
+  <header class="sticky top-0 z-40 border-b border-zinc-200/80 bg-white/80 backdrop-blur dark:border-mono-border dark:bg-mono-bg/80">
+  <div class="mx-auto flex w-full max-w-6xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
+    <a href="/" class="flex items-center gap-2 font-mono text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+      <img src="/favicon.svg" width="36" height="36" alt="PoC Archive" />
+      <span>PoC Archive</span>
+    </a>
+
+    <nav class="ml-2 hidden items-center gap-1 text-sm sm:flex">
+      
+      <a href="/" class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-mono-hover dark:hover:text-zinc-100">home</a>
+      <a href="/pocs/" class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-mono-hover dark:hover:text-zinc-100">pocs</a>
+      <a href="/watchlist/" class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-mono-hover dark:hover:text-zinc-100">watchlist</a>
+    </nav>
+    <div class="ml-auto hidden items-center gap-3 font-mono text-xs sm:flex">
+      <span class="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400">
+        <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"></span>
+        <strong class="font-semibold text-zinc-800 dark:text-zinc-100">772</strong> PoCs
+      </span>
+      <span class="text-zinc-300 dark:text-zinc-700">|</span>
+      <a href="/pocs/?signal=kev" class="font-semibold text-red-600 transition hover:underline dark:text-red-400">116 CISA KEV</a>
+    </div>
+
+    <div class="ml-auto flex items-center gap-2 sm:ml-3">
+      
+      <a href="https://poc.intelseclab.com/index.xml" target="_blank" rel="noopener noreferrer" title="RSS feed of new PoCs" aria-label="RSS feed" class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 dark:border-mono-border dark:text-zinc-300 dark:hover:bg-mono-hover">
+        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
+      </a>
+      
+      <a href="https://github.com/intelseclab/poc-archive" target="_blank" rel="noopener noreferrer" class="hidden rounded-md border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 sm:inline-flex dark:border-mono-border dark:text-zinc-300 dark:hover:bg-mono-hover">
+        GitHub
+      </a>
+      <button
+        type="button"
+        id="theme-toggle"
+        aria-label="Toggle color theme"
+        class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 dark:border-mono-border dark:text-zinc-300 dark:hover:bg-mono-hover"
+      >
+        <svg class="hidden h-4 w-4 dark:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="block h-4 w-4 dark:hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  
+  <nav class="flex items-center gap-1 border-t border-zinc-200 px-4 py-2 text-sm sm:hidden dark:border-mono-border">
+    <a href="/" class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">home</a>
+    <a href="/pocs/" class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">pocs</a>
+    <a href="/watchlist/" class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">watchlist</a>
+  </nav>
+
+  <script>
+    (function () {
+      var btn = document.getElementById('theme-toggle');
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        var root = document.documentElement;
+        var isDark = root.classList.toggle('dark');
+        try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (e) {}
+      });
+    })();
+  </script>
+</header>
+
+  <main class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    
+<header class="border-b border-zinc-200 pb-6 dark:border-mono-border">
+  <p class="font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+    tag
+  </p>
+  <h1 class="mt-1 font-mono text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">Stored-Xss</h1>
+  
+</header>
+
+
+  <div class="mt-6 overflow-hidden rounded-lg border border-zinc-200 dark:border-mono-border">
+    
+      <tr
+  class="poc-row group hover:bg-zinc-50 dark:hover:bg-mono-hover"
+  data-category="web"
+  data-severity="High"
+  data-cvss="7.2"
+  data-patched="true"
+  data-patch-status="patched"
+  data-date="2026-07-05"
+  data-permalink="/pocs/web/2026-07-05_cve-2026-40791-wp-time-slots-booking-xss/"
+  data-kev="false"
+  data-ransomware="false"
+  data-overdue="false"
+  data-epss="0.0021"
+  data-priority="17"
+  data-title="WP Time Slots Booking Form Unauthenticated Stored XSS (CVE-2026-40791)"
+  data-cve="CVE-2026-40791"
+>
+  <td class="max-w-0 px-3 py-2.5">
+    <a href="/pocs/web/2026-07-05_cve-2026-40791-wp-time-slots-booking-xss/" class="flex flex-wrap items-center gap-1.5">
+      <span class="line-clamp-1 min-w-0 font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand">WP Time Slots Booking Form Unauthenticated Stored XSS (CVE-2026-40791)</span>
+      <span class="poc-new-badge hidden shrink-0 border border-emerald-300 bg-emerald-50 px-1 py-[1px] text-[9px] uppercase text-emerald-600 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">new</span>
+    </a>
+    <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-zinc-500 sm:hidden dark:text-mono-muted">
+      <span class="text-emerald-600 dark:text-brand">CVE-2026-40791</span>
+      <span>web</span>
+      <span><span class="text-emerald-600 dark:text-brand" title="Vendor fix documented in this entry">Patched</span></span>
+    </div>
+  </td>
+  <td class="hidden truncate whitespace-nowrap px-3 py-2.5 font-bold text-emerald-600 sm:table-cell dark:text-brand" title="CVE-2026-40791">CVE-2026-40791</td>
+  <td class="hidden px-3 py-2.5 text-zinc-500 lg:table-cell dark:text-mono-muted">web</td>
+  <td class="whitespace-nowrap px-3 py-2.5 font-bold text-orange-600 dark:text-orange-400">
+    HIGH <span class="font-normal">7.2</span>
+  </td>
+  <td class="hidden px-3 py-2.5 md:table-cell">
+    <span class="text-emerald-600 dark:text-brand" title="Vendor fix documented in this entry">Patched</span>
+  </td>
+  <td class="hidden whitespace-nowrap px-3 py-2.5 text-[11px] text-zinc-400 lg:table-cell dark:text-mono-muted">2026-07-05</td>
+</tr>
+
+    
+      <tr
+  class="poc-row group hover:bg-zinc-50 dark:hover:bg-mono-hover"
+  data-category="web"
+  data-severity="High"
+  data-cvss="8.5"
+  data-patched="true"
+  data-patch-status="patched"
+  data-date="2026-07-05"
+  data-permalink="/pocs/web/2026-07-05_cve-2026-5615-vvvebjs-svg-stored-xss/"
+  data-kev="false"
+  data-ransomware="false"
+  data-overdue="false"
+  data-epss="0.00773"
+  data-priority="17"
+  data-title="VvvebJs SVG Upload Stored Cross-Site Scripting — CVE-2026-5615"
+  data-cve="CVE-2026-5615"
+>
+  <td class="max-w-0 px-3 py-2.5">
+    <a href="/pocs/web/2026-07-05_cve-2026-5615-vvvebjs-svg-stored-xss/" class="flex flex-wrap items-center gap-1.5">
+      <span class="line-clamp-1 min-w-0 font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand">VvvebJs SVG Upload Stored Cross-Site Scripting — CVE-2026-5615</span>
+      <span class="poc-new-badge hidden shrink-0 border border-emerald-300 bg-emerald-50 px-1 py-[1px] text-[9px] uppercase text-emerald-600 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">new</span>
+    </a>
+    <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-zinc-500 sm:hidden dark:text-mono-muted">
+      <span class="text-emerald-600 dark:text-brand">CVE-2026-5615</span>
+      <span>web</span>
+      <span><span class="text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: 8cac22cff99b8bc701c408aa8e887fa702755336">Patched</span></span>
+    </div>
+  </td>
+  <td class="hidden truncate whitespace-nowrap px-3 py-2.5 font-bold text-emerald-600 sm:table-cell dark:text-brand" title="CVE-2026-5615">CVE-2026-5615</td>
+  <td class="hidden px-3 py-2.5 text-zinc-500 lg:table-cell dark:text-mono-muted">web</td>
+  <td class="whitespace-nowrap px-3 py-2.5 font-bold text-orange-600 dark:text-orange-400">
+    HIGH <span class="font-normal">8.5</span>
+  </td>
+  <td class="hidden px-3 py-2.5 md:table-cell">
+    <span class="text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: 8cac22cff99b8bc701c408aa8e887fa702755336">Patched</span>
+  </td>
+  <td class="hidden whitespace-nowrap px-3 py-2.5 text-[11px] text-zinc-400 lg:table-cell dark:text-mono-muted">2026-07-05</td>
+</tr>
+
+    
+      <tr
+  class="poc-row group hover:bg-zinc-50 dark:hover:bg-mono-hover"
+  data-category="web"
+  data-severity="Medium"
+  data-cvss="0"
+  data-patched="true"
+  data-patch-status="patched"
+  data-date="2026-07-05"
+  data-permalink="/pocs/web/2026-07-05_cve-2026-27621-typicms-svg-xss/"
+  data-kev="false"
+  data-ransomware="false"
+  data-overdue="false"
+  data-epss="0.00188"
+  data-priority="9"
+  data-title="TypiCMS Core — Stored XSS via Unsanitized SVG File Upload (CVE-2026-27621)"
+  data-cve="CVE-2026-27621 (GHSA-xfvg-8v67-j7wp)"
+>
+  <td class="max-w-0 px-3 py-2.5">
+    <a href="/pocs/web/2026-07-05_cve-2026-27621-typicms-svg-xss/" class="flex flex-wrap items-center gap-1.5">
+      <span class="line-clamp-1 min-w-0 font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand">TypiCMS Core — Stored XSS via Unsanitized SVG File Upload (CVE-2026-27621)</span>
+      <span class="poc-new-badge hidden shrink-0 border border-emerald-300 bg-emerald-50 px-1 py-[1px] text-[9px] uppercase text-emerald-600 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">new</span>
+    </a>
+    <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-zinc-500 sm:hidden dark:text-mono-muted">
+      <span class="text-emerald-600 dark:text-brand">CVE-2026-27621 (GHSA-xfvg-8v67-j7wp)</span>
+      <span>web</span>
+      <span><span class="text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: d480a0be1e8e7c0600bb9a325bb11920ee66497d">Patched</span></span>
+    </div>
+  </td>
+  <td class="hidden truncate whitespace-nowrap px-3 py-2.5 font-bold text-emerald-600 sm:table-cell dark:text-brand" title="CVE-2026-27621 (GHSA-xfvg-8v67-j7wp)">CVE-2026-27621</td>
+  <td class="hidden px-3 py-2.5 text-zinc-500 lg:table-cell dark:text-mono-muted">web</td>
+  <td class="whitespace-nowrap px-3 py-2.5 font-bold text-yellow-600 dark:text-yellow-500">
+    MEDIUM
+  </td>
+  <td class="hidden px-3 py-2.5 md:table-cell">
+    <span class="text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: d480a0be1e8e7c0600bb9a325bb11920ee66497d">Patched</span>
+  </td>
+  <td class="hidden whitespace-nowrap px-3 py-2.5 text-[11px] text-zinc-400 lg:table-cell dark:text-mono-muted">2026-07-05</td>
+</tr>
+
+    
+      <tr
+  class="poc-row group hover:bg-zinc-50 dark:hover:bg-mono-hover"
+  data-category="web"
+  data-severity="High"
+  data-cvss="0"
+  data-patched="true"
+  data-patch-status="patched"
+  data-date="2026-07-05"
+  data-permalink="/pocs/web/2026-07-05_cve-2026-22804-termix-stored-xss/"
+  data-kev="false"
+  data-ransomware="false"
+  data-overdue="false"
+  data-epss="0.00172"
+  data-priority="9"
+  data-title="Termix Stored XSS via Malicious SVG Upload -&gt; LFI / Session Hijack (CVE-2026-22804 / GHSA-m3cv-5hgp-hv35)"
+  data-cve="CVE-2026-22804 (GHSA-m3cv-5hgp-hv35)"
+>
+  <td class="max-w-0 px-3 py-2.5">
+    <a href="/pocs/web/2026-07-05_cve-2026-22804-termix-stored-xss/" class="flex flex-wrap items-center gap-1.5">
+      <span class="line-clamp-1 min-w-0 font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand">Termix Stored XSS via Malicious SVG Upload -&gt; LFI / Session Hijack (CVE-2026-22804 / GHSA-m3cv-5hgp-hv35)</span>
+      <span class="poc-new-badge hidden shrink-0 border border-emerald-300 bg-emerald-50 px-1 py-[1px] text-[9px] uppercase text-emerald-600 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">new</span>
+    </a>
+    <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-zinc-500 sm:hidden dark:text-mono-muted">
+      <span class="text-emerald-600 dark:text-brand">CVE-2026-22804 (GHSA-m3cv-5hgp-hv35)</span>
+      <span>web</span>
+      <span><span class="text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: ad86c2040b70c1a8b2df3f83037c1b904a67bfe4">Patched</span></span>
+    </div>
+  </td>
+  <td class="hidden truncate whitespace-nowrap px-3 py-2.5 font-bold text-emerald-600 sm:table-cell dark:text-brand" title="CVE-2026-22804 (GHSA-m3cv-5hgp-hv35)">CVE-2026-22804</td>
+  <td class="hidden px-3 py-2.5 text-zinc-500 lg:table-cell dark:text-mono-muted">web</td>
+  <td class="whitespace-nowrap px-3 py-2.5 font-bold text-orange-600 dark:text-orange-400">
+    HIGH
+  </td>
+  <td class="hidden px-3 py-2.5 md:table-cell">
+    <span class="text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: ad86c2040b70c1a8b2df3f83037c1b904a67bfe4">Patched</span>
+  </td>
+  <td class="hidden whitespace-nowrap px-3 py-2.5 text-[11px] text-zinc-400 lg:table-cell dark:text-mono-muted">2026-07-05</td>
+</tr>
+
+    
+      <tr
+  class="poc-row group hover:bg-zinc-50 dark:hover:bg-mono-hover"
+  data-category="web"
+  data-severity="High"
+  data-cvss="0"
+  data-patched="true"
+  data-patch-status="patched"
+  data-date="2026-07-05"
+  data-permalink="/pocs/web/2026-07-05_cve-2026-23499-saleor-file-upload-xss/"
+  data-kev="false"
+  data-ransomware="false"
+  data-overdue="false"
+  data-epss="0.00228"
+  data-priority="9"
+  data-title="Saleor Stored XSS via Unrestricted File Upload (CVE-2026-23499)"
+  data-cve="CVE-2026-23499"
+>
+  <td class="max-w-0 px-3 py-2.5">
+    <a href="/pocs/web/2026-07-05_cve-2026-23499-saleor-file-upload-xss/" class="flex flex-wrap items-center gap-1.5">
+      <span class="line-clamp-1 min-w-0 font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand">Saleor Stored XSS via Unrestricted File Upload (CVE-2026-23499)</span>
+      <span class="poc-new-badge hidden shrink-0 border border-emerald-300 bg-emerald-50 px-1 py-[1px] text-[9px] uppercase text-emerald-600 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">new</span>
+    </a>
+    <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-zinc-500 sm:hidden dark:text-mono-muted">
+      <span class="text-emerald-600 dark:text-brand">CVE-2026-23499</span>
+      <span>web</span>
+      <span><span class="text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: 0e590c8ef86a47443b9d264c8cc0c7b86677232e, 77f7927a0db9a216440df92c51012136f13e1d99">Patched</span></span>
+    </div>
+  </td>
+  <td class="hidden truncate whitespace-nowrap px-3 py-2.5 font-bold text-emerald-600 sm:table-cell dark:text-brand" title="CVE-2026-23499">CVE-2026-23499</td>
+  <td class="hidden px-3 py-2.5 text-zinc-500 lg:table-cell dark:text-mono-muted">web</td>
+  <td class="whitespace-nowrap px-3 py-2.5 font-bold text-orange-600 dark:text-orange-400">
+    HIGH
+  </td>
+  <td class="hidden px-3 py-2.5 md:table-cell">
+    <span class="text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: 0e590c8ef86a47443b9d264c8cc0c7b86677232e, 77f7927a0db9a216440df92c51012136f13e1d99">Patched</span>
+  </td>
+  <td class="hidden whitespace-nowrap px-3 py-2.5 text-[11px] text-zinc-400 lg:table-cell dark:text-mono-muted">2026-07-05</td>
+</tr>
+
+    
+      <tr
+  class="poc-row group hover:bg-zinc-50 dark:hover:bg-mono-hover"
+  data-category="web"
+  data-severity="High"
+  data-cvss="0"
+  data-patched="true"
+  data-patch-status="patched"
+  data-date="2026-07-05"
+  data-permalink="/pocs/web/2026-07-05_cve-2026-22849-saleor-richtext-stored-xss/"
+  data-kev="false"
+  data-ransomware="false"
+  data-overdue="false"
+  data-epss="0.00201"
+  data-priority="9"
+  data-title="Saleor Rich Text (EditorJS) Field Stored XSS (CVE-2026-22849)"
+  data-cve="CVE-2026-22849 (GHSA-8jcj-r5g2-qrpv)"
+>
+  <td class="max-w-0 px-3 py-2.5">
+    <a href="/pocs/web/2026-07-05_cve-2026-22849-saleor-richtext-stored-xss/" class="flex flex-wrap items-center gap-1.5">
+      <span class="line-clamp-1 min-w-0 font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand">Saleor Rich Text (EditorJS) Field Stored XSS (CVE-2026-22849)</span>
+      <span class="poc-new-badge hidden shrink-0 border border-emerald-300 bg-emerald-50 px-1 py-[1px] text-[9px] uppercase text-emerald-600 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">new</span>
+    </a>
+    <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-zinc-500 sm:hidden dark:text-mono-muted">
+      <span class="text-emerald-600 dark:text-brand">CVE-2026-22849 (GHSA-8jcj-r5g2-qrpv)</span>
+      <span>web</span>
+      <span><span class="text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: 0e590c8ef86a47443b9d264c8cc0c7b86677232e, 1085c7813224a0a65f1dac7275cbc3244e23c386">Patched</span></span>
+    </div>
+  </td>
+  <td class="hidden truncate whitespace-nowrap px-3 py-2.5 font-bold text-emerald-600 sm:table-cell dark:text-brand" title="CVE-2026-22849 (GHSA-8jcj-r5g2-qrpv)">CVE-2026-22849</td>
+  <td class="hidden px-3 py-2.5 text-zinc-500 lg:table-cell dark:text-mono-muted">web</td>
+  <td class="whitespace-nowrap px-3 py-2.5 font-bold text-orange-600 dark:text-orange-400">
+    HIGH
+  </td>
+  <td class="hidden px-3 py-2.5 md:table-cell">
+    <span class="text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: 0e590c8ef86a47443b9d264c8cc0c7b86677232e, 1085c7813224a0a65f1dac7275cbc3244e23c386">Patched</span>
+  </td>
+  <td class="hidden whitespace-nowrap px-3 py-2.5 text-[11px] text-zinc-400 lg:table-cell dark:text-mono-muted">2026-07-05</td>
+</tr>
+
+    
+      <tr
+  class="poc-row group hover:bg-zinc-50 dark:hover:bg-mono-hover"
+  data-category="web"
+  data-severity="High"
+  data-cvss="8.9"
+  data-patched="true"
+  data-patch-status="patched"
+  data-date="2026-07-05"
+  data-permalink="/pocs/web/2026-07-05_cve-2026-40487-postiz-svg-upload-xss/"
+  data-kev="false"
+  data-ransomware="false"
+  data-overdue="false"
+  data-epss="0.00224"
+  data-priority="17"
+  data-title="Postiz Arbitrary File Upload to Stored XSS / Account Takeover (CVE-2026-40487)"
+  data-cve="CVE-2026-40487 / GHSA-44wg-r34q-hvfx"
+>
+  <td class="max-w-0 px-3 py-2.5">
+    <a href="/pocs/web/2026-07-05_cve-2026-40487-postiz-svg-upload-xss/" class="flex flex-wrap items-center gap-1.5">
+      <span class="line-clamp-1 min-w-0 font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand">Postiz Arbitrary File Upload to Stored XSS / Account Takeover (CVE-2026-40487)</span>
+      <span class="poc-new-badge hidden shrink-0 border border-emerald-300 bg-emerald-50 px-1 py-[1px] text-[9px] uppercase text-emerald-600 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">new</span>
+    </a>
+    <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-zinc-500 sm:hidden dark:text-mono-muted">
+      <span class="text-emerald-600 dark:text-brand">CVE-2026-40487 / GHSA-44wg-r34q-hvfx</span>
+      <span>web</span>
+      <span><span class="text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: 3ea302202dc0daa3db577eb7c68374cdc1ddbc3c">Patched</span></span>
+    </div>
+  </td>
+  <td class="hidden truncate whitespace-nowrap px-3 py-2.5 font-bold text-emerald-600 sm:table-cell dark:text-brand" title="CVE-2026-40487 / GHSA-44wg-r34q-hvfx">CVE-2026-40487 / GHSA-44wg-r34q-hvfx</td>
+  <td class="hidden px-3 py-2.5 text-zinc-500 lg:table-cell dark:text-mono-muted">web</td>
+  <td class="whitespace-nowrap px-3 py-2.5 font-bold text-orange-600 dark:text-orange-400">
+    HIGH <span class="font-normal">8.9</span>
+  </td>
+  <td class="hidden px-3 py-2.5 md:table-cell">
+    <span class="text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: 3ea302202dc0daa3db577eb7c68374cdc1ddbc3c">Patched</span>
+  </td>
+  <td class="hidden whitespace-nowrap px-3 py-2.5 text-[11px] text-zinc-400 lg:table-cell dark:text-mono-muted">2026-07-05</td>
+</tr>
+
+    
+      <tr
+  class="poc-row group hover:bg-zinc-50 dark:hover:bg-mono-hover"
+  data-category="web"
+  data-severity="High"
+  data-cvss="0"
+  data-patched="true"
+  data-patch-status="patched"
+  data-date="2026-07-05"
+  data-permalink="/pocs/web/2026-07-05_cve-2026-33331-orpc-openapi-stored-xss/"
+  data-kev="false"
+  data-ransomware="false"
+  data-overdue="false"
+  data-epss="0.00288"
+  data-priority="9"
+  data-title="oRPC OpenAPI Reference Plugin Stored XSS via Unescaped Spec Embedding (CVE-2026-33331)"
+  data-cve="CVE-2026-33331 (GHSA-7f6v-3gx7-27q8)"
+>
+  <td class="max-w-0 px-3 py-2.5">
+    <a href="/pocs/web/2026-07-05_cve-2026-33331-orpc-openapi-stored-xss/" class="flex flex-wrap items-center gap-1.5">
+      <span class="line-clamp-1 min-w-0 font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand">oRPC OpenAPI Reference Plugin Stored XSS via Unescaped Spec Embedding (CVE-2026-33331)</span>
+      <span class="poc-new-badge hidden shrink-0 border border-emerald-300 bg-emerald-50 px-1 py-[1px] text-[9px] uppercase text-emerald-600 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">new</span>
+    </a>
+    <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-zinc-500 sm:hidden dark:text-mono-muted">
+      <span class="text-emerald-600 dark:text-brand">CVE-2026-33331 (GHSA-7f6v-3gx7-27q8)</span>
+      <span>web</span>
+      <span><span class="text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: 267a406c43bad6bfe0ee3b03d6d6bfbd56b6539a, 4f0efa8a1d3fa8e8317a4b03cc3945a5dfd68add">Patched</span></span>
+    </div>
+  </td>
+  <td class="hidden truncate whitespace-nowrap px-3 py-2.5 font-bold text-emerald-600 sm:table-cell dark:text-brand" title="CVE-2026-33331 (GHSA-7f6v-3gx7-27q8)">CVE-2026-33331</td>
+  <td class="hidden px-3 py-2.5 text-zinc-500 lg:table-cell dark:text-mono-muted">web</td>
+  <td class="whitespace-nowrap px-3 py-2.5 font-bold text-orange-600 dark:text-orange-400">
+    HIGH
+  </td>
+  <td class="hidden px-3 py-2.5 md:table-cell">
+    <span class="text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: 267a406c43bad6bfe0ee3b03d6d6bfbd56b6539a, 4f0efa8a1d3fa8e8317a4b03cc3945a5dfd68add">Patched</span>
+  </td>
+  <td class="hidden whitespace-nowrap px-3 py-2.5 text-[11px] text-zinc-400 lg:table-cell dark:text-mono-muted">2026-07-05</td>
+</tr>
+
+    
+      <tr
+  class="poc-row group hover:bg-zinc-50 dark:hover:bg-mono-hover"
+  data-category="web"
+  data-severity="Medium"
+  data-cvss="6.4"
+  data-patched="false"
+  data-patch-status="unknown"
+  data-date="2026-07-05"
+  data-permalink="/pocs/web/2026-07-05_cve-2026-3228-nextscripts-wp-stored-xss/"
+  data-kev="false"
+  data-ransomware="false"
+  data-overdue="false"
+  data-epss="0.0366"
+  data-priority="23"
+  data-title="NextScripts Social Networks Auto-Poster — WordPress Stored XSS (CVE-2026-3228)"
+  data-cve="CVE-2026-3228"
+>
+  <td class="max-w-0 px-3 py-2.5">
+    <a href="/pocs/web/2026-07-05_cve-2026-3228-nextscripts-wp-stored-xss/" class="flex flex-wrap items-center gap-1.5">
+      <span class="line-clamp-1 min-w-0 font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand">NextScripts Social Networks Auto-Poster — WordPress Stored XSS (CVE-2026-3228)</span>
+      <span class="poc-new-badge hidden shrink-0 border border-emerald-300 bg-emerald-50 px-1 py-[1px] text-[9px] uppercase text-emerald-600 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">new</span>
+    </a>
+    <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-zinc-500 sm:hidden dark:text-mono-muted">
+      <span class="text-emerald-600 dark:text-brand">CVE-2026-3228</span>
+      <span>web</span>
+      <span><span class="text-zinc-500 dark:text-mono-muted" title="No authoritative fix record found; status not confirmed either way">Unverified</span></span>
+    </div>
+  </td>
+  <td class="hidden truncate whitespace-nowrap px-3 py-2.5 font-bold text-emerald-600 sm:table-cell dark:text-brand" title="CVE-2026-3228">CVE-2026-3228</td>
+  <td class="hidden px-3 py-2.5 text-zinc-500 lg:table-cell dark:text-mono-muted">web</td>
+  <td class="whitespace-nowrap px-3 py-2.5 font-bold text-yellow-600 dark:text-yellow-500">
+    MEDIUM <span class="font-normal">6.4</span>
+  </td>
+  <td class="hidden px-3 py-2.5 md:table-cell">
+    <span class="text-zinc-500 dark:text-mono-muted" title="No authoritative fix record found; status not confirmed either way">Unverified</span>
+  </td>
+  <td class="hidden whitespace-nowrap px-3 py-2.5 text-[11px] text-zinc-400 lg:table-cell dark:text-mono-muted">2026-07-05</td>
+</tr>
+
+    
+      <tr
+  class="poc-row group hover:bg-zinc-50 dark:hover:bg-mono-hover"
+  data-category="web"
+  data-severity="High"
+  data-cvss="0"
+  data-patched="true"
+  data-patch-status="patched"
+  data-date="2026-07-05"
+  data-permalink="/pocs/web/2026-07-05_cve-2026-35455-immich-exfiltration/"
+  data-kev="false"
+  data-ransomware="false"
+  data-overdue="false"
+  data-epss="0.00225"
+  data-priority="9"
+  data-title="Immich Stored XSS to API Key Exfiltration and Account Hijacking (CVE-2026-35455)"
+  data-cve="CVE-2026-35455"
+>
+  <td class="max-w-0 px-3 py-2.5">
+    <a href="/pocs/web/2026-07-05_cve-2026-35455-immich-exfiltration/" class="flex flex-wrap items-center gap-1.5">
+      <span class="line-clamp-1 min-w-0 font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand">Immich Stored XSS to API Key Exfiltration and Account Hijacking (CVE-2026-35455)</span>
+      <span class="poc-new-badge hidden shrink-0 border border-emerald-300 bg-emerald-50 px-1 py-[1px] text-[9px] uppercase text-emerald-600 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">new</span>
+    </a>
+    <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-zinc-500 sm:hidden dark:text-mono-muted">
+      <span class="text-emerald-600 dark:text-brand">CVE-2026-35455</span>
+      <span>web</span>
+      <span><span class="text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: afec61addcbb14b54cb5dcc9dd7c8a101a6b72f3">Patched</span></span>
+    </div>
+  </td>
+  <td class="hidden truncate whitespace-nowrap px-3 py-2.5 font-bold text-emerald-600 sm:table-cell dark:text-brand" title="CVE-2026-35455">CVE-2026-35455</td>
+  <td class="hidden px-3 py-2.5 text-zinc-500 lg:table-cell dark:text-mono-muted">web</td>
+  <td class="whitespace-nowrap px-3 py-2.5 font-bold text-orange-600 dark:text-orange-400">
+    HIGH
+  </td>
+  <td class="hidden px-3 py-2.5 md:table-cell">
+    <span class="text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: afec61addcbb14b54cb5dcc9dd7c8a101a6b72f3">Patched</span>
+  </td>
+  <td class="hidden whitespace-nowrap px-3 py-2.5 text-[11px] text-zinc-400 lg:table-cell dark:text-mono-muted">2026-07-05</td>
+</tr>
+
+    
+      <tr
+  class="poc-row group hover:bg-zinc-50 dark:hover:bg-mono-hover"
+  data-category="web"
+  data-severity="Medium"
+  data-cvss="0"
+  data-patched="true"
+  data-patch-status="patched"
+  data-date="2026-07-05"
+  data-permalink="/pocs/web/2026-07-05_cve-2026-33657-espocrm-stored-html-injection/"
+  data-kev="false"
+  data-ransomware="false"
+  data-overdue="false"
+  data-epss="0.00176"
+  data-priority="9"
+  data-title="EspoCRM 9.3.3 Stored HTML Injection in Email Notifications — CVE-2026-33657"
+  data-cve="CVE-2026-33657"
+>
+  <td class="max-w-0 px-3 py-2.5">
+    <a href="/pocs/web/2026-07-05_cve-2026-33657-espocrm-stored-html-injection/" class="flex flex-wrap items-center gap-1.5">
+      <span class="line-clamp-1 min-w-0 font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand">EspoCRM 9.3.3 Stored HTML Injection in Email Notifications — CVE-2026-33657</span>
+      <span class="poc-new-badge hidden shrink-0 border border-emerald-300 bg-emerald-50 px-1 py-[1px] text-[9px] uppercase text-emerald-600 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">new</span>
+    </a>
+    <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-zinc-500 sm:hidden dark:text-mono-muted">
+      <span class="text-emerald-600 dark:text-brand">CVE-2026-33657</span>
+      <span>web</span>
+      <span><span class="text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: f1763e732f34fbebf7f70f176eec1ccd8a272679">Patched</span></span>
+    </div>
+  </td>
+  <td class="hidden truncate whitespace-nowrap px-3 py-2.5 font-bold text-emerald-600 sm:table-cell dark:text-brand" title="CVE-2026-33657">CVE-2026-33657</td>
+  <td class="hidden px-3 py-2.5 text-zinc-500 lg:table-cell dark:text-mono-muted">web</td>
+  <td class="whitespace-nowrap px-3 py-2.5 font-bold text-yellow-600 dark:text-yellow-500">
+    MEDIUM
+  </td>
+  <td class="hidden px-3 py-2.5 md:table-cell">
+    <span class="text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: f1763e732f34fbebf7f70f176eec1ccd8a272679">Patched</span>
+  </td>
+  <td class="hidden whitespace-nowrap px-3 py-2.5 text-[11px] text-zinc-400 lg:table-cell dark:text-mono-muted">2026-07-05</td>
+</tr>
+
+    
+      <tr
+  class="poc-row group hover:bg-zinc-50 dark:hover:bg-mono-hover"
+  data-category="web"
+  data-severity="Medium"
+  data-cvss="6.4"
+  data-patched="true"
+  data-patch-status="patched"
+  data-date="2026-07-05"
+  data-permalink="/pocs/web/2026-07-05_cve-2026-2600-elementskit-stored-xss/"
+  data-kev="false"
+  data-ransomware="false"
+  data-overdue="false"
+  data-epss="0.00293"
+  data-priority="9"
+  data-title="ElementsKit Elementor Addons Authenticated Stored XSS via REST API (CVE-2026-2600)"
+  data-cve="CVE-2026-2600"
+>
+  <td class="max-w-0 px-3 py-2.5">
+    <a href="/pocs/web/2026-07-05_cve-2026-2600-elementskit-stored-xss/" class="flex flex-wrap items-center gap-1.5">
+      <span class="line-clamp-1 min-w-0 font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand">ElementsKit Elementor Addons Authenticated Stored XSS via REST API (CVE-2026-2600)</span>
+      <span class="poc-new-badge hidden shrink-0 border border-emerald-300 bg-emerald-50 px-1 py-[1px] text-[9px] uppercase text-emerald-600 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">new</span>
+    </a>
+    <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-zinc-500 sm:hidden dark:text-mono-muted">
+      <span class="text-emerald-600 dark:text-brand">CVE-2026-2600</span>
+      <span>web</span>
+      <span><span class="text-emerald-600 dark:text-brand" title="Vendor fix documented in this entry">Patched</span></span>
+    </div>
+  </td>
+  <td class="hidden truncate whitespace-nowrap px-3 py-2.5 font-bold text-emerald-600 sm:table-cell dark:text-brand" title="CVE-2026-2600">CVE-2026-2600</td>
+  <td class="hidden px-3 py-2.5 text-zinc-500 lg:table-cell dark:text-mono-muted">web</td>
+  <td class="whitespace-nowrap px-3 py-2.5 font-bold text-yellow-600 dark:text-yellow-500">
+    MEDIUM <span class="font-normal">6.4</span>
+  </td>
+  <td class="hidden px-3 py-2.5 md:table-cell">
+    <span class="text-emerald-600 dark:text-brand" title="Vendor fix documented in this entry">Patched</span>
+  </td>
+  <td class="hidden whitespace-nowrap px-3 py-2.5 text-[11px] text-zinc-400 lg:table-cell dark:text-mono-muted">2026-07-05</td>
+</tr>
+
+    
+      <tr
+  class="poc-row group hover:bg-zinc-50 dark:hover:bg-mono-hover"
+  data-category="web"
+  data-severity="High"
+  data-cvss="7.2"
+  data-patched="true"
+  data-patch-status="patched"
+  data-date="2026-07-05"
+  data-permalink="/pocs/web/2026-07-05_cve-2026-5513-bookly-cookie-stored-xss/"
+  data-kev="false"
+  data-ransomware="false"
+  data-overdue="false"
+  data-epss="0.00437"
+  data-priority="17"
+  data-title="Bookly Booking Form Cookie-Based Stored XSS — CVE-2026-5513"
+  data-cve="CVE-2026-5513"
+>
+  <td class="max-w-0 px-3 py-2.5">
+    <a href="/pocs/web/2026-07-05_cve-2026-5513-bookly-cookie-stored-xss/" class="flex flex-wrap items-center gap-1.5">
+      <span class="line-clamp-1 min-w-0 font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand">Bookly Booking Form Cookie-Based Stored XSS — CVE-2026-5513</span>
+      <span class="poc-new-badge hidden shrink-0 border border-emerald-300 bg-emerald-50 px-1 py-[1px] text-[9px] uppercase text-emerald-600 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">new</span>
+    </a>
+    <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-zinc-500 sm:hidden dark:text-mono-muted">
+      <span class="text-emerald-600 dark:text-brand">CVE-2026-5513</span>
+      <span>web</span>
+      <span><span class="text-emerald-600 dark:text-brand" title="Vendor fix documented in this entry">Patched</span></span>
+    </div>
+  </td>
+  <td class="hidden truncate whitespace-nowrap px-3 py-2.5 font-bold text-emerald-600 sm:table-cell dark:text-brand" title="CVE-2026-5513">CVE-2026-5513</td>
+  <td class="hidden px-3 py-2.5 text-zinc-500 lg:table-cell dark:text-mono-muted">web</td>
+  <td class="whitespace-nowrap px-3 py-2.5 font-bold text-orange-600 dark:text-orange-400">
+    HIGH <span class="font-normal">7.2</span>
+  </td>
+  <td class="hidden px-3 py-2.5 md:table-cell">
+    <span class="text-emerald-600 dark:text-brand" title="Vendor fix documented in this entry">Patched</span>
+  </td>
+  <td class="hidden whitespace-nowrap px-3 py-2.5 text-[11px] text-zinc-400 lg:table-cell dark:text-mono-muted">2026-07-05</td>
+</tr>
+
+    
+      <tr
+  class="poc-row group hover:bg-zinc-50 dark:hover:bg-mono-hover"
+  data-category="web"
+  data-severity="Critical"
+  data-cvss="0"
+  data-patched="true"
+  data-patch-status="patched"
+  data-date="2026-07-05"
+  data-permalink="/pocs/web/2026-07-05_cve-2026-41653-bentopdf-stored-xss-exfil/"
+  data-kev="false"
+  data-ransomware="false"
+  data-overdue="false"
+  data-epss="0.00356"
+  data-priority="9"
+  data-title="BentoPDF Stored XSS to File Exfiltration (CVE-2026-41653)"
+  data-cve="CVE-2026-41653"
+>
+  <td class="max-w-0 px-3 py-2.5">
+    <a href="/pocs/web/2026-07-05_cve-2026-41653-bentopdf-stored-xss-exfil/" class="flex flex-wrap items-center gap-1.5">
+      <span class="line-clamp-1 min-w-0 font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand">BentoPDF Stored XSS to File Exfiltration (CVE-2026-41653)</span>
+      <span class="poc-new-badge hidden shrink-0 border border-emerald-300 bg-emerald-50 px-1 py-[1px] text-[9px] uppercase text-emerald-600 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">new</span>
+    </a>
+    <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-zinc-500 sm:hidden dark:text-mono-muted">
+      <span class="text-emerald-600 dark:text-brand">CVE-2026-41653</span>
+      <span>web</span>
+      <span><span class="text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: 28b4f3ebc4588836662f1fc0dd316ebe06ebe417">Patched</span></span>
+    </div>
+  </td>
+  <td class="hidden truncate whitespace-nowrap px-3 py-2.5 font-bold text-emerald-600 sm:table-cell dark:text-brand" title="CVE-2026-41653">CVE-2026-41653</td>
+  <td class="hidden px-3 py-2.5 text-zinc-500 lg:table-cell dark:text-mono-muted">web</td>
+  <td class="whitespace-nowrap px-3 py-2.5 font-bold text-red-600 dark:text-red-400">
+    CRITICAL
+  </td>
+  <td class="hidden px-3 py-2.5 md:table-cell">
+    <span class="text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: 28b4f3ebc4588836662f1fc0dd316ebe06ebe417">Patched</span>
+  </td>
+  <td class="hidden whitespace-nowrap px-3 py-2.5 text-[11px] text-zinc-400 lg:table-cell dark:text-mono-muted">2026-07-05</td>
+</tr>
+
+    
+      <tr
+  class="poc-row group hover:bg-zinc-50 dark:hover:bg-mono-hover"
+  data-category="web"
+  data-severity="Critical"
+  data-cvss="9.1"
+  data-patched="true"
+  data-patch-status="patched"
+  data-date="2026-07-05"
+  data-permalink="/pocs/web/2026-07-05_cve-2026-30862-appsmith-stored-xss-privesc/"
+  data-kev="false"
+  data-ransomware="false"
+  data-overdue="false"
+  data-epss="0.00308"
+  data-priority="24"
+  data-title="Appsmith Table Widget Stored XSS to Admin Account Takeover — CVE-2026-30862"
+  data-cve="CVE-2026-30862 (GHSA-5hw4-whxv-6794)"
+>
+  <td class="max-w-0 px-3 py-2.5">
+    <a href="/pocs/web/2026-07-05_cve-2026-30862-appsmith-stored-xss-privesc/" class="flex flex-wrap items-center gap-1.5">
+      <span class="line-clamp-1 min-w-0 font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand">Appsmith Table Widget Stored XSS to Admin Account Takeover — CVE-2026-30862</span>
+      <span class="poc-new-badge hidden shrink-0 border border-emerald-300 bg-emerald-50 px-1 py-[1px] text-[9px] uppercase text-emerald-600 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">new</span>
+    </a>
+    <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-zinc-500 sm:hidden dark:text-mono-muted">
+      <span class="text-emerald-600 dark:text-brand">CVE-2026-30862 (GHSA-5hw4-whxv-6794)</span>
+      <span>web</span>
+      <span><span class="text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: b207dbb84d4b985dd60ef5411c47d9bd8721fde9">Patched</span></span>
+    </div>
+  </td>
+  <td class="hidden truncate whitespace-nowrap px-3 py-2.5 font-bold text-emerald-600 sm:table-cell dark:text-brand" title="CVE-2026-30862 (GHSA-5hw4-whxv-6794)">CVE-2026-30862</td>
+  <td class="hidden px-3 py-2.5 text-zinc-500 lg:table-cell dark:text-mono-muted">web</td>
+  <td class="whitespace-nowrap px-3 py-2.5 font-bold text-red-600 dark:text-red-400">
+    CRITICAL <span class="font-normal">9.1</span>
+  </td>
+  <td class="hidden px-3 py-2.5 md:table-cell">
+    <span class="text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: b207dbb84d4b985dd60ef5411c47d9bd8721fde9">Patched</span>
+  </td>
+  <td class="hidden whitespace-nowrap px-3 py-2.5 text-[11px] text-zinc-400 lg:table-cell dark:text-mono-muted">2026-07-05</td>
+</tr>
+
+    
+  </div>
+
+
+  </main>
+  <footer class="mt-16 border-t border-zinc-200 dark:border-mono-border">
+  <div class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-8 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8 dark:text-zinc-500">
+    <p class="font-mono">
+      PoC Archive — research artifacts for defensive and educational use only.
+    </p>
+    <p class="font-mono">
+      built with <a href="https://gohugo.io" class="text-emerald-600 hover:underline dark:text-emerald-400">hugo</a> · deployed on github pages
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>
