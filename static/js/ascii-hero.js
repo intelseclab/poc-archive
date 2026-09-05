@@ -6,6 +6,7 @@ const mount = document.getElementById('ascii-hero');
 
 if (mount) {
   const SIZE = 280;
+  const RESOLUTION = 0.35;
   // ?raw — render the plain WebGL canvas instead of the ASCII effect (debug view)
   const raw = new URLSearchParams(location.search).has('raw');
 
@@ -59,7 +60,7 @@ if (mount) {
     renderer.setSize(SIZE, SIZE);
     mount.appendChild(renderer.domElement);
   } else {
-    effect = new AsciiEffect(renderer, ' .:-=+*#%@', { invert: true, resolution: 0.35 });
+    effect = new AsciiEffect(renderer, ' .:-=+*#%@', { invert: true, resolution: RESOLUTION });
     effect.setSize(SIZE, SIZE);
     effect.domElement.firstElementChild.style.fontFamily = '"JetBrains Mono", ui-monospace, monospace';
     effect.domElement.style.backgroundColor = 'transparent';
