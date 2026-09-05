@@ -55,16 +55,75 @@ if (mount) {
   paint();
   new MutationObserver(paint).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
+  // Drag-to-rotate with inertia
+  mount.style.touchAction = 'none';
+  mount.style.cursor = 'grab';
+
+  const clampPitch = (v) => Math.max(-Math.PI / 2, Math.min(Math.PI / 2, v));
+
+  let dragging = false;
+  let lastX = 0;
+  let lastY = 0;
+  let velX = 0;
+  let velY = 0;
+  let dirty = true;
+
+  mount.addEventListener('pointerdown', (e) => {
+    dragging = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    velX = velY = 0;
+    mount.style.cursor = 'grabbing';
+    mount.setPointerCapture(e.pointerId);
+  });
+
+  mount.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    pivot.rotation.y += dx * 0.01;
+    pivot.rotation.x = clampPitch(pivot.rotation.x + dy * 0.01);
+    velY = dx * 0.01;
+    velX = dy * 0.01;
+    dirty = true;
+  });
+
+  const endDrag = () => {
+    dragging = false;
+    mount.style.cursor = 'grab';
+  };
+  mount.addEventListener('pointerup', endDrag);
+  mount.addEventListener('pointercancel', endDrag);
+
+  const tick = () => {
+    if (!dragging && (Math.abs(velX) > 0.0001 || Math.abs(velY) > 0.0001)) {
+      pivot.rotation.y += velY;
+      pivot.rotation.x = clampPitch(pivot.rotation.x + velX);
+      velX *= 0.95;
+      velY *= 0.95;
+      dirty = true;
+    }
+    if (dirty) {
+      effect.render(scene, camera);
+      dirty = false;
+    }
+    requestAnimationFrame(tick);
+  };
+
   new GLTFLoader().load(
     mount.dataset.model,
     (gltf) => {
       pivot.add(fit(gltf.scene));
-      effect.render(scene, camera);
+      dirty = true;
     },
     undefined,
     () => {
       pivot.add(fallbackMesh());
-      effect.render(scene, camera);
+      dirty = true;
     }
   );
+
+  requestAnimationFrame(tick);
 }
