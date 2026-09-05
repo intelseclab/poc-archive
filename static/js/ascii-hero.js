@@ -62,7 +62,13 @@ if (mount) {
   } else {
     effect = new AsciiEffect(renderer, ' .:-=+*#%@', { invert: true, resolution: RESOLUTION });
     effect.setSize(SIZE, SIZE);
-    effect.domElement.firstElementChild.style.fontFamily = '"JetBrains Mono", ui-monospace, monospace';
+    const table = effect.domElement.firstElementChild;
+    table.style.fontFamily = '"JetBrains Mono", ui-monospace, monospace';
+    // AsciiEffect's letter-spacing presets assume resolution 0.2; at other
+    // resolutions the char grid is narrower than the canvas and the image
+    // squashes horizontally. Compensate so each char advance = 1/resolution:
+    // advance = 0.6em (mono) × fontSize(2/res) + spacing = 1/res → spacing = -0.2/res.
+    table.style.letterSpacing = `${-0.2 / RESOLUTION}px`;
     effect.domElement.style.backgroundColor = 'transparent';
     mount.appendChild(effect.domElement);
     const paint = () => {
