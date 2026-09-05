@@ -5,7 +5,7 @@ import { AsciiEffect } from 'three/addons/effects/AsciiEffect.js';
 const mount = document.getElementById('ascii-hero');
 
 if (mount) {
-  const SIZE = 280;
+  const SIZE = 360;
   const RESOLUTION = 0.35;
   // ?raw — render the plain WebGL canvas instead of the ASCII effect (debug view)
   const raw = new URLSearchParams(location.search).has('raw');
