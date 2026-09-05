@@ -101,8 +101,8 @@ if (mount) {
     if (!dragging) return;
     const dx = e.clientX - lastX;
     lastX = e.clientX;
-    pivot.rotation.y += dx * 0.01;
-    velY = dx * 0.01;
+    pivot.rotation.y += dx * 0.005;
+    velY = dx * 0.005;
     dirty = true;
   });
 
@@ -116,7 +116,7 @@ if (mount) {
   const tick = () => {
     if (!dragging && Math.abs(velY) > 0.0001) {
       pivot.rotation.y += velY;
-      velY *= 0.95;
+      velY *= 0.92;
       dirty = true;
     }
     if (dirty) {
