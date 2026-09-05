@@ -6,6 +6,8 @@ const mount = document.getElementById('ascii-hero');
 
 if (mount) {
   const SIZE = 280;
+  // ?raw — render the plain WebGL canvas instead of the ASCII effect (debug view)
+  const raw = new URLSearchParams(location.search).has('raw');
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 50);
@@ -39,21 +41,26 @@ if (mount) {
     new THREE.MeshStandardMaterial({ roughness: 0.35, metalness: 0.15 })
   ));
 
-  const renderer = new THREE.WebGLRenderer({ antialias: false });
+  const renderer = new THREE.WebGLRenderer({ antialias: !raw });
   renderer.setPixelRatio(1);
 
-  const effect = new AsciiEffect(renderer, ' .:-=+*#%@', { invert: true, resolution: 0.2 });
-  effect.setSize(SIZE, SIZE);
-  effect.domElement.firstElementChild.style.fontFamily = '"JetBrains Mono", ui-monospace, monospace';
-  effect.domElement.style.backgroundColor = 'transparent';
-  mount.appendChild(effect.domElement);
-
-  const paint = () => {
-    const dark = document.documentElement.classList.contains('dark');
-    effect.domElement.style.color = dark ? '#10b981' : '#059669';
-  };
-  paint();
-  new MutationObserver(paint).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+  let effect = null;
+  if (raw) {
+    renderer.setSize(SIZE, SIZE);
+    mount.appendChild(renderer.domElement);
+  } else {
+    effect = new AsciiEffect(renderer, ' .:-=+*#%@', { invert: true, resolution: 0.2 });
+    effect.setSize(SIZE, SIZE);
+    effect.domElement.firstElementChild.style.fontFamily = '"JetBrains Mono", ui-monospace, monospace';
+    effect.domElement.style.backgroundColor = 'transparent';
+    mount.appendChild(effect.domElement);
+    const paint = () => {
+      const dark = document.documentElement.classList.contains('dark');
+      effect.domElement.style.color = dark ? '#10b981' : '#059669';
+    };
+    paint();
+    new MutationObserver(paint).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+  }
 
   // Drag-to-rotate with inertia
   mount.style.touchAction = 'none';
@@ -106,7 +113,8 @@ if (mount) {
       dirty = true;
     }
     if (dirty) {
-      effect.render(scene, camera);
+      if (effect) effect.render(scene, camera);
+      else renderer.render(scene, camera);
       dirty = false;
     }
     requestAnimationFrame(tick);
