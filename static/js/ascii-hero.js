@@ -44,6 +44,16 @@ if (mount) {
   const renderer = new THREE.WebGLRenderer({ antialias: !raw });
   renderer.setPixelRatio(1);
 
+  // ASCII readability comes from silhouette + shading, not texture detail:
+  // swap any textured materials for a matte mid-gray with a wide ramp.
+  const normalizeMaterials = (root) => {
+    root.traverse((o) => {
+      if (o.isMesh) {
+        o.material = new THREE.MeshStandardMaterial({ color: 0xd9d9d9, roughness: 0.45, metalness: 0 });
+      }
+    });
+  };
+
   let effect = null;
   if (raw) {
     renderer.setSize(SIZE, SIZE);
@@ -123,6 +133,7 @@ if (mount) {
   new GLTFLoader().load(
     mount.dataset.model,
     (gltf) => {
+      normalizeMaterials(gltf.scene);
       pivot.add(fit(gltf.scene));
       dirty = true;
     },
