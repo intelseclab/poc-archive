@@ -49,7 +49,7 @@ if (mount) {
     renderer.setSize(SIZE, SIZE);
     mount.appendChild(renderer.domElement);
   } else {
-    effect = new AsciiEffect(renderer, ' .:-=+*#%@', { invert: true, resolution: 0.2 });
+    effect = new AsciiEffect(renderer, ' .:-=+*#%@', { invert: true, resolution: 0.35 });
     effect.setSize(SIZE, SIZE);
     effect.domElement.firstElementChild.style.fontFamily = '"JetBrains Mono", ui-monospace, monospace';
     effect.domElement.style.backgroundColor = 'transparent';
