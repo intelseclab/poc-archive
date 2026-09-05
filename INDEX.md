@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-09-04 19:03:36
+> Last updated: 2026-09-05 00:51:23
 
 ---
 
@@ -635,10 +635,12 @@
 | 2026-09-03 | — | [cve-2026-49869-kestra-auth-bypass-rce](./pocs/web/2026-09-03_cve-2026-49869-kestra-auth-bypass-rce/) | `web` | CVE-2026-49869, CVE-2026-53576 | Critical | RCE, authentication bypass, Kestra, unauthenticated, Python | Weaponized |
 | 2026-09-03 | — | [cve-2026-75604-nextjs-windows-rce](./pocs/web/2026-09-03_cve-2026-75604-nextjs-windows-rce/) | `web` | CVE-2026-75604 | Critical | RCE, Next.js, Windows, path traversal, cache poisoning, Python | Weaponized |
 | 2026-09-03 | — | [cve-2026-82970-wplp-cookie-consent-rce](./pocs/web/2026-09-03_cve-2026-82970-wplp-cookie-consent-rce/) | `web` | CVE-2026-82970 | Critical | RCE, WordPress, file upload, unauthenticated, PHP, webshell | Weaponized |
+| 2026-09-05 | — | [cve-2026-11613-divi-ajax-filter-lfi](./pocs/web/2026-09-05_cve-2026-11613-divi-ajax-filter-lfi/) | `web` | CVE-2026-11613 | Critical | LFI, WordPress, Divi, unauthenticated, Python | PoC |
+| 2026-09-05 | — | [cve-2026-81578-papercut-auth-bypass-rce](./pocs/web/2026-09-05_cve-2026-81578-papercut-auth-bypass-rce/) | `web` | CVE-2026-81578, CVE-2026-82078 | Critical | auth-bypass, RCE, PaperCut, class-loading, Python, chained | Weaponized |
 
 ---
 
-*Total POCs: 770*
+*Total POCs: 772*
 
 ## By Category
 
@@ -649,7 +651,7 @@
 - **`misc`** — 33 entries
 - **`network`** — 131 entries
 - **`social-engineering`** — 6 entries
-- **`web`** — 439 entries
+- **`web`** — 441 entries
 
 ## Archives
 
