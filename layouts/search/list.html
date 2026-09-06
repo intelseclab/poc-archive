@@ -62,20 +62,6 @@
     class="ml-auto rounded border border-zinc-300 bg-zinc-50 px-2 py-0.5 font-mono text-[10px] text-zinc-500 hover:text-red-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted dark:hover:text-red-400">CLEAR</button>
 </div>
 
-<!-- Sort -->
-<div class="mt-2 flex items-center gap-2">
-  <span class="font-mono text-[11px] text-zinc-500 dark:text-mono-muted">Sort:</span>
-  <div class="flex gap-1" id="cs-sort-btns">
-    <button type="button" data-sort="RELEVANCE" aria-pressed="true"
-      class="cs-sort rounded border border-emerald-400 bg-emerald-50 px-2.5 py-1 font-mono text-[11px] text-emerald-600 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">relevance</button>
-    <button type="button" data-sort="NEWEST" aria-pressed="false"
-      class="cs-sort rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">newest</button>
-    <button type="button" data-sort="POCS" aria-pressed="false"
-      class="cs-sort rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">most pocs</button>
-  </div>
-  <span class="ml-auto font-mono text-[10px] text-zinc-400 dark:text-mono-muted" id="cs-refreshed"></span>
-</div>
-
 <!-- Trending (default view) -->
 <div id="cs-trending" class="mt-5">
   <div class="overflow-hidden rounded border border-zinc-200 bg-white dark:border-mono-border dark:bg-mono-card">
@@ -285,7 +271,6 @@ var moreWrap = document.getElementById('cs-more-wrap');
 var moreBtn = document.getElementById('cs-more-btn');
 var trendRows = document.getElementById('cs-trend-rows');
 var trendNote = document.getElementById('cs-trend-note');
-var refreshedEl = document.getElementById('cs-refreshed');
 var sevChips = document.getElementById('cs-sev-chips');
 var srcChips = document.getElementById('cs-src-chips');
 var kevToggle = document.getElementById('cs-kev-toggle');
@@ -1240,8 +1225,6 @@ function readURLState() {
   var query = (params.get('q') || '').trim();
   if (query) { state.query = query; inputEl.value = query; }
   if (params.get('kev') === '1') state.kevOnly = true;
-  var sort = (params.get('sort') || '').toUpperCase();
-  if (['RELEVANCE','NEWEST','POCS'].includes(sort)) state.sort = sort;
   var sevStr = (params.get('sev') || '').toUpperCase();
   if (sevStr) {
     var wanted = sevStr.split(',').filter(function(v) { return FILTER_OPTIONS.severity.some(function(o){return o[0]===v;}); });
@@ -1261,7 +1244,6 @@ function syncURL() {
     var params = new URLSearchParams();
     if (state.query.length >= MIN_QUERY) params.set('q', state.query);
     if (state.kevOnly) params.set('kev', '1');
-    if (state.sort !== 'RELEVANCE') params.set('sort', state.sort.toLowerCase());
     if (state.filters.severity.size !== FILTER_OPTIONS.severity.length) {
       params.set('sev', FILTER_OPTIONS.severity.map(function(o){return o[0];}).filter(function(v){return state.filters.severity.has(v);}).join(','));
     }
@@ -1322,10 +1304,6 @@ function syncFilterControls() {
   setActive(kevToggle, state.kevOnly);
   clearFilters.hidden = !hasActiveFilters();
 
-  document.querySelectorAll('#cs-sort-btns .cs-sort').forEach(function(btn) {
-    setActive(btn, btn.dataset.sort === state.sort);
-    btn.setAttribute('aria-pressed', String(btn.dataset.sort === state.sort));
-  });
 }
 
 function toggleFilter(kind, value) {
@@ -1411,16 +1389,6 @@ document.getElementById('cs-filters').addEventListener('click', function(e) {
     syncFilterControls();
     render();
   }
-});
-
-// Sort buttons
-document.getElementById('cs-sort-btns').addEventListener('click', function(e) {
-  var btn = e.target.closest('[data-sort]');
-  if (!btn) return;
-  state.sort = btn.dataset.sort;
-  state.shown = PAGE_SIZE;
-  syncFilterControls();
-  render();
 });
 
 // Trending mode toggle
@@ -1558,10 +1526,6 @@ renderYears();
     trending = (meta.items || []).map(function(item) {
       return Object.assign({}, item, { _pushed: hoursSince(item.pushed), _created: hoursSince(item.created) });
     });
-    var minutes = Math.max(0, Math.round((Date.now() - Date.parse(meta.generated)) / 60000));
-    refreshedEl.textContent = minutes < 60
-      ? 'index refreshed ' + minutes + ' minute' + (minutes === 1 ? '' : 's') + ' ago'
-      : 'index refreshed ' + Math.round(minutes / 60) + ' hour' + (Math.round(minutes / 60) === 1 ? '' : 's') + ' ago';
   } catch (err) {
     console.warn('trending:', err.message);
   }
