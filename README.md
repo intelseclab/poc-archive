@@ -105,3 +105,7 @@ Or browse [INDEX.md](./INDEX.md).
 
 Write-ups and research notes: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)  
 Exploit code: [MIT](https://opensource.org/licenses/MIT)
+
+### Third-Party Assets
+
+- ["Bomb"](https://sketchfab.com/3d-models/bomb-1a9395dac5bc4742bdd780b3cce93416) 3D model by [giga](https://sketchfab.com/gits3d) is licensed under [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/). Converted to GLB for real-time ASCII rendering.
