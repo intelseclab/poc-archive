@@ -96,7 +96,7 @@
   </div>
 </div>
 
-<!-- Results (search view) -->
+<!-- Results (search view) — split layout: list left, detail sidebar right -->
 <div id="cs-results" class="mt-5" hidden>
   <div class="overflow-hidden rounded border border-zinc-200 bg-white dark:border-mono-border dark:bg-mono-card">
     <div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50/60 px-3 py-2.5 dark:border-mono-border dark:bg-mono-bg/50">
@@ -106,12 +106,30 @@
       </span>
       <span class="font-mono text-xs text-zinc-500 dark:text-mono-muted" id="cs-result-count"></span>
     </div>
-    <div id="cs-result-list" class="divide-y divide-zinc-200 dark:divide-mono-border/40"></div>
+    <div class="flex min-h-[400px]">
+      <!-- Left: compact result list -->
+      <div id="cs-result-list" class="w-full divide-y divide-zinc-200 overflow-y-auto lg:w-[45%] lg:border-r lg:border-zinc-200 dark:divide-mono-border/40 lg:dark:border-mono-border" style="max-height:calc(100vh - 180px)"></div>
+      <!-- Right: detail sidebar (desktop inline, mobile overlay) -->
+      <div id="cs-sidebar" class="fixed inset-y-0 right-0 z-50 w-full max-w-lg translate-x-full border-l border-zinc-200 bg-white transition-transform duration-200 ease-out lg:relative lg:inset-auto lg:z-auto lg:block lg:w-[55%] lg:max-w-none lg:translate-x-0 lg:border-l-0 lg:transition-none dark:border-mono-border dark:bg-mono-card" hidden>
+        <div class="flex h-full flex-col">
+          <div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50/60 px-4 py-2.5 dark:border-mono-border dark:bg-mono-bg/50">
+            <span id="cs-sidebar-title" class="font-mono text-sm font-bold text-emerald-600 dark:text-brand"></span>
+            <button type="button" id="cs-sidebar-close" class="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:text-mono-muted dark:hover:bg-mono-hover dark:hover:text-white" title="Close detail panel">
+              <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div id="cs-sidebar-body" class="flex-1 overflow-y-auto p-4" style="max-height:calc(100vh - 230px)"></div>
+        </div>
+      </div>
+    </div>
   </div>
   <div id="cs-more-wrap" class="mt-4 text-center" hidden>
     <button type="button" id="cs-more-btn" class="rounded border border-zinc-300 px-4 py-1.5 font-mono text-xs text-zinc-600 hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-mono-muted dark:hover:border-brand dark:hover:text-brand">Show more</button>
   </div>
 </div>
+
+<!-- Sidebar backdrop (mobile) -->
+<div id="cs-backdrop" class="fixed inset-0 z-40 bg-black/40 lg:hidden" hidden></div>
 
 <!-- Browse by year -->
 <nav class="mt-8 border-t border-zinc-200 pt-5 dark:border-mono-border" aria-label="Browse by year">
@@ -233,7 +251,8 @@ var NOT_A_REPO = new Set(['user-attachments','advisories','security','orgs',
    ================================================================ */
 var state = {
   query: '', mode: 'TRENDING', sort: 'RELEVANCE',
-  shown: PAGE_SIZE, descOpen: new Set(), pocOpen: new Set(), advisoryOpen: new Set(),
+  shown: PAGE_SIZE, selectedCve: null,
+  pocOpen: new Set(), advisoryOpen: new Set(),
   kevOnly: false,
   filters: {
     severity: new Set(FILTER_OPTIONS.severity.map(function(x){return x[0];})),
@@ -272,6 +291,11 @@ var srcChips = document.getElementById('cs-src-chips');
 var kevToggle = document.getElementById('cs-kev-toggle');
 var clearFilters = document.getElementById('cs-clear-filters');
 var yearsEl = document.getElementById('cs-years');
+var sidebar = document.getElementById('cs-sidebar');
+var sidebarTitle = document.getElementById('cs-sidebar-title');
+var sidebarBody = document.getElementById('cs-sidebar-body');
+var sidebarClose = document.getElementById('cs-sidebar-close');
+var backdrop = document.getElementById('cs-backdrop');
 
 /* ================================================================
    FORMATTING
@@ -876,7 +900,7 @@ function renderTrending() {
 }
 
 /* ================================================================
-   RENDERING — Results
+   RENDERING — PoC row / Advisory row (for sidebar detail)
    ================================================================ */
 function pocRow(url) {
   var curated = null;
@@ -886,14 +910,14 @@ function pocRow(url) {
 
   if (curated) {
     var tagCls = SRC_CLS[curated.tag] || SRC_CLS.REFERENCE;
-    return '<div class="flex items-center gap-1.5 py-0.5">' +
+    return '<div class="flex items-center gap-1.5 py-1">' +
       '<span class="shrink-0 rounded border px-1 py-[1px] text-[9px] font-bold uppercase ' + tagCls + '" title="' + esc(curated.hint) + '">' + curated.tag + '</span>' +
       '<a class="truncate text-zinc-700 hover:text-emerald-600 dark:text-slate-300 dark:hover:text-brand" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer nofollow">' + esc(curated.label(url)) + '</a></div>';
   }
 
   var parsed = repoFromUrl(url);
   if (!parsed) {
-    return '<div class="flex items-center gap-1.5 py-0.5">' +
+    return '<div class="flex items-center gap-1.5 py-1">' +
       '<a class="truncate text-zinc-600 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-brand" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer nofollow">' + esc(plainLinkLabel(url)) + '</a></div>';
   }
 
@@ -904,7 +928,7 @@ function pocRow(url) {
   var starHtml = stars != null ? '<span class="shrink-0 font-mono text-[10px]' + popularCls + '">' + fmtStars(stars) + ' &#9733;</span>' : '';
   var ageHtml = hours != null ? '<span class="shrink-0 font-mono text-[10px] text-zinc-400 dark:text-mono-muted">' + esc(shortAge(hours)) + '</span>' : '';
 
-  return '<div class="flex items-center gap-1.5 py-0.5">' +
+  return '<div class="flex items-center gap-1.5 py-1">' +
     '<span class="shrink-0 rounded border px-1 py-[1px] text-[9px] font-bold uppercase ' + SRC_CLS.GITHUB + '">GITHUB</span>' +
     '<span class="truncate text-zinc-500 dark:text-mono-muted">' + esc(parsed.owner) + '<span class="text-zinc-300 dark:text-zinc-600"> / </span></span>' +
     '<a class="truncate font-medium text-zinc-700 hover:text-emerald-600 dark:text-slate-300 dark:hover:text-brand" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer nofollow">' + esc(parsed.repo) + '</a>' +
@@ -917,7 +941,7 @@ function advisoryRow(item) {
   var tags = Array.isArray(item[1]) ? item[1].map(String) : [];
   var tag = tags.includes('Vendor Advisory') ? 'VENDOR' : tags.includes('Patch') ? 'PATCH' : 'ADVISORY';
   var tagCls = SRC_CLS[tag] || SRC_CLS.ADVISORY;
-  return '<div class="flex items-center gap-1.5 py-0.5">' +
+  return '<div class="flex items-center gap-1.5 py-1">' +
     '<span class="shrink-0 rounded border px-1 py-[1px] text-[9px] font-bold uppercase ' + tagCls + '" title="' + esc(tags.join(', ') || 'Advisory') + '">' + tag + '</span>' +
     '<a class="truncate text-zinc-600 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-brand" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer nofollow">' + esc(plainLinkLabel(url)) + '</a></div>';
 }
@@ -940,15 +964,76 @@ function rankedLinks(entry) {
   return entry._ranked;
 }
 
-function resultRow(entry) {
+/* ================================================================
+   RENDERING — Compact result row (left list)
+   ================================================================ */
+function compactRow(entry) {
   var id = entry.cve;
-  var open = state.descOpen.has(id);
-  var all = state.pocOpen.has(id);
   var links = rankedLinks(entry);
-  var visible = all ? links : links.slice(0, POC_PREVIEW);
+  var selected = state.selectedCve === id;
+
+  var canonical = canonicalCvss(id);
+  var fallback = ratings[id] || {};
+  var severity = canonical ? canonical.severity : entrySeverity(entry);
+  var cvss = canonical ? canonical.score : fallback.cvss;
+
+  var sevChip = severity && SEV_CLS[severity]
+    ? '<span class="shrink-0 rounded border px-1 py-[1px] text-[9px] font-bold ' + SEV_CLS[severity] + '">' +
+      esc(severity[0]) + (cvss != null ? ' ' + cvss : '') + '</span>'
+    : '';
+
+  var scored = epss[id] || null;
+  var epssChip = scored && scored[0] >= 0.1
+    ? '<span class="shrink-0 font-mono text-[9px] font-bold text-orange-500 dark:text-orange-400">' +
+      (scored[0] * 100).toFixed(0) + '%</span>'
+    : '';
+
+  var kevChip = kev[id]
+    ? '<span class="shrink-0 rounded border border-red-400 bg-red-50 px-1 py-[1px] text-[8px] font-bold uppercase text-red-600 dark:border-red-700 dark:bg-red-950 dark:text-red-400">KEV</span>'
+    : '';
+
+  var archBadge = archiveIndex[id]
+    ? '<span class="shrink-0 w-1.5 h-1.5 rounded-full bg-emerald-500" title="In archive"></span>'
+    : '';
+
+  var titleSnippet = entry.title
+    ? '<p class="truncate font-mono text-[10px] text-zinc-500 dark:text-mono-muted">' + esc(entry.title) + '</p>'
+    : (entry.desc
+      ? '<p class="truncate font-mono text-[10px] text-zinc-500 dark:text-mono-muted">' + esc(entry.desc.slice(0, 120)) + '</p>'
+      : '');
+
+  return '<div class="cs-row cursor-pointer px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-mono-hover' +
+    (selected ? ' bg-emerald-50/50 dark:bg-emerald-950/20' : '') +
+    '" data-cve="' + esc(id) + '">' +
+    '<div class="flex items-center gap-1.5">' +
+      archBadge +
+      '<span class="shrink-0 font-mono text-xs font-bold text-emerald-600 dark:text-brand">' + esc(id) + '</span>' +
+      '<span class="shrink-0 font-mono text-[10px] text-zinc-400 dark:text-mono-muted">' + fmtNum(links.length) + '</span>' +
+      sevChip + epssChip + kevChip +
+    '</div>' +
+    titleSnippet +
+    '</div>';
+}
+
+/* ================================================================
+   RENDERING — Detail sidebar content
+   ================================================================ */
+function renderSidebar(entry) {
+  if (!entry) {
+    sidebar.hidden = true;
+    sidebar.classList.add('translate-x-full');
+    backdrop.hidden = true;
+    document.body.style.overflow = '';
+    return;
+  }
+
+  var id = entry.cve;
+  var links = rankedLinks(entry);
+  var allPoc = state.pocOpen.has(id);
+  var visible = allPoc ? links : links.slice(0, POC_PREVIEW);
   var moreButton = links.length > POC_PREVIEW
-    ? '<button type="button" class="mt-0.5 font-mono text-[11px] text-emerald-600 hover:underline dark:text-brand" data-toggle-poc="' + esc(id) + '">' +
-      (all ? '&#8593; show fewer' : '+ ' + fmtNum(links.length - POC_PREVIEW) + ' more') + '</button>'
+    ? '<button type="button" class="mt-1 font-mono text-[11px] text-emerald-600 hover:underline dark:text-brand" data-toggle-poc="' + esc(id) + '">' +
+      (allPoc ? '&#8593; show fewer' : '+ ' + fmtNum(links.length - POC_PREVIEW) + ' more') + '</button>'
     : '';
 
   var advOpen = state.advisoryOpen.has(id);
@@ -958,13 +1043,8 @@ function resultRow(entry) {
   });
   var shownAdv = advOpen ? advisories : advisories.slice(0, ADVISORY_PREVIEW);
   var advMore = advisories.length > ADVISORY_PREVIEW
-    ? '<button type="button" class="mt-0.5 font-mono text-[11px] text-emerald-600 hover:underline dark:text-brand" data-toggle-advisory="' + esc(id) + '">' +
+    ? '<button type="button" class="mt-1 font-mono text-[11px] text-emerald-600 hover:underline dark:text-brand" data-toggle-advisory="' + esc(id) + '">' +
       (advOpen ? '&#8593; show fewer' : '+ ' + fmtNum(advisories.length - ADVISORY_PREVIEW) + ' more') + '</button>'
-    : '';
-  var advHtml = advisories.length
-    ? '<div class="mt-2 border-t border-zinc-100 pt-2 dark:border-mono-border/30">' +
-      '<p class="mb-1 font-mono text-[10px] font-bold uppercase text-zinc-400 dark:text-mono-muted">Advisories <span class="font-normal">' + fmtNum(advisories.length) + '</span></p>' +
-      shownAdv.map(advisoryRow).join('') + advMore + '</div>'
     : '';
 
   var canonical = canonicalCvss(id);
@@ -1006,26 +1086,67 @@ function resultRow(entry) {
 
   var archiveUrl = archiveIndex[id];
   var archBadge = archiveUrl
-    ? '<a class="rounded border border-emerald-300 bg-emerald-50 px-1 py-[1px] text-[9px] font-bold uppercase text-emerald-600 hover:underline dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400" href="' + esc(archiveUrl) + '">in archive &#8594;</a>'
+    ? '<a class="rounded border border-emerald-300 bg-emerald-50 px-1.5 py-[1px] text-[9px] font-bold uppercase text-emerald-600 hover:underline dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400" href="' + esc(archiveUrl) + '">in archive &#8594;</a>'
     : '';
 
-  return '<div class="px-3 py-3">' +
-    '<div class="flex flex-wrap items-center gap-1.5">' +
-      '<a class="font-mono text-sm font-bold text-emerald-600 hover:underline dark:text-brand" href="https://nvd.nist.gov/vuln/detail/' + encodeURIComponent(id) + '" target="_blank" rel="noopener">' + esc(id) + '</a>' +
-      archBadge +
-      '<span class="font-mono text-[11px] text-zinc-500 dark:text-mono-muted">' + fmtNum(links.length) + ' PoC' + (links.length === 1 ? '' : 's') + '</span>' +
-      sevChip + epssChip + kevChip +
-      '<a class="font-mono text-[10px] text-zinc-400 hover:text-emerald-600 dark:text-mono-muted dark:hover:text-brand" href="https://nvd.nist.gov/vuln/detail/' + encodeURIComponent(id) + '" target="_blank" rel="noopener">NVD &#8599;</a>' +
-      '<a class="font-mono text-[10px] text-zinc-400 hover:text-emerald-600 dark:text-mono-muted dark:hover:text-brand" href="https://www.cve.org/CVERecord?id=' + encodeURIComponent(id) + '" target="_blank" rel="noopener">CVE.ORG &#8599;</a>' +
-    '</div>' +
-    (entry.title ? '<p class="mt-1 font-mono text-xs font-medium text-zinc-800 dark:text-zinc-200">' + esc(entry.title) + '</p>' : '') +
-    '<p class="mt-1 font-mono text-[11px] leading-relaxed text-zinc-500 dark:text-mono-muted' + (open ? '' : ' line-clamp-3') + '">' + esc(entry.desc || '') + '</p>' +
-    '<button type="button" class="font-mono text-[10px] text-zinc-400 hover:text-emerald-600 dark:text-mono-muted dark:hover:text-brand" data-toggle-desc="' + esc(id) + '">' + (open ? '&#8593; collapse' : '&#8595; full description') + '</button>' +
-    '<div class="mt-1.5 font-mono text-xs">' + visible.map(pocRow).join('') + moreButton + '</div>' +
-    advHtml +
+  sidebarTitle.textContent = id;
+
+  var html = '';
+
+  // Badges row
+  html += '<div class="flex flex-wrap items-center gap-1.5">' +
+    archBadge + sevChip + epssChip + kevChip +
+    '<span class="font-mono text-[11px] text-zinc-500 dark:text-mono-muted">' + fmtNum(links.length) + ' PoC' + (links.length === 1 ? '' : 's') + '</span>' +
     '</div>';
+
+  // External links
+  html += '<div class="mt-2 flex items-center gap-3">' +
+    '<a class="font-mono text-[10px] text-zinc-400 hover:text-emerald-600 dark:text-mono-muted dark:hover:text-brand" href="https://nvd.nist.gov/vuln/detail/' + encodeURIComponent(id) + '" target="_blank" rel="noopener">NVD &#8599;</a>' +
+    '<a class="font-mono text-[10px] text-zinc-400 hover:text-emerald-600 dark:text-mono-muted dark:hover:text-brand" href="https://www.cve.org/CVERecord?id=' + encodeURIComponent(id) + '" target="_blank" rel="noopener">CVE.ORG &#8599;</a>' +
+    '</div>';
+
+  // Title
+  if (entry.title) {
+    html += '<p class="mt-3 font-mono text-xs font-medium text-zinc-800 dark:text-zinc-200">' + esc(entry.title) + '</p>';
+  }
+
+  // Description
+  if (entry.desc) {
+    html += '<p class="mt-2 font-mono text-[11px] leading-relaxed text-zinc-500 dark:text-mono-muted">' + esc(entry.desc) + '</p>';
+  }
+
+  // PoC section
+  html += '<div class="mt-4 border-t border-zinc-100 pt-3 dark:border-mono-border/30">' +
+    '<p class="mb-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-mono-muted">Proof of Concepts <span class="font-normal">' + fmtNum(links.length) + '</span></p>' +
+    '<div class="font-mono text-xs">' + visible.map(pocRow).join('') + moreButton + '</div>' +
+    '</div>';
+
+  // Advisories section
+  if (advisories.length) {
+    html += '<div class="mt-4 border-t border-zinc-100 pt-3 dark:border-mono-border/30">' +
+      '<p class="mb-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-mono-muted">Advisories <span class="font-normal">' + fmtNum(advisories.length) + '</span></p>' +
+      '<div class="font-mono text-xs">' + shownAdv.map(advisoryRow).join('') + advMore + '</div>' +
+      '</div>';
+  }
+
+  sidebarBody.innerHTML = html;
+
+  // Show sidebar
+  sidebar.hidden = false;
+  requestAnimationFrame(function() {
+    sidebar.classList.remove('translate-x-full');
+  });
+
+  // Mobile: show backdrop + lock scroll
+  if (window.innerWidth < 1024) {
+    backdrop.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
 }
 
+/* ================================================================
+   RENDERING — Results list + sidebar
+   ================================================================ */
 function renderResults(elapsed) {
   var results = state.results;
   trendingEl.hidden = true;
@@ -1036,6 +1157,7 @@ function renderResults(elapsed) {
     resultList.innerHTML = '<div class="px-3 py-8 text-center font-mono text-sm text-zinc-400 dark:text-mono-muted">No results' + subject + '</div>';
     resultCount.textContent = '';
     moreWrap.hidden = true;
+    closeSidebar();
     if (elapsed != null) statusEl.textContent = 'no results in ' + Math.max(1, Math.round(elapsed)) + 'ms';
     return;
   }
@@ -1043,22 +1165,47 @@ function renderResults(elapsed) {
   var shown = results.slice(0, state.shown);
   var remaining = results.length - shown.length;
   resultCount.textContent = fmtNum(results.length) + ' CVE' + (results.length === 1 ? '' : 's') + ' · ' + fmtNum(results.pocTotal || 0) + ' PoC' + ((results.pocTotal || 0) === 1 ? '' : 's');
-  resultList.innerHTML = shown.map(resultRow).join('');
+  resultList.innerHTML = shown.map(compactRow).join('');
   moreWrap.hidden = remaining <= 0;
   if (remaining > 0) moreBtn.textContent = '+ ' + fmtNum(remaining) + ' more matching CVEs';
 
-  // Hide expander on short descriptions
-  resultList.querySelectorAll('[data-toggle-desc]').forEach(function(btn) {
-    var desc = btn.previousElementSibling;
-    if (desc && !desc.classList.contains('line-clamp-3')) return;
-    if (desc && desc.scrollHeight <= desc.clientHeight + 1) btn.hidden = true;
-  });
+  // Auto-select first result if nothing selected or selected not in results
+  if (results.length && (!state.selectedCve || !results.find(function(e){return e.cve === state.selectedCve;}))) {
+    state.selectedCve = results[0].cve;
+    highlightRow(state.selectedCve);
+    renderSidebar(results[0]);
+  } else if (state.selectedCve) {
+    var sel = results.find(function(e){return e.cve === state.selectedCve;});
+    if (sel) renderSidebar(sel);
+  }
 
   if (elapsed != null) {
     var note = results.corrected
       ? results.corrected.map(function(c){return c[1]+' for '+c[0];}).join(', ') + ' · '
       : '';
     statusEl.textContent = note + 'matched in ' + Math.max(1, Math.round(elapsed)) + 'ms';
+  }
+}
+
+function highlightRow(cve) {
+  resultList.querySelectorAll('.cs-row').forEach(function(row) {
+    var active = row.dataset.cve === cve;
+    row.classList.toggle('bg-emerald-50/50', active);
+    row.classList.toggle('dark:bg-emerald-950/20', active);
+  });
+}
+
+function closeSidebar() {
+  state.selectedCve = null;
+  sidebar.classList.add('translate-x-full');
+  backdrop.hidden = true;
+  document.body.style.overflow = '';
+  highlightRow(null);
+  // On desktop, hide after transition
+  if (window.innerWidth >= 1024) {
+    sidebar.hidden = true;
+  } else {
+    setTimeout(function() { sidebar.hidden = true; }, 200);
   }
 }
 
@@ -1069,6 +1216,7 @@ function render() {
   syncURL();
   if (state.query.length < MIN_QUERY && !hasActiveFilters()) {
     statusEl.textContent = state.ready ? '' : 'loading index…';
+    closeSidebar();
     renderTrending();
     return;
   }
@@ -1214,9 +1362,9 @@ inputEl.addEventListener('input', function() {
   if (next === state.query) return;
   state.query = next;
   state.shown = PAGE_SIZE;
+  state.selectedCve = null;
   clearTimeout(searchTimer);
 
-  // Expansion hints
   var slug = next.toLowerCase().replace(/[^a-z0-9]/g, '');
   if (NAMED[slug]) { hintEl.textContent = slug + ' → ' + NAMED[slug]; hintEl.hidden = false; }
   else {
@@ -1239,6 +1387,7 @@ document.getElementById('cs-filters').addEventListener('click', function(e) {
   if (chip && !chip.disabled) {
     toggleFilter(chip.dataset.filterKind, chip.dataset.filterValue);
     state.shown = PAGE_SIZE;
+    state.selectedCve = null;
     syncFilterControls();
     render();
     return;
@@ -1246,6 +1395,7 @@ document.getElementById('cs-filters').addEventListener('click', function(e) {
   if (e.target === kevToggle || e.target.closest('#cs-kev-toggle') === kevToggle) {
     state.kevOnly = !state.kevOnly;
     state.shown = PAGE_SIZE;
+    state.selectedCve = null;
     syncFilterControls();
     render();
     return;
@@ -1257,6 +1407,7 @@ document.getElementById('cs-filters').addEventListener('click', function(e) {
       FILTER_OPTIONS[kind].forEach(function(o) { state.filters[kind].add(o[0]); });
     });
     state.shown = PAGE_SIZE;
+    state.selectedCve = null;
     syncFilterControls();
     render();
   }
@@ -1280,30 +1431,55 @@ document.getElementById('cs-trend-mode').addEventListener('click', function(e) {
   renderTrending();
 });
 
-// Result interactions (description expand, poc expand, advisory expand, show more)
-resultsEl.addEventListener('click', function(e) {
-  var desc = e.target.closest('[data-toggle-desc]');
+// Result list click — select row and open sidebar
+resultList.addEventListener('click', function(e) {
+  var row = e.target.closest('.cs-row[data-cve]');
+  if (!row) {
+    // More button
+    if (e.target.closest('#cs-more-btn')) {
+      state.shown += PAGE_SIZE;
+      renderResults(null);
+    }
+    return;
+  }
+  var cve = row.dataset.cve;
+  var entry = state.results.find(function(r){return r.cve === cve;});
+  if (!entry) return;
+  state.selectedCve = cve;
+  highlightRow(cve);
+  renderSidebar(entry);
+});
+
+// Sidebar interactions (poc expand, advisory expand)
+sidebarBody.addEventListener('click', function(e) {
   var poc = e.target.closest('[data-toggle-poc]');
   var advisory = e.target.closest('[data-toggle-advisory]');
-  var more = e.target.closest('#cs-more-btn');
-  if (desc) {
-    var id = desc.dataset.toggleDesc;
-    state.descOpen.has(id) ? state.descOpen.delete(id) : state.descOpen.add(id);
-  } else if (poc) {
-    var id2 = poc.dataset.togglePoc;
-    state.pocOpen.has(id2) ? state.pocOpen.delete(id2) : state.pocOpen.add(id2);
+  if (poc) {
+    var id = poc.dataset.togglePoc;
+    state.pocOpen.has(id) ? state.pocOpen.delete(id) : state.pocOpen.add(id);
   } else if (advisory) {
-    var id3 = advisory.dataset.toggleAdvisory;
-    state.advisoryOpen.has(id3) ? state.advisoryOpen.delete(id3) : state.advisoryOpen.add(id3);
-  } else if (more) {
-    state.shown += PAGE_SIZE;
+    var id2 = advisory.dataset.toggleAdvisory;
+    state.advisoryOpen.has(id2) ? state.advisoryOpen.delete(id2) : state.advisoryOpen.add(id2);
   } else {
     return;
   }
-  renderResults(null);
+  var entry = state.results.find(function(r){return r.cve === state.selectedCve;});
+  if (entry) renderSidebar(entry);
 });
 
-// Year browse — set query directly and render (don't rely on synthetic input event)
+// More button
+moreWrap.addEventListener('click', function(e) {
+  if (e.target.closest('#cs-more-btn')) {
+    state.shown += PAGE_SIZE;
+    renderResults(null);
+  }
+});
+
+// Sidebar close
+sidebarClose.addEventListener('click', closeSidebar);
+backdrop.addEventListener('click', closeSidebar);
+
+// Year browse
 yearsEl.addEventListener('click', function(e) {
   var span = e.target.closest('[data-year]');
   if (!span) return;
@@ -1311,22 +1487,46 @@ yearsEl.addEventListener('click', function(e) {
   inputEl.value = q;
   state.query = q;
   state.shown = PAGE_SIZE;
+  state.selectedCve = null;
   hintEl.hidden = true;
   clearTimeout(searchTimer);
   render();
 });
 
-// Global keyboard: typing focuses search, slash shortcut, escape clears
+// Keyboard: Escape closes sidebar, up/down navigate results, typing focuses search
 document.addEventListener('keydown', function(e) {
   if (e.ctrlKey || e.metaKey || e.altKey) return;
-  if (document.activeElement === inputEl) {
-    if (e.key === 'Escape') {
+
+  // Escape closes sidebar first, then clears search
+  if (e.key === 'Escape') {
+    if (state.selectedCve && !sidebar.hidden) {
+      closeSidebar();
+      e.preventDefault();
+      return;
+    }
+    if (document.activeElement === inputEl) {
       inputEl.value = '';
       inputEl.dispatchEvent(new Event('input', { bubbles: true }));
       inputEl.blur();
     }
     return;
   }
+
+  // Arrow navigation through results
+  if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && state.results.length && !sidebar.hidden) {
+    e.preventDefault();
+    var idx = state.results.findIndex(function(r){return r.cve === state.selectedCve;});
+    if (e.key === 'ArrowDown') idx = Math.min(idx + 1, Math.min(state.shown, state.results.length) - 1);
+    else idx = Math.max(idx - 1, 0);
+    state.selectedCve = state.results[idx].cve;
+    highlightRow(state.selectedCve);
+    renderSidebar(state.results[idx]);
+    var activeRow = resultList.querySelector('[data-cve="' + state.selectedCve + '"]');
+    if (activeRow) activeRow.scrollIntoView({ block: 'nearest' });
+    return;
+  }
+
+  if (document.activeElement === inputEl) return;
   var active = document.activeElement;
   var editing = active && (active.isContentEditable || ['INPUT','TEXTAREA','SELECT','BUTTON'].includes(active.tagName));
   if (editing) return;
@@ -1352,7 +1552,6 @@ syncFilterControls();
 renderYears();
 
 (async function() {
-  // Load trending + metadata first (small, has stats)
   try {
     var meta = await loadJSON(DATA_ROOT + '/trending_poc.json', { cache: 'no-store' });
     indexMeta = meta;
@@ -1372,7 +1571,6 @@ renderYears();
   paintStats();
   render();
 
-  // Archive cross-reference (our verified PoCs)
   fetch('{{ "/index.json" | relURL }}').then(function(r) { return r.ok ? r.json() : []; })
     .then(function(entries) {
       (entries || []).forEach(function(e) {
@@ -1381,7 +1579,6 @@ renderYears();
       });
     }).catch(function() {});
 
-  // Parallel: KEV, CVSS, nuclei, EPSS, repo_meta
   loadJSON(DATA_ROOT + '/kev.json', { cache: 'no-cache' }).then(function(data) {
     kev = data || {};
     kevToggle.disabled = false;
@@ -1415,7 +1612,6 @@ renderYears();
     if (state.ready && (state.query || hasActiveFilters())) renderResults(null);
   }).catch(function(err) { console.warn('repo_meta:', err.message); });
 
-  // Main dataset last (biggest)
   var loadAdvisories = function() {
     loadJSON(DATA_ROOT + '/advisories.json', { cache: 'no-cache' }).then(function(data) {
       for (var id in (data || {})) (metadata[id] || (metadata[id] = {})).advisories = data[id];
