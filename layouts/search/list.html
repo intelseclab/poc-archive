@@ -38,7 +38,7 @@
       class="w-full rounded-lg border border-zinc-300 bg-zinc-50 py-3 pl-11 pr-4 font-mono text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 dark:border-mono-border dark:bg-mono-bg dark:text-white dark:placeholder:text-mono-muted dark:focus:border-brand dark:focus:ring-brand" />
   </div>
   <div class="mt-1.5 flex items-center justify-between">
-    <p id="cs-hint" class="hidden font-mono text-[11px] text-emerald-600 dark:text-brand"></p>
+    <p id="cs-hint" hidden class="font-mono text-[11px] text-emerald-600 dark:text-brand"></p>
     <p id="cs-status" class="ml-auto font-mono text-[11px] text-zinc-400 dark:text-mono-muted"></p>
   </div>
 </div>
@@ -97,7 +97,7 @@
 </div>
 
 <!-- Results (search view) -->
-<div id="cs-results" class="mt-5 hidden">
+<div id="cs-results" class="mt-5" hidden>
   <div class="overflow-hidden rounded border border-zinc-200 bg-white dark:border-mono-border dark:bg-mono-card">
     <div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50/60 px-3 py-2.5 dark:border-mono-border dark:bg-mono-bg/50">
       <span class="flex items-center gap-2 font-mono text-xs font-bold text-zinc-900 dark:text-white">
@@ -108,7 +108,7 @@
     </div>
     <div id="cs-result-list" class="divide-y divide-zinc-200 dark:divide-mono-border/40"></div>
   </div>
-  <div id="cs-more-wrap" class="mt-4 hidden text-center">
+  <div id="cs-more-wrap" class="mt-4 text-center" hidden>
     <button type="button" id="cs-more-btn" class="rounded border border-zinc-300 px-4 py-1.5 font-mono text-xs text-zinc-600 hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-mono-muted dark:hover:border-brand dark:hover:text-brand">Show more</button>
   </div>
 </div>
@@ -1303,12 +1303,17 @@ resultsEl.addEventListener('click', function(e) {
   renderResults(null);
 });
 
-// Year browse
+// Year browse — set query directly and render (don't rely on synthetic input event)
 yearsEl.addEventListener('click', function(e) {
   var span = e.target.closest('[data-year]');
   if (!span) return;
-  inputEl.value = 'CVE-' + span.dataset.year;
-  inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+  var q = 'CVE-' + span.dataset.year;
+  inputEl.value = q;
+  state.query = q;
+  state.shown = PAGE_SIZE;
+  hintEl.hidden = true;
+  clearTimeout(searchTimer);
+  render();
 });
 
 // Global keyboard: typing focuses search, slash shortcut, escape clears
