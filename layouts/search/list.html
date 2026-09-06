@@ -1,0 +1,632 @@
+{{ define "main" }}
+{{- /* Full CVE + PoC search engine powered by the monitor pipeline.
+       Server-side search over 170K+ CVEs via monitor.intelseclab.com.
+
+       ── Monitor API contract (endpoints the pipeline needs to expose) ──
+
+       GET /cves/stats
+         → { total_cves, with_pocs, kev_count, last_sync }
+
+       GET /cves/search?q=...&severity=...&kev=1&sort=relevance|newest|pocs&page=1&limit=50
+         → { results: [{cve,desc,title,severity,cvss,epss,kev,kev_date,kev_ransomware,
+              published,poc_count,pocs:[{url,stars,pushed,source}]}], total, page, pages }
+
+       GET /cves/trending?limit=20
+         → { entries: [{name,url,cve,desc,stars,pushed}] }
+
+       All endpoints share the same CORS config as /list.
+*/ -}}
+
+<header class="border-b border-zinc-200 pb-6 dark:border-mono-border">
+  <nav class="mb-3 font-mono text-xs text-zinc-500 dark:text-mono-muted">
+    <a href="{{ "/" | relURL }}" class="hover:text-emerald-600 dark:hover:text-white">home</a>
+    <span class="text-zinc-300 dark:text-zinc-700"> / </span>
+    <span class="text-zinc-700 dark:text-slate-300">search</span>
+  </nav>
+  <h1 class="font-mono text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white">CVE Search</h1>
+  <p class="mt-2 max-w-3xl text-sm leading-relaxed text-zinc-600 dark:text-mono-muted">
+    Search the full CVE index with linked proof-of-concept repositories, exploits, and templates.
+    Enriched daily with CISA KEV status, EPSS scores, and multi-source PoC discovery across GitHub,
+    Nuclei, Metasploit, ExploitDB, and Vulhub.
+  </p>
+</header>
+
+<!-- Stats -->
+<section class="grid grid-cols-3 gap-3 py-6">
+  {{- range slice
+    (dict "id" "cs-total" "label" "CVEs indexed"    "accent" "")
+    (dict "id" "cs-pocs"  "label" "With PoCs"       "accent" "text-emerald-600 dark:text-brand")
+    (dict "id" "cs-kev"   "label" "Known exploited" "accent" "text-red-500 dark:text-red-400") }}
+  <div class="rounded border border-zinc-200 bg-white p-3.5 dark:border-mono-border dark:bg-mono-card">
+    <p class="font-mono text-[10px] uppercase tracking-wider text-zinc-500 dark:text-mono-muted">{{ .label }}</p>
+    <h3 id="{{ .id }}" class="mt-1 font-mono text-xl font-bold {{ if .accent }}{{ .accent }}{{ else }}text-zinc-900 dark:text-white{{ end }}">—</h3>
+  </div>
+  {{- end }}
+</section>
+
+<!-- Search -->
+<div class="rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card">
+  <div class="relative">
+    <svg class="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400 dark:text-mono-muted" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <input type="search" id="cs-input" autocomplete="off"
+      placeholder="Search by CVE ID, product, keyword, or name (log4shell, sqli, rce…)"
+      class="w-full rounded-lg border border-zinc-300 bg-zinc-50 py-3 pl-11 pr-4 font-mono text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 dark:border-mono-border dark:bg-mono-bg dark:text-white dark:placeholder:text-mono-muted dark:focus:border-brand dark:focus:ring-brand" />
+  </div>
+  <div class="mt-1.5 flex items-center justify-between">
+    <p id="cs-hint" class="hidden font-mono text-[11px] text-emerald-600 dark:text-brand"></p>
+    <p id="cs-status" class="ml-auto font-mono text-[11px] text-zinc-400 dark:text-mono-muted"></p>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="mt-3 flex flex-wrap items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-4 py-3 dark:border-mono-border dark:bg-mono-card">
+  <span class="mr-1 font-mono text-[11px] text-zinc-500 dark:text-mono-muted">Severity:</span>
+  <div class="flex flex-wrap gap-1.5" id="cs-severity">
+    <button type="button" data-s="all"      class="cs-sev rounded border border-emerald-400 bg-emerald-50 px-2.5 py-1 font-mono text-[11px] text-emerald-600 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">all</button>
+    <button type="button" data-s="CRITICAL" class="cs-sev rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">critical</button>
+    <button type="button" data-s="HIGH"     class="cs-sev rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">high</button>
+    <button type="button" data-s="MEDIUM"   class="cs-sev rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">medium</button>
+    <button type="button" data-s="LOW"      class="cs-sev rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">low</button>
+  </div>
+
+  <span class="mx-1.5 text-zinc-300 dark:text-zinc-700">|</span>
+
+  <button type="button" id="cs-kev-toggle"
+    class="rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted"
+    title="Show only CVEs in CISA Known Exploited Vulnerabilities catalog">KEV only</button>
+
+  <span class="mx-1.5 text-zinc-300 dark:text-zinc-700">|</span>
+  <span class="font-mono text-[11px] text-zinc-500 dark:text-mono-muted">Sort:</span>
+  <select id="cs-sort" class="rounded border border-zinc-300 bg-zinc-50 px-2 py-1 font-mono text-[11px] text-zinc-700 focus:border-emerald-400 focus:outline-none dark:border-mono-border dark:bg-mono-bg dark:text-zinc-300 dark:focus:border-brand">
+    <option value="relevance">Relevance</option>
+    <option value="newest">Newest</option>
+    <option value="pocs">Most PoCs</option>
+  </select>
+
+  <span class="ml-auto font-mono text-[11px] text-zinc-400 dark:text-mono-muted" id="cs-sync"></span>
+</div>
+
+<!-- Trending (default view) -->
+<div id="cs-trending" class="mt-6">
+  <div class="overflow-hidden rounded border border-zinc-200 bg-white dark:border-mono-border dark:bg-mono-card">
+    <div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50/60 px-3 py-2.5 dark:border-mono-border dark:bg-mono-bg/50">
+      <span class="flex items-center gap-2 font-mono text-xs font-bold text-zinc-900 dark:text-white">
+        <svg class="h-4 w-4 text-emerald-600 dark:text-brand" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        TRENDING POCS
+      </span>
+      <div class="flex gap-1" id="cs-trend-mode">
+        <button type="button" data-m="weighted" class="cs-tm rounded border border-emerald-400 bg-emerald-50 px-2 py-0.5 font-mono text-[10px] text-emerald-600 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">weighted</button>
+        <button type="button" data-m="recent" class="cs-tm rounded border border-zinc-300 bg-zinc-50 px-2 py-0.5 font-mono text-[10px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">newest</button>
+      </div>
+    </div>
+    <div id="cs-trend-note" class="border-b border-zinc-100 px-3 py-1.5 font-mono text-[10px] text-zinc-400 dark:border-mono-border/50 dark:text-mono-muted">stars weighted against time since last commit</div>
+    <div id="cs-trend-rows" class="divide-y divide-zinc-100 dark:divide-mono-border/30">
+      <div class="px-3 py-8 text-center font-mono text-sm text-zinc-400 dark:text-mono-muted">Loading trending data…</div>
+    </div>
+  </div>
+</div>
+
+<!-- Results (search view) -->
+<div id="cs-results" class="mt-6 hidden">
+  <div class="overflow-hidden rounded border border-zinc-200 bg-white dark:border-mono-border dark:bg-mono-card">
+    <div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50/60 px-3 py-2.5 dark:border-mono-border dark:bg-mono-bg/50">
+      <span class="flex items-center gap-2 font-mono text-xs font-bold text-zinc-900 dark:text-white">
+        <svg class="h-4 w-4 text-emerald-600 dark:text-brand" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        RESULTS
+      </span>
+      <span class="font-mono text-xs text-zinc-500 dark:text-mono-muted" id="cs-result-count"></span>
+    </div>
+    <div id="cs-result-list" class="divide-y divide-zinc-200 dark:divide-mono-border/40"></div>
+  </div>
+  <div id="cs-more" class="mt-4 hidden text-center">
+    <button type="button" id="cs-more-btn" class="rounded border border-zinc-300 px-4 py-1.5 font-mono text-xs text-zinc-600 hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-mono-muted dark:hover:border-brand dark:hover:text-brand">Show more</button>
+  </div>
+</div>
+
+<!-- Sync pending banner (shown until pipeline is live) -->
+<div id="cs-pending" class="mt-6 hidden rounded border border-dashed border-zinc-300 bg-zinc-50/50 p-6 text-center dark:border-mono-border dark:bg-mono-bg/30">
+  <p class="font-mono text-sm text-zinc-500 dark:text-mono-muted">
+    The CVE pipeline is syncing — this page will populate once the daily run completes.
+  </p>
+  <p class="mt-2 font-mono text-xs text-zinc-400 dark:text-mono-muted">
+    Meanwhile, check the <a href="{{ "/watchlist/" | relURL }}" class="underline hover:text-emerald-600 dark:hover:text-brand">watchlist</a>
+    for recent candidates, or browse the <a href="{{ "/pocs/" | relURL }}" class="underline hover:text-emerald-600 dark:hover:text-brand">verified archive</a>.
+  </p>
+</div>
+
+<script>
+(function () {
+  /* ================================================================
+     CONSTANTS
+     ================================================================ */
+  var API = "https://monitor.intelseclab.com";
+
+  var ALIASES = {
+    sqli:["sql injection"],xss:["cross-site scripting","cross site scripting"],
+    rce:["remote code execution"],lpe:["privilege escalation"],
+    privesc:["privilege escalation"],eop:["elevation of privilege","privilege escalation"],
+    lfi:["local file inclusion"],rfi:["remote file inclusion"],
+    xxe:["xml external entity"],csrf:["cross-site request forgery"],
+    ssrf:["server-side request forgery"],ssti:["server-side template injection"],
+    idor:["insecure direct object reference"],dos:["denial of service"],
+    cmdi:["command injection"],traversal:["path traversal","directory traversal"],
+    deserialization:["deserialization of untrusted data","insecure deserialization"],
+    bypass:["authentication bypass","authorization bypass"],
+    overflow:["buffer overflow","heap overflow","stack overflow","integer overflow"],
+    rop:["return oriented programming"],uaf:["use after free"],
+    oob:["out of bounds"],bof:["buffer overflow"]
+  };
+
+  var NAMED = {
+    log4shell:"CVE-2021-44228",heartbleed:"CVE-2014-0160",eternalblue:"CVE-2017-0144",
+    eternalromance:"CVE-2017-0145",wannacry:"CVE-2017-0144",printnightmare:"CVE-2021-34527",
+    zerologon:"CVE-2020-1472",spring4shell:"CVE-2022-22965",proxyshell:"CVE-2021-34473",
+    proxylogon:"CVE-2021-26855",proxynotshell:"CVE-2022-41040",citrixbleed:"CVE-2023-4966",
+    regresshion:"CVE-2024-6387",bluekeep:"CVE-2019-0708",shellshock:"CVE-2014-6271",
+    dirtypipe:"CVE-2022-0847",dirtycow:"CVE-2016-5195",follina:"CVE-2022-30190",
+    ghostcat:"CVE-2020-1938",looneytunables:"CVE-2023-4911",text4shell:"CVE-2022-42889",
+    pwnkit:"CVE-2021-4034",baronsamedit:"CVE-2021-3156",moveit:"CVE-2023-34362",
+    smbghost:"CVE-2020-0796",petitpotam:"CVE-2021-36942",sambacry:"CVE-2017-7494",
+    drupalgeddon:"CVE-2014-3704",drupalgeddon2:"CVE-2018-7600",curveball:"CVE-2020-0601",
+    sigred:"CVE-2020-1350",poodle:"CVE-2014-3566",meltdown:"CVE-2017-5754",
+    spectre:"CVE-2017-5753",krack:"CVE-2017-13077",zenbleed:"CVE-2023-20593",
+    downfall:"CVE-2022-40982",terrapin:"CVE-2023-48795",xzbackdoor:"CVE-2024-3094"
+  };
+
+  var SEV_CLS = {
+    CRITICAL: "border-red-300 bg-red-50 text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400",
+    HIGH: "border-orange-300 bg-orange-50 text-orange-600 dark:border-orange-800 dark:bg-orange-950 dark:text-orange-400",
+    MEDIUM: "border-yellow-300 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-400",
+    LOW: "border-zinc-300 bg-zinc-50 text-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+  };
+
+  var SRC_CLS = {
+    GITHUB: "border-zinc-300 bg-zinc-50 text-zinc-600 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+    GHSA: "border-purple-300 bg-purple-50 text-purple-600 dark:border-purple-800 dark:bg-purple-950 dark:text-purple-400",
+    NUCLEI: "border-blue-300 bg-blue-50 text-blue-600 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-400",
+    MSF: "border-red-300 bg-red-50 text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400",
+    EDB: "border-orange-300 bg-orange-50 text-orange-600 dark:border-orange-800 dark:bg-orange-950 dark:text-orange-400",
+    VULHUB: "border-teal-300 bg-teal-50 text-teal-600 dark:border-teal-800 dark:bg-teal-950 dark:text-teal-400",
+    REFERENCE: "border-zinc-300 bg-zinc-50 text-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+  };
+
+  var ACTIVE = ["border-emerald-400","bg-emerald-50","text-emerald-600",
+    "dark:text-emerald-400","dark:bg-emerald-950","dark:border-emerald-700"];
+
+  /* ================================================================
+     STATE
+     ================================================================ */
+  var state = {
+    query: "", severity: "all", kevOnly: false, sort: "relevance",
+    page: 1, shown: 50, results: [], total: 0, trending: [],
+    archiveIndex: {}, loading: false, ready: false
+  };
+
+  /* ================================================================
+     DOM REFS
+     ================================================================ */
+  var inputEl    = document.getElementById("cs-input");
+  var hintEl     = document.getElementById("cs-hint");
+  var statusEl   = document.getElementById("cs-status");
+  var trendingEl = document.getElementById("cs-trending");
+  var resultsEl  = document.getElementById("cs-results");
+  var resultList = document.getElementById("cs-result-list");
+  var resultCount = document.getElementById("cs-result-count");
+  var moreWrap   = document.getElementById("cs-more");
+  var moreBtn    = document.getElementById("cs-more-btn");
+  var pendingEl  = document.getElementById("cs-pending");
+  var trendRows  = document.getElementById("cs-trend-rows");
+  var trendNote  = document.getElementById("cs-trend-note");
+  var syncEl     = document.getElementById("cs-sync");
+
+  /* ================================================================
+     HELPERS
+     ================================================================ */
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function(c) {
+    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]; }); }
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = String(text);
+    return n;
+  }
+
+  function fmtStars(n) { return n >= 1000 ? (n / 1000).toFixed(1) + "k" : String(n); }
+
+  function fmtAge(iso) {
+    if (!iso) return "";
+    var ms = Date.now() - new Date(iso.length === 10 ? iso + "T00:00:00Z" : iso).getTime();
+    if (isNaN(ms) || ms < 0) return "";
+    var h = ms / 36e5;
+    if (h < 24) return Math.max(1, Math.round(h)) + "h";
+    var d = h / 24;
+    if (d < 14) return Math.round(d) + "d";
+    if (d < 60) return Math.round(d / 7) + "w";
+    if (d < 730) return Math.round(d / 30) + "mo";
+    return Math.round(d / 365) + "y";
+  }
+
+  function fmtLongAge(iso) {
+    if (!iso) return "";
+    var ms = Date.now() - new Date(iso.length === 10 ? iso + "T00:00:00Z" : iso).getTime();
+    if (isNaN(ms) || ms < 0) return "";
+    var h = ms / 36e5;
+    var units = [[8760,"year"],[720,"month"],[168,"week"],[24,"day"],[1,"hour"]];
+    for (var i = 0; i < units.length; i++) {
+      if (h >= units[i][0]) { var n = Math.floor(h / units[i][0]); return n + " " + units[i][1] + (n === 1 ? "" : "s") + " ago"; }
+    }
+    return "just now";
+  }
+
+  function fmtNum(n) { return n.toLocaleString("en-US"); }
+
+  function toggleActive(btn, on) {
+    ACTIVE.forEach(function (c) { btn.classList.toggle(c, on); });
+    btn.classList.toggle("border-zinc-300", !on);
+    btn.classList.toggle("dark:border-mono-border", !on);
+  }
+
+  /* ================================================================
+     SEARCH EXPANSION
+     ================================================================ */
+  function expandQuery(raw) {
+    var q = raw.toLowerCase().trim();
+    if (!q) return { q: "", hint: "" };
+    var slug = q.replace(/[^a-z0-9]/g, "");
+    var named = NAMED[slug];
+    if (named) return { q: named, hint: slug + " → " + named };
+    var words = q.split(/\s+/);
+    var expanded = [];
+    var hints = [];
+    words.forEach(function (w) {
+      expanded.push(w);
+      var a = ALIASES[w];
+      if (a) { a.forEach(function (x) { expanded.push(x); }); hints.push(w + " → " + a[0]); }
+    });
+    return { q: expanded.join(" "), hint: hints.join(", ") };
+  }
+
+  /* ================================================================
+     API
+     ================================================================ */
+  function fetchJSON(url) {
+    return fetch(url).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    });
+  }
+
+  function loadStats() {
+    fetchJSON(API + "/cves/stats").then(function (d) {
+      document.getElementById("cs-total").textContent = fmtNum(d.total_cves || 0);
+      document.getElementById("cs-pocs").textContent = fmtNum(d.with_pocs || 0);
+      document.getElementById("cs-kev").textContent = fmtNum(d.kev_count || 0);
+      if (d.last_sync) syncEl.textContent = "synced " + String(d.last_sync).slice(0, 10);
+      state.ready = true;
+    }).catch(function () {
+      pendingEl.classList.remove("hidden");
+    });
+  }
+
+  function loadTrending() {
+    fetchJSON(API + "/cves/trending?limit=20").then(function (d) {
+      state.trending = d.entries || [];
+      renderTrending();
+    }).catch(function () {
+      trendRows.innerHTML = '<div class="px-3 py-6 text-center font-mono text-xs text-zinc-400 dark:text-mono-muted">Trending data will appear once the pipeline syncs.</div>';
+    });
+  }
+
+  function doSearch() {
+    if (state.loading) return;
+    var expanded = expandQuery(state.query);
+    hintEl.textContent = expanded.hint;
+    hintEl.classList.toggle("hidden", !expanded.hint);
+
+    if (!expanded.q || expanded.q.length < 2) {
+      trendingEl.classList.remove("hidden");
+      resultsEl.classList.add("hidden");
+      statusEl.textContent = "";
+      return;
+    }
+
+    state.loading = true;
+    statusEl.textContent = "searching…";
+
+    var params = "?q=" + encodeURIComponent(expanded.q) +
+      "&sort=" + state.sort +
+      "&page=" + state.page +
+      "&limit=50";
+    if (state.severity !== "all") params += "&severity=" + state.severity;
+    if (state.kevOnly) params += "&kev=1";
+
+    fetchJSON(API + "/cves/search" + params).then(function (d) {
+      state.results = d.results || [];
+      state.total = d.total || 0;
+      state.loading = false;
+      renderResults();
+      statusEl.textContent = fmtNum(state.total) + " results";
+    }).catch(function (e) {
+      state.loading = false;
+      statusEl.textContent = "search unavailable — pipeline may still be syncing";
+      resultList.innerHTML = '<div class="px-3 py-8 text-center font-mono text-sm text-zinc-400 dark:text-mono-muted">Search will be available once the CVE pipeline completes its first sync.</div>';
+      trendingEl.classList.add("hidden");
+      resultsEl.classList.remove("hidden");
+    });
+  }
+
+  /* ================================================================
+     ARCHIVE CROSS-REFERENCE
+     ================================================================ */
+  function loadArchive() {
+    fetch("{{ "/index.json" | relURL }}").then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (entries) {
+        (entries || []).forEach(function (e) {
+          var m = String(e.cve || "").match(/CVE-\d{4}-\d{4,7}/i);
+          if (m) state.archiveIndex[m[0].toUpperCase()] = e.permalink;
+        });
+      }).catch(function () {});
+  }
+
+  /* ================================================================
+     RENDERING — Trending
+     ================================================================ */
+  var trendMode = "weighted";
+
+  function renderTrending() {
+    var items = state.trending.slice();
+    if (trendMode === "weighted") {
+      items.sort(function (a, b) {
+        var ha = a.pushed ? (Date.now() - new Date(a.pushed).getTime()) / 36e5 : 8760;
+        var hb = b.pushed ? (Date.now() - new Date(b.pushed).getTime()) / 36e5 : 8760;
+        return (b.stars / Math.pow(hb + 6, 0.45)) - (a.stars / Math.pow(ha + 6, 0.45));
+      });
+      trendNote.textContent = "stars weighted against time since last commit";
+    } else {
+      items.sort(function (a, b) {
+        return (b.pushed || "").localeCompare(a.pushed || "");
+      });
+      trendNote.textContent = "newest commit first";
+    }
+
+    if (!items.length) {
+      trendRows.innerHTML = '<div class="px-3 py-6 text-center font-mono text-xs text-zinc-400 dark:text-mono-muted">No trending data yet.</div>';
+      return;
+    }
+
+    trendRows.textContent = "";
+    items.slice(0, 20).forEach(function (t) {
+      var row = el("div", "flex items-center gap-3 px-3 py-2 hover:bg-zinc-50 dark:hover:bg-mono-hover");
+
+      var stars = el("span", "w-16 shrink-0 text-right font-mono text-[11px] " +
+        (t.stars >= 500 ? "font-bold text-yellow-600 dark:text-yellow-400" : "text-zinc-500 dark:text-mono-muted"),
+        fmtStars(t.stars || 0) + " ★");
+
+      var age = el("span", "w-20 shrink-0 font-mono text-[11px] text-zinc-400 dark:text-mono-muted",
+        fmtLongAge(t.pushed));
+
+      var nameWrap = el("span", "flex min-w-0 items-center gap-1.5");
+      if (t.cve && state.archiveIndex[t.cve]) {
+        nameWrap.appendChild(el("span", "shrink-0 rounded border border-emerald-300 bg-emerald-50 px-1 py-[1px] text-[9px] font-bold uppercase text-emerald-600 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400", "in archive"));
+      }
+      var link = el("a", "truncate font-mono text-xs font-medium text-zinc-900 hover:text-emerald-600 dark:text-white dark:hover:text-brand", t.name || "");
+      link.href = t.url || "#";
+      link.target = "_blank";
+      link.rel = "noopener noreferrer nofollow";
+      nameWrap.appendChild(link);
+
+      var desc = el("span", "hidden truncate font-mono text-[11px] text-zinc-400 lg:block dark:text-mono-muted", t.desc || "");
+
+      row.appendChild(stars);
+      row.appendChild(age);
+      row.appendChild(nameWrap);
+      row.appendChild(desc);
+      trendRows.appendChild(row);
+    });
+  }
+
+  /* ================================================================
+     RENDERING — Results
+     ================================================================ */
+  function pocLink(p) {
+    var wrap = el("div", "flex items-center gap-1.5 py-0.5");
+    var src = p.source || "GITHUB";
+    var cls = SRC_CLS[src] || SRC_CLS.REFERENCE;
+    wrap.appendChild(el("span", "shrink-0 rounded border px-1 py-[1px] text-[9px] font-bold uppercase " + cls, src));
+
+    var link = el("a", "truncate text-zinc-700 hover:text-emerald-600 dark:text-slate-300 dark:hover:text-brand");
+    link.href = p.url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer nofollow";
+    var parts = String(p.url).match(/github\.com\/([^/#?]+)\/([^/#?]+)/i);
+    link.textContent = parts ? parts[1] + "/" + parts[2].replace(/\.git$/i, "") : p.url.replace(/^https?:\/\//, "");
+    wrap.appendChild(link);
+
+    if (p.stars != null && p.stars > 0) {
+      wrap.appendChild(el("span", "shrink-0 font-mono text-[10px] " +
+        (p.stars >= 500 ? "font-bold text-yellow-600 dark:text-yellow-400" : "text-zinc-400 dark:text-mono-muted"),
+        fmtStars(p.stars) + "★"));
+    }
+    if (p.pushed) {
+      wrap.appendChild(el("span", "shrink-0 font-mono text-[10px] text-zinc-400 dark:text-mono-muted", fmtAge(p.pushed)));
+    }
+    return wrap;
+  }
+
+  function resultCard(entry) {
+    var card = el("div", "px-3 py-3");
+
+    // Top row: CVE + chips
+    var top = el("div", "flex flex-wrap items-center gap-1.5");
+
+    var cveLink = el("a", "font-mono text-sm font-bold text-emerald-600 hover:underline dark:text-brand", entry.cve);
+    cveLink.href = "https://nvd.nist.gov/vuln/detail/" + encodeURIComponent(entry.cve);
+    cveLink.target = "_blank";
+    cveLink.rel = "noopener";
+    top.appendChild(cveLink);
+
+    var archiveURL = state.archiveIndex[(entry.cve || "").toUpperCase()];
+    if (archiveURL) {
+      var abadge = el("a", "rounded border border-emerald-300 bg-emerald-50 px-1 py-[1px] text-[9px] font-bold uppercase text-emerald-600 hover:underline dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400", "in archive →");
+      abadge.href = archiveURL;
+      top.appendChild(abadge);
+    }
+
+    if (entry.poc_count != null) {
+      top.appendChild(el("span", "font-mono text-[11px] text-zinc-500 dark:text-mono-muted", fmtNum(entry.poc_count) + " PoC" + (entry.poc_count === 1 ? "" : "s")));
+    }
+
+    var sev = entry.severity;
+    if (sev && SEV_CLS[sev]) {
+      var chip = el("span", "rounded border px-1.5 py-[1px] text-[10px] font-bold " + SEV_CLS[sev]);
+      chip.textContent = sev + (entry.cvss != null ? " " + entry.cvss : "");
+      top.appendChild(chip);
+    }
+
+    if (entry.epss != null) {
+      var pct = (entry.epss * 100);
+      var epCls = pct >= 50 ? "text-red-500 dark:text-red-400 font-bold" : pct >= 10 ? "text-orange-500 dark:text-orange-400" : "text-zinc-500 dark:text-mono-muted";
+      var epChip = el("span", "font-mono text-[10px] " + epCls, "EPSS " + pct.toFixed(pct >= 10 ? 0 : 1) + "%");
+      epChip.title = "Estimated probability of exploitation in the next 30 days";
+      top.appendChild(epChip);
+    }
+
+    if (entry.kev) {
+      var kevChip = el("span", "rounded border border-red-400 bg-red-50 px-1 py-[1px] text-[9px] font-bold uppercase text-red-600 dark:border-red-700 dark:bg-red-950 dark:text-red-400");
+      kevChip.textContent = "KEV" + (entry.kev_ransomware ? " RANSOMWARE" : "");
+      if (entry.kev_date) kevChip.title = "Added to CISA KEV on " + entry.kev_date;
+      top.appendChild(kevChip);
+    }
+
+    card.appendChild(top);
+
+    // Title + description
+    if (entry.title) {
+      card.appendChild(el("p", "mt-1 font-mono text-xs font-medium text-zinc-800 dark:text-zinc-200", entry.title));
+    }
+    var desc = el("p", "mt-1 line-clamp-3 font-mono text-[11px] leading-relaxed text-zinc-500 dark:text-mono-muted", entry.desc || "");
+    card.appendChild(desc);
+
+    // PoC links
+    var pocs = entry.pocs || [];
+    if (pocs.length) {
+      var pocList = el("div", "mt-2 space-y-0.5 font-mono text-xs");
+      var visible = pocs.slice(0, 5);
+      visible.forEach(function (p) { pocList.appendChild(pocLink(p)); });
+      if (pocs.length > 5) {
+        var more = el("button", "mt-0.5 font-mono text-[11px] text-emerald-600 hover:underline dark:text-brand");
+        more.type = "button";
+        more.textContent = "+ " + (pocs.length - 5) + " more";
+        more.addEventListener("click", function () {
+          pocs.slice(5).forEach(function (p) { pocList.insertBefore(pocLink(p), more); });
+          more.remove();
+        });
+        pocList.appendChild(more);
+      }
+      card.appendChild(pocList);
+    }
+
+    // NVD + CVE.org links
+    var links = el("div", "mt-2 flex gap-2 font-mono text-[10px]");
+    var nvd = el("a", "text-zinc-400 hover:text-emerald-600 dark:text-mono-muted dark:hover:text-brand", "NVD ↗");
+    nvd.href = "https://nvd.nist.gov/vuln/detail/" + encodeURIComponent(entry.cve);
+    nvd.target = "_blank"; nvd.rel = "noopener";
+    var cveOrg = el("a", "text-zinc-400 hover:text-emerald-600 dark:text-mono-muted dark:hover:text-brand", "CVE.ORG ↗");
+    cveOrg.href = "https://www.cve.org/CVERecord?id=" + encodeURIComponent(entry.cve);
+    cveOrg.target = "_blank"; cveOrg.rel = "noopener";
+    links.appendChild(nvd);
+    links.appendChild(cveOrg);
+    card.appendChild(links);
+
+    return card;
+  }
+
+  function renderResults() {
+    trendingEl.classList.add("hidden");
+    resultsEl.classList.remove("hidden");
+    resultList.textContent = "";
+
+    if (!state.results.length) {
+      resultList.appendChild(el("div", "px-3 py-8 text-center font-mono text-sm text-zinc-400 dark:text-mono-muted", "No results for the current query and filters."));
+      resultCount.textContent = "";
+      moreWrap.classList.add("hidden");
+      return;
+    }
+
+    resultCount.textContent = fmtNum(state.total) + " CVEs";
+    var visible = state.results.slice(0, state.shown);
+    visible.forEach(function (entry) { resultList.appendChild(resultCard(entry)); });
+
+    var remaining = state.total - visible.length;
+    moreWrap.classList.toggle("hidden", remaining <= 0);
+    if (remaining > 0) moreBtn.textContent = "Show more (" + fmtNum(remaining) + " remaining)";
+  }
+
+  /* ================================================================
+     EVENT HANDLERS
+     ================================================================ */
+  var debounce = null;
+  inputEl.addEventListener("input", function () {
+    clearTimeout(debounce);
+    debounce = setTimeout(function () {
+      state.query = inputEl.value.trim();
+      state.page = 1; state.shown = 50;
+      if (state.query) doSearch();
+      else {
+        trendingEl.classList.remove("hidden");
+        resultsEl.classList.add("hidden");
+        hintEl.classList.add("hidden");
+        statusEl.textContent = "";
+      }
+    }, 300);
+  });
+
+  inputEl.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { clearTimeout(debounce); state.query = inputEl.value.trim(); state.page = 1; state.shown = 50; doSearch(); }
+  });
+
+  moreBtn.addEventListener("click", function () { state.shown += 50; renderResults(); });
+
+  // Severity filter
+  document.querySelectorAll("#cs-severity .cs-sev").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      state.severity = btn.getAttribute("data-s"); state.page = 1; state.shown = 50;
+      document.querySelectorAll("#cs-severity .cs-sev").forEach(function (b) { toggleActive(b, b === btn); });
+      if (state.query) doSearch();
+    });
+  });
+
+  // KEV toggle
+  var kevToggle = document.getElementById("cs-kev-toggle");
+  kevToggle.addEventListener("click", function () {
+    state.kevOnly = !state.kevOnly;
+    toggleActive(kevToggle, state.kevOnly);
+    state.page = 1; state.shown = 50;
+    if (state.query) doSearch();
+  });
+
+  // Sort
+  document.getElementById("cs-sort").addEventListener("change", function (e) {
+    state.sort = e.target.value; state.page = 1; state.shown = 50;
+    if (state.query) doSearch();
+  });
+
+  // Trending mode
+  document.querySelectorAll("#cs-trend-mode .cs-tm").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      trendMode = btn.getAttribute("data-m");
+      document.querySelectorAll("#cs-trend-mode .cs-tm").forEach(function (b) { toggleActive(b, b === btn); });
+      renderTrending();
+    });
+  });
+
+  /* ================================================================
+     INIT
+     ================================================================ */
+  loadArchive();
+  loadStats();
+  loadTrending();
+})();
+</script>
+{{ end }}
