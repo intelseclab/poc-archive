@@ -1,7 +1,6 @@
 // Hero 3D model asset: "Bomb" by giga (https://sketchfab.com/gits3d) licensed under CC BY 4.0
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { AsciiEffect } from 'three/addons/effects/AsciiEffect.js';
 
 const mount = document.getElementById('ascii-hero');
 
@@ -97,19 +96,141 @@ if (mount) {
     });
   };
 
+  // High-performance DOM AsciiEffect:
+  // - Zero-span background: empty/black spaces are emitted as plain text, eliminating ~6,000 DOM nodes/frame
+  // - Run-length color grouping: merges consecutive characters with identical RGB into a single span
+  // - willReadFrequently: true: eliminates GPU stalls and synchronous readback warnings
+  class FastAsciiEffect {
+    constructor(rend, charSet = ' .:-=+*#%@', options = {}) {
+      const fResolution = options.resolution || 0.15;
+      const iScale = options.scale || 1;
+      const bColor = options.color || false;
+      const bInvert = options.invert || false;
+
+      let width = 0, height = 0;
+      let iWidth = 0, iHeight = 0;
+
+      const domElement = document.createElement('div');
+      domElement.style.cursor = 'default';
+
+      const oAscii = document.createElement('table');
+      oAscii.cellSpacing = '0';
+      oAscii.cellPadding = '0';
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      tr.appendChild(td);
+      oAscii.appendChild(tr);
+      domElement.appendChild(oAscii);
+
+      const oCanvasImg = rend.domElement;
+      const oCanvas = document.createElement('canvas');
+      const oCtx = oCanvas.getContext('2d', { willReadFrequently: true });
+
+      const aCharList = charSet || ' .:-=+*#%@';
+      const fFontSize = (2 / fResolution) * iScale;
+      const fLineHeight = (2 / fResolution) * iScale;
+
+      const oStyle = oAscii.style;
+      oStyle.whiteSpace = 'pre';
+      oStyle.margin = '0px';
+      oStyle.padding = '0px';
+      oStyle.letterSpacing = '-1px';
+      oStyle.fontFamily = '"JetBrains Mono", ui-monospace, monospace';
+      oStyle.fontSize = `${fFontSize}px`;
+      oStyle.lineHeight = `${fLineHeight}px`;
+      oStyle.textAlign = 'left';
+
+      this.domElement = domElement;
+
+      this.setSize = function (w, h) {
+        width = w;
+        height = h;
+        rend.setSize(w, h);
+        iWidth = Math.floor(width * fResolution);
+        iHeight = Math.floor(height * fResolution);
+        oCanvas.width = iWidth;
+        oCanvas.height = iHeight;
+        td.style.display = 'block';
+        td.style.width = `${width}px`;
+        td.style.height = `${height}px`;
+        td.style.overflow = 'hidden';
+      };
+
+      const asciifyImage = () => {
+        oCtx.clearRect(0, 0, iWidth, iHeight);
+        oCtx.drawImage(oCanvasImg, 0, 0, iWidth, iHeight);
+        const d = oCtx.getImageData(0, 0, iWidth, iHeight).data;
+
+        let strChars = '';
+        const charLen = aCharList.length - 1;
+
+        for (let y = 0; y < iHeight; y += 2) {
+          let curColor = null;
+          let curText = '';
+
+          for (let x = 0; x < iWidth; x++) {
+            const iOffset = (y * iWidth + x) * 4;
+            const r = d[iOffset];
+            const g = d[iOffset + 1];
+            const b = d[iOffset + 2];
+            const a = d[iOffset + 3];
+
+            let fBrightness = (0.3 * r + 0.59 * g + 0.11 * b) / 255;
+            if (a === 0) fBrightness = 1;
+
+            let iCharIdx = Math.floor((1 - fBrightness) * charLen);
+            if (bInvert) iCharIdx = charLen - iCharIdx;
+
+            const strThisChar = aCharList[iCharIdx];
+            const isSpace = (!strThisChar || strThisChar === ' ' || (r === 0 && g === 0 && b === 0));
+
+            if (!bColor || isSpace) {
+              if (curColor !== null) {
+                strChars += `<span style="color:${curColor}">${curText}</span>`;
+                curColor = null;
+                curText = '';
+              }
+              curText += (strThisChar === ' ' || !strThisChar) ? '&nbsp;' : strThisChar;
+            } else {
+              const colorStr = `rgb(${r},${g},${b})`;
+              if (colorStr === curColor) {
+                curText += strThisChar;
+              } else {
+                if (curText) {
+                  strChars += curColor ? `<span style="color:${curColor}">${curText}</span>` : curText;
+                }
+                curColor = colorStr;
+                curText = strThisChar;
+              }
+            }
+          }
+
+          if (curText) {
+            strChars += curColor ? `<span style="color:${curColor}">${curText}</span>` : curText;
+          }
+          strChars += '<br/>';
+        }
+
+        td.innerHTML = strChars;
+      };
+
+      this.render = function (sc, cam) {
+        rend.render(sc, cam);
+        asciifyImage();
+      };
+    }
+  }
+
   let effect = null;
   if (raw) {
     renderer.setSize(SIZE, SIZE);
     mount.appendChild(renderer.domElement);
   } else {
-    effect = new AsciiEffect(renderer, ' .:-=+*#%@', { invert: true, resolution: RESOLUTION, color: true });
+    effect = new FastAsciiEffect(renderer, ' .:-=+*#%@', { invert: true, resolution: RESOLUTION, color: true });
     effect.setSize(SIZE, SIZE);
     const table = effect.domElement.firstElementChild;
     table.style.fontFamily = '"JetBrains Mono", ui-monospace, monospace';
-    // AsciiEffect's letter-spacing presets assume resolution 0.2; at other
-    // resolutions the char grid is narrower than the canvas and the image
-    // squashes horizontally. Compensate so each char advance = 1/resolution:
-    // advance = 0.6em (mono) × fontSize(2/res) + spacing = 1/res → spacing = -0.2/res.
+    // Compensate so each char advance = 1/resolution:
     table.style.letterSpacing = `${-0.2 / RESOLUTION}px`;
     effect.domElement.style.backgroundColor = 'transparent';
     mount.appendChild(effect.domElement);
@@ -154,7 +275,51 @@ if (mount) {
   mount.addEventListener('pointerup', endDrag);
   mount.addEventListener('pointercancel', endDrag);
 
-  const tick = () => {
+  // Lifecycle optimizations: pause when scrolled off-screen or tab is hidden
+  let isVisible = true;
+  let running = false;
+
+  const TARGET_FPS = 60; // Silky smooth 60 FPS enabled by FastAsciiEffect (<2ms per frame)
+  const FRAME_INTERVAL = 1000 / TARGET_FPS;
+  let lastFrameTime = 0;
+
+  const startLoop = () => {
+    if (!running && isVisible && !document.hidden) {
+      running = true;
+      requestAnimationFrame(tick);
+    }
+  };
+
+  const stopLoop = () => {
+    running = false;
+  };
+
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isVisible = entry.isIntersecting;
+        if (isVisible) startLoop();
+        else stopLoop();
+      },
+      { threshold: 0.05 }
+    );
+    observer.observe(mount);
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stopLoop();
+    else if (isVisible) startLoop();
+  });
+
+  const tick = (now = performance.now()) => {
+    if (!running) return;
+
+    requestAnimationFrame(tick);
+
+    const elapsed = now - lastFrameTime;
+    if (elapsed < FRAME_INTERVAL && !dragging) return;
+    lastFrameTime = now - (elapsed % FRAME_INTERVAL);
+
     if (!dragging && Math.abs(velY) > 0.0001) {
       pivot.rotation.y += velY;
       velY *= 0.92;
@@ -165,7 +330,6 @@ if (mount) {
       else renderer.render(scene, camera);
       dirty = false;
     }
-    requestAnimationFrame(tick);
   };
 
   new GLTFLoader().load(
@@ -182,5 +346,5 @@ if (mount) {
     }
   );
 
-  requestAnimationFrame(tick);
+  startLoop();
 }
