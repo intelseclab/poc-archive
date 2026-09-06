@@ -80,13 +80,9 @@ if (mount) {
     new MutationObserver(paint).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
   }
 
-  // Drag-to-rotate with inertia + slow auto-orbit
+  // Drag-to-rotate with inertia
   mount.style.touchAction = 'none';
   mount.style.cursor = 'grab';
-
-  const clock = new THREE.Clock();
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const AUTO_SPEED = prefersReducedMotion ? 0 : 0.25; // rad/sec (~25s full rotation)
 
   let dragging = false;
   let lastX = 0;
@@ -118,15 +114,9 @@ if (mount) {
   mount.addEventListener('pointercancel', endDrag);
 
   const tick = () => {
-    const delta = Math.min(clock.getDelta(), 0.1);
-    if (!dragging) {
-      if (Math.abs(velY) > 0.0001) {
-        pivot.rotation.y += velY;
-        velY *= 0.92;
-      }
-      if (AUTO_SPEED > 0) {
-        pivot.rotation.y += AUTO_SPEED * delta;
-      }
+    if (!dragging && Math.abs(velY) > 0.0001) {
+      pivot.rotation.y += velY;
+      velY *= 0.92;
       dirty = true;
     }
     if (dirty) {
