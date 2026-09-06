@@ -1,12 +1,13 @@
 {{ define "main" }}
 {{- /* Triage view over the CVE monitor worker (monitor.intelseclab.com).
        Candidates are raw GitHub search hits — automatically discovered, NOT
-       verified. State is derived client-side:
+       verified. Enhanced with multi-signal screening adapted from pocindex:
+       blacklist matching, PoC/non-PoC vocabulary scoring, trust indicators,
+       CISA KEV + EPSS enrichment.  State is derived client-side:
          ingested     — the CVE exists in this archive
          reviewed     — worker marked it reviewed but it was not ingested
          needs review — neither
-       The archive side of that comparison comes from /index.json, which is
-       same-origin, so only the worker call is cross-origin. */ -}}
+       The archive side comes from /index.json (same-origin). */ -}}
 
 <header class="border-b border-zinc-200 pb-6 dark:border-mono-border">
   <nav class="mb-3 font-mono text-xs text-zinc-500 dark:text-mono-muted">
@@ -16,17 +17,17 @@
   </nav>
   <h1 class="font-mono text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white">Watchlist</h1>
   <p class="mt-2 max-w-3xl text-sm leading-relaxed text-zinc-600 dark:text-mono-muted">
-    Critical CVEs (CVSS ≥ 9.0) our monitor is tracking, together with candidate PoC
-    repositories it found on GitHub. This is the queue that feeds the archive — everything
-    here is awaiting review, has been reviewed, or has already been ingested.
+    CVEs our monitor is tracking, together with candidate PoC repositories found on GitHub.
+    Multi-signal screening scores each candidate for trust — blacklist checks, vocabulary
+    analysis, and enrichment from CISA KEV and EPSS help separate real exploits from noise.
   </p>
 </header>
 
 <div class="mt-5 rounded border border-zinc-300 bg-zinc-50 p-3 font-mono text-xs text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-zinc-400">
   <span class="font-bold">[!] Unverified.</span>
-  These are automated GitHub search results, not archive entries. They have not been opened,
-  read, or screened for scams, stubs or malware. Only entries marked
-  <span class="font-bold">ingested</span> have passed verification and live in
+  These are automated GitHub search results, not archive entries. Multi-signal screening
+  assigns trust scores but cannot guarantee safety. Only entries marked
+  <span class="font-bold">ingested</span> have passed manual verification and live in
   <a href="{{ "/pocs/" | relURL }}" class="underline">the archive</a>. Treat every repo linked
   here as untrusted until reviewed.
 </div>
@@ -45,14 +46,24 @@
   {{- end }}
 </section>
 
+<!-- Screening summary -->
+<div id="wl-screening" class="mb-4 hidden flex-wrap items-center gap-x-4 gap-y-1 rounded border border-zinc-200 bg-zinc-50/80 px-3 py-2 font-mono text-[11px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg/50 dark:text-mono-muted">
+  <span id="wl-kev-stat"></span>
+  <span id="wl-epss-stat"></span>
+  <span id="wl-flagged-stat"></span>
+  <span id="wl-bl-stat"></span>
+</div>
+
 <!-- Controls -->
 <div class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card">
   <div class="relative">
     <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 dark:text-mono-muted" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
     <input type="search" id="wl-search" autocomplete="off"
-      placeholder="Search CVE ID, repository or description…"
+      placeholder="Search CVE, repo, description, or name (log4shell, sqli, rce…)"
       class="w-full rounded border border-zinc-300 bg-zinc-50 py-2.5 pl-9 pr-3 font-mono text-xs text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-400 focus:outline-none dark:border-mono-border dark:bg-mono-bg dark:text-white dark:placeholder:text-mono-muted dark:focus:border-brand" />
+    <p id="wl-search-hint" class="mt-1 hidden font-mono text-[10px] text-emerald-600 dark:text-brand"></p>
   </div>
+
   <div class="flex flex-wrap items-center gap-1.5">
     <span class="mr-1 font-mono text-[11px] text-zinc-500 dark:text-mono-muted">Status:</span>
     <div class="flex flex-wrap gap-1.5" id="wl-filter">
@@ -61,11 +72,36 @@
       <button type="button" data-v="reviewed" class="wl-pill rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">reviewed</button>
       <button type="button" data-v="ingested" class="wl-pill rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">ingested</button>
     </div>
+  </div>
+
+  <div class="flex flex-wrap items-center gap-1.5">
+    <span class="mr-1 font-mono text-[11px] text-zinc-500 dark:text-mono-muted">Severity:</span>
+    <div class="flex flex-wrap gap-1.5" id="wl-severity">
+      <button type="button" data-s="all"      class="wl-sev rounded border border-emerald-400 bg-emerald-50 px-2.5 py-1 font-mono text-[11px] text-emerald-600 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">all</button>
+      <button type="button" data-s="critical" class="wl-sev rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">critical</button>
+      <button type="button" data-s="high"     class="wl-sev rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">high</button>
+      <button type="button" data-s="medium"   class="wl-sev rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">medium</button>
+      <button type="button" data-s="low"      class="wl-sev rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">low</button>
+    </div>
+  </div>
+
+  <div class="flex flex-wrap items-center gap-1.5">
     <button type="button" id="wl-signal"
       class="rounded border border-emerald-400 bg-emerald-50 px-2.5 py-1 font-mono text-[11px] text-emerald-600 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
-      title="GitHub search matches any repo mentioning a CVE ID — most are dependency manifests, scanners or NVD mirrors rather than exploits">
-      likely PoCs only
-    </button>
+      title="GitHub search matches any repo mentioning a CVE ID — most are scanners or NVD mirrors, not exploits">likely PoCs only</button>
+    <button type="button" id="wl-bl-toggle"
+      class="rounded border border-emerald-400 bg-emerald-50 px-2.5 py-1 font-mono text-[11px] text-emerald-600 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
+      title="Hide repos on the screening blacklist (CVE indexes, mirrors, known farms)">hide blacklisted</button>
+
+    <span class="mx-1 text-zinc-300 dark:text-zinc-700">|</span>
+    <span class="font-mono text-[11px] text-zinc-500 dark:text-mono-muted">Sort:</span>
+    <select id="wl-sort" class="rounded border border-zinc-300 bg-zinc-50 px-2 py-1 font-mono text-[11px] text-zinc-700 focus:border-emerald-400 focus:outline-none dark:border-mono-border dark:bg-mono-bg dark:text-zinc-300 dark:focus:border-brand">
+      <option value="newest">Newest first</option>
+      <option value="trust">Trust score</option>
+      <option value="cvss">CVSS (highest)</option>
+      <option value="oldest">Oldest first</option>
+    </select>
+
     <span class="ml-auto font-mono text-[11px] text-zinc-400 dark:text-mono-muted" id="wl-updated"></span>
   </div>
 </div>
@@ -121,9 +157,10 @@
           <tr>
             <th class="px-3 py-2.5">Repository</th>
             <th class="hidden w-40 px-3 py-2.5 sm:table-cell">CVE</th>
-            <th class="w-20 px-3 py-2.5">CVSS</th>
-            <th class="hidden w-28 px-3 py-2.5 md:table-cell">Status</th>
-            <th class="hidden w-24 px-3 py-2.5 lg:table-cell">Seen</th>
+            <th class="w-16 px-3 py-2.5">CVSS</th>
+            <th class="hidden w-16 px-3 py-2.5 md:table-cell">Trust</th>
+            <th class="hidden w-28 px-3 py-2.5 lg:table-cell">Status</th>
+            <th class="hidden w-24 px-3 py-2.5 xl:table-cell">Seen</th>
           </tr>
         </thead>
         <tbody id="wl-rows" class="divide-y divide-zinc-200 text-zinc-700 dark:divide-mono-border/40 dark:text-slate-300">
@@ -139,20 +176,228 @@
 
 <script>
 (function () {
+  /* ================================================================
+     CONSTANTS — screening data adapted from pocindex
+     ================================================================ */
   var MONITOR = "https://monitor.intelseclab.com";
+  var KEV_URL = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json";
+  var EPSS_URL = "https://api.first.org/data/v1/epss";
+
+  var BLACKLIST_REPOS = new Set([
+    "0xfschott/CVE-search","0xMarcio/cve","0xor0ne/awesome-list","0xP1ckl3d/cve2poc",
+    "0xT11/CVE-POC","1nj3ct10n/CVEs","25S22/NIST-NVD-CVE-Watcher","5ecurity/CVE-List",
+    "aaidilz/CVE-Search","aarif450/aarif450.github.io","aettern/copyfrag-fuse",
+    "ajmalabubakkr/CVE","Al-Vt/CVE-exploit-prediction","alans0011/nist-cve-api",
+    "alexfrancow/CVE-Search","andraxsnakesecurity/CVE-LIST",
+    "andraxsnakesecurity/CVE-PoC-in-GitHub","Andromeda254/cve",
+    "andrew-max365/jwport-cve-test","ARPSyndicate/cve-scores","actuator/cve",
+    "Asbawy/Asbawy.github.io","aymanahmedali/bash-scripts","b1nslashsh/CVE",
+    "bachkhoasoft/awesome-list-ks","bb1nfosec/vuln-corpus","bikramtuladhar/awesome-list",
+    "biswajit2902/defusedxml-norpc","c-skills/CVEs","cassis-sec/CVE","cc8700619/poc",
+    "ChPratik/NGINX_2026_CVE_Bundle_CTI_Report","chnzzh/idrac-cve-lib",
+    "chnzzh/redfish-cve-lib","cometkim/awesome-list","cpt-ferna02/AVEN",
+    "CVE-Hunters/cve-hunters","cve-search/cve-search","CVEDB/awesome-cve-repo",
+    "CVEDB/cve","CVEDB/top","cvefeed/cvefeed.io","cxosmo/CVEs","cyllective/CVEs",
+    "Cyreslab-AI/nist-nvd-mcp-server","developer3000S/PoC-in-GitHub",
+    "deepin-community/defusedxml","dinesh-murugan-h/CVEraptor","DMW11525708/wiki",
+    "dweglowski/security-research","enthought/cve-search","Ereline/CVE-Search",
+    "Fakechippies/POC-Hunter","fkie-cad/nvd-json-data-feeds","fpauth/fpauthanalysis",
+    "GhostTroops/TOP","gotr00t0day/kernelpwned","gregk4sec/cve","Hacking-Notes/CVE",
+    "hectorgie/PoC-in-GitHub","hori0729/poc-container-escape","ishakdev325/cve-search",
+    "jaeminLeee/cve","javokhir-sec/CVE-PoC-Hub","jaychen2/NIST-BULK-CVE-Lookup",
+    "jerfinj/cve-search","J-Dheeraj/AI-exploit-CVE","JunFengDeng/Cve-List",
+    "Kwabena-d/Vulnsieve-","l1uyi/cve-list","Mad-robot/CVE-List",
+    "MarkLee131/awesome-web-pocs","metalx1993/kernel-exploit-intelligence",
+    "miradam/cve-search","monney-sys/daily-learning","n0-traces/cve_monitor",
+    "n1sh1th/CVE-POC","nasp-thu/prophetfuzz","netveil/Awesome-List",
+    "nomi-sec/PoC-in-GitHub","OrlandoNE/NIST_NVD_sh","org-ai-assisted/terminal-poc-corpus",
+    "Ostorlab/KEV","pexip/os-defusedxml","plzheheplztrying/cve_monitor","pudiish/CVE",
+    "punggawacybersecurity/CVE-List","qazbnm456/awesome-cve-poc","r3p3r/cve-search",
+    "requarks/wiki","ricnanni/CVE","romain-deperne/vulnhunter-harness",
+    "rozetyp/vuln-intel-mcp","runner361/CVE-List","s-index/poc-list",
+    "secure-terminal/terminal-poc-corpus","serifmuammer/nist-cve-crawler",
+    "soosmile/POC","stanleyman810/cobalt-strike-rce","stanleyman810/counter-strike-1.6",
+    "stanleyman810/https_rce","stratosphereips/nist-cve-search-tool",
+    "swastik99/cve-search","the-priest/priestsbasilisk",
+    "theulis/NIST-1Password-Kandji-Public","theulis/NIST-1Password-Public",
+    "Threekiii/CVE","timgad794/DevHub-HTB-Walkthrough",
+    "timschneeb/postexploitation-toolbox-android","twais/credable_interview",
+    "trickest/cve","vicentewncosta/CVE","vin01/CVEs","whoforget/CVE-POC",
+    "wiseeyesent/cves","wisespace-io/cve-search","Wrin9/POC",
+    "yiwen-ming/fpauthanalysis","yogeshshe1ke/CVE","zecool/cve","zulloper/cve-poc",
+    "0xMarcio/pocindex"
+  ]);
+
+  var FARM_ACCOUNTS = new Set([
+    "nxploited","b1ack4sh","fomovet","horkimhab","polosss","thecodeb0ss",
+    "codeb0ssx","diznev","tc4dy","shinthink","pickl31","c0gnit00",
+    "qassam-315","bannned-bit","0xblackash","imbas007","candisexterior171"
+  ]);
+
+  var POC_RE = /\b(?:poc|exploit(?:ation)?|proof[\s_-]*of[\s_-]*concept|repro(?:ducer|duction|duce)?|payload|prueba[\s_-]*de[\s_-]*concepto|explotaci[oó]n|explora[cç][aã]o|preuve[\s_-]*de[\s_-]*concept)\b|漏洞利用|漏洞复现|复现|利用代码|利用脚本|攻击脚本|驗證程式|検証コード|эксплойт|익스플로잇/i;
+
+  var NON_POC_RE = /\b(?:advisory|aggregat(?:ion|or)|analysis|ansible|audits?|block(?:er|ing)?|blog|bookmark|challenge|cheat[\s_-]*sheets?|check(?:s|er|ing)?|collection|corpus|course|ctf|dataset|defen[cs](?:e|ive)|detect(?:ion|or)?|dfir|epss|feed|finder|framework|github[\s_-]*stars|hardening|hub|honeypot|intelligence|ioc|lab|list|lookup|mitigat(?:e|ing|ion|or)|model(?:er|ing)|monitor(?:ing)?|notes?|oscp|papers?|patch(?:es|ed|ing)?|pentest|portfolio|prediction|pre[\s_-]*checks?|prevent(?:ion|ive)?|profile|protect(?:ion|ive)|remediat(?:e|ion)|reports?|resources?|rules?|scan(?:s|ner|ning)?|shield|signature|suggester|templates?|toolkit|training|tutorial|validat(?:e|ion|or)|verif(?:y|ier|ication)|walkthrough|wazuh|workarounds?|fix(?:es|ed|ing)?|write[\s_-]*ups?)\b|searchpoc|watchdog/i;
+
+  var ALIASES = {
+    sqli:["sql injection"],xss:["cross-site scripting","cross site scripting"],
+    rce:["remote code execution"],lpe:["privilege escalation"],
+    privesc:["privilege escalation"],eop:["elevation of privilege","privilege escalation"],
+    lfi:["local file inclusion"],rfi:["remote file inclusion"],
+    xxe:["xml external entity"],csrf:["cross-site request forgery"],
+    ssrf:["server-side request forgery"],ssti:["server-side template injection"],
+    idor:["insecure direct object reference"],dos:["denial of service"],
+    cmdi:["command injection"],traversal:["path traversal","directory traversal"],
+    deserialization:["deserialization of untrusted data","insecure deserialization"],
+    bypass:["authentication bypass","authorization bypass"],
+    overflow:["buffer overflow","heap overflow","stack overflow","integer overflow"],
+    rop:["return oriented programming"],uaf:["use after free"],
+    oob:["out of bounds"],bof:["buffer overflow"]
+  };
+
+  var NAMED = {
+    log4shell:"CVE-2021-44228",heartbleed:"CVE-2014-0160",eternalblue:"CVE-2017-0144",
+    eternalromance:"CVE-2017-0145",wannacry:"CVE-2017-0144",printnightmare:"CVE-2021-34527",
+    zerologon:"CVE-2020-1472",spring4shell:"CVE-2022-22965",proxyshell:"CVE-2021-34473",
+    proxylogon:"CVE-2021-26855",proxynotshell:"CVE-2022-41040",citrixbleed:"CVE-2023-4966",
+    regresshion:"CVE-2024-6387",bluekeep:"CVE-2019-0708",shellshock:"CVE-2014-6271",
+    dirtypipe:"CVE-2022-0847",dirtycow:"CVE-2016-5195",follina:"CVE-2022-30190",
+    ghostcat:"CVE-2020-1938",looneytunables:"CVE-2023-4911",text4shell:"CVE-2022-42889",
+    pwnkit:"CVE-2021-4034",baronsamedit:"CVE-2021-3156",moveit:"CVE-2023-34362",
+    smbghost:"CVE-2020-0796",petitpotam:"CVE-2021-36942",sambacry:"CVE-2017-7494",
+    drupalgeddon:"CVE-2014-3704",drupalgeddon2:"CVE-2018-7600",curveball:"CVE-2020-0601",
+    sigred:"CVE-2020-1350",poodle:"CVE-2014-3566",meltdown:"CVE-2017-5754",
+    spectre:"CVE-2017-5753",krack:"CVE-2017-13077",zenbleed:"CVE-2023-20593",
+    downfall:"CVE-2022-40982",terrapin:"CVE-2023-48795",xzbackdoor:"CVE-2024-3094"
+  };
+
+  /* ================================================================
+     DOM REFS
+     ================================================================ */
   var rowsEl    = document.getElementById("wl-rows");
   var tableWrap = document.getElementById("wl-table-wrap");
   var stateEl   = document.getElementById("wl-state");
   var searchEl  = document.getElementById("wl-search");
+  var hintEl    = document.getElementById("wl-search-hint");
   var moreWrap  = document.getElementById("wl-more");
   var moreBtn   = document.getElementById("wl-more-btn");
   var tblCount  = document.getElementById("wl-table-count");
-  var ACTIVE    = ["border-emerald-400", "bg-emerald-50", "text-emerald-600", "dark:text-emerald-400", "dark:bg-emerald-950", "dark:border-emerald-700"];
+  var screenBar = document.getElementById("wl-screening");
 
+  var ACTIVE = ["border-emerald-400","bg-emerald-50","text-emerald-600",
+    "dark:text-emerald-400","dark:bg-emerald-950","dark:border-emerald-700"];
+
+  /* ================================================================
+     STATE
+     ================================================================ */
   var all = [], filter = "all", query = "", shown = 50;
-  var MIN_SCORE = 50, onlyLikely = true;
+  var MIN_SCORE = 50, onlyLikely = true, hideBlacklisted = true;
+  var sortBy = "newest", sevFilter = "all";
+  var kevData = {}, epssData = {};
 
-  // ---- Owner mode -----------------------------------------------------
+  /* ================================================================
+     SCREENING — multi-signal trust scoring
+     ================================================================ */
+  function isBlacklisted(c) {
+    var name = c.repo_full_name || "";
+    if (BLACKLIST_REPOS.has(name)) return true;
+    var owner = name.split("/")[0];
+    if (owner && FARM_ACCOUNTS.has(owner.toLowerCase())) return true;
+    return false;
+  }
+
+  function severityOf(cvss) {
+    if (cvss == null) return "";
+    if (cvss >= 9.0) return "critical";
+    if (cvss >= 7.0) return "high";
+    if (cvss >= 4.0) return "medium";
+    return "low";
+  }
+
+  function computeTrust(c) {
+    var score = c.poc_score || 0;
+    var blob = ((c.repo_full_name || "") + " " + (c.description || "")).toLowerCase();
+
+    if (POC_RE.test(blob)) score += 15;
+    if (NON_POC_RE.test(blob)) score -= 20;
+    if (c._blacklisted) score -= 40;
+    var span = c.cve_span || 0;
+    if (span > 5) score -= 15;
+    else if (span > 2) score -= 5;
+
+    var parts = (c.repo_full_name || "").split("/");
+    if (parts.length === 2 && parts[0].toLowerCase() === parts[1].toLowerCase()) score -= 10;
+    if (!c.description) score -= 5;
+
+    return Math.max(0, Math.min(100, score));
+  }
+
+  function enrichCandidate(c) {
+    c._blacklisted = isBlacklisted(c);
+    c._trust = computeTrust(c);
+    c._severity = severityOf(c.cvss_score);
+    c._kev = false;
+    c._epss = null;
+  }
+
+  function applyEnrichment() {
+    all.forEach(function (c) {
+      c._kev = !!kevData[String(c.cve_id || "").toUpperCase()];
+      var ep = epssData[String(c.cve_id || "").toUpperCase()];
+      c._epss = ep != null ? ep : null;
+    });
+  }
+
+  /* ================================================================
+     SEARCH — alias expansion + named CVEs
+     ================================================================ */
+  function expandSearch(raw) {
+    var q = raw.toLowerCase().trim();
+    if (!q) return { terms: [], hint: "" };
+
+    var slug = q.replace(/[^a-z0-9]/g, "");
+    var named = NAMED[slug];
+    if (named) return { terms: [named.toLowerCase()], hint: slug + " → " + named };
+
+    var words = q.split(/\s+/);
+    var expanded = [];
+    var hints = [];
+    words.forEach(function (w) {
+      expanded.push(w);
+      var aliases = ALIASES[w];
+      if (aliases) {
+        aliases.forEach(function (a) { expanded.push(a); });
+        hints.push(w + " → " + aliases[0]);
+      }
+    });
+    return { terms: expanded, hint: hints.join(", ") };
+  }
+
+  function matchesSearch(c, parsed) {
+    if (!parsed.terms.length) return true;
+    return parsed.terms.some(function (term) {
+      return c._blob.indexOf(term) !== -1;
+    });
+  }
+
+  /* ================================================================
+     SORTING
+     ================================================================ */
+  function sortFn(a, b) {
+    switch (sortBy) {
+      case "cvss":
+        return ((b.cvss_score || 0) - (a.cvss_score || 0)) || (b._trust - a._trust);
+      case "trust":
+        return (b._trust - a._trust) || ((b.cvss_score || 0) - (a.cvss_score || 0));
+      case "oldest":
+        return (a.discovered_at || "").localeCompare(b.discovered_at || "");
+      default:
+        return (b.discovered_at || "").localeCompare(a.discovered_at || "");
+    }
+  }
+
+  /* ================================================================
+     OWNER MODE
+     ================================================================ */
   var ownerKey = null;
   var toggleEl = document.getElementById("wl-owner-toggle");
   var formEl   = document.getElementById("wl-owner-form");
@@ -221,7 +466,9 @@
     });
   }
 
-  // ---- Rendering ------------------------------------------------------
+  /* ================================================================
+     RENDERING
+     ================================================================ */
   function el(tag, cls, text) {
     var n = document.createElement(tag);
     if (cls) n.className = cls;
@@ -242,82 +489,168 @@
     pending:  "border-zinc-300 bg-zinc-50 text-zinc-600 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
   };
 
+  var SEV_CHIP = {
+    critical: "border-red-300 bg-red-50 text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400",
+    high:     "border-orange-300 bg-orange-50 text-orange-600 dark:border-orange-800 dark:bg-orange-950 dark:text-orange-400",
+    medium:   "border-yellow-300 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-400",
+    low:      "border-zinc-300 bg-zinc-50 text-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+  };
+
+  function trustColor(score) {
+    if (score >= 75) return "text-emerald-600 dark:text-emerald-400";
+    if (score >= 50) return "text-yellow-600 dark:text-yellow-400";
+    return "text-red-500 dark:text-red-400";
+  }
+
   function card(c) {
     var st = statusOf(c);
     var tr = el("tr", "group hover:bg-zinc-50 dark:hover:bg-mono-hover");
+    if (c._blacklisted) tr.className += " opacity-60";
 
-    // Repo column
+    // ---- Repository column ----
     var td1 = el("td", "max-w-0 px-3 py-2.5");
     var link = el("a", "flex flex-wrap items-center gap-1.5");
     link.href = c.repo_url;
     link.target = "_blank";
     link.rel = "noopener noreferrer nofollow";
     link.appendChild(el("span", "line-clamp-1 min-w-0 font-medium text-zinc-900 group-hover:text-emerald-600 dark:text-white dark:group-hover:text-brand", c.repo_full_name));
+
     link.appendChild(el("span", "shrink-0 border px-1 py-[1px] text-[9px] uppercase " + BADGE_CLS[st], STATUS_LABEL[st]));
-    if ((c.poc_score || 0) >= 60) {
+
+    if (c._kev) {
+      link.appendChild(el("span", "shrink-0 border border-red-400 bg-red-50 px-1 py-[1px] text-[9px] font-bold uppercase text-red-600 dark:border-red-700 dark:bg-red-950 dark:text-red-400", "KEV"));
+    }
+    if (c._blacklisted) {
+      link.appendChild(el("span", "shrink-0 border border-red-300 bg-red-50 px-1 py-[1px] text-[9px] uppercase text-red-500 dark:border-red-800 dark:bg-red-950 dark:text-red-400", "blacklisted"));
+    }
+    if (!c._blacklisted && (c.poc_score || 0) >= 60) {
       link.appendChild(el("span", "shrink-0 border border-zinc-300 bg-zinc-50 px-1 py-[1px] text-[9px] uppercase text-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400", "likely poc"));
     }
     if (c.cve_span > 2) {
-      link.appendChild(el("span", "shrink-0 border border-zinc-300 bg-zinc-50 px-1 py-[1px] text-[9px] uppercase text-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400", "collection"));
+      link.appendChild(el("span", "shrink-0 border border-zinc-300 bg-zinc-50 px-1 py-[1px] text-[9px] uppercase text-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400", c.cve_span + " CVEs"));
     }
     td1.appendChild(link);
-    td1.appendChild(el("p", "line-clamp-1 mt-0.5 text-[11px] text-zinc-500 dark:text-mono-muted", c.description || "No description"));
+
+    var descText = c.description || "No description";
+    if (c._epss != null) descText += "  ·  EPSS " + (c._epss * 100).toFixed(1) + "%";
+    td1.appendChild(el("p", "line-clamp-1 mt-0.5 text-[11px] text-zinc-500 dark:text-mono-muted", descText));
+
     // Mobile fold
     var mf = el("div", "mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-zinc-500 sm:hidden dark:text-mono-muted");
     mf.appendChild(el("span", "font-bold text-emerald-600 dark:text-brand", c.cve_id));
-    mf.appendChild(el("span", "font-bold", "CVSS " + (c.cvss_score != null ? c.cvss_score : "—")));
+    var cvssText = c.cvss_score != null ? c.cvss_score : "—";
+    var sevLabel = c._severity ? " " + c._severity.toUpperCase() : "";
+    mf.appendChild(el("span", "font-bold", "CVSS " + cvssText + sevLabel));
+    mf.appendChild(el("span", trustColor(c._trust), "Trust " + c._trust));
     var cwe = (c.cwe_names || []).slice(0, 2).join(", ");
     if (cwe) mf.appendChild(el("span", "", cwe));
     td1.appendChild(mf);
     tr.appendChild(td1);
 
-    // CVE column
+    // ---- CVE column ----
     tr.appendChild(el("td", "hidden truncate whitespace-nowrap px-3 py-2.5 font-bold text-emerald-600 sm:table-cell dark:text-brand", c.cve_id));
 
-    // CVSS column
-    tr.appendChild(el("td", "whitespace-nowrap px-3 py-2.5 font-bold text-zinc-900 dark:text-white", c.cvss_score != null ? String(c.cvss_score) : "—"));
+    // ---- CVSS column (with severity chip) ----
+    var td3 = el("td", "whitespace-nowrap px-3 py-2.5");
+    if (c.cvss_score != null) {
+      var sev = c._severity;
+      var chipCls = SEV_CHIP[sev] || SEV_CHIP.low;
+      var chip = el("span", "inline-block rounded border px-1.5 py-[1px] text-[10px] font-bold " + chipCls, c.cvss_score);
+      if (c._epss != null) chip.title = "EPSS: " + (c._epss * 100).toFixed(1) + "% probability of exploitation";
+      td3.appendChild(chip);
+    } else {
+      td3.appendChild(el("span", "text-zinc-400 dark:text-mono-muted", "—"));
+    }
+    tr.appendChild(td3);
 
-    // Status column
-    var td4 = el("td", "hidden whitespace-nowrap px-3 py-2.5 md:table-cell text-zinc-500 dark:text-zinc-400");
+    // ---- Trust column ----
+    var td4 = el("td", "hidden whitespace-nowrap px-3 py-2.5 md:table-cell");
+    var trustSpan = el("span", "font-bold " + trustColor(c._trust), String(c._trust));
+    if (c._trust >= 75) trustSpan.title = "High confidence — strong PoC signals";
+    else if (c._trust >= 50) trustSpan.title = "Medium confidence — some PoC signals present";
+    else trustSpan.title = "Low confidence — weak signals or screening flags";
+    td4.appendChild(trustSpan);
+    tr.appendChild(td4);
+
+    // ---- Status column ----
+    var td5 = el("td", "hidden whitespace-nowrap px-3 py-2.5 lg:table-cell text-zinc-500 dark:text-zinc-400");
     if (c._archiveURL) {
       var va = el("a", "font-medium text-emerald-600 hover:underline dark:text-brand", "ingested →");
       va.href = c._archiveURL;
-      td4.appendChild(va);
+      td5.appendChild(va);
     } else if (ownerKey && !c.reviewed) {
       var mb = el("button", "rounded border border-zinc-300 px-2 py-0.5 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-800", "mark");
       mb.type = "button";
       mb.addEventListener("click", function () { markReviewed(c, mb); });
-      td4.appendChild(mb);
+      td5.appendChild(mb);
     } else {
-      td4.textContent = STATUS_LABEL[st];
+      td5.textContent = STATUS_LABEL[st];
     }
-    tr.appendChild(td4);
+    tr.appendChild(td5);
 
-    // Seen date column
-    tr.appendChild(el("td", "hidden whitespace-nowrap px-3 py-2.5 text-[11px] text-zinc-400 lg:table-cell dark:text-mono-muted", String(c.discovered_at || "").slice(0, 10)));
+    // ---- Seen column ----
+    tr.appendChild(el("td", "hidden whitespace-nowrap px-3 py-2.5 text-[11px] text-zinc-400 xl:table-cell dark:text-mono-muted", String(c.discovered_at || "").slice(0, 10)));
 
     return tr;
   }
 
   function render() {
-    var q = query.toLowerCase();
+    var parsed = expandSearch(query);
+    if (hintEl) {
+      hintEl.textContent = parsed.hint;
+      hintEl.classList.toggle("hidden", !parsed.hint);
+    }
+
     var list = all.filter(function (c) {
       if (onlyLikely && (c.poc_score || 0) < MIN_SCORE) return false;
+      if (hideBlacklisted && c._blacklisted) return false;
       if (filter !== "all" && statusOf(c) !== filter) return false;
-      return !q || c._blob.indexOf(q) !== -1;
+      if (sevFilter !== "all" && c._severity !== sevFilter) return false;
+      if (!matchesSearch(c, parsed)) return false;
+      return true;
     });
 
-    var pool = onlyLikely ? all.filter(function (c) { return (c.poc_score || 0) >= MIN_SCORE; }) : all;
+    list.sort(sortFn);
+
+    // Stats — count from the pool (signal + blacklist filters, not status/sev/search)
+    var pool = all.filter(function (c) {
+      if (onlyLikely && (c.poc_score || 0) < MIN_SCORE) return false;
+      if (hideBlacklisted && c._blacklisted) return false;
+      return true;
+    });
     document.getElementById("wl-total").textContent    = pool.length;
     document.getElementById("wl-ingested").textContent = pool.filter(function (c) { return statusOf(c) === "ingested"; }).length;
     document.getElementById("wl-reviewed").textContent = pool.filter(function (c) { return statusOf(c) === "reviewed"; }).length;
     document.getElementById("wl-pending").textContent  = pool.filter(function (c) { return statusOf(c) === "pending"; }).length;
 
+    // Screening summary
+    var kevCount = all.filter(function (c) { return c._kev; }).length;
+    var blCount = all.filter(function (c) { return c._blacklisted; }).length;
+    var lowTrust = all.filter(function (c) { return c._trust < 30; }).length;
+    var epssHigh = all.filter(function (c) { return (c._epss || 0) >= 0.5; }).length;
+    var parts = [];
+    if (kevCount) parts.push(kevCount + " in CISA KEV");
+    if (epssHigh) parts.push(epssHigh + " with EPSS ≥ 50%");
+    if (lowTrust) parts.push(lowTrust + " low-trust flagged");
+    if (blCount) parts.push(blCount + " blacklisted" + (hideBlacklisted ? " (hidden)" : ""));
+
+    var kevStat = document.getElementById("wl-kev-stat");
+    var epssStat = document.getElementById("wl-epss-stat");
+    var flagStat = document.getElementById("wl-flagged-stat");
+    var blStat = document.getElementById("wl-bl-stat");
+    kevStat.textContent = kevCount ? kevCount + " in CISA KEV" : "";
+    epssStat.textContent = epssHigh ? epssHigh + " with EPSS ≥ 50%" : "";
+    flagStat.textContent = lowTrust ? lowTrust + " low-trust flagged" : "";
+    blStat.textContent = blCount ? blCount + " blacklisted" + (hideBlacklisted ? " (hidden)" : "") : "";
+    screenBar.classList.toggle("hidden", !parts.length);
+    if (parts.length) screenBar.style.display = "flex";
+
+    // Table
     rowsEl.textContent = "";
     if (!list.length) {
       tableWrap.classList.add("hidden");
       moreWrap.classList.add("hidden");
-      stateEl.textContent = "No candidates match the current filter.";
+      stateEl.textContent = "No candidates match the current filters.";
       stateEl.classList.remove("hidden");
       return;
     }
@@ -329,18 +662,26 @@
     moreWrap.classList.toggle("hidden", list.length <= shown);
     moreBtn.textContent = "Show more (" + (list.length - shown) + " remaining)";
 
-    var hidden = onlyLikely
-      ? all.filter(function (c) { return (c.poc_score || 0) < MIN_SCORE; }).length
-      : 0;
+    var hidden = (onlyLikely ? all.filter(function (c) { return (c.poc_score || 0) < MIN_SCORE; }).length : 0) +
+                 (hideBlacklisted ? blCount : 0);
     var note = document.getElementById("wl-hidden");
     if (note) {
-      note.textContent = hidden
-        ? hidden + " lower-signal candidate" + (hidden === 1 ? "" : "s") + " hidden — click \"likely PoCs only\" to include them"
-        : "";
-      note.classList.toggle("hidden", hidden === 0);
+      var msgs = [];
+      if (onlyLikely) {
+        var lsc = all.filter(function (c) { return (c.poc_score || 0) < MIN_SCORE; }).length;
+        if (lsc) msgs.push(lsc + " low-signal candidate" + (lsc === 1 ? "" : "s") + " hidden");
+      }
+      if (hideBlacklisted && blCount) {
+        msgs.push(blCount + " blacklisted repo" + (blCount === 1 ? "" : "s") + " hidden");
+      }
+      note.textContent = msgs.length ? msgs.join(" · ") + " — toggle filters above to show" : "";
+      note.classList.toggle("hidden", !msgs.length);
     }
   }
 
+  /* ================================================================
+     DATA LOADING
+     ================================================================ */
   function fail(msg) {
     tableWrap.classList.add("hidden");
     moreWrap.classList.add("hidden");
@@ -349,11 +690,41 @@
       " — the archive itself is unaffected, this page reads a separate live service.";
   }
 
+  function fetchKev() {
+    return fetch(KEV_URL).then(function (r) {
+      if (!r.ok) throw new Error("KEV HTTP " + r.status);
+      return r.json();
+    }).then(function (data) {
+      (data.vulnerabilities || []).forEach(function (v) {
+        kevData[String(v.cveID || "").toUpperCase()] = true;
+      });
+    }).catch(function () {});
+  }
+
+  function fetchEpss(cveIds) {
+    if (!cveIds.length) return Promise.resolve();
+    var batches = [];
+    for (var i = 0; i < cveIds.length; i += 100) {
+      batches.push(cveIds.slice(i, i + 100));
+    }
+    return Promise.all(batches.map(function (batch) {
+      return fetch(EPSS_URL + "?cve=" + batch.join(",")).then(function (r) {
+        if (!r.ok) throw new Error("EPSS HTTP " + r.status);
+        return r.json();
+      }).then(function (data) {
+        (data.data || []).forEach(function (d) {
+          epssData[String(d.cve || "").toUpperCase()] = parseFloat(d.epss) || 0;
+        });
+      }).catch(function () {});
+    }));
+  }
+
   Promise.all([
     fetch(MONITOR + "/list?sort=discovered_desc&limit=2000").then(function (r) {
       if (!r.ok) throw new Error("monitor HTTP " + r.status); return r.json();
     }),
-    fetch("{{ "/index.json" | relURL }}").then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; })
+    fetch("{{ "/index.json" | relURL }}").then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; }),
+    fetchKev()
   ]).then(function (res) {
     var data = res[0], archive = res[1] || [];
     var byCve = {};
@@ -361,11 +732,23 @@
       var m = String(e.cve || "").match(/CVE-\d{4}-\d{4,7}/i);
       if (m) byCve[m[0].toUpperCase()] = e.permalink;
     });
+
     all = (data.candidates || []).map(function (c) {
       c._archiveURL = byCve[String(c.cve_id || "").toUpperCase()] || null;
       c._blob = [c.cve_id, c.repo_full_name, c.description, (c.cwe_names || []).join(" ")].join(" ").toLowerCase();
+      enrichCandidate(c);
       return c;
     });
+
+    applyEnrichment();
+
+    var cveIds = [];
+    var seen = {};
+    all.forEach(function (c) {
+      var id = String(c.cve_id || "").toUpperCase();
+      if (id && !seen[id]) { cveIds.push(id); seen[id] = true; }
+    });
+
     var u = document.getElementById("wl-updated");
     if (all.length) {
       var newest = all.reduce(function (m, c) {
@@ -375,32 +758,73 @@
       u.textContent = "last discovery · " + newest.slice(0, 10) +
         "  ·  " + (data.total || all.length) + " tracked";
     }
+
     render();
+
+    fetchEpss(cveIds).then(function () {
+      applyEnrichment();
+      render();
+    });
   }).catch(function (e) { fail(e.message || String(e)); });
 
+  /* ================================================================
+     EVENT HANDLERS
+     ================================================================ */
+  function toggleActive(btn, on) {
+    ACTIVE.forEach(function (c) { btn.classList.toggle(c, on); });
+    btn.classList.toggle("border-zinc-300", !on);
+    btn.classList.toggle("dark:border-mono-border", !on);
+  }
+
+  // Signal toggle
   var signalEl = document.getElementById("wl-signal");
   signalEl.addEventListener("click", function () {
     onlyLikely = !onlyLikely;
-    signalEl.textContent = onlyLikely ? "likely PoCs only" : "showing all candidates";
-    ACTIVE.forEach(function (c) { signalEl.classList.toggle(c, onlyLikely); });
-    signalEl.classList.toggle("border-zinc-300", !onlyLikely);
-    signalEl.classList.toggle("dark:border-mono-border", !onlyLikely);
-    shown = 50;
-    render();
+    signalEl.textContent = onlyLikely ? "likely PoCs only" : "all signal levels";
+    toggleActive(signalEl, onlyLikely);
+    shown = 50; render();
   });
 
+  // Blacklist toggle
+  var blToggle = document.getElementById("wl-bl-toggle");
+  blToggle.addEventListener("click", function () {
+    hideBlacklisted = !hideBlacklisted;
+    blToggle.textContent = hideBlacklisted ? "hide blacklisted" : "show blacklisted";
+    toggleActive(blToggle, hideBlacklisted);
+    shown = 50; render();
+  });
+
+  // Search
   searchEl.addEventListener("input", function () { query = searchEl.value.trim(); shown = 50; render(); });
+
+  // Show more
   moreBtn.addEventListener("click", function () { shown += 50; render(); });
+
+  // Status filter
   document.querySelectorAll("#wl-filter .wl-pill").forEach(function (btn) {
     btn.addEventListener("click", function () {
       filter = btn.getAttribute("data-v"); shown = 50;
       document.querySelectorAll("#wl-filter .wl-pill").forEach(function (b) {
-        ACTIVE.forEach(function (c) { b.classList.toggle(c, b === btn); });
-        b.classList.toggle("border-zinc-300", b !== btn);
-        b.classList.toggle("dark:border-mono-border", b !== btn);
+        toggleActive(b, b === btn);
       });
       render();
     });
+  });
+
+  // Severity filter
+  document.querySelectorAll("#wl-severity .wl-sev").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      sevFilter = btn.getAttribute("data-s"); shown = 50;
+      document.querySelectorAll("#wl-severity .wl-sev").forEach(function (b) {
+        toggleActive(b, b === btn);
+      });
+      render();
+    });
+  });
+
+  // Sort
+  document.getElementById("wl-sort").addEventListener("change", function (e) {
+    sortBy = e.target.value; shown = 50; render();
   });
 })();
 </script>

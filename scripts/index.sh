@@ -17,12 +17,13 @@ trap 'rm -rf "$TMPDIR_ROWS" "$TMPDIR_JSON"' EXIT
 mkdir -p "$ARCHIVE_DIR" "$DOCS_DIR"
 
 extract_field() {
-  grep -i "^[|] \*\*${2}\*\*" "$1" 2>/dev/null \
-    | head -1 \
-    | sed 's/.*| \*\*[^*]*\*\* | //' \
-    | sed 's/ |.*//' \
-    | sed 's/<!--.*-->//g' \
-    | xargs
+  local line
+  line=$(grep -i "^[|] \*\*${2}\*\*" "$1" 2>/dev/null | head -1) || true
+  if [[ -z "$line" ]]; then
+    echo ""
+    return 0
+  fi
+  echo "$line" | sed 's/.*| \*\*[^*]*\*\* | //' | sed 's/ |.*//' | sed 's/<!--.*-->//g' | xargs
 }
 
 extract_summary() {
