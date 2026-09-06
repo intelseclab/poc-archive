@@ -1,3 +1,4 @@
+// Hero 3D model asset: "Bomb" by giga (https://sketchfab.com/gits3d) licensed under CC BY 4.0
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { AsciiEffect } from 'three/addons/effects/AsciiEffect.js';
@@ -40,18 +41,58 @@ if (mount) {
 
   const fallbackMesh = () => fit(new THREE.Mesh(
     new THREE.TorusKnotGeometry(1, 0.34, 220, 32),
-    new THREE.MeshStandardMaterial({ roughness: 0.35, metalness: 0.15 })
+    new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.35, metalness: 0.15 })
   ));
 
   const renderer = new THREE.WebGLRenderer({ antialias: !raw });
   renderer.setPixelRatio(1);
 
-  // ASCII readability comes from silhouette + shading, not texture detail:
-  // swap any textured materials for a matte mid-gray with a wide ramp.
+  // Recolor model texture: keep fire sparks (orange/red), map bomb body and collar to emerald green
+  const recolorTexture = (texture) => {
+    const img = texture.image;
+    if (!img) return texture;
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width || 512;
+    canvas.height = img.height || 512;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    const idata = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const d = idata.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const r = d[i], g = d[i + 1], b = d[i + 2];
+      // Keep fire colors (high red, low blue: orange & red sparks)
+      const isFire = (r > 180 && b < 60);
+      if (!isFire) {
+        if (r > 70) {
+          // Fuse/collar: light mint (#a7f3d0)
+          d[i] = 167;
+          d[i + 1] = 243;
+          d[i + 2] = 208;
+        } else {
+          // Bomb body: emerald green (#10b981)
+          d[i] = 16;
+          d[i + 1] = 185;
+          d[i + 2] = 129;
+        }
+      }
+    }
+    ctx.putImageData(idata, 0, 0);
+    const newTex = new THREE.CanvasTexture(canvas);
+    newTex.flipY = texture.flipY;
+    if (texture.colorSpace) newTex.colorSpace = texture.colorSpace;
+    newTex.needsUpdate = true;
+    return newTex;
+  };
+
   const normalizeMaterials = (root) => {
     root.traverse((o) => {
-      if (o.isMesh) {
-        o.material = new THREE.MeshStandardMaterial({ color: 0xd9d9d9, roughness: 0.45, metalness: 0 });
+      if (o.isMesh && o.material) {
+        if (o.material.map && o.material.map.image) {
+          o.material.map = recolorTexture(o.material.map);
+        }
+        o.material.emissive = new THREE.Color(0x064e3b);
+        o.material.roughness = 0.45;
+        o.material.metalness = 0;
       }
     });
   };
@@ -61,7 +102,7 @@ if (mount) {
     renderer.setSize(SIZE, SIZE);
     mount.appendChild(renderer.domElement);
   } else {
-    effect = new AsciiEffect(renderer, ' .:-=+*#%@', { invert: true, resolution: RESOLUTION });
+    effect = new AsciiEffect(renderer, ' .:-=+*#%@', { invert: true, resolution: RESOLUTION, color: true });
     effect.setSize(SIZE, SIZE);
     const table = effect.domElement.firstElementChild;
     table.style.fontFamily = '"JetBrains Mono", ui-monospace, monospace';
