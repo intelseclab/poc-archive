@@ -288,8 +288,12 @@
   }
 
   /* ================================================================
-     API
+     API — tries pipeline endpoints first, falls back to /list
      ================================================================ */
+  var candidates = [];
+  var pipelineReady = false;
+  var kevData = {}, epssData = {};
+
   function fetchJSON(url) {
     return fetch(url).then(function (r) {
       if (!r.ok) throw new Error("HTTP " + r.status);
@@ -297,29 +301,138 @@
     });
   }
 
+  function severityOf(cvss) {
+    if (cvss == null) return "";
+    if (cvss >= 9.0) return "CRITICAL";
+    if (cvss >= 7.0) return "HIGH";
+    if (cvss >= 4.0) return "MEDIUM";
+    return "LOW";
+  }
+
+  function candidateToResult(c) {
+    return {
+      cve: c.cve_id || "",
+      desc: c.description || "",
+      title: "",
+      severity: severityOf(c.cvss_score),
+      cvss: c.cvss_score,
+      epss: epssData[(c.cve_id || "").toUpperCase()] || null,
+      kev: !!kevData[(c.cve_id || "").toUpperCase()],
+      kev_date: kevData[(c.cve_id || "").toUpperCase()] || null,
+      kev_ransomware: false,
+      published: String(c.discovered_at || "").slice(0, 10),
+      poc_count: 1,
+      pocs: [{ url: c.repo_url || "", stars: null, pushed: null, source: "GITHUB" }],
+      _blob: [c.cve_id, c.repo_full_name, c.description, (c.cwe_names || []).join(" ")].join(" ").toLowerCase(),
+      _score: c.poc_score || 0,
+      _discovered: c.discovered_at || ""
+    };
+  }
+
   function loadStats() {
     fetchJSON(API + "/cves/stats").then(function (d) {
+      pipelineReady = true;
       document.getElementById("cs-total").textContent = fmtNum(d.total_cves || 0);
       document.getElementById("cs-pocs").textContent = fmtNum(d.with_pocs || 0);
       document.getElementById("cs-kev").textContent = fmtNum(d.kev_count || 0);
       if (d.last_sync) syncEl.textContent = "synced " + String(d.last_sync).slice(0, 10);
       state.ready = true;
     }).catch(function () {
+      loadFallback();
+    });
+  }
+
+  function loadFallback() {
+    Promise.all([
+      fetchJSON(API + "/list?sort=discovered_desc&limit=2000"),
+      fetch("https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json")
+        .then(function (r) { return r.ok ? r.json() : { vulnerabilities: [] }; })
+        .catch(function () { return { vulnerabilities: [] }; }),
+      fetch("https://api.first.org/data/v1/epss?cve=" +
+        "CVE-2021-44228,CVE-2024-3094,CVE-2023-4966,CVE-2024-6387,CVE-2022-22965")
+        .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+        .catch(function () { return { data: [] }; })
+    ]).then(function (res) {
+      var data = res[0];
+      candidates = (data.candidates || []).map(function (c) {
+        c._blob = [c.cve_id, c.repo_full_name, c.description, (c.cwe_names || []).join(" ")].join(" ").toLowerCase();
+        return c;
+      });
+
+      (res[1].vulnerabilities || []).forEach(function (v) {
+        kevData[String(v.cveID || "").toUpperCase()] = v.dateAdded || true;
+      });
+      (res[2].data || []).forEach(function (d) {
+        epssData[String(d.cve || "").toUpperCase()] = parseFloat(d.epss) || 0;
+      });
+
+      var uniqueCves = {};
+      candidates.forEach(function (c) {
+        var id = (c.cve_id || "").toUpperCase();
+        if (id) uniqueCves[id] = true;
+      });
+      var totalCves = Object.keys(uniqueCves).length;
+      var kevCount = 0;
+      Object.keys(uniqueCves).forEach(function (id) { if (kevData[id]) kevCount++; });
+
+      document.getElementById("cs-total").textContent = fmtNum(totalCves);
+      document.getElementById("cs-pocs").textContent = fmtNum(candidates.length);
+      document.getElementById("cs-kev").textContent = fmtNum(kevCount);
+      syncEl.textContent = "live from monitor · pipeline pending";
+
+      var epssIds = [];
+      var seen = {};
+      candidates.forEach(function (c) {
+        var id = (c.cve_id || "").toUpperCase();
+        if (id && !seen[id]) { epssIds.push(id); seen[id] = true; }
+      });
+      fetchEpssBatch(epssIds);
+
+      state.trending = candidates
+        .filter(function (c) { return (c.poc_score || 0) >= 50; })
+        .slice(0, 40)
+        .map(function (c) {
+          return {
+            name: c.repo_full_name || "",
+            url: c.repo_url || "",
+            cve: c.cve_id || "",
+            desc: c.description || "",
+            stars: 0,
+            pushed: c.discovered_at || ""
+          };
+        });
+      renderTrending();
+      state.ready = true;
+    }).catch(function (e) {
       pendingEl.classList.remove("hidden");
+      trendRows.innerHTML = '<div class="px-3 py-6 text-center font-mono text-xs text-zinc-400 dark:text-mono-muted">Could not reach the monitor.</div>';
+    });
+  }
+
+  function fetchEpssBatch(ids) {
+    if (!ids.length) return;
+    var batches = [];
+    for (var i = 0; i < ids.length; i += 100) batches.push(ids.slice(i, i + 100));
+    batches.forEach(function (batch) {
+      fetch("https://api.first.org/data/v1/epss?cve=" + batch.join(","))
+        .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+        .then(function (d) {
+          (d.data || []).forEach(function (e) {
+            epssData[String(e.cve || "").toUpperCase()] = parseFloat(e.epss) || 0;
+          });
+        }).catch(function () {});
     });
   }
 
   function loadTrending() {
     fetchJSON(API + "/cves/trending?limit=20").then(function (d) {
+      pipelineReady = true;
       state.trending = d.entries || [];
       renderTrending();
-    }).catch(function () {
-      trendRows.innerHTML = '<div class="px-3 py-6 text-center font-mono text-xs text-zinc-400 dark:text-mono-muted">Trending data will appear once the pipeline syncs.</div>';
-    });
+    }).catch(function () {});
   }
 
   function doSearch() {
-    if (state.loading) return;
     var expanded = expandQuery(state.query);
     hintEl.textContent = expanded.hint;
     hintEl.classList.toggle("hidden", !expanded.hint);
@@ -331,13 +444,19 @@
       return;
     }
 
+    if (pipelineReady) {
+      doServerSearch(expanded);
+    } else {
+      doClientSearch(expanded);
+    }
+  }
+
+  function doServerSearch(expanded) {
+    if (state.loading) return;
     state.loading = true;
     statusEl.textContent = "searching…";
-
     var params = "?q=" + encodeURIComponent(expanded.q) +
-      "&sort=" + state.sort +
-      "&page=" + state.page +
-      "&limit=50";
+      "&sort=" + state.sort + "&page=" + state.page + "&limit=50";
     if (state.severity !== "all") params += "&severity=" + state.severity;
     if (state.kevOnly) params += "&kev=1";
 
@@ -347,13 +466,44 @@
       state.loading = false;
       renderResults();
       statusEl.textContent = fmtNum(state.total) + " results";
-    }).catch(function (e) {
+    }).catch(function () {
       state.loading = false;
-      statusEl.textContent = "search unavailable — pipeline may still be syncing";
-      resultList.innerHTML = '<div class="px-3 py-8 text-center font-mono text-sm text-zinc-400 dark:text-mono-muted">Search will be available once the CVE pipeline completes its first sync.</div>';
-      trendingEl.classList.add("hidden");
-      resultsEl.classList.remove("hidden");
+      doClientSearch(expanded);
     });
+  }
+
+  function doClientSearch(expanded) {
+    var terms = expanded.q.toLowerCase().split(/\s+/);
+    var t0 = performance.now();
+
+    var matched = candidates.filter(function (c) {
+      if (state.severity !== "all" && severityOf(c.cvss_score) !== state.severity) return false;
+      if (state.kevOnly && !kevData[(c.cve_id || "").toUpperCase()]) return false;
+      return terms.some(function (t) { return c._blob.indexOf(t) !== -1; });
+    });
+
+    if (state.sort === "newest") {
+      matched.sort(function (a, b) { return (b.discovered_at || "").localeCompare(a.discovered_at || ""); });
+    } else if (state.sort === "pocs") {
+      matched.sort(function (a, b) { return (b.poc_score || 0) - (a.poc_score || 0); });
+    } else {
+      matched.sort(function (a, b) {
+        var sa = 0, sb = 0;
+        terms.forEach(function (t) {
+          if ((a.cve_id || "").toLowerCase().indexOf(t) !== -1) sa += 100;
+          if ((b.cve_id || "").toLowerCase().indexOf(t) !== -1) sb += 100;
+          if ((a.repo_full_name || "").toLowerCase().indexOf(t) !== -1) sa += 50;
+          if ((b.repo_full_name || "").toLowerCase().indexOf(t) !== -1) sb += 50;
+        });
+        return sb - sa || (b.discovered_at || "").localeCompare(a.discovered_at || "");
+      });
+    }
+
+    state.results = matched.map(candidateToResult);
+    state.total = matched.length;
+    var elapsed = performance.now() - t0;
+    renderResults();
+    statusEl.textContent = fmtNum(state.total) + " results in " + Math.round(elapsed) + "ms (client-side)";
   }
 
   /* ================================================================
