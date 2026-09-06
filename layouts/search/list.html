@@ -1,21 +1,7 @@
 {{ define "main" }}
-{{- /* Full CVE + PoC search engine powered by the monitor pipeline.
-       Server-side search over 170K+ CVEs via monitor.intelseclab.com.
-
-       ── Monitor API contract (endpoints the pipeline needs to expose) ──
-
-       GET /cves/stats
-         → { total_cves, with_pocs, kev_count, last_sync }
-
-       GET /cves/search?q=...&severity=...&kev=1&sort=relevance|newest|pocs&page=1&limit=50
-         → { results: [{cve,desc,title,severity,cvss,epss,kev,kev_date,kev_ransomware,
-              published,poc_count,pocs:[{url,stars,pushed,source}]}], total, page, pages }
-
-       GET /cves/trending?limit=20
-         → { entries: [{name,url,cve,desc,stars,pushed}] }
-
-       All endpoints share the same CORS config as /list.
-*/ -}}
+{{- /* Full CVE + PoC search engine.
+       Loads static JSON data files (synced daily from pocindex) and runs
+       word-indexed client-side search over 82K+ CVEs.  */ -}}
 
 <header class="border-b border-zinc-200 pb-6 dark:border-mono-border">
   <nav class="mb-3 font-mono text-xs text-zinc-500 dark:text-mono-muted">
@@ -25,9 +11,8 @@
   </nav>
   <h1 class="font-mono text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white">CVE Search</h1>
   <p class="mt-2 max-w-3xl text-sm leading-relaxed text-zinc-600 dark:text-mono-muted">
-    Search the full CVE index with linked proof-of-concept repositories, exploits, and templates.
-    Enriched daily with CISA KEV status, EPSS scores, and multi-source PoC discovery across GitHub,
-    Nuclei, Metasploit, ExploitDB, and Vulhub.
+    Search 82,000+ CVEs with linked proof-of-concept exploits from GitHub, Nuclei, Metasploit,
+    ExploitDB, and Vulhub. Enriched with CISA KEV, EPSS scores, and CVSS data. Synced daily.
   </p>
 </header>
 
@@ -39,7 +24,7 @@
     (dict "id" "cs-kev"   "label" "Known exploited" "accent" "text-red-500 dark:text-red-400") }}
   <div class="rounded border border-zinc-200 bg-white p-3.5 dark:border-mono-border dark:bg-mono-card">
     <p class="font-mono text-[10px] uppercase tracking-wider text-zinc-500 dark:text-mono-muted">{{ .label }}</p>
-    <h3 id="{{ .id }}" class="mt-1 font-mono text-xl font-bold {{ if .accent }}{{ .accent }}{{ else }}text-zinc-900 dark:text-white{{ end }}">—</h3>
+    <h3 id="{{ .id }}" class="mt-1 font-mono text-xl font-bold {{ if .accent }}{{ .accent }}{{ else }}text-zinc-900 dark:text-white{{ end }}">&mdash;</h3>
   </div>
   {{- end }}
 </section>
@@ -48,8 +33,8 @@
 <div class="rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card">
   <div class="relative">
     <svg class="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400 dark:text-mono-muted" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-    <input type="search" id="cs-input" autocomplete="off"
-      placeholder="Search by CVE ID, product, keyword, or name (log4shell, sqli, rce…)"
+    <input type="search" id="cs-input" autocomplete="off" spellcheck="false"
+      placeholder="Search by CVE ID, product, keyword, or name (log4shell, sqli, rce…) · exclude with -term"
       class="w-full rounded-lg border border-zinc-300 bg-zinc-50 py-3 pl-11 pr-4 font-mono text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 dark:border-mono-border dark:bg-mono-bg dark:text-white dark:placeholder:text-mono-muted dark:focus:border-brand dark:focus:ring-brand" />
   </div>
   <div class="mt-1.5 flex items-center justify-between">
@@ -59,35 +44,40 @@
 </div>
 
 <!-- Filters -->
-<div class="mt-3 flex flex-wrap items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-4 py-3 dark:border-mono-border dark:bg-mono-card">
+<div id="cs-filters" class="mt-3 flex flex-wrap items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-4 py-3 dark:border-mono-border dark:bg-mono-card">
   <span class="mr-1 font-mono text-[11px] text-zinc-500 dark:text-mono-muted">Severity:</span>
-  <div class="flex flex-wrap gap-1.5" id="cs-severity">
-    <button type="button" data-s="all"      class="cs-sev rounded border border-emerald-400 bg-emerald-50 px-2.5 py-1 font-mono text-[11px] text-emerald-600 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">all</button>
-    <button type="button" data-s="CRITICAL" class="cs-sev rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">critical</button>
-    <button type="button" data-s="HIGH"     class="cs-sev rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">high</button>
-    <button type="button" data-s="MEDIUM"   class="cs-sev rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">medium</button>
-    <button type="button" data-s="LOW"      class="cs-sev rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">low</button>
-  </div>
+  <div class="flex flex-wrap gap-1" id="cs-sev-chips"></div>
 
   <span class="mx-1.5 text-zinc-300 dark:text-zinc-700">|</span>
 
-  <button type="button" id="cs-kev-toggle"
-    class="rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted"
-    title="Show only CVEs in CISA Known Exploited Vulnerabilities catalog">KEV only</button>
+  <button type="button" id="cs-kev-toggle" disabled
+    class="rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted disabled:opacity-50"
+    title="Show only CVEs in CISA Known Exploited Vulnerabilities catalog">KEV</button>
 
   <span class="mx-1.5 text-zinc-300 dark:text-zinc-700">|</span>
+  <span class="mr-1 font-mono text-[11px] text-zinc-500 dark:text-mono-muted">Source:</span>
+  <div class="flex flex-wrap gap-1" id="cs-src-chips"></div>
+
+  <button type="button" id="cs-clear-filters" hidden
+    class="ml-auto rounded border border-zinc-300 bg-zinc-50 px-2 py-0.5 font-mono text-[10px] text-zinc-500 hover:text-red-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted dark:hover:text-red-400">CLEAR</button>
+</div>
+
+<!-- Sort -->
+<div class="mt-2 flex items-center gap-2">
   <span class="font-mono text-[11px] text-zinc-500 dark:text-mono-muted">Sort:</span>
-  <select id="cs-sort" class="rounded border border-zinc-300 bg-zinc-50 px-2 py-1 font-mono text-[11px] text-zinc-700 focus:border-emerald-400 focus:outline-none dark:border-mono-border dark:bg-mono-bg dark:text-zinc-300 dark:focus:border-brand">
-    <option value="relevance">Relevance</option>
-    <option value="newest">Newest</option>
-    <option value="pocs">Most PoCs</option>
-  </select>
-
-  <span class="ml-auto font-mono text-[11px] text-zinc-400 dark:text-mono-muted" id="cs-sync"></span>
+  <div class="flex gap-1" id="cs-sort-btns">
+    <button type="button" data-sort="RELEVANCE" aria-pressed="true"
+      class="cs-sort rounded border border-emerald-400 bg-emerald-50 px-2.5 py-1 font-mono text-[11px] text-emerald-600 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">relevance</button>
+    <button type="button" data-sort="NEWEST" aria-pressed="false"
+      class="cs-sort rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">newest</button>
+    <button type="button" data-sort="POCS" aria-pressed="false"
+      class="cs-sort rounded border border-zinc-300 bg-zinc-50 px-2.5 py-1 font-mono text-[11px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">most pocs</button>
+  </div>
+  <span class="ml-auto font-mono text-[10px] text-zinc-400 dark:text-mono-muted" id="cs-refreshed"></span>
 </div>
 
 <!-- Trending (default view) -->
-<div id="cs-trending" class="mt-6">
+<div id="cs-trending" class="mt-5">
   <div class="overflow-hidden rounded border border-zinc-200 bg-white dark:border-mono-border dark:bg-mono-card">
     <div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50/60 px-3 py-2.5 dark:border-mono-border dark:bg-mono-bg/50">
       <span class="flex items-center gap-2 font-mono text-xs font-bold text-zinc-900 dark:text-white">
@@ -95,19 +85,19 @@
         TRENDING POCS
       </span>
       <div class="flex gap-1" id="cs-trend-mode">
-        <button type="button" data-m="weighted" class="cs-tm rounded border border-emerald-400 bg-emerald-50 px-2 py-0.5 font-mono text-[10px] text-emerald-600 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">weighted</button>
-        <button type="button" data-m="recent" class="cs-tm rounded border border-zinc-300 bg-zinc-50 px-2 py-0.5 font-mono text-[10px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">newest</button>
+        <button type="button" data-m="TRENDING" aria-pressed="true" class="cs-tm rounded border border-emerald-400 bg-emerald-50 px-2 py-0.5 font-mono text-[10px] text-emerald-600 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">trending</button>
+        <button type="button" data-m="RECENT" aria-pressed="false" class="cs-tm rounded border border-zinc-300 bg-zinc-50 px-2 py-0.5 font-mono text-[10px] text-zinc-600 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">newest</button>
       </div>
     </div>
     <div id="cs-trend-note" class="border-b border-zinc-100 px-3 py-1.5 font-mono text-[10px] text-zinc-400 dark:border-mono-border/50 dark:text-mono-muted">stars weighted against time since last commit</div>
     <div id="cs-trend-rows" class="divide-y divide-zinc-100 dark:divide-mono-border/30">
-      <div class="px-3 py-8 text-center font-mono text-sm text-zinc-400 dark:text-mono-muted">Loading trending data…</div>
+      <div class="px-3 py-8 text-center font-mono text-sm text-zinc-400 dark:text-mono-muted">Loading index&hellip;</div>
     </div>
   </div>
 </div>
 
 <!-- Results (search view) -->
-<div id="cs-results" class="mt-6 hidden">
+<div id="cs-results" class="mt-5 hidden">
   <div class="overflow-hidden rounded border border-zinc-200 bg-white dark:border-mono-border dark:bg-mono-card">
     <div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50/60 px-3 py-2.5 dark:border-mono-border dark:bg-mono-bg/50">
       <span class="flex items-center gap-2 font-mono text-xs font-bold text-zinc-900 dark:text-white">
@@ -118,665 +108,1329 @@
     </div>
     <div id="cs-result-list" class="divide-y divide-zinc-200 dark:divide-mono-border/40"></div>
   </div>
-  <div id="cs-more" class="mt-4 hidden text-center">
+  <div id="cs-more-wrap" class="mt-4 hidden text-center">
     <button type="button" id="cs-more-btn" class="rounded border border-zinc-300 px-4 py-1.5 font-mono text-xs text-zinc-600 hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-mono-muted dark:hover:border-brand dark:hover:text-brand">Show more</button>
   </div>
 </div>
 
-<!-- Sync pending banner (shown until pipeline is live) -->
-<div id="cs-pending" class="mt-6 hidden rounded border border-dashed border-zinc-300 bg-zinc-50/50 p-6 text-center dark:border-mono-border dark:bg-mono-bg/30">
-  <p class="font-mono text-sm text-zinc-500 dark:text-mono-muted">
-    The CVE pipeline is syncing — this page will populate once the daily run completes.
-  </p>
-  <p class="mt-2 font-mono text-xs text-zinc-400 dark:text-mono-muted">
-    Meanwhile, check the <a href="{{ "/watchlist/" | relURL }}" class="underline hover:text-emerald-600 dark:hover:text-brand">watchlist</a>
-    for recent candidates, or browse the <a href="{{ "/pocs/" | relURL }}" class="underline hover:text-emerald-600 dark:hover:text-brand">verified archive</a>.
-  </p>
-</div>
+<!-- Browse by year -->
+<nav class="mt-8 border-t border-zinc-200 pt-5 dark:border-mono-border" aria-label="Browse by year">
+  <span class="font-mono text-[10px] uppercase tracking-wider text-zinc-400 dark:text-mono-muted">browse by year</span>
+  <div class="mt-2 flex flex-wrap gap-1.5" id="cs-years"></div>
+</nav>
 
 <script>
+'use strict';
 (function () {
-  /* ================================================================
-     CONSTANTS
-     ================================================================ */
-  var API = "https://monitor.intelseclab.com";
 
-  var ALIASES = {
-    sqli:["sql injection"],xss:["cross-site scripting","cross site scripting"],
-    rce:["remote code execution"],lpe:["privilege escalation"],
-    privesc:["privilege escalation"],eop:["elevation of privilege","privilege escalation"],
-    lfi:["local file inclusion"],rfi:["remote file inclusion"],
-    xxe:["xml external entity"],csrf:["cross-site request forgery"],
-    ssrf:["server-side request forgery"],ssti:["server-side template injection"],
-    idor:["insecure direct object reference"],dos:["denial of service"],
-    cmdi:["command injection"],traversal:["path traversal","directory traversal"],
-    deserialization:["deserialization of untrusted data","insecure deserialization"],
-    bypass:["authentication bypass","authorization bypass"],
-    overflow:["buffer overflow","heap overflow","stack overflow","integer overflow"],
-    rop:["return oriented programming"],uaf:["use after free"],
-    oob:["out of bounds"],bof:["buffer overflow"]
-  };
+/* ================================================================
+   CONSTANTS
+   ================================================================ */
+var DATA_ROOT = '{{ "/data" | relURL }}';
+var PAGE_SIZE = 50;
+var POC_PREVIEW = 5;
+var ADVISORY_PREVIEW = 3;
+var TREND_ROWS = 20;
+var MIN_QUERY = 2;
+var POC_FIELDS = ['poc', 'nuclei', 'msf', 'edb', 'vulhub', 'collections'];
 
-  var NAMED = {
-    log4shell:"CVE-2021-44228",heartbleed:"CVE-2014-0160",eternalblue:"CVE-2017-0144",
-    eternalromance:"CVE-2017-0145",wannacry:"CVE-2017-0144",printnightmare:"CVE-2021-34527",
-    zerologon:"CVE-2020-1472",spring4shell:"CVE-2022-22965",proxyshell:"CVE-2021-34473",
-    proxylogon:"CVE-2021-26855",proxynotshell:"CVE-2022-41040",citrixbleed:"CVE-2023-4966",
-    regresshion:"CVE-2024-6387",bluekeep:"CVE-2019-0708",shellshock:"CVE-2014-6271",
-    dirtypipe:"CVE-2022-0847",dirtycow:"CVE-2016-5195",follina:"CVE-2022-30190",
-    ghostcat:"CVE-2020-1938",looneytunables:"CVE-2023-4911",text4shell:"CVE-2022-42889",
-    pwnkit:"CVE-2021-4034",baronsamedit:"CVE-2021-3156",moveit:"CVE-2023-34362",
-    smbghost:"CVE-2020-0796",petitpotam:"CVE-2021-36942",sambacry:"CVE-2017-7494",
-    drupalgeddon:"CVE-2014-3704",drupalgeddon2:"CVE-2018-7600",curveball:"CVE-2020-0601",
-    sigred:"CVE-2020-1350",poodle:"CVE-2014-3566",meltdown:"CVE-2017-5754",
-    spectre:"CVE-2017-5753",krack:"CVE-2017-13077",zenbleed:"CVE-2023-20593",
-    downfall:"CVE-2022-40982",terrapin:"CVE-2023-48795",xzbackdoor:"CVE-2024-3094"
-  };
+var FILTER_OPTIONS = {
+  severity: [['CRITICAL','CRITICAL'],['HIGH','HIGH'],['MEDIUM','MEDIUM'],['LOW','LOW']],
+  source: [['GITHUB','GITHUB'],['GHSA','GHSA'],['REFERENCE','REFERENCE'],
+           ['NUCLEI','NUCLEI'],['MSF','METASPLOIT'],['EDB','EXPLOITDB'],
+           ['VULHUB','VULHUB'],['COLLECTIONS','COLLECTIONS']]
+};
 
-  var SEV_CLS = {
-    CRITICAL: "border-red-300 bg-red-50 text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400",
-    HIGH: "border-orange-300 bg-orange-50 text-orange-600 dark:border-orange-800 dark:bg-orange-950 dark:text-orange-400",
-    MEDIUM: "border-yellow-300 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-400",
-    LOW: "border-zinc-300 bg-zinc-50 text-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
-  };
+var SEV_CLS = {
+  CRITICAL: 'border-red-300 bg-red-50 text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400',
+  HIGH: 'border-orange-300 bg-orange-50 text-orange-600 dark:border-orange-800 dark:bg-orange-950 dark:text-orange-400',
+  MEDIUM: 'border-yellow-300 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-400',
+  LOW: 'border-zinc-300 bg-zinc-50 text-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
+};
 
-  var SRC_CLS = {
-    GITHUB: "border-zinc-300 bg-zinc-50 text-zinc-600 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
-    GHSA: "border-purple-300 bg-purple-50 text-purple-600 dark:border-purple-800 dark:bg-purple-950 dark:text-purple-400",
-    NUCLEI: "border-blue-300 bg-blue-50 text-blue-600 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-400",
-    MSF: "border-red-300 bg-red-50 text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400",
-    EDB: "border-orange-300 bg-orange-50 text-orange-600 dark:border-orange-800 dark:bg-orange-950 dark:text-orange-400",
-    VULHUB: "border-teal-300 bg-teal-50 text-teal-600 dark:border-teal-800 dark:bg-teal-950 dark:text-teal-400",
-    REFERENCE: "border-zinc-300 bg-zinc-50 text-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
-  };
+var SRC_CLS = {
+  GITHUB: 'border-zinc-300 bg-zinc-50 text-zinc-600 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400',
+  GHSA: 'border-purple-300 bg-purple-50 text-purple-600 dark:border-purple-800 dark:bg-purple-950 dark:text-purple-400',
+  REFERENCE: 'border-zinc-300 bg-zinc-50 text-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400',
+  NUCLEI: 'border-blue-300 bg-blue-50 text-blue-600 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-400',
+  MSF: 'border-red-300 bg-red-50 text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400',
+  EDB: 'border-orange-300 bg-orange-50 text-orange-600 dark:border-orange-800 dark:bg-orange-950 dark:text-orange-400',
+  VULHUB: 'border-teal-300 bg-teal-50 text-teal-600 dark:border-teal-800 dark:bg-teal-950 dark:text-teal-400',
+  COLLECTIONS: 'border-indigo-300 bg-indigo-50 text-indigo-600 dark:border-indigo-800 dark:bg-indigo-950 dark:text-indigo-400',
+  AFROG: 'border-cyan-300 bg-cyan-50 text-cyan-600 dark:border-cyan-800 dark:bg-cyan-950 dark:text-cyan-400',
+  XRAY: 'border-violet-300 bg-violet-50 text-violet-600 dark:border-violet-800 dark:bg-violet-950 dark:text-violet-400',
+  '0DAY': 'border-rose-300 bg-rose-50 text-rose-600 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-400',
+  POC: 'border-lime-300 bg-lime-50 text-lime-600 dark:border-lime-800 dark:bg-lime-950 dark:text-lime-400',
+  ADVISORY: 'border-slate-300 bg-slate-50 text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400',
+  VENDOR: 'border-sky-300 bg-sky-50 text-sky-600 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-400',
+  PATCH: 'border-emerald-300 bg-emerald-50 text-emerald-600 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400'
+};
 
-  var ACTIVE = ["border-emerald-400","bg-emerald-50","text-emerald-600",
-    "dark:text-emerald-400","dark:bg-emerald-950","dark:border-emerald-700"];
+var ACTIVE_ON = ['border-emerald-400','bg-emerald-50','text-emerald-600',
+  'dark:text-emerald-400','dark:bg-emerald-950','dark:border-emerald-700'];
+var ACTIVE_OFF = ['border-zinc-300','bg-zinc-50','text-zinc-600',
+  'dark:border-mono-border','dark:bg-mono-bg','dark:text-mono-muted'];
 
-  /* ================================================================
-     STATE
-     ================================================================ */
-  var state = {
-    query: "", severity: "all", kevOnly: false, sort: "relevance",
-    page: 1, shown: 50, results: [], total: 0, trending: [],
-    archiveIndex: {}, loading: false, ready: false
-  };
+var ALIASES = {
+  sqli:['sql injection'],xss:['cross-site scripting','cross site scripting'],
+  rce:['remote code execution'],lpe:['privilege escalation'],
+  privesc:['privilege escalation'],eop:['elevation of privilege','privilege escalation'],
+  lfi:['local file inclusion'],rfi:['remote file inclusion'],
+  xxe:['xml external entity'],csrf:['cross-site request forgery'],
+  ssrf:['server-side request forgery'],ssti:['server-side template injection'],
+  idor:['insecure direct object reference'],dos:['denial of service'],
+  cmdi:['command injection'],traversal:['path traversal','directory traversal'],
+  deserialization:['deserialization of untrusted data','insecure deserialization'],
+  bypass:['authentication bypass','authorization bypass'],
+  overflow:['buffer overflow','heap overflow','stack overflow','integer overflow'],
+  rop:['return oriented programming'],uaf:['use after free'],
+  oob:['out of bounds'],bof:['buffer overflow']
+};
 
-  /* ================================================================
-     DOM REFS
-     ================================================================ */
-  var inputEl    = document.getElementById("cs-input");
-  var hintEl     = document.getElementById("cs-hint");
-  var statusEl   = document.getElementById("cs-status");
-  var trendingEl = document.getElementById("cs-trending");
-  var resultsEl  = document.getElementById("cs-results");
-  var resultList = document.getElementById("cs-result-list");
-  var resultCount = document.getElementById("cs-result-count");
-  var moreWrap   = document.getElementById("cs-more");
-  var moreBtn    = document.getElementById("cs-more-btn");
-  var pendingEl  = document.getElementById("cs-pending");
-  var trendRows  = document.getElementById("cs-trend-rows");
-  var trendNote  = document.getElementById("cs-trend-note");
-  var syncEl     = document.getElementById("cs-sync");
+var NAMED = {
+  log4shell:'CVE-2021-44228',heartbleed:'CVE-2014-0160',eternalblue:'CVE-2017-0144',
+  eternalromance:'CVE-2017-0145',wannacry:'CVE-2017-0144',printnightmare:'CVE-2021-34527',
+  zerologon:'CVE-2020-1472',spring4shell:'CVE-2022-22965',proxyshell:'CVE-2021-34473',
+  proxylogon:'CVE-2021-26855',proxynotshell:'CVE-2022-41040',citrixbleed:'CVE-2023-4966',
+  citrixbleed2:'CVE-2025-5777',regresshion:'CVE-2024-6387',bluekeep:'CVE-2019-0708',
+  shellshock:'CVE-2014-6271',dirtypipe:'CVE-2022-0847',dirtycow:'CVE-2016-5195',
+  follina:'CVE-2022-30190',ghostcat:'CVE-2020-1938',looneytunables:'CVE-2023-4911',
+  text4shell:'CVE-2022-42889',pwnkit:'CVE-2021-4034',baronsamedit:'CVE-2021-3156',
+  moveit:'CVE-2023-34362',smbghost:'CVE-2020-0796',petitpotam:'CVE-2021-36942',
+  hivenightmare:'CVE-2021-36934',serioussam:'CVE-2021-36934',sambacry:'CVE-2017-7494',
+  drupalgeddon:'CVE-2014-3704',drupalgeddon2:'CVE-2018-7600',curveball:'CVE-2020-0601',
+  sigred:'CVE-2020-1350',poodle:'CVE-2014-3566',meltdown:'CVE-2017-5754',
+  spectre:'CVE-2017-5753',krack:'CVE-2017-13077',zenbleed:'CVE-2023-20593',
+  downfall:'CVE-2022-40982',terrapin:'CVE-2023-48795',xzbackdoor:'CVE-2024-3094'
+};
 
-  /* ================================================================
-     HELPERS
-     ================================================================ */
-  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function(c) {
-    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]; }); }
+var CURATED = [
+  {match:'github.com/advisories/GHSA-',tag:'GHSA',hint:'GitHub reviewed advisory',
+    label:function(u){return u.split('/').pop();}},
+  {match:'/zan8in/afrog/',tag:'AFROG',hint:'Runnable afrog CVE template',
+    label:function(u){return decodeURIComponent(u.split('/').pop());}},
+  {match:'/chaitin/xray/',tag:'XRAY',hint:'Runnable xray CVE template',
+    label:function(u){return decodeURIComponent(u.split('/').pop());}},
+  {match:'/helloexp/0day/',tag:'0DAY',hint:'CVE-specific exploit collection',
+    label:function(u){return decodeURIComponent(u.split('/').pop());}},
+  {match:'/tzwlhack/Vulnerability/',tag:'POC',hint:'CVE-specific reproduction guide',
+    label:function(u){return decodeURIComponent(u.split('/').pop());}},
+  {match:'/nuclei-templates/',tag:'NUCLEI',hint:'Runnable nuclei detection template',
+    label:function(u){return u.split('/').pop();}},
+  {match:'/metasploit-framework/',tag:'MSF',hint:'Metasploit module',
+    label:function(u){return u.split('/modules/').pop().replace(/\.rb$/,'');}},
+  {match:'exploit-db.com/exploits/',tag:'EDB',hint:'ExploitDB entry',
+    label:function(u){return 'exploit-db.com/'+u.split('/').pop();}},
+  {match:'/vulhub/vulhub/tree/',tag:'VULHUB',hint:'Runnable Vulhub environment',
+    label:function(u){return u.split('/tree/master/').pop();}}
+];
 
-  function el(tag, cls, text) {
-    var n = document.createElement(tag);
-    if (cls) n.className = cls;
-    if (text != null) n.textContent = String(text);
-    return n;
-  }
+var NOT_A_REPO = new Set(['user-attachments','advisories','security','orgs',
+  'apps','marketplace','sponsors','topics','collections','settings','notifications']);
 
-  function fmtStars(n) { return n >= 1000 ? (n / 1000).toFixed(1) + "k" : String(n); }
+/* ================================================================
+   STATE
+   ================================================================ */
+var state = {
+  query: '', mode: 'TRENDING', sort: 'RELEVANCE',
+  shown: PAGE_SIZE, descOpen: new Set(), pocOpen: new Set(), advisoryOpen: new Set(),
+  kevOnly: false,
+  filters: {
+    severity: new Set(FILTER_OPTIONS.severity.map(function(x){return x[0];})),
+    source: new Set(FILTER_OPTIONS.source.map(function(x){return x[0];}))
+  },
+  ready: false, results: []
+};
 
-  function fmtAge(iso) {
-    if (!iso) return "";
-    var ms = Date.now() - new Date(iso.length === 10 ? iso + "T00:00:00Z" : iso).getTime();
-    if (isNaN(ms) || ms < 0) return "";
-    var h = ms / 36e5;
-    if (h < 24) return Math.max(1, Math.round(h)) + "h";
-    var d = h / 24;
-    if (d < 14) return Math.round(d) + "d";
-    if (d < 60) return Math.round(d / 7) + "w";
-    if (d < 730) return Math.round(d / 30) + "mo";
-    return Math.round(d / 365) + "y";
-  }
+var dataset = [];
+var repoMeta = {};
+var kev = {};
+var ratings = {};
+var metadata = {};
+var epss = {};
+var trending = [];
+var indexMeta = null;
+var archiveIndex = {};
 
-  function fmtLongAge(iso) {
-    if (!iso) return "";
-    var ms = Date.now() - new Date(iso.length === 10 ? iso + "T00:00:00Z" : iso).getTime();
-    if (isNaN(ms) || ms < 0) return "";
-    var h = ms / 36e5;
-    var units = [[8760,"year"],[720,"month"],[168,"week"],[24,"day"],[1,"hour"]];
-    for (var i = 0; i < units.length; i++) {
-      if (h >= units[i][0]) { var n = Math.floor(h / units[i][0]); return n + " " + units[i][1] + (n === 1 ? "" : "s") + " ago"; }
+/* ================================================================
+   DOM REFS
+   ================================================================ */
+var inputEl = document.getElementById('cs-input');
+var hintEl = document.getElementById('cs-hint');
+var statusEl = document.getElementById('cs-status');
+var trendingEl = document.getElementById('cs-trending');
+var resultsEl = document.getElementById('cs-results');
+var resultList = document.getElementById('cs-result-list');
+var resultCount = document.getElementById('cs-result-count');
+var moreWrap = document.getElementById('cs-more-wrap');
+var moreBtn = document.getElementById('cs-more-btn');
+var trendRows = document.getElementById('cs-trend-rows');
+var trendNote = document.getElementById('cs-trend-note');
+var refreshedEl = document.getElementById('cs-refreshed');
+var sevChips = document.getElementById('cs-sev-chips');
+var srcChips = document.getElementById('cs-src-chips');
+var kevToggle = document.getElementById('cs-kev-toggle');
+var clearFilters = document.getElementById('cs-clear-filters');
+var yearsEl = document.getElementById('cs-years');
+
+/* ================================================================
+   FORMATTING
+   ================================================================ */
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+function fmtNum(n) { return n.toLocaleString('en-US'); }
+
+function fmtStars(n) { return n >= 1000 ? (n/1000).toFixed(1)+'k' : String(n); }
+
+function hoursSince(iso) {
+  if (!iso) return null;
+  var then = Date.parse(iso.length === 10 ? iso+'T00:00:00Z' : iso);
+  if (isNaN(then)) return null;
+  return (Date.now() - then) / 36e5;
+}
+
+function longAge(hours) {
+  if (hours == null) return '';
+  var units = [[8760,'year'],[720,'month'],[168,'week'],[24,'day'],[1,'hour']];
+  for (var i = 0; i < units.length; i++) {
+    if (hours >= units[i][0]) {
+      var n = Math.floor(hours / units[i][0]);
+      return n + ' ' + units[i][1] + (n === 1 ? '' : 's') + ' ago';
     }
-    return "just now";
+  }
+  var minutes = Math.max(1, Math.round(hours * 60));
+  return minutes + ' minute' + (minutes === 1 ? '' : 's') + ' ago';
+}
+
+function shortAge(hours) {
+  if (hours == null) return '';
+  if (hours < 24) return Math.max(1, Math.round(hours)) + 'h';
+  var d = hours / 24;
+  if (d < 14) return Math.round(d) + 'd';
+  if (d < 60) return Math.round(d / 7) + 'w';
+  if (d < 730) return Math.round(d / 30) + 'mo';
+  return Math.round(d / 365) + 'y';
+}
+
+function ordinal(n) {
+  var tens = n % 100;
+  if (tens >= 11 && tens <= 13) return n + 'th';
+  return n + (['th','st','nd','rd'][n % 10] || 'th');
+}
+
+/* ================================================================
+   REPO / LINK PARSING
+   ================================================================ */
+function repoFromUrl(url) {
+  var m = /^https?:\/\/(?:www\.)?github\.com\/([^/#?]+)\/([^/#?]+)/i.exec(url || '');
+  if (!m || NOT_A_REPO.has(m[1].toLowerCase())) return null;
+  return { owner: m[1], repo: m[2].replace(/\.git$/i, '') };
+}
+
+function plainLinkLabel(url) {
+  try {
+    var p = new URL(url);
+    return p.host.replace(/^www\./, '') + p.pathname.replace(/\/$/, '');
+  } catch (e) { return url; }
+}
+
+function normalizedLink(url) {
+  var p = repoFromUrl(String(url || ''));
+  if (p) return 'github:' + p.owner.toLowerCase() + '/' + p.repo.toLowerCase();
+  return String(url || '').replace(/\/$/, '');
+}
+
+function uniqueSourceLinks(urls) {
+  var seen = new Set();
+  return urls.filter(function(url) {
+    var key = normalizedLink(url);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+/* ================================================================
+   MATCHING ENGINE
+   ================================================================ */
+function normalizeToSpaces(v) { return v.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); }
+
+function buildLooseRegex(v) {
+  var compact = v.toLowerCase().replace(/[^a-z0-9]+/g, '');
+  if (compact.length < 4) return null;
+  var escaped = compact.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(escaped.split('').join('[^a-z0-9]*'));
+}
+
+function buildMatcher(term) {
+  var raw = term.toLowerCase().trim();
+  if (!raw) return null;
+  var isPhrase = /\s/.test(raw);
+  return {
+    raw: raw,
+    isPhrase: isPhrase,
+    phrase: isPhrase ? normalizeToSpaces(raw) : '',
+    loose: !isPhrase && raw.replace(/[^a-z0-9]+/g, '').length >= 4 ? buildLooseRegex(raw) : null
+  };
+}
+
+function wordStart(text, term) {
+  var at = text.indexOf(term);
+  while (at > 0) {
+    var code = text.charCodeAt(at - 1);
+    if (!((code > 96 && code < 123) || (code > 47 && code < 58))) return at;
+    at = text.indexOf(term, at + 1);
+  }
+  return at;
+}
+
+function leadBonus(index) {
+  if (index < 0) return 0;
+  if (index < 80) return 80;
+  if (index < 300) return 40;
+  return 0;
+}
+
+function entryLinks(entry) {
+  if (entry._allLinks === undefined) {
+    entry._allLinks = uniqueSourceLinks(POC_FIELDS.flatMap(function(f) { return entry[f] || []; }));
+  }
+  return entry._allLinks;
+}
+
+function pocText(entry) {
+  if (entry._pocText === undefined) entry._pocText = entryLinks(entry).join(' ').toLowerCase();
+  return entry._pocText;
+}
+
+function pocSpace(entry) {
+  if (entry._pocSpace === undefined) entry._pocSpace = normalizeToSpaces(pocText(entry));
+  return entry._pocSpace;
+}
+
+function descSpace(entry) {
+  if (entry._descSpace === undefined) entry._descSpace = normalizeToSpaces(entry._descText);
+  return entry._descSpace;
+}
+
+function scoreEntry(entry, matcher) {
+  if (!matcher || !matcher.raw) return 0;
+  if (matcher.isPhrase) {
+    var phrase = matcher.phrase;
+    if (!phrase) return 0;
+    if (entry._titleSpace && wordStart(entry._titleSpace, phrase) >= 0) return 300;
+    var at = wordStart(descSpace(entry), phrase);
+    if (at >= 0) return 200 + leadBonus(at);
+    if (wordStart(pocSpace(entry), phrase) >= 0) return 80;
+    return 0;
+  }
+  var raw = matcher.raw;
+  if (entry._cveText.includes(raw)) return 600;
+  if (entry._titleText && wordStart(entry._titleText, raw) >= 0) return 400;
+  var at2 = wordStart(entry._descText, raw);
+  if (at2 >= 0) return 240 + leadBonus(at2);
+  if (wordStart(pocText(entry), raw) >= 0) return 80;
+  if (matcher.loose) {
+    if (matcher.loose.test(entry._descText)) return 160;
+    if (matcher.loose.test(pocText(entry))) return 60;
+  }
+  return 0;
+}
+
+function countLinkHits(entry, matchers) {
+  var hits = 0;
+  for (var i = 0; i < entryLinks(entry).length; i++) {
+    var text = entryLinks(entry)[i].toLowerCase();
+    if (matchers.every(function(m) { return wordStart(text, m.raw) >= 0 || (m.loose && m.loose.test(text)); })) {
+      hits++;
+      if (hits >= 999) break;
+    }
+  }
+  return hits;
+}
+
+/* ================================================================
+   SEVERITY / FILTERS
+   ================================================================ */
+var severityEpoch = 0;
+
+function canonicalCvss(id) {
+  var rows = ((metadata[id] || {}).cvss || []);
+  if (!Array.isArray(rows) || !Array.isArray(rows[0])) return null;
+  return { score: Number(rows[0][1]), severity: String(rows[0][2] || '').toUpperCase() };
+}
+
+function entrySeverity(entry) {
+  if (entry._sevEpoch === severityEpoch) return entry._sev;
+  var score = canonicalCvss(entry.cve);
+  var sev = '';
+  if (score && ['NONE','LOW','MEDIUM','HIGH','CRITICAL'].includes(score.severity)) {
+    sev = score.severity;
+  } else {
+    var fb = String((ratings[entry.cve] || {}).severity || '').toUpperCase();
+    sev = ['NONE','LOW','MEDIUM','HIGH','CRITICAL'].includes(fb) ? fb : '';
+  }
+  entry._sev = sev;
+  entry._sevEpoch = severityEpoch;
+  return sev;
+}
+
+function entrySources(entry) {
+  if (entry._sources) return entry._sources;
+  var sources = new Set();
+  var fields = {NUCLEI:'nuclei',MSF:'msf',EDB:'edb',VULHUB:'vulhub',COLLECTIONS:'collections'};
+  for (var src in fields) {
+    if ((entry[fields[src]] || []).length) sources.add(src);
+  }
+  for (var i = 0; i < (entry.poc || []).length; i++) {
+    var url = entry.poc[i];
+    if (/^https?:\/\/(?:www\.)?github\.com\/advisories\/GHSA-/i.test(url)) sources.add('GHSA');
+    else if (repoFromUrl(url)) sources.add('GITHUB');
+    else sources.add('REFERENCE');
+  }
+  entry._sources = sources;
+  return sources;
+}
+
+function hasActiveFilters() {
+  return state.kevOnly || Object.keys(state.filters).some(function(kind) {
+    return state.filters[kind].size !== FILTER_OPTIONS[kind].length;
+  });
+}
+
+function matchesFilters(entry) {
+  if (state.kevOnly && !kev[entry.cve]) return false;
+  var srcFilter = state.filters.source;
+  var srcMatch = false;
+  srcFilter.forEach(function(v) { if (entrySources(entry).has(v)) srcMatch = true; });
+  if (!srcMatch) return false;
+  if (state.filters.severity.size === FILTER_OPTIONS.severity.length) return true;
+  var sev = entrySeverity(entry);
+  return sev ? state.filters.severity.has(sev) : false;
+}
+
+/* ================================================================
+   WORD INDEX
+   ================================================================ */
+var wordIndex = { words: null, postings: new Map(), ready: false, built: 0 };
+
+function tokensOf(text) { return text ? text.match(/[a-z0-9]+/g) || [] : []; }
+
+var yieldPort = new MessageChannel();
+var yieldNext = null;
+yieldPort.port1.onmessage = function() {
+  var next = yieldNext;
+  yieldNext = null;
+  if (next) next();
+};
+function yieldThen(fn) {
+  yieldNext = fn;
+  yieldPort.port2.postMessage(null);
+}
+
+function indexSlice(budget) {
+  var started = performance.now();
+  var postings = wordIndex.postings;
+  while (wordIndex.built < dataset.length) {
+    var at = wordIndex.built;
+    var entry = dataset[at];
+    var words = (entry._descText + ' ' + entry._titleText + ' ' + pocSpace(entry)).match(/[a-z0-9]+/g);
+    if (words) {
+      for (var w = 0; w < words.length; w++) {
+        var word = words[w];
+        var list = postings.get(word);
+        if (!list) postings.set(word, [at]);
+        else if (list[list.length - 1] !== at) list.push(at);
+      }
+    }
+    wordIndex.built++;
+    if ((at & 127) === 0 && performance.now() - started > budget) break;
+  }
+  if (wordIndex.built < dataset.length) {
+    yieldThen(function() { indexSlice(budget); });
+    return;
+  }
+  wordIndex.words = Array.from(postings.keys()).sort();
+  wordIndex.ready = true;
+}
+
+function buildWordIndex() {
+  wordIndex.postings = new Map();
+  wordIndex.words = null;
+  wordIndex.built = 0;
+  wordIndex.ready = false;
+  indexSlice(32);
+}
+
+function wordRange(prefix) {
+  var words = wordIndex.words;
+  if (!words) return [0, 0];
+  var low = 0, high = words.length;
+  while (low < high) {
+    var mid = (low + high) >> 1;
+    if (words[mid] < prefix) low = mid + 1; else high = mid;
+  }
+  var start = low;
+  high = words.length;
+  while (low < high) {
+    var mid2 = (low + high) >> 1;
+    if (words[mid2].startsWith(prefix)) low = mid2 + 1; else high = mid2;
+  }
+  return [start, low];
+}
+
+function candidateCounts(groups) {
+  var size = dataset.length;
+  var total = new Uint8Array(size);
+  var stampOf = new Int32Array(size);
+  var hit = new Uint8Array(size);
+  var stamp = 0;
+  for (var g = 0; g < groups.length; g++) {
+    hit.fill(0);
+    for (var m = 0; m < groups[g].length; m++) {
+      var matcher = groups[g][m];
+      var parts = tokensOf(matcher.isPhrase ? matcher.phrase : matcher.raw);
+      if (!parts.length) return null;
+      var partCount = new Uint8Array(size);
+      for (var p = 0; p < parts.length; p++) {
+        stamp++;
+        if (p === parts.length - 1) {
+          var range = wordRange(parts[p]);
+          for (var i = range[0]; i < range[1]; i++) {
+            var posting = wordIndex.postings.get(wordIndex.words[i]);
+            for (var j = 0; j < posting.length; j++) {
+              if (stampOf[posting[j]] !== stamp) { stampOf[posting[j]] = stamp; partCount[posting[j]]++; }
+            }
+          }
+        } else {
+          var posting2 = wordIndex.postings.get(parts[p]) || [];
+          for (var j2 = 0; j2 < posting2.length; j2++) {
+            if (stampOf[posting2[j2]] !== stamp) { stampOf[posting2[j2]] = stamp; partCount[posting2[j2]]++; }
+          }
+        }
+      }
+      var raw = matcher.raw;
+      for (var a = 0; a < size; a++) {
+        if (partCount[a] === parts.length || dataset[a]._cveText.includes(raw)) hit[a] = 1;
+      }
+    }
+    for (var a2 = 0; a2 < size; a2++) if (hit[a2]) total[a2]++;
+  }
+  return total;
+}
+
+function scoreGroup(entry, group) {
+  var best = 0;
+  for (var i = 0; i < group.length; i++) {
+    var s = scoreEntry(entry, group[i]);
+    if (s > best) best = s;
+  }
+  return best;
+}
+
+/* ================================================================
+   TYPO CORRECTION
+   ================================================================ */
+function withinOneEdit(a, b) {
+  if (a === b) return true;
+  if (Math.abs(a.length - b.length) > 1) return false;
+  var i = 0;
+  while (i < a.length && i < b.length && a[i] === b[i]) i++;
+  if (a.length === b.length) {
+    if (a.slice(i + 1) === b.slice(i + 1)) return true;
+    return i + 1 < a.length && a[i] === b[i + 1] && a[i + 1] === b[i] && a.slice(i + 2) === b.slice(i + 2);
+  }
+  return a.length > b.length ? a.slice(i + 1) === b.slice(i) : b.slice(i + 1) === a.slice(i);
+}
+
+function closestWord(term) {
+  var range = wordRange(term[0]);
+  var best = null, bestSize = 0;
+  for (var i = range[0]; i < range[1]; i++) {
+    var w = wordIndex.words[i];
+    if (Math.abs(w.length - term.length) > 1 || !withinOneEdit(term, w)) continue;
+    var sz = wordIndex.postings.get(w).length;
+    if (sz > bestSize) { best = w; bestSize = sz; }
+  }
+  return best;
+}
+
+function correctTerms(terms) {
+  var changes = [];
+  var fixed = terms.map(function(term) {
+    var bare = term.replace(/^-?"|"$/g, '').toLowerCase();
+    if (term[0] === '-' || term[0] === '"' || !/^[a-z0-9]{4,}$/.test(bare) || ALIASES[bare]) return term;
+    var range = wordRange(bare);
+    if (range[1] > range[0]) return term;
+    var alt = closestWord(bare);
+    if (!alt) return term;
+    changes.push([bare, alt]);
+    return alt;
+  });
+  return changes.length ? { query: fixed.join(' '), changes: changes } : null;
+}
+
+/* ================================================================
+   NAMED CVE LOOKUP
+   ================================================================ */
+function namedCve(query) {
+  return NAMED[query.toLowerCase().replace(/[^a-z0-9]+/g, '')] || null;
+}
+
+/* ================================================================
+   SEARCH
+   ================================================================ */
+function linkBucket(count) {
+  return count >= 100 ? 4 : count >= 20 ? 3 : count >= 5 ? 2 : count >= 2 ? 1 : 0;
+}
+
+function compareRelevance(a, b) {
+  if (b._score !== a._score) return b._score - a._score;
+  if (b._hits !== a._hits) return b._hits - a._hits;
+  var ka = kev[a.cve] ? 1 : 0, kb = kev[b.cve] ? 1 : 0;
+  if (kb !== ka) return kb - ka;
+  var la = linkBucket(entryLinks(a).length), lb = linkBucket(entryLinks(b).length);
+  if (lb !== la) return lb - la;
+  var ea = Math.round(((epss[a.cve] || [0])[0] || 0) * 100);
+  var eb = Math.round(((epss[b.cve] || [0])[0] || 0) * 100);
+  if (eb !== ea) return eb - ea;
+  if (b._year !== a._year) return b._year - a._year;
+  return b._num - a._num;
+}
+
+function compareNewest(a, b) {
+  return (b._year - a._year) || (b._num - a._num) || (b._score - a._score);
+}
+
+function comparePocs(a, b) {
+  return (entryLinks(b).length - entryLinks(a).length) || (b._score - a._score)
+    || (b._year - a._year) || (b._num - a._num);
+}
+
+function runSearch(query, scan, corrected) {
+  var terms = query.match(/-?"[^"]+"|-?\S+/g) || [];
+  var cleaned = terms.map(function(t) { return t.replace(/^(-?)"/, '$1').replace(/"$/, ''); });
+  var positive = cleaned.filter(function(t) { return t && t[0] !== '-'; });
+  var matchers = positive.map(buildMatcher).filter(Boolean);
+  var groups = matchers.map(function(m) {
+    return [m].concat((ALIASES[m.raw] || []).map(buildMatcher).filter(Boolean));
+  });
+  var adjacent = positive.length > 1 ? positive.join(' ').toLowerCase() : '';
+  var negatives = cleaned.filter(function(t) { return t && t[0] === '-'; })
+    .map(function(t) { return t.slice(1); }).filter(Boolean).map(buildMatcher).filter(Boolean);
+
+  var counts = !scan && wordIndex.ready && groups.length ? candidateCounts(groups) : null;
+  var results = [];
+  results.pocTotal = 0;
+  for (var at = 0; at < dataset.length; at++) {
+    if (counts && counts[at] !== groups.length) continue;
+    var entry = dataset[at];
+    if (!matchesFilters(entry)) continue;
+    var score = 0, matched = true, describes = false;
+    for (var g = 0; g < groups.length; g++) {
+      var ts = scoreGroup(entry, groups[g]);
+      if (ts === 0) { matched = false; break; }
+      if (ts >= 160) describes = true;
+      score += ts;
+    }
+    if (!matched) continue;
+    var negHit = false;
+    for (var n = 0; n < negatives.length; n++) {
+      if (scoreEntry(entry, negatives[n]) > 0) { negHit = true; break; }
+    }
+    if (negHit) continue;
+    if (adjacent) {
+      var adjAt = wordStart(entry._descText, adjacent);
+      if (adjAt >= 0) { score += 300 + leadBonus(adjAt); describes = true; }
+      else if (wordStart(pocText(entry), adjacent) >= 0) score += 100;
+    }
+    entry._score = score;
+    entry._hits = describes ? 0 : countLinkHits(entry, matchers);
+    results.pocTotal += entryLinks(entry).length;
+    results.push(entry);
   }
 
-  function fmtNum(n) { return n.toLocaleString("en-US"); }
-
-  function toggleActive(btn, on) {
-    ACTIVE.forEach(function (c) { btn.classList.toggle(c, on); });
-    btn.classList.toggle("border-zinc-300", !on);
-    btn.classList.toggle("dark:border-mono-border", !on);
+  var out = results;
+  if (counts && results.length < 5 && matchers.some(function(m){return m.loose;})) {
+    out = runSearch(query, true, corrected);
+  }
+  if (!out.length && !scan && !corrected && wordIndex.ready) {
+    var fix = correctTerms(terms);
+    if (fix) { var again = runSearch(fix.query, false, true); again.corrected = fix.changes; return again; }
   }
 
-  /* ================================================================
-     SEARCH EXPANSION
-     ================================================================ */
-  function expandQuery(raw) {
-    var q = raw.toLowerCase().trim();
-    if (!q) return { q: "", hint: "" };
-    var slug = q.replace(/[^a-z0-9]/g, "");
-    var named = NAMED[slug];
-    if (named) return { q: named, hint: slug + " → " + named };
-    var words = q.split(/\s+/);
-    var expanded = [];
+  var star = !scan && !corrected ? namedCve(query) : null;
+  if (star) {
+    var found = out.find(function(e){return e.cve === star;});
+    if (!found) {
+      found = dataset.find(function(e){return e.cve === star;});
+      if (found && matchesFilters(found)) {
+        found._score = 0; found._hits = 0;
+        out.pocTotal += entryLinks(found).length;
+        out.push(found);
+      }
+    }
+    if (found) found._score += 100000;
+  }
+
+  out.sort(state.sort === 'NEWEST' ? compareNewest : state.sort === 'POCS' ? comparePocs : compareRelevance);
+  return out;
+}
+
+function prepareDataset(raw) {
+  if (!Array.isArray(raw)) return [];
+  var REPLACE_STRINGS = ['HackTheBox - ', 'VulnHub - ', 'UHC - '];
+  var out = [];
+  for (var i = 0; i < raw.length; i++) {
+    var entry = raw[i];
+    var cve = (entry.cve || '').trim();
+    if (!cve) continue;
+    for (var f = 0; f < POC_FIELDS.length; f++) {
+      if (!Array.isArray(entry[POC_FIELDS[f]])) entry[POC_FIELDS[f]] = [];
+    }
+    if (!entryLinks(entry).length) continue;
+    var parts = cve.split('-');
+    entry._cveText = cve.toLowerCase();
+    var desc = entry.desc || '';
+    for (var r = 0; r < REPLACE_STRINGS.length; r++) desc = desc.replace(REPLACE_STRINGS[r], '');
+    entry._descText = desc.toLowerCase();
+    entry._year = parseInt(parts[1], 10) || 0;
+    entry._num = parseInt(parts[2], 10) || 0;
+    var named = [entry.title || ''].concat(entry.vendor || []).concat(entry.product || []).join(' ');
+    entry._titleText = named.toLowerCase();
+    entry._titleSpace = normalizeToSpaces(entry._titleText);
+    out.push(entry);
+  }
+  return out;
+}
+
+/* ================================================================
+   RENDERING — Stats
+   ================================================================ */
+function paintStats() {
+  var total = document.getElementById('cs-total');
+  var pocs = document.getElementById('cs-pocs');
+  var kevEl = document.getElementById('cs-kev');
+  if (indexMeta) {
+    total.textContent = fmtNum(indexMeta.total_cves || 0);
+    pocs.textContent = fmtNum(indexMeta.with_pocs || 0);
+  }
+  var kevCount = Object.keys(kev).length;
+  if (kevCount) kevEl.textContent = fmtNum(kevCount);
+}
+
+/* ================================================================
+   RENDERING — Trending
+   ================================================================ */
+function renderTrending() {
+  resultsEl.hidden = true;
+  trendingEl.hidden = false;
+
+  var ranked = trending.slice();
+  if (state.mode === 'TRENDING') {
+    ranked.sort(function(a, b) {
+      var rank = function(r) { return r.stars / Math.pow((r._pushed == null ? 8760 : r._pushed) + 6, 0.45); };
+      return rank(b) - rank(a);
+    });
+    trendNote.textContent = 'stars weighted against time since last commit';
+  } else {
+    ranked.sort(function(a, b) {
+      return (a._pushed == null ? Infinity : a._pushed) - (b._pushed == null ? Infinity : b._pushed);
+    });
+    trendNote.textContent = 'newest commit first';
+  }
+
+  var rows = ranked.slice(0, TREND_ROWS);
+  if (!rows.length) {
+    trendRows.innerHTML = '<div class="px-3 py-8 text-center font-mono text-sm text-zinc-400 dark:text-mono-muted">Loading index&hellip;</div>';
+    return;
+  }
+
+  var html = '';
+  for (var i = 0; i < rows.length; i++) {
+    var t = rows[i];
+    var popular = t.stars >= 500 ? ' font-bold text-yellow-600 dark:text-yellow-400' : ' text-zinc-500 dark:text-mono-muted';
+    var kevBadge = t.cve && kev[t.cve]
+      ? '<span class="shrink-0 rounded border border-red-300 bg-red-50 px-1 py-[1px] text-[9px] font-bold text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400">KEV</span>'
+      : '';
+    var archBadge = t.cve && archiveIndex[t.cve]
+      ? '<span class="shrink-0 rounded border border-emerald-300 bg-emerald-50 px-1 py-[1px] text-[9px] font-bold text-emerald-600 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">ARCHIVE</span>'
+      : '';
+    html += '<div class="flex items-center gap-3 px-3 py-2 hover:bg-zinc-50 dark:hover:bg-mono-hover">' +
+      '<span class="w-16 shrink-0 text-right font-mono text-[11px]' + popular + '">' + fmtStars(t.stars || 0) + ' &#9733;</span>' +
+      '<span class="w-20 shrink-0 font-mono text-[11px] text-zinc-400 dark:text-mono-muted">' + esc(longAge(t._pushed)) + '</span>' +
+      '<span class="flex min-w-0 items-center gap-1.5">' + kevBadge + archBadge +
+      '<a class="truncate font-mono text-xs font-medium text-zinc-900 hover:text-emerald-600 dark:text-white dark:hover:text-brand" href="' + esc(t.url) + '" target="_blank" rel="noopener noreferrer nofollow">' + esc(t.name) + '</a></span>' +
+      '<span class="hidden truncate font-mono text-[11px] text-zinc-400 lg:block dark:text-mono-muted">' + esc(t.desc || '') + '</span>' +
+      '</div>';
+  }
+  trendRows.innerHTML = html;
+
+  document.querySelectorAll('#cs-trend-mode .cs-tm').forEach(function(btn) {
+    setActive(btn, btn.getAttribute('data-m') === state.mode);
+  });
+}
+
+/* ================================================================
+   RENDERING — Results
+   ================================================================ */
+function pocRow(url) {
+  var curated = null;
+  for (var c = 0; c < CURATED.length; c++) {
+    if (url.includes(CURATED[c].match)) { curated = CURATED[c]; break; }
+  }
+
+  if (curated) {
+    var tagCls = SRC_CLS[curated.tag] || SRC_CLS.REFERENCE;
+    return '<div class="flex items-center gap-1.5 py-0.5">' +
+      '<span class="shrink-0 rounded border px-1 py-[1px] text-[9px] font-bold uppercase ' + tagCls + '" title="' + esc(curated.hint) + '">' + curated.tag + '</span>' +
+      '<a class="truncate text-zinc-700 hover:text-emerald-600 dark:text-slate-300 dark:hover:text-brand" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer nofollow">' + esc(curated.label(url)) + '</a></div>';
+  }
+
+  var parsed = repoFromUrl(url);
+  if (!parsed) {
+    return '<div class="flex items-center gap-1.5 py-0.5">' +
+      '<a class="truncate text-zinc-600 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-brand" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer nofollow">' + esc(plainLinkLabel(url)) + '</a></div>';
+  }
+
+  var meta = repoMeta[(parsed.owner + '/' + parsed.repo).toLowerCase()];
+  var stars = meta ? meta[0] : null;
+  var hours = meta ? hoursSince(meta[1]) : null;
+  var popularCls = stars != null && stars >= 500 ? ' font-bold text-yellow-600 dark:text-yellow-400' : ' text-zinc-400 dark:text-mono-muted';
+  var starHtml = stars != null ? '<span class="shrink-0 font-mono text-[10px]' + popularCls + '">' + fmtStars(stars) + ' &#9733;</span>' : '';
+  var ageHtml = hours != null ? '<span class="shrink-0 font-mono text-[10px] text-zinc-400 dark:text-mono-muted">' + esc(shortAge(hours)) + '</span>' : '';
+
+  return '<div class="flex items-center gap-1.5 py-0.5">' +
+    '<span class="shrink-0 rounded border px-1 py-[1px] text-[9px] font-bold uppercase ' + SRC_CLS.GITHUB + '">GITHUB</span>' +
+    '<span class="truncate text-zinc-500 dark:text-mono-muted">' + esc(parsed.owner) + '<span class="text-zinc-300 dark:text-zinc-600"> / </span></span>' +
+    '<a class="truncate font-medium text-zinc-700 hover:text-emerald-600 dark:text-slate-300 dark:hover:text-brand" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer nofollow">' + esc(parsed.repo) + '</a>' +
+    starHtml + ageHtml + '</div>';
+}
+
+function advisoryRow(item) {
+  if (!Array.isArray(item) || !item[0]) return '';
+  var url = String(item[0]);
+  var tags = Array.isArray(item[1]) ? item[1].map(String) : [];
+  var tag = tags.includes('Vendor Advisory') ? 'VENDOR' : tags.includes('Patch') ? 'PATCH' : 'ADVISORY';
+  var tagCls = SRC_CLS[tag] || SRC_CLS.ADVISORY;
+  return '<div class="flex items-center gap-1.5 py-0.5">' +
+    '<span class="shrink-0 rounded border px-1 py-[1px] text-[9px] font-bold uppercase ' + tagCls + '" title="' + esc(tags.join(', ') || 'Advisory') + '">' + tag + '</span>' +
+    '<a class="truncate text-zinc-600 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-brand" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer nofollow">' + esc(plainLinkLabel(url)) + '</a></div>';
+}
+
+function compact(v) { return v.toLowerCase().replace(/[^a-z0-9]/g, ''); }
+
+function rankedLinks(entry) {
+  if (entry._ranked) return entry._ranked;
+  var id = compact(entry.cve);
+  var scored = (entry.poc || []).map(function(url, index) {
+    var parsed = repoFromUrl(url);
+    var meta = parsed && repoMeta[(parsed.owner + '/' + parsed.repo).toLowerCase()];
+    return { url: url, index: index, dedicated: compact(url).includes(id) ? 1 : 0, stars: meta ? meta[0] : -1 };
+  });
+  scored.sort(function(a, b) { return (b.dedicated - a.dedicated) || (b.stars - a.stars) || (a.index - b.index); });
+  entry._ranked = uniqueSourceLinks(
+    (entry.nuclei || []).concat(entry.msf || []).concat(entry.edb || []).concat(entry.vulhub || [])
+    .concat(entry.collections || []).concat(scored.map(function(s){return s.url;}))
+  );
+  return entry._ranked;
+}
+
+function resultRow(entry) {
+  var id = entry.cve;
+  var open = state.descOpen.has(id);
+  var all = state.pocOpen.has(id);
+  var links = rankedLinks(entry);
+  var visible = all ? links : links.slice(0, POC_PREVIEW);
+  var moreButton = links.length > POC_PREVIEW
+    ? '<button type="button" class="mt-0.5 font-mono text-[11px] text-emerald-600 hover:underline dark:text-brand" data-toggle-poc="' + esc(id) + '">' +
+      (all ? '&#8593; show fewer' : '+ ' + fmtNum(links.length - POC_PREVIEW) + ' more') + '</button>'
+    : '';
+
+  var advOpen = state.advisoryOpen.has(id);
+  var pocLinks = new Set(entryLinks(entry).map(normalizedLink));
+  var advisories = ((metadata[id] || {}).advisories || []).filter(function(item) {
+    return Array.isArray(item) && !pocLinks.has(normalizedLink(item[0]));
+  });
+  var shownAdv = advOpen ? advisories : advisories.slice(0, ADVISORY_PREVIEW);
+  var advMore = advisories.length > ADVISORY_PREVIEW
+    ? '<button type="button" class="mt-0.5 font-mono text-[11px] text-emerald-600 hover:underline dark:text-brand" data-toggle-advisory="' + esc(id) + '">' +
+      (advOpen ? '&#8593; show fewer' : '+ ' + fmtNum(advisories.length - ADVISORY_PREVIEW) + ' more') + '</button>'
+    : '';
+  var advHtml = advisories.length
+    ? '<div class="mt-2 border-t border-zinc-100 pt-2 dark:border-mono-border/30">' +
+      '<p class="mb-1 font-mono text-[10px] font-bold uppercase text-zinc-400 dark:text-mono-muted">Advisories <span class="font-normal">' + fmtNum(advisories.length) + '</span></p>' +
+      shownAdv.map(advisoryRow).join('') + advMore + '</div>'
+    : '';
+
+  var canonical = canonicalCvss(id);
+  var fallback = ratings[id] || {};
+  var severity = canonical ? canonical.severity : entrySeverity(entry);
+  var cvss = canonical ? canonical.score : fallback.cvss;
+  var cvssTooltip = '';
+  if (canonical) {
+    var rows = ((metadata[id] || {}).cvss || []);
+    if (Array.isArray(rows)) {
+      cvssTooltip = rows.filter(Array.isArray).map(function(row) {
+        var src = row[4] ? ' by ' + row[4] : '';
+        return 'CVSS ' + row[0] + ' ' + row[1] + ' ' + row[2] + src + (row[3] ? '\n' + row[3] : '');
+      }).join('\n\n');
+    }
+  } else {
+    cvssTooltip = String(fallback.cvss_vector || '');
+  }
+
+  var sevChip = severity && SEV_CLS[severity]
+    ? '<span class="rounded border px-1.5 py-[1px] text-[10px] font-bold ' + SEV_CLS[severity] + '"' +
+      (cvssTooltip ? ' title="' + esc(cvssTooltip) + '"' : '') + '>' +
+      esc(severity) + (cvss != null ? ' ' + cvss : '') + '</span>'
+    : '';
+
+  var scored = epss[id] || null;
+  var epssChip = scored
+    ? '<span class="font-mono text-[10px] ' + (scored[0] >= 0.1 ? 'font-bold text-orange-500 dark:text-orange-400' : 'text-zinc-500 dark:text-mono-muted') +
+      '" title="EPSS: estimated chance of exploitation in next 30 days, ' + ordinal(Math.round(scored[1] * 100)) + ' percentile">' +
+      'EPSS ' + (scored[0] * 100).toFixed(scored[0] >= 0.1 ? 0 : 1) + '%</span>'
+    : '';
+
+  var flagged = kev[id];
+  var kevChip = flagged
+    ? '<span class="rounded border border-red-400 bg-red-50 px-1 py-[1px] text-[9px] font-bold uppercase text-red-600 dark:border-red-700 dark:bg-red-950 dark:text-red-400"' +
+      ' title="CISA KEV' + (flagged[0] ? ' added ' + flagged[0] : '') + (flagged[1] ? ', used in ransomware' : '') + '">' +
+      'KEV' + (flagged[1] ? ' RANSOMWARE' : '') + '</span>'
+    : '';
+
+  var archiveUrl = archiveIndex[id];
+  var archBadge = archiveUrl
+    ? '<a class="rounded border border-emerald-300 bg-emerald-50 px-1 py-[1px] text-[9px] font-bold uppercase text-emerald-600 hover:underline dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400" href="' + esc(archiveUrl) + '">in archive &#8594;</a>'
+    : '';
+
+  return '<div class="px-3 py-3">' +
+    '<div class="flex flex-wrap items-center gap-1.5">' +
+      '<a class="font-mono text-sm font-bold text-emerald-600 hover:underline dark:text-brand" href="https://nvd.nist.gov/vuln/detail/' + encodeURIComponent(id) + '" target="_blank" rel="noopener">' + esc(id) + '</a>' +
+      archBadge +
+      '<span class="font-mono text-[11px] text-zinc-500 dark:text-mono-muted">' + fmtNum(links.length) + ' PoC' + (links.length === 1 ? '' : 's') + '</span>' +
+      sevChip + epssChip + kevChip +
+      '<a class="font-mono text-[10px] text-zinc-400 hover:text-emerald-600 dark:text-mono-muted dark:hover:text-brand" href="https://nvd.nist.gov/vuln/detail/' + encodeURIComponent(id) + '" target="_blank" rel="noopener">NVD &#8599;</a>' +
+      '<a class="font-mono text-[10px] text-zinc-400 hover:text-emerald-600 dark:text-mono-muted dark:hover:text-brand" href="https://www.cve.org/CVERecord?id=' + encodeURIComponent(id) + '" target="_blank" rel="noopener">CVE.ORG &#8599;</a>' +
+    '</div>' +
+    (entry.title ? '<p class="mt-1 font-mono text-xs font-medium text-zinc-800 dark:text-zinc-200">' + esc(entry.title) + '</p>' : '') +
+    '<p class="mt-1 font-mono text-[11px] leading-relaxed text-zinc-500 dark:text-mono-muted' + (open ? '' : ' line-clamp-3') + '">' + esc(entry.desc || '') + '</p>' +
+    '<button type="button" class="font-mono text-[10px] text-zinc-400 hover:text-emerald-600 dark:text-mono-muted dark:hover:text-brand" data-toggle-desc="' + esc(id) + '">' + (open ? '&#8593; collapse' : '&#8595; full description') + '</button>' +
+    '<div class="mt-1.5 font-mono text-xs">' + visible.map(pocRow).join('') + moreButton + '</div>' +
+    advHtml +
+    '</div>';
+}
+
+function renderResults(elapsed) {
+  var results = state.results;
+  trendingEl.hidden = true;
+  resultsEl.hidden = false;
+
+  if (!results.length) {
+    var subject = state.query.length >= MIN_QUERY ? ' for ' + esc(state.query) : ' for the active filters';
+    resultList.innerHTML = '<div class="px-3 py-8 text-center font-mono text-sm text-zinc-400 dark:text-mono-muted">No results' + subject + '</div>';
+    resultCount.textContent = '';
+    moreWrap.hidden = true;
+    if (elapsed != null) statusEl.textContent = 'no results in ' + Math.max(1, Math.round(elapsed)) + 'ms';
+    return;
+  }
+
+  var shown = results.slice(0, state.shown);
+  var remaining = results.length - shown.length;
+  resultCount.textContent = fmtNum(results.length) + ' CVE' + (results.length === 1 ? '' : 's') + ' · ' + fmtNum(results.pocTotal || 0) + ' PoC' + ((results.pocTotal || 0) === 1 ? '' : 's');
+  resultList.innerHTML = shown.map(resultRow).join('');
+  moreWrap.hidden = remaining <= 0;
+  if (remaining > 0) moreBtn.textContent = '+ ' + fmtNum(remaining) + ' more matching CVEs';
+
+  // Hide expander on short descriptions
+  resultList.querySelectorAll('[data-toggle-desc]').forEach(function(btn) {
+    var desc = btn.previousElementSibling;
+    if (desc && !desc.classList.contains('line-clamp-3')) return;
+    if (desc && desc.scrollHeight <= desc.clientHeight + 1) btn.hidden = true;
+  });
+
+  if (elapsed != null) {
+    var note = results.corrected
+      ? results.corrected.map(function(c){return c[1]+' for '+c[0];}).join(', ') + ' · '
+      : '';
+    statusEl.textContent = note + 'matched in ' + Math.max(1, Math.round(elapsed)) + 'ms';
+  }
+}
+
+/* ================================================================
+   RENDER DISPATCH
+   ================================================================ */
+function render() {
+  syncURL();
+  if (state.query.length < MIN_QUERY && !hasActiveFilters()) {
+    statusEl.textContent = state.ready ? '' : 'loading index…';
+    renderTrending();
+    return;
+  }
+  if (!state.ready) {
+    resultsEl.hidden = false;
+    trendingEl.hidden = true;
+    statusEl.textContent = 'loading index…';
+    resultList.innerHTML = '<div class="px-3 py-8 text-center font-mono text-sm text-zinc-400 dark:text-mono-muted">Loading the CVE index&hellip;</div>';
+    return;
+  }
+  var started = performance.now();
+  state.results = runSearch(state.query.length >= MIN_QUERY ? state.query : '');
+  renderResults(performance.now() - started);
+}
+
+/* ================================================================
+   URL STATE
+   ================================================================ */
+function readURLState() {
+  var params = new URLSearchParams(location.search);
+  var query = (params.get('q') || '').trim();
+  if (query) { state.query = query; inputEl.value = query; }
+  if (params.get('kev') === '1') state.kevOnly = true;
+  var sort = (params.get('sort') || '').toUpperCase();
+  if (['RELEVANCE','NEWEST','POCS'].includes(sort)) state.sort = sort;
+  var sevStr = (params.get('sev') || '').toUpperCase();
+  if (sevStr) {
+    var wanted = sevStr.split(',').filter(function(v) { return FILTER_OPTIONS.severity.some(function(o){return o[0]===v;}); });
+    if (wanted.length) state.filters.severity = new Set(wanted);
+  }
+  var srcStr = (params.get('src') || '').toUpperCase();
+  if (srcStr) {
+    var srcWanted = srcStr.split(',').filter(function(v) { return FILTER_OPTIONS.source.some(function(o){return o[0]===v;}); });
+    if (srcWanted.length) state.filters.source = new Set(srcWanted);
+  }
+}
+
+var urlTimer = null;
+function syncURL() {
+  clearTimeout(urlTimer);
+  urlTimer = setTimeout(function() {
+    var params = new URLSearchParams();
+    if (state.query.length >= MIN_QUERY) params.set('q', state.query);
+    if (state.kevOnly) params.set('kev', '1');
+    if (state.sort !== 'RELEVANCE') params.set('sort', state.sort.toLowerCase());
+    if (state.filters.severity.size !== FILTER_OPTIONS.severity.length) {
+      params.set('sev', FILTER_OPTIONS.severity.map(function(o){return o[0];}).filter(function(v){return state.filters.severity.has(v);}).join(','));
+    }
+    if (state.filters.source.size !== FILTER_OPTIONS.source.length) {
+      params.set('src', FILTER_OPTIONS.source.map(function(o){return o[0];}).filter(function(v){return state.filters.source.has(v);}).join(','));
+    }
+    var search = params.toString();
+    var next = search ? location.pathname + '?' + search : location.pathname;
+    if (next !== location.pathname + location.search) history.replaceState(null, '', next);
+  }, 300);
+}
+
+/* ================================================================
+   FILTER CHIPS
+   ================================================================ */
+function setActive(btn, on) {
+  ACTIVE_ON.forEach(function(c) { btn.classList.toggle(c, on); });
+  ACTIVE_OFF.forEach(function(c) { btn.classList.toggle(c, !on); });
+}
+
+function renderFilterChips() {
+  FILTER_OPTIONS.severity.forEach(function(opt) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'cs-chip rounded border px-2 py-0.5 font-mono text-[11px] disabled:opacity-50 ' + ACTIVE_OFF.join(' ');
+    btn.textContent = opt[1].toLowerCase();
+    btn.dataset.filterKind = 'severity';
+    btn.dataset.filterValue = opt[0];
+    btn.disabled = true;
+    sevChips.appendChild(btn);
+  });
+  FILTER_OPTIONS.source.forEach(function(opt) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'cs-chip rounded border px-2 py-0.5 font-mono text-[11px] disabled:opacity-50 ' + ACTIVE_OFF.join(' ');
+    btn.textContent = opt[1].toLowerCase();
+    btn.dataset.filterKind = 'source';
+    btn.dataset.filterValue = opt[0];
+    btn.disabled = true;
+    srcChips.appendChild(btn);
+  });
+}
+
+function enableFilter(kind) {
+  var container = kind === 'severity' ? sevChips : srcChips;
+  container.querySelectorAll('[data-filter-value]').forEach(function(btn) { btn.disabled = false; });
+}
+
+function syncFilterControls() {
+  ['severity', 'source'].forEach(function(kind) {
+    var filter = state.filters[kind];
+    var narrowed = filter.size !== FILTER_OPTIONS[kind].length;
+    var container = kind === 'severity' ? sevChips : srcChips;
+    container.querySelectorAll('[data-filter-value]').forEach(function(btn) {
+      setActive(btn, narrowed && filter.has(btn.dataset.filterValue));
+    });
+  });
+  setActive(kevToggle, state.kevOnly);
+  clearFilters.hidden = !hasActiveFilters();
+
+  document.querySelectorAll('#cs-sort-btns .cs-sort').forEach(function(btn) {
+    setActive(btn, btn.dataset.sort === state.sort);
+    btn.setAttribute('aria-pressed', String(btn.dataset.sort === state.sort));
+  });
+}
+
+function toggleFilter(kind, value) {
+  var filter = state.filters[kind];
+  if (filter.size === FILTER_OPTIONS[kind].length) {
+    filter.clear();
+    filter.add(value);
+  } else if (!filter.has(value)) {
+    filter.add(value);
+  } else {
+    filter.delete(value);
+    if (!filter.size) FILTER_OPTIONS[kind].forEach(function(o) { filter.add(o[0]); });
+  }
+}
+
+/* ================================================================
+   BROWSE BY YEAR
+   ================================================================ */
+function renderYears() {
+  var currentYear = new Date().getFullYear();
+  var html = '';
+  for (var y = currentYear; y >= 1999; y--) {
+    html += '<span class="rounded border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-500 hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-mono-muted dark:hover:border-brand dark:hover:text-brand cursor-pointer" data-year="' + y + '">' + y + '</span>';
+  }
+  yearsEl.innerHTML = html;
+}
+
+/* ================================================================
+   EVENT WIRING
+   ================================================================ */
+var searchTimer = null;
+inputEl.addEventListener('input', function() {
+  var next = inputEl.value.trim();
+  if (next === state.query) return;
+  state.query = next;
+  state.shown = PAGE_SIZE;
+  clearTimeout(searchTimer);
+
+  // Expansion hints
+  var slug = next.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (NAMED[slug]) { hintEl.textContent = slug + ' → ' + NAMED[slug]; hintEl.hidden = false; }
+  else {
+    var words = next.toLowerCase().split(/\s+/);
     var hints = [];
-    words.forEach(function (w) {
-      expanded.push(w);
-      var a = ALIASES[w];
-      if (a) { a.forEach(function (x) { expanded.push(x); }); hints.push(w + " → " + a[0]); }
-    });
-    return { q: expanded.join(" "), hint: hints.join(", ") };
+    words.forEach(function(w) { if (ALIASES[w]) hints.push(w + ' → ' + ALIASES[w][0]); });
+    if (hints.length) { hintEl.textContent = hints.join(', '); hintEl.hidden = false; }
+    else hintEl.hidden = true;
   }
 
-  /* ================================================================
-     API — tries pipeline endpoints first, falls back to /list
-     ================================================================ */
-  var candidates = [];
-  var pipelineReady = false;
-  var kevData = {}, epssData = {};
+  if (next.length < MIN_QUERY) { render(); return; }
+  searchTimer = setTimeout(render, 160);
+});
 
-  function fetchJSON(url) {
-    return fetch(url).then(function (r) {
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      return r.json();
-    });
+document.querySelector('#cs-input').closest('div').parentElement.addEventListener('submit', function(e) { e.preventDefault(); });
+
+// Filter chip clicks
+document.getElementById('cs-filters').addEventListener('click', function(e) {
+  var chip = e.target.closest('[data-filter-value]');
+  if (chip && !chip.disabled) {
+    toggleFilter(chip.dataset.filterKind, chip.dataset.filterValue);
+    state.shown = PAGE_SIZE;
+    syncFilterControls();
+    render();
+    return;
   }
-
-  function severityOf(cvss) {
-    if (cvss == null) return "";
-    if (cvss >= 9.0) return "CRITICAL";
-    if (cvss >= 7.0) return "HIGH";
-    if (cvss >= 4.0) return "MEDIUM";
-    return "LOW";
-  }
-
-  function candidateToResult(c) {
-    return {
-      cve: c.cve_id || "",
-      desc: c.description || "",
-      title: "",
-      severity: severityOf(c.cvss_score),
-      cvss: c.cvss_score,
-      epss: epssData[(c.cve_id || "").toUpperCase()] || null,
-      kev: !!kevData[(c.cve_id || "").toUpperCase()],
-      kev_date: kevData[(c.cve_id || "").toUpperCase()] || null,
-      kev_ransomware: false,
-      published: String(c.discovered_at || "").slice(0, 10),
-      poc_count: 1,
-      pocs: [{ url: c.repo_url || "", stars: null, pushed: null, source: "GITHUB" }],
-      _blob: [c.cve_id, c.repo_full_name, c.description, (c.cwe_names || []).join(" ")].join(" ").toLowerCase(),
-      _score: c.poc_score || 0,
-      _discovered: c.discovered_at || ""
-    };
-  }
-
-  function loadStats() {
-    fetchJSON(API + "/cves/stats").then(function (d) {
-      pipelineReady = true;
-      document.getElementById("cs-total").textContent = fmtNum(d.total_cves || 0);
-      document.getElementById("cs-pocs").textContent = fmtNum(d.with_pocs || 0);
-      document.getElementById("cs-kev").textContent = fmtNum(d.kev_count || 0);
-      if (d.last_sync) syncEl.textContent = "synced " + String(d.last_sync).slice(0, 10);
-      state.ready = true;
-    }).catch(function () {
-      loadFallback();
-    });
-  }
-
-  function loadFallback() {
-    Promise.all([
-      fetchJSON(API + "/list?sort=discovered_desc&limit=2000"),
-      fetch("https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json")
-        .then(function (r) { return r.ok ? r.json() : { vulnerabilities: [] }; })
-        .catch(function () { return { vulnerabilities: [] }; }),
-      fetch("https://api.first.org/data/v1/epss?cve=" +
-        "CVE-2021-44228,CVE-2024-3094,CVE-2023-4966,CVE-2024-6387,CVE-2022-22965")
-        .then(function (r) { return r.ok ? r.json() : { data: [] }; })
-        .catch(function () { return { data: [] }; })
-    ]).then(function (res) {
-      var data = res[0];
-      candidates = (data.candidates || []).map(function (c) {
-        c._blob = [c.cve_id, c.repo_full_name, c.description, (c.cwe_names || []).join(" ")].join(" ").toLowerCase();
-        return c;
-      });
-
-      (res[1].vulnerabilities || []).forEach(function (v) {
-        kevData[String(v.cveID || "").toUpperCase()] = v.dateAdded || true;
-      });
-      (res[2].data || []).forEach(function (d) {
-        epssData[String(d.cve || "").toUpperCase()] = parseFloat(d.epss) || 0;
-      });
-
-      var uniqueCves = {};
-      candidates.forEach(function (c) {
-        var id = (c.cve_id || "").toUpperCase();
-        if (id) uniqueCves[id] = true;
-      });
-      var totalCves = Object.keys(uniqueCves).length;
-      var kevCount = 0;
-      Object.keys(uniqueCves).forEach(function (id) { if (kevData[id]) kevCount++; });
-
-      document.getElementById("cs-total").textContent = fmtNum(totalCves);
-      document.getElementById("cs-pocs").textContent = fmtNum(candidates.length);
-      document.getElementById("cs-kev").textContent = fmtNum(kevCount);
-      syncEl.textContent = "live from monitor · pipeline pending";
-
-      var epssIds = [];
-      var seen = {};
-      candidates.forEach(function (c) {
-        var id = (c.cve_id || "").toUpperCase();
-        if (id && !seen[id]) { epssIds.push(id); seen[id] = true; }
-      });
-      fetchEpssBatch(epssIds);
-
-      state.trending = candidates
-        .filter(function (c) { return (c.poc_score || 0) >= 50; })
-        .slice(0, 40)
-        .map(function (c) {
-          return {
-            name: c.repo_full_name || "",
-            url: c.repo_url || "",
-            cve: c.cve_id || "",
-            desc: c.description || "",
-            stars: 0,
-            pushed: c.discovered_at || ""
-          };
-        });
-      renderTrending();
-      state.ready = true;
-    }).catch(function (e) {
-      pendingEl.classList.remove("hidden");
-      trendRows.innerHTML = '<div class="px-3 py-6 text-center font-mono text-xs text-zinc-400 dark:text-mono-muted">Could not reach the monitor.</div>';
-    });
-  }
-
-  function fetchEpssBatch(ids) {
-    if (!ids.length) return;
-    var batches = [];
-    for (var i = 0; i < ids.length; i += 100) batches.push(ids.slice(i, i + 100));
-    batches.forEach(function (batch) {
-      fetch("https://api.first.org/data/v1/epss?cve=" + batch.join(","))
-        .then(function (r) { return r.ok ? r.json() : { data: [] }; })
-        .then(function (d) {
-          (d.data || []).forEach(function (e) {
-            epssData[String(e.cve || "").toUpperCase()] = parseFloat(e.epss) || 0;
-          });
-        }).catch(function () {});
-    });
-  }
-
-  function loadTrending() {
-    fetchJSON(API + "/cves/trending?limit=20").then(function (d) {
-      pipelineReady = true;
-      state.trending = d.entries || [];
-      renderTrending();
-    }).catch(function () {});
-  }
-
-  function doSearch() {
-    var expanded = expandQuery(state.query);
-    hintEl.textContent = expanded.hint;
-    hintEl.classList.toggle("hidden", !expanded.hint);
-
-    if (!expanded.q || expanded.q.length < 2) {
-      trendingEl.classList.remove("hidden");
-      resultsEl.classList.add("hidden");
-      statusEl.textContent = "";
-      return;
-    }
-
-    if (pipelineReady) {
-      doServerSearch(expanded);
-    } else {
-      doClientSearch(expanded);
-    }
-  }
-
-  function doServerSearch(expanded) {
-    if (state.loading) return;
-    state.loading = true;
-    statusEl.textContent = "searching…";
-    var params = "?q=" + encodeURIComponent(expanded.q) +
-      "&sort=" + state.sort + "&page=" + state.page + "&limit=50";
-    if (state.severity !== "all") params += "&severity=" + state.severity;
-    if (state.kevOnly) params += "&kev=1";
-
-    fetchJSON(API + "/cves/search" + params).then(function (d) {
-      state.results = d.results || [];
-      state.total = d.total || 0;
-      state.loading = false;
-      renderResults();
-      statusEl.textContent = fmtNum(state.total) + " results";
-    }).catch(function () {
-      state.loading = false;
-      doClientSearch(expanded);
-    });
-  }
-
-  function doClientSearch(expanded) {
-    var terms = expanded.q.toLowerCase().split(/\s+/);
-    var t0 = performance.now();
-
-    var matched = candidates.filter(function (c) {
-      if (state.severity !== "all" && severityOf(c.cvss_score) !== state.severity) return false;
-      if (state.kevOnly && !kevData[(c.cve_id || "").toUpperCase()]) return false;
-      return terms.some(function (t) { return c._blob.indexOf(t) !== -1; });
-    });
-
-    if (state.sort === "newest") {
-      matched.sort(function (a, b) { return (b.discovered_at || "").localeCompare(a.discovered_at || ""); });
-    } else if (state.sort === "pocs") {
-      matched.sort(function (a, b) { return (b.poc_score || 0) - (a.poc_score || 0); });
-    } else {
-      matched.sort(function (a, b) {
-        var sa = 0, sb = 0;
-        terms.forEach(function (t) {
-          if ((a.cve_id || "").toLowerCase().indexOf(t) !== -1) sa += 100;
-          if ((b.cve_id || "").toLowerCase().indexOf(t) !== -1) sb += 100;
-          if ((a.repo_full_name || "").toLowerCase().indexOf(t) !== -1) sa += 50;
-          if ((b.repo_full_name || "").toLowerCase().indexOf(t) !== -1) sb += 50;
-        });
-        return sb - sa || (b.discovered_at || "").localeCompare(a.discovered_at || "");
-      });
-    }
-
-    state.results = matched.map(candidateToResult);
-    state.total = matched.length;
-    var elapsed = performance.now() - t0;
-    renderResults();
-    statusEl.textContent = fmtNum(state.total) + " results in " + Math.round(elapsed) + "ms (client-side)";
-  }
-
-  /* ================================================================
-     ARCHIVE CROSS-REFERENCE
-     ================================================================ */
-  function loadArchive() {
-    fetch("{{ "/index.json" | relURL }}").then(function (r) { return r.ok ? r.json() : []; })
-      .then(function (entries) {
-        (entries || []).forEach(function (e) {
-          var m = String(e.cve || "").match(/CVE-\d{4}-\d{4,7}/i);
-          if (m) state.archiveIndex[m[0].toUpperCase()] = e.permalink;
-        });
-      }).catch(function () {});
-  }
-
-  /* ================================================================
-     RENDERING — Trending
-     ================================================================ */
-  var trendMode = "weighted";
-
-  function renderTrending() {
-    var items = state.trending.slice();
-    if (trendMode === "weighted") {
-      items.sort(function (a, b) {
-        var ha = a.pushed ? (Date.now() - new Date(a.pushed).getTime()) / 36e5 : 8760;
-        var hb = b.pushed ? (Date.now() - new Date(b.pushed).getTime()) / 36e5 : 8760;
-        return (b.stars / Math.pow(hb + 6, 0.45)) - (a.stars / Math.pow(ha + 6, 0.45));
-      });
-      trendNote.textContent = "stars weighted against time since last commit";
-    } else {
-      items.sort(function (a, b) {
-        return (b.pushed || "").localeCompare(a.pushed || "");
-      });
-      trendNote.textContent = "newest commit first";
-    }
-
-    if (!items.length) {
-      trendRows.innerHTML = '<div class="px-3 py-6 text-center font-mono text-xs text-zinc-400 dark:text-mono-muted">No trending data yet.</div>';
-      return;
-    }
-
-    trendRows.textContent = "";
-    items.slice(0, 20).forEach(function (t) {
-      var row = el("div", "flex items-center gap-3 px-3 py-2 hover:bg-zinc-50 dark:hover:bg-mono-hover");
-
-      var stars = el("span", "w-16 shrink-0 text-right font-mono text-[11px] " +
-        (t.stars >= 500 ? "font-bold text-yellow-600 dark:text-yellow-400" : "text-zinc-500 dark:text-mono-muted"),
-        fmtStars(t.stars || 0) + " ★");
-
-      var age = el("span", "w-20 shrink-0 font-mono text-[11px] text-zinc-400 dark:text-mono-muted",
-        fmtLongAge(t.pushed));
-
-      var nameWrap = el("span", "flex min-w-0 items-center gap-1.5");
-      if (t.cve && state.archiveIndex[t.cve]) {
-        nameWrap.appendChild(el("span", "shrink-0 rounded border border-emerald-300 bg-emerald-50 px-1 py-[1px] text-[9px] font-bold uppercase text-emerald-600 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400", "in archive"));
-      }
-      var link = el("a", "truncate font-mono text-xs font-medium text-zinc-900 hover:text-emerald-600 dark:text-white dark:hover:text-brand", t.name || "");
-      link.href = t.url || "#";
-      link.target = "_blank";
-      link.rel = "noopener noreferrer nofollow";
-      nameWrap.appendChild(link);
-
-      var desc = el("span", "hidden truncate font-mono text-[11px] text-zinc-400 lg:block dark:text-mono-muted", t.desc || "");
-
-      row.appendChild(stars);
-      row.appendChild(age);
-      row.appendChild(nameWrap);
-      row.appendChild(desc);
-      trendRows.appendChild(row);
-    });
-  }
-
-  /* ================================================================
-     RENDERING — Results
-     ================================================================ */
-  function pocLink(p) {
-    var wrap = el("div", "flex items-center gap-1.5 py-0.5");
-    var src = p.source || "GITHUB";
-    var cls = SRC_CLS[src] || SRC_CLS.REFERENCE;
-    wrap.appendChild(el("span", "shrink-0 rounded border px-1 py-[1px] text-[9px] font-bold uppercase " + cls, src));
-
-    var link = el("a", "truncate text-zinc-700 hover:text-emerald-600 dark:text-slate-300 dark:hover:text-brand");
-    link.href = p.url;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer nofollow";
-    var parts = String(p.url).match(/github\.com\/([^/#?]+)\/([^/#?]+)/i);
-    link.textContent = parts ? parts[1] + "/" + parts[2].replace(/\.git$/i, "") : p.url.replace(/^https?:\/\//, "");
-    wrap.appendChild(link);
-
-    if (p.stars != null && p.stars > 0) {
-      wrap.appendChild(el("span", "shrink-0 font-mono text-[10px] " +
-        (p.stars >= 500 ? "font-bold text-yellow-600 dark:text-yellow-400" : "text-zinc-400 dark:text-mono-muted"),
-        fmtStars(p.stars) + "★"));
-    }
-    if (p.pushed) {
-      wrap.appendChild(el("span", "shrink-0 font-mono text-[10px] text-zinc-400 dark:text-mono-muted", fmtAge(p.pushed)));
-    }
-    return wrap;
-  }
-
-  function resultCard(entry) {
-    var card = el("div", "px-3 py-3");
-
-    // Top row: CVE + chips
-    var top = el("div", "flex flex-wrap items-center gap-1.5");
-
-    var cveLink = el("a", "font-mono text-sm font-bold text-emerald-600 hover:underline dark:text-brand", entry.cve);
-    cveLink.href = "https://nvd.nist.gov/vuln/detail/" + encodeURIComponent(entry.cve);
-    cveLink.target = "_blank";
-    cveLink.rel = "noopener";
-    top.appendChild(cveLink);
-
-    var archiveURL = state.archiveIndex[(entry.cve || "").toUpperCase()];
-    if (archiveURL) {
-      var abadge = el("a", "rounded border border-emerald-300 bg-emerald-50 px-1 py-[1px] text-[9px] font-bold uppercase text-emerald-600 hover:underline dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400", "in archive →");
-      abadge.href = archiveURL;
-      top.appendChild(abadge);
-    }
-
-    if (entry.poc_count != null) {
-      top.appendChild(el("span", "font-mono text-[11px] text-zinc-500 dark:text-mono-muted", fmtNum(entry.poc_count) + " PoC" + (entry.poc_count === 1 ? "" : "s")));
-    }
-
-    var sev = entry.severity;
-    if (sev && SEV_CLS[sev]) {
-      var chip = el("span", "rounded border px-1.5 py-[1px] text-[10px] font-bold " + SEV_CLS[sev]);
-      chip.textContent = sev + (entry.cvss != null ? " " + entry.cvss : "");
-      top.appendChild(chip);
-    }
-
-    if (entry.epss != null) {
-      var pct = (entry.epss * 100);
-      var epCls = pct >= 50 ? "text-red-500 dark:text-red-400 font-bold" : pct >= 10 ? "text-orange-500 dark:text-orange-400" : "text-zinc-500 dark:text-mono-muted";
-      var epChip = el("span", "font-mono text-[10px] " + epCls, "EPSS " + pct.toFixed(pct >= 10 ? 0 : 1) + "%");
-      epChip.title = "Estimated probability of exploitation in the next 30 days";
-      top.appendChild(epChip);
-    }
-
-    if (entry.kev) {
-      var kevChip = el("span", "rounded border border-red-400 bg-red-50 px-1 py-[1px] text-[9px] font-bold uppercase text-red-600 dark:border-red-700 dark:bg-red-950 dark:text-red-400");
-      kevChip.textContent = "KEV" + (entry.kev_ransomware ? " RANSOMWARE" : "");
-      if (entry.kev_date) kevChip.title = "Added to CISA KEV on " + entry.kev_date;
-      top.appendChild(kevChip);
-    }
-
-    card.appendChild(top);
-
-    // Title + description
-    if (entry.title) {
-      card.appendChild(el("p", "mt-1 font-mono text-xs font-medium text-zinc-800 dark:text-zinc-200", entry.title));
-    }
-    var desc = el("p", "mt-1 line-clamp-3 font-mono text-[11px] leading-relaxed text-zinc-500 dark:text-mono-muted", entry.desc || "");
-    card.appendChild(desc);
-
-    // PoC links
-    var pocs = entry.pocs || [];
-    if (pocs.length) {
-      var pocList = el("div", "mt-2 space-y-0.5 font-mono text-xs");
-      var visible = pocs.slice(0, 5);
-      visible.forEach(function (p) { pocList.appendChild(pocLink(p)); });
-      if (pocs.length > 5) {
-        var more = el("button", "mt-0.5 font-mono text-[11px] text-emerald-600 hover:underline dark:text-brand");
-        more.type = "button";
-        more.textContent = "+ " + (pocs.length - 5) + " more";
-        more.addEventListener("click", function () {
-          pocs.slice(5).forEach(function (p) { pocList.insertBefore(pocLink(p), more); });
-          more.remove();
-        });
-        pocList.appendChild(more);
-      }
-      card.appendChild(pocList);
-    }
-
-    // NVD + CVE.org links
-    var links = el("div", "mt-2 flex gap-2 font-mono text-[10px]");
-    var nvd = el("a", "text-zinc-400 hover:text-emerald-600 dark:text-mono-muted dark:hover:text-brand", "NVD ↗");
-    nvd.href = "https://nvd.nist.gov/vuln/detail/" + encodeURIComponent(entry.cve);
-    nvd.target = "_blank"; nvd.rel = "noopener";
-    var cveOrg = el("a", "text-zinc-400 hover:text-emerald-600 dark:text-mono-muted dark:hover:text-brand", "CVE.ORG ↗");
-    cveOrg.href = "https://www.cve.org/CVERecord?id=" + encodeURIComponent(entry.cve);
-    cveOrg.target = "_blank"; cveOrg.rel = "noopener";
-    links.appendChild(nvd);
-    links.appendChild(cveOrg);
-    card.appendChild(links);
-
-    return card;
-  }
-
-  function renderResults() {
-    trendingEl.classList.add("hidden");
-    resultsEl.classList.remove("hidden");
-    resultList.textContent = "";
-
-    if (!state.results.length) {
-      resultList.appendChild(el("div", "px-3 py-8 text-center font-mono text-sm text-zinc-400 dark:text-mono-muted", "No results for the current query and filters."));
-      resultCount.textContent = "";
-      moreWrap.classList.add("hidden");
-      return;
-    }
-
-    resultCount.textContent = fmtNum(state.total) + " CVEs";
-    var visible = state.results.slice(0, state.shown);
-    visible.forEach(function (entry) { resultList.appendChild(resultCard(entry)); });
-
-    var remaining = state.total - visible.length;
-    moreWrap.classList.toggle("hidden", remaining <= 0);
-    if (remaining > 0) moreBtn.textContent = "Show more (" + fmtNum(remaining) + " remaining)";
-  }
-
-  /* ================================================================
-     EVENT HANDLERS
-     ================================================================ */
-  var debounce = null;
-  inputEl.addEventListener("input", function () {
-    clearTimeout(debounce);
-    debounce = setTimeout(function () {
-      state.query = inputEl.value.trim();
-      state.page = 1; state.shown = 50;
-      if (state.query) doSearch();
-      else {
-        trendingEl.classList.remove("hidden");
-        resultsEl.classList.add("hidden");
-        hintEl.classList.add("hidden");
-        statusEl.textContent = "";
-      }
-    }, 300);
-  });
-
-  inputEl.addEventListener("keydown", function (e) {
-    if (e.key === "Enter") { clearTimeout(debounce); state.query = inputEl.value.trim(); state.page = 1; state.shown = 50; doSearch(); }
-  });
-
-  moreBtn.addEventListener("click", function () { state.shown += 50; renderResults(); });
-
-  // Severity filter
-  document.querySelectorAll("#cs-severity .cs-sev").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      state.severity = btn.getAttribute("data-s"); state.page = 1; state.shown = 50;
-      document.querySelectorAll("#cs-severity .cs-sev").forEach(function (b) { toggleActive(b, b === btn); });
-      if (state.query) doSearch();
-    });
-  });
-
-  // KEV toggle
-  var kevToggle = document.getElementById("cs-kev-toggle");
-  kevToggle.addEventListener("click", function () {
+  if (e.target === kevToggle || e.target.closest('#cs-kev-toggle') === kevToggle) {
     state.kevOnly = !state.kevOnly;
-    toggleActive(kevToggle, state.kevOnly);
-    state.page = 1; state.shown = 50;
-    if (state.query) doSearch();
-  });
-
-  // Sort
-  document.getElementById("cs-sort").addEventListener("change", function (e) {
-    state.sort = e.target.value; state.page = 1; state.shown = 50;
-    if (state.query) doSearch();
-  });
-
-  // Trending mode
-  document.querySelectorAll("#cs-trend-mode .cs-tm").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      trendMode = btn.getAttribute("data-m");
-      document.querySelectorAll("#cs-trend-mode .cs-tm").forEach(function (b) { toggleActive(b, b === btn); });
-      renderTrending();
+    state.shown = PAGE_SIZE;
+    syncFilterControls();
+    render();
+    return;
+  }
+  if (e.target === clearFilters || e.target.closest('#cs-clear-filters') === clearFilters) {
+    state.kevOnly = false;
+    Object.keys(state.filters).forEach(function(kind) {
+      state.filters[kind].clear();
+      FILTER_OPTIONS[kind].forEach(function(o) { state.filters[kind].add(o[0]); });
     });
-  });
+    state.shown = PAGE_SIZE;
+    syncFilterControls();
+    render();
+  }
+});
 
-  /* ================================================================
-     INIT
-     ================================================================ */
-  loadArchive();
-  loadStats();
-  loadTrending();
+// Sort buttons
+document.getElementById('cs-sort-btns').addEventListener('click', function(e) {
+  var btn = e.target.closest('[data-sort]');
+  if (!btn) return;
+  state.sort = btn.dataset.sort;
+  state.shown = PAGE_SIZE;
+  syncFilterControls();
+  render();
+});
+
+// Trending mode toggle
+document.getElementById('cs-trend-mode').addEventListener('click', function(e) {
+  var btn = e.target.closest('[data-m]');
+  if (!btn) return;
+  state.mode = btn.dataset.m;
+  renderTrending();
+});
+
+// Result interactions (description expand, poc expand, advisory expand, show more)
+resultsEl.addEventListener('click', function(e) {
+  var desc = e.target.closest('[data-toggle-desc]');
+  var poc = e.target.closest('[data-toggle-poc]');
+  var advisory = e.target.closest('[data-toggle-advisory]');
+  var more = e.target.closest('#cs-more-btn');
+  if (desc) {
+    var id = desc.dataset.toggleDesc;
+    state.descOpen.has(id) ? state.descOpen.delete(id) : state.descOpen.add(id);
+  } else if (poc) {
+    var id2 = poc.dataset.togglePoc;
+    state.pocOpen.has(id2) ? state.pocOpen.delete(id2) : state.pocOpen.add(id2);
+  } else if (advisory) {
+    var id3 = advisory.dataset.toggleAdvisory;
+    state.advisoryOpen.has(id3) ? state.advisoryOpen.delete(id3) : state.advisoryOpen.add(id3);
+  } else if (more) {
+    state.shown += PAGE_SIZE;
+  } else {
+    return;
+  }
+  renderResults(null);
+});
+
+// Year browse
+yearsEl.addEventListener('click', function(e) {
+  var span = e.target.closest('[data-year]');
+  if (!span) return;
+  inputEl.value = 'CVE-' + span.dataset.year;
+  inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+});
+
+// Global keyboard: typing focuses search, slash shortcut, escape clears
+document.addEventListener('keydown', function(e) {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (document.activeElement === inputEl) {
+    if (e.key === 'Escape') {
+      inputEl.value = '';
+      inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+      inputEl.blur();
+    }
+    return;
+  }
+  var active = document.activeElement;
+  var editing = active && (active.isContentEditable || ['INPUT','TEXTAREA','SELECT','BUTTON'].includes(active.tagName));
+  if (editing) return;
+  if (e.key === '/') { e.preventDefault(); inputEl.focus(); return; }
+  if (e.key.length !== 1 && e.key !== 'Backspace') return;
+  inputEl.focus();
+});
+
+if (window.matchMedia('(min-width: 900px)').matches) inputEl.focus();
+
+/* ================================================================
+   DATA LOADING
+   ================================================================ */
+function loadJSON(url, opts) {
+  return fetch(url, opts || {}).then(function(r) {
+    if (!r.ok) throw new Error(url + ' (' + r.status + ')');
+    return r.json();
+  });
+}
+
+renderFilterChips();
+syncFilterControls();
+renderYears();
+
+(async function() {
+  // Load trending + metadata first (small, has stats)
+  try {
+    var meta = await loadJSON(DATA_ROOT + '/trending_poc.json', { cache: 'no-store' });
+    indexMeta = meta;
+    trending = (meta.items || []).map(function(item) {
+      return Object.assign({}, item, { _pushed: hoursSince(item.pushed), _created: hoursSince(item.created) });
+    });
+    var minutes = Math.max(0, Math.round((Date.now() - Date.parse(meta.generated)) / 60000));
+    refreshedEl.textContent = minutes < 60
+      ? 'index refreshed ' + minutes + ' minute' + (minutes === 1 ? '' : 's') + ' ago'
+      : 'index refreshed ' + Math.round(minutes / 60) + ' hour' + (Math.round(minutes / 60) === 1 ? '' : 's') + ' ago';
+  } catch (err) {
+    console.warn('trending:', err.message);
+  }
+
+  readURLState();
+  syncFilterControls();
+  paintStats();
+  render();
+
+  // Archive cross-reference (our verified PoCs)
+  fetch('{{ "/index.json" | relURL }}').then(function(r) { return r.ok ? r.json() : []; })
+    .then(function(entries) {
+      (entries || []).forEach(function(e) {
+        var m = String(e.cve || '').match(/CVE-\d{4}-\d{4,7}/i);
+        if (m) archiveIndex[m[0].toUpperCase()] = e.permalink;
+      });
+    }).catch(function() {});
+
+  // Parallel: KEV, CVSS, nuclei, EPSS, repo_meta
+  loadJSON(DATA_ROOT + '/kev.json', { cache: 'no-cache' }).then(function(data) {
+    kev = data || {};
+    kevToggle.disabled = false;
+    paintStats();
+    if (state.ready && (state.query || hasActiveFilters())) render();
+    else renderTrending();
+  }).catch(function(err) { console.warn('kev:', err.message); });
+
+  loadJSON(DATA_ROOT + '/cvss.json', { cache: 'no-cache' }).then(function(data) {
+    for (var id in (data || {})) (metadata[id] || (metadata[id] = {})).cvss = data[id];
+    severityEpoch++;
+    enableFilter('severity');
+    if (state.ready && (state.query || hasActiveFilters())) render();
+  }).catch(function(err) { console.warn('cvss:', err.message); });
+
+  loadJSON(DATA_ROOT + '/nuclei.json', { cache: 'no-cache' }).then(function(data) {
+    ratings = data || {};
+    severityEpoch++;
+    enableFilter('severity');
+    if (state.ready && (state.query || hasActiveFilters())) render();
+  }).catch(function(err) { console.warn('nuclei:', err.message); });
+
+  loadJSON(DATA_ROOT + '/epss.json', { cache: 'no-cache' }).then(function(data) {
+    epss = data || {};
+    if (state.ready && (state.query || hasActiveFilters())) renderResults(null);
+  }).catch(function(err) { console.warn('epss:', err.message); });
+
+  loadJSON(DATA_ROOT + '/repo_meta.json', { cache: 'no-cache' }).then(function(data) {
+    repoMeta = data || {};
+    for (var i = 0; i < dataset.length; i++) dataset[i]._ranked = null;
+    if (state.ready && (state.query || hasActiveFilters())) renderResults(null);
+  }).catch(function(err) { console.warn('repo_meta:', err.message); });
+
+  // Main dataset last (biggest)
+  var loadAdvisories = function() {
+    loadJSON(DATA_ROOT + '/advisories.json', { cache: 'no-cache' }).then(function(data) {
+      for (var id in (data || {})) (metadata[id] || (metadata[id] = {})).advisories = data[id];
+      if (state.ready && (state.query || hasActiveFilters())) renderResults(null);
+    }).catch(function(err) { console.warn('advisories:', err.message); });
+  };
+
+  try {
+    dataset = prepareDataset(await loadJSON(DATA_ROOT + '/CVE_list.json', { cache: 'no-cache' }));
+    state.ready = true;
+    enableFilter('source');
+    render();
+    buildWordIndex();
+  } catch (err) {
+    console.warn('CVE_list:', err.message);
+    statusEl.textContent = 'index unavailable — run sync-pocindex.sh first';
+  }
+  loadAdvisories();
+})();
+
 })();
 </script>
 {{ end }}
