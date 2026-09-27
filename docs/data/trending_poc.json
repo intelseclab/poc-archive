@@ -1,11 +1,44 @@
 {
-  "generated": "2026-09-26T09:10:18.757359+00:00",
-  "total_cves": 172835,
-  "with_pocs": 83526,
+  "generated": "2026-09-27T09:36:22.430300+00:00",
+  "total_cves": 172874,
+  "with_pocs": 83563,
   "items": [
     {
       "year": 2026,
-      "stars": 3,
+      "stars": 825,
+      "name": "CVE-2026-24061",
+      "url": "https://github.com/jacubes/CVE-2026-24061",
+      "desc": "CVE-2026-24061 exploit PoC",
+      "pushed": "2026-09-26T15:54:22Z",
+      "created": "2026-03-08T11:25:39Z",
+      "cve": "CVE-2026-24061",
+      "kev": true
+    },
+    {
+      "year": 2026,
+      "stars": 9,
+      "name": "CVE-2026-78306",
+      "url": "https://github.com/Wh02m1/CVE-2026-78306",
+      "desc": "DJI Drone DUML Command Injection over Bluetooth - Proof of Concept for CVE-2026-78306",
+      "pushed": "2026-09-26T15:34:42Z",
+      "created": "2026-09-20T14:50:46Z",
+      "cve": "CVE-2026-78306",
+      "kev": false
+    },
+    {
+      "year": 2026,
+      "stars": 13,
+      "name": "CVE-2026-41089",
+      "url": "https://github.com/hnytgl/CVE-2026-41089",
+      "desc": "CVE-2026-41089 是 Windows Netlogon 服务中一个关键的远程代码执行漏洞，单包即可崩溃 lsass.exe，导致域控制器在约 30-60 秒内重启。此期间该 DC 的所有域认证将失败。",
+      "pushed": "2026-09-26T13:49:41Z",
+      "created": "2026-06-03T02:29:06Z",
+      "cve": "CVE-2026-41089",
+      "kev": false
+    },
+    {
+      "year": 2026,
+      "stars": 5,
       "name": "CVE-2026-43682",
       "url": "https://github.com/petermalone/CVE-2026-43682",
       "desc": "CVE-2026-43682: HFS+ B-tree kernel heap overflow in macOS",
@@ -16,18 +49,18 @@
     },
     {
       "year": 2026,
-      "stars": 9,
-      "name": "CVE-2026-78306",
-      "url": "https://github.com/Wh02m1/CVE-2026-78306",
-      "desc": "DJI Drone DUML Command Injection over Bluetooth - Proof of Concept for CVE-2026-78306",
-      "pushed": "2026-09-25T10:22:46Z",
-      "created": "2026-09-20T14:50:46Z",
-      "cve": "CVE-2026-78306",
-      "kev": false
+      "stars": 3,
+      "name": "CVE-2026-67279",
+      "url": "https://github.com/HackSpeak/CVE-2026-67279",
+      "desc": "MikroTrick (MikroTik RouterOS SSH takeover chain) PoC mirror - CVE-2026-67279 + CVE-2026-86060 (+67276); for authorized lab testing",
+      "pushed": "2026-09-26T03:47:01Z",
+      "created": "2026-09-26T03:46:49Z",
+      "cve": "CVE-2026-67279",
+      "kev": true
     },
     {
       "year": 2026,
-      "stars": 4,
+      "stars": 3,
       "name": "op13-cve-2026-64560",
       "url": "https://github.com/a23bc/op13-cve-2026-64560",
       "desc": "In the Linux kernel, the following vulnerability has been resolved: posix-cpu-timers: Prevent UAF caused by non-leader exec() race Wongi and Jungwoo decoded and reported a non-leader exec() related race which can result in an UAF: sys_timer_delete() exec() posix_cpu_timer_del() // Observes old leader p = pid_task(pid, pid_type); de_thread() switch_leader(); release_task(old_leader) __exit_signal(old_leader) sighand = lock(old_leader, sighand); posix_cpu_timers*_exit(); sighand = lock_task_sighand(p) unhash_task(old_leader); sh = lock(p, sighand) old_leader->sighand = NULL; unlock(sighand); (p->sighand == NULL) unlock(sh) return NULL; // Returns without action if(!sighand) return 0; free_posix_timer(); This is \"harmless\" unless the deleted timer was armed and enqueued in p->signal because on exec() a TGID targeted timer is inherited. As sys_timer_delete() freed the underlying posix timer object run_posix_cpu_timers() or any timerqueue related add/delete operations on other timers will access the freed object's timerqueue node, which results in an UAF. There is a similar problem vs. posix_cpu_timer_set(). For regular posix timers it just transiently returns -ESRCH to user space, but for the use case in do_cpu_nanosleep() it's the same UAF just that the k_itimer is allocated on the stack. Also posix_cpu_timer_rearm() fails to rearm the timer, which means it stops to expire. While debating solutions Frederic pointed out another problem: posix_cpu_timer_del(tmr) __exit_signal(p) posix_cpu_timers*_exit(p); unhash_task(p); p->sighand = NULL; sh = lock_task_sighand(p) sighand = p->sighand; if (!sighand) return NULL; lock(sighand); if (!sh) WARN_ON_ONCE(timer_queued(tmr)); On weakly ordered architectures it is not guaranteed that posix_cpu_timer_del() will observe the stores in posix_cpu_timers*_exit() when p->sighand is observed as NULL, which means the WARN() can be a false positive. Solve these issues by: 1) Changing the store in __exit_signal() to smp_store_release(). 2) Adding a smp_acquire__after_ctrl_dep() into the !sighand path of lock_task_sighand(). 3) Creating a helper function for looking up the task and locking sighand which does not return when sighand == NULL. Instead it retries the task lookup and only if that fails it gives up. 4) Using that helper in the three affected functions. #1/#2 ensures that the reader side which observes sighand == NULL also observes all preceeding stores, i.e. the stores in posix_cpu_timers*_exit() and the ones in unhash_task(). #3 ensures that the above described non-leader exec() situation is handled gracefully. When the task lookup returns the old leader, but sighand == NULL then it retries. In the non-leader exec() case the subsequent task lookup will observe the new leader due to #1/#2. In normal exit() scenarios the subsequent lookup fails. When the task lookup fails, the function also checks whether the timer is still enqueued and issues a warning if that's the case. Unfortunately there is nothing which can be done about it, but as the task is already not longer visible the timer should not be accessed anymore. This check also requires memory ordering, which is not provided when the first lookup fails. To achieve that the check is preceeded by a smp_rmb() which pairs with the smp_wmb() in write_seqlock() in __exit_signal(). That ensures that the stores in posix_cpu_timers*_exit() are visible. The history of the non-leader exec() issue goes back to the early days of posix CPU timers, which stored a pointer to the group leader task in the timer. That obviously fails when a non-leader exec() switches the leader. commit e0a70217107e (\"posix-cpu-timers: workaround to suppress the problems with mt exec\") added a temporary workaround for that in 2010 which surv ---truncated---",
@@ -49,7 +82,7 @@
     },
     {
       "year": 2026,
-      "stars": 11,
+      "stars": 12,
       "name": "watchTowr-vs-f5-bigip-PreAuth-RCE-CVE-2026-94127",
       "url": "https://github.com/watchtowrlabs/watchTowr-vs-f5-bigip-PreAuth-RCE-CVE-2026-94127",
       "desc": "When a BIG-IP APM access policy and an OAuth profile are configured on a virtual server, specific malicious traffic can lead to remote code execution (RCE). This vulnerability is only present when BIG-IP APM is configured as an OAuth Authorization Server. Deployments using APM strictly as an OAuth Client / Resource Server (without OAuth authorization server profiles configured) are not affected by this vulnerability. Impact: This vulnerability allows an unauthenticated attacker to perform remote code execution. The BIG-IP system in Appliance mode is also vulnerable. This is a data plane issue; there is no control plane exposure. Note: Software versions which have reached End of Technical Support (EoTS) are not evaluated.",
@@ -60,7 +93,7 @@
     },
     {
       "year": 2026,
-      "stars": 5,
+      "stars": 6,
       "name": "CVE-2026-87902-Toolkit",
       "url": "https://github.com/tc4dy/CVE-2026-87902-Toolkit",
       "desc": "CVE-2026-87902 - WordPress Core LFI→RCE Toolkit (CVSS 9.2) - Red/Blue Team suite for WordPress 4.7-7.1.1. / 2 tools: Full Exploit (LFI, PEAR RCE, admin create, webshell, reverse shell, loot, mass scan, stealth) & SafeChecker (version detect, risk audit, JSON report). 🛠️ Use Ethically & Authorized Enviorement, Stay Legal <3",
@@ -71,7 +104,7 @@
     },
     {
       "year": 2026,
-      "stars": 35,
+      "stars": 37,
       "name": "CVE-2026-84543",
       "url": "https://github.com/petermalone/CVE-2026-84543",
       "desc": "Technical disclosure and PoC for CVE-2026-84543, a macOS SMB kernel vulnerability",
@@ -137,7 +170,7 @@
     },
     {
       "year": 2026,
-      "stars": 3,
+      "stars": 4,
       "name": "CVE-2026-23921",
       "url": "https://github.com/qucklecrabik/CVE-2026-23921",
       "desc": "This repository contains a proof-of-concept (PoC) exploit for CVE-2026-23921",
@@ -155,17 +188,6 @@
       "pushed": "2026-09-22T19:36:47Z",
       "created": "2026-09-22T18:40:26Z",
       "cve": "CVE-2026-87902",
-      "kev": true
-    },
-    {
-      "year": 2026,
-      "stars": 825,
-      "name": "CVE-2026-24061",
-      "url": "https://github.com/jacubes/CVE-2026-24061",
-      "desc": "CVE-2026-24061 exploit PoC",
-      "pushed": "2026-09-22T16:21:54Z",
-      "created": "2026-03-08T11:25:39Z",
-      "cve": "CVE-2026-24061",
       "kev": true
     },
     {
@@ -199,28 +221,6 @@
       "pushed": "2026-09-20T18:27:12Z",
       "created": "2026-09-20T17:31:00Z",
       "cve": "CVE-2026-28609",
-      "kev": false
-    },
-    {
-      "year": 2026,
-      "stars": 4,
-      "name": "CVE-2026-93958",
-      "url": "https://github.com/HackSpeak/CVE-2026-93958",
-      "desc": "D-Link R95 (BE9500) DHMAPI SetTimeSettings command injection -> root RCE PoC (CVE-2026-93958); for authorized testing",
-      "pushed": "2026-09-20T13:11:15Z",
-      "created": "2026-09-20T13:10:55Z",
-      "cve": "CVE-2026-93958",
-      "kev": false
-    },
-    {
-      "year": 2026,
-      "stars": 5,
-      "name": "CVE-2026-92229",
-      "url": "https://github.com/murrez/CVE-2026-92229",
-      "desc": "CVE-2026-92229 - Forminator ≤1.57.2 unauth shortcode exec (current_url / quiz AJAX). Python 3 PoC.",
-      "pushed": "2026-09-19T20:28:53Z",
-      "created": "2026-09-19T20:22:01Z",
-      "cve": "CVE-2026-92229",
       "kev": false
     },
     {
@@ -468,6 +468,54 @@
     {
       "year": 2025,
       "stars": 0,
+      "name": "CVE-2025-39964",
+      "url": "https://github.com/suominen/CVE-2025-39964",
+      "desc": "In the Linux kernel, the following vulnerability has been resolved: crypto: af_alg - Disallow concurrent writes in af_alg_sendmsg Issuing two writes to the same af_alg socket is bogus as the data will be interleaved in an unpredictable fashion. Furthermore, concurrent writes may create inconsistencies in the internal socket state. Disallow this by adding a new ctx->write field that indiciates exclusive ownership for writing.",
+      "pushed": "2026-09-27T06:28:20Z",
+      "created": "2026-09-20T05:55:14Z",
+      "cve": "CVE-2025-39964",
+      "kev": true,
+      "landed": true
+    },
+    {
+      "year": 2025,
+      "stars": 0,
+      "name": "POC-CVE-2025-11201",
+      "url": "https://github.com/rmhowe425/POC-CVE-2025-11201",
+      "desc": "PoC for MLFlow unauth RCE",
+      "pushed": "2026-09-27T01:51:01Z",
+      "created": "2026-09-27T01:50:15Z",
+      "cve": "CVE-2025-11201",
+      "kev": false,
+      "landed": true
+    },
+    {
+      "year": 2026,
+      "stars": 2,
+      "name": "CVE-2026-mikrotik-poc",
+      "url": "https://github.com/gagaltotal/CVE-2026-mikrotik-poc",
+      "desc": "CVE-2026-86060 - CVE-2026-67279 - CVE-2026-67276 RouterOS SSH",
+      "pushed": "2026-09-26T15:34:48Z",
+      "created": "2026-09-25T15:59:34Z",
+      "cve": "CVE-2026-86060",
+      "kev": true,
+      "landed": true
+    },
+    {
+      "year": 2026,
+      "stars": 0,
+      "name": "CVE-2026-93399",
+      "url": "https://github.com/josemour8/CVE-2026-93399",
+      "desc": "Bookly <= 28.2 Unauth IDOR + PII Leak + RCE Mass exploitation scanner for CVE-2026-93399 (CVSS 9.1 Critical) affecting the Bookly - Online Scheduling and Appointment Booking System WordPress plugin (versions <= 28.2).",
+      "pushed": "2026-09-26T05:29:03Z",
+      "created": "2026-09-26T04:58:47Z",
+      "cve": "CVE-2026-93399",
+      "kev": false,
+      "landed": true
+    },
+    {
+      "year": 2025,
+      "stars": 0,
       "name": "Langflow-RCE-CVE-2025-3248",
       "url": "https://github.com/LeotheGGman/Langflow-RCE-CVE-2025-3248",
       "desc": "Langflow versions prior to 1.3.0 are susceptible to code injection in the /api/v1/validate/code endpoint. A remote and unauthenticated attacker can send crafted HTTP requests to execute arbitrarycode.",
@@ -479,14 +527,14 @@
     },
     {
       "year": 2026,
-      "stars": 2,
-      "name": "CVE-2026-67279",
-      "url": "https://github.com/HackSpeak/CVE-2026-67279",
-      "desc": "MikroTrick (MikroTik RouterOS SSH takeover chain) PoC mirror - CVE-2026-67279 + CVE-2026-86060 (+67276); for authorized lab testing",
-      "pushed": "2026-09-26T03:47:01Z",
-      "created": "2026-09-26T03:46:49Z",
-      "cve": "CVE-2026-67279",
-      "kev": true,
+      "stars": 0,
+      "name": "CVE-2026-86350",
+      "url": "https://github.com/abraxas/CVE-2026-86350",
+      "desc": "CVE-2026-86350 - Apache Tomcat - Critical 9.1 - Unauthenticated GET /header.jsp - HTTP/2 Request Header Mix-up (Request Smuggling)",
+      "pushed": "2026-09-25T21:59:06Z",
+      "created": "2026-09-25T21:58:58Z",
+      "cve": "CVE-2026-86350",
+      "kev": false,
       "landed": true
     },
     {
@@ -499,18 +547,6 @@
       "created": "2026-09-25T04:09:16Z",
       "cve": "CVE-2025-9974",
       "kev": false,
-      "landed": true
-    },
-    {
-      "year": 2025,
-      "stars": 0,
-      "name": "CVE-2025-39964",
-      "url": "https://github.com/suominen/CVE-2025-39964",
-      "desc": "In the Linux kernel, the following vulnerability has been resolved: crypto: af_alg - Disallow concurrent writes in af_alg_sendmsg Issuing two writes to the same af_alg socket is bogus as the data will be interleaved in an unpredictable fashion. Furthermore, concurrent writes may create inconsistencies in the internal socket state. Disallow this by adding a new ctx->write field that indiciates exclusive ownership for writing.",
-      "pushed": "2026-09-25T02:46:42Z",
-      "created": "2026-09-20T05:55:14Z",
-      "cve": "CVE-2025-39964",
-      "kev": true,
       "landed": true
     },
     {
@@ -539,50 +575,14 @@
     },
     {
       "year": 2026,
-      "stars": 2,
-      "name": "ghostlock-cve-2026-43499",
-      "url": "https://github.com/gitchw/ghostlock-cve-2026-43499",
-      "desc": "CVE-2026-43499 (GhostLock) - Linux kernel futex PI rt_mutex UAF ARM32 privilege escalation research targeting Huawei Watch 4 Pro (kernel 5.4.210)",
-      "pushed": "2026-09-22T13:50:50Z",
-      "created": "2026-08-18T12:54:23Z",
-      "cve": "CVE-2026-43499",
-      "kev": false,
-      "landed": true
-    },
-    {
-      "year": 2026,
-      "stars": 1,
-      "name": "CVE-2026-77812",
-      "url": "https://github.com/Wh02m1/CVE-2026-77812",
-      "desc": "DJI Drone Cleartext Bluetooth Transmission of Wi-Fi PSK and Session UUID - Proof of Concept for CVE-2026-77812.",
-      "pushed": "2026-09-21T11:50:49Z",
-      "created": "2026-09-20T20:33:14Z",
-      "cve": "CVE-2026-77812",
-      "kev": false,
-      "landed": true
-    },
-    {
-      "year": 2025,
-      "stars": 1,
-      "name": "CVE-2025-6325_CVE-2025-6327",
-      "url": "https://github.com/JohenLastGen-JLG/CVE-2025-6325_CVE-2025-6327",
-      "desc": "CVE-2025-6325 + CVE-2025-6327 - King Addons for Elementor <= 51.1.36 DUAL EXPLOIT PoC (Unauthenticated Privilege Escalation + Arbitrary File Upload)",
-      "pushed": "2026-09-21T10:19:23Z",
-      "created": "2026-09-21T10:14:28Z",
-      "cve": "CVE-2025-6325",
-      "kev": false,
-      "landed": true
-    },
-    {
-      "year": 2026,
-      "stars": 2,
-      "name": "CVE-2026-90817",
-      "url": "https://github.com/murrez/CVE-2026-90817",
-      "desc": "Unauth REDCap RCE (CVE-2026-90817) mass check PoC - requires public survey hash for full validation.",
-      "pushed": "2026-09-21T04:06:54Z",
-      "created": "2026-09-21T04:05:26Z",
-      "cve": "CVE-2026-90817",
-      "kev": false,
+      "stars": 0,
+      "name": "CVE-2026-87902",
+      "url": "https://github.com/zer0dayf/CVE-2026-87902",
+      "desc": "An unauthenticated attacker can make `get_page_template()` page-template resolution include a chosen readable local `.php` file outside the active theme directories. If relevant pre-conditions for both the server and the active theme are met, this can lead to RCE.",
+      "pushed": "2026-09-23T11:04:46Z",
+      "created": "2026-09-23T11:03:07Z",
+      "cve": "CVE-2026-87902",
+      "kev": true,
       "landed": true
     }
   ]
