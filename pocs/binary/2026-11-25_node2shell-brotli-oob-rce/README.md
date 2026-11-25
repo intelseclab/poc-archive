@@ -1,0 +1,169 @@
+# Node2Shell — Node.js Brotli Decoder OOB Write to RCE (CVE-2026-111497)
+
+<!--
+  File: 2026-11-25_node2shell-brotli-oob-rce.md
+  Location: pocs/binary/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-11-25 |
+| **Last Updated** | 2026-10-25 |
+| **Author / Researcher** | dimasma0305 (PoC); Imperva (research) |
+| **CVE / Advisory** | CVE-2026-111497 |
+| **Category** | binary |
+| **Severity** | Critical |
+| **CVSS Score** | 9.8 (NVD CVSSv3.1); vendor CVSS 4.0: 9.2 |
+| **Status** | Weaponized (lab-verified, probabilistic) |
+| **Tags** | RCE, Node.js, Brotli, OOB-write, heap-overflow, Express, body-parser, ROP, ASLR, unauthenticated, in-the-wild |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Google Brotli decoder; Node.js (bundled Brotli in `zlib`) and downstream consumers |
+| **Versions Affected** | Node.js 22.x before 22.23.4, 23.0.0–24.22.1, 25.0.0–26.12.1; Brotli 1.0.3–1.0.10, 1.1.0–1.1.1, 1.2.0–1.2.1. NVD also lists .NET, Bun, Istio, Envoy, Python `brotlicffi` and others (see references) |
+| **Language / Platform** | C / C++ decoder, JavaScript runtime; Linux x86_64 reference lab, Node.js on other platforms in scope |
+| **Authentication Required** | No |
+| **Network Access Required** | Yes |
+
+---
+
+## Summary
+
+Node2Shell is an out-of-bounds write in Google Brotli's decoder that is reachable from Node.js because Node bundles Brotli in zlib. A malformed Brotli block-switch makes the decoder's block-type-length routine return a false/zero value in a case where zero also means success; callers misread the result, the block length underflows, and a crafted stream drives a controlled write past the decoder's ring buffer. Express 5 / body-parser 2.x transparently decode Content-Encoding: br request bodies, so an unauthenticated POST can reach the bug. The included PoC is network-only and verifies RCE by returning fresh id output on the request socket in pinned Node 24.22.0 Express labs; other affected applications are verified as DoS.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+In `DecodeBlockTypeAndLength()`, a stream that requests a block-type switch in a category with at most one declared type returns `BROTLI_FALSE`. The streaming (safe-mode) caller interprets that false return as "needs more input" and saves state permanently at `BROTLI_STATE_COMMAND_BEGIN`; the non-safe/batch path discards the return value, so `block_length[1]` underflows to `UINT32_MAX` and later array accesses write outside the decoder's output buffer. The upstream fix adds `BROTLI_DECODER_ERROR_FORMAT_BLOCK_SWITCH` (-17) and makes callers stop on it. Node.js's bundled decoder exposes the bug through `zlib.brotliDecompress()` and through HTTP body decompression.
+
+### Attack Vector
+
+An attacker sends a crafted Brotli stream to an application that decodes attacker-controlled Brotli data. The reference vector is an unauthenticated `POST` with `Content-Type: application/json` and `Content-Encoding: br` to an Express 5 / body-parser 2.x route; body-parser decompresses before the route handler runs. Other vectors include a Node.js `fetch()`/undici client consuming an attacker-controlled Brotli response, and direct calls to `zlib.brotliDecompress()`. The PoC grooms the heap, drives the 16-byte OOB write, and — in the pinned lab profile — redirects a saved return address into a ROP chain that writes `id` output to the request socket.
+
+### Impact
+
+Remote code execution as the Node.js process user in the pinned Express lab, or denial of service (process crash) in the other verified profiles. Because Brotli is embedded in many runtimes and proxies, the blast radius extends beyond Node.js; the NVD CPE list includes .NET, Bun, Istio, Envoy, Python `brotlicffi`, and other consumers. The PoC's RCE is probabilistic and profile-specific: it depends on the exact Node binary, one libuv worker, accepted socket fd 19, the restart supervisor, and an ASLR address guess.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Linux x86_64 (Docker; reference host is Debian bookworm)
+Target:      Node.js v24.22.0 with Express 5.3.0 and body-parser 2.4.0
+Attacker:    Python 3.10+ (stdlib only), loopback access
+Tools:       Docker, Python 3, curl
+Supervisor:  restart loop with UV_THREADPOOL_SIZE=1 (part of the tested profile)
+```
+
+### Setup Steps
+
+```bash
+# 1. Build the included Express lab. The upstream lockfile is not vendored
+#    (archive rule); the Dockerfile uses `npm install` instead of `npm ci`.
+docker build --pull --platform linux/amd64 \
+  -t cve-2026-111497-lab:v24.22.0-express \
+  -f lab/express-body-parser/Dockerfile lab/express-body-parser
+
+# 2. Run the lab with the supervisor required by the profile.
+docker run --platform linux/amd64 -d --name cve-111497-express \
+  --entrypoint sh -e UV_THREADPOOL_SIZE=1 -p 127.0.0.1:3000:3000 \
+  cve-2026-111497-lab:v24.22.0-express \
+  -lc "while true; do node /app/server.js; sleep 0.1; done"
+
+# 3. Run the PoC.
+python3 poc.py --profile node-24.22.0-express-5.3.0-bookworm-x86_64 --timeout 30
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Start the pinned lab** — Node v24.22.0, Express 5.3.0, body-parser 2.4.0, one libuv worker, restart supervisor.
+2. **Send the trigger** — `poc.py` sends a `Content-Encoding: br` JSON request whose Brotli stream contains the impossible block-switch sequence and the heap-grooming layout for the selected profile.
+3. **Reset ASLR if the guess misses** — the PoC uses the network crash primitive to make the supervisor restart the worker, then retries with a fresh layout (up to 16 fresh processes by default).
+4. **Verify** — success is a fresh `uid=`/`gid=` line received on the HTTP request socket; the PoC exits nonzero unless it observes the complete `id` output.
+
+### Exploit Code
+
+> See [`poc.py`](./poc.py) and the pinned profile registry in [`profiles.json`](./profiles.json). The upstream write-up is [`upstream-README.md`](./upstream-README.md).
+
+The PoC is profile-driven rather than a single universal payload. The profile fixes the Node binary, allocator layout, callback host/port, and ROP/gadget offsets; the stream itself is built in `poc.py` from the Brotli bit-writer and the block-switch trigger.
+
+### Expected Output
+
+```text
+PASS: RCE verified by fresh id output through the declared interface
+profile=node-24.22.0-express-5.3.0-bookworm-x86_64
+proof_channel=HTTP request socket stdout
+proof_command=id
+proof_stdout=uid=1000(node) gid=1000(node) groups=1000(node)
+```
+
+Profiles marked **DoS verified** (stock zlib, fetch, undici, axios, NestJS, Koa, Next.js) crash the service without RCE.
+
+---
+
+## Detection & Indicators of Compromise
+
+- Node.js process crash loops (`SIGSEGV`, exit 139) with restart supervision, especially after large `Content-Encoding: br` requests.
+- `Content-Encoding: br` on JSON API routes where clients normally send plain JSON; large compressed bodies (the reference payload is multi-MB).
+- Brotli decode errors / `BROTLI_DECODER_ERROR_FORMAT_BLOCK_SWITCH` in application or proxy logs on patched builds.
+- Version fingerprints: Node.js 22.x < 22.23.4, 24.x < 24.22.1, 26.x < 26.12.1; Brotli 1.0.3–1.0.10, 1.1.0–1.1.1, 1.2.0–1.2.1.
+- Unusual outbound callback traffic from a Node worker after a request burst (the RCE chain returns command output on the request socket in the lab; other chains may call back).
+
+**SIEM / IDS rule (example):**
+
+```text
+alert http any any -> any any (msg:"Node2Shell Brotli request body"; \
+  content:"Content-Encoding|3a| br"; http_header; \
+  content:"application/json"; http_header; sid:9002611;)
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Upgrade Node.js to 22.23.4, 24.22.1 or 26.12.1 (or later). Upgrade Brotli to 1.0.10, 1.1.1 or 1.2.1. Rebuild/redeploy anything statically linking Brotli. |
+| **Workaround** | Reject `Content-Encoding: br` at the edge or in the framework if Brotli request decoding is not required; disable automatic response decompression for untrusted origins where possible. |
+| **Config Hardening** | Cap request body size and decompressed size, isolate Node workers, monitor crash loops, and inventory downstream consumers (.NET, Bun, Istio, Envoy, Python `brotlicffi`, etc.). |
+
+---
+
+## References
+
+- [CVE-2026-111497 — NVD](https://nvd.nist.gov/vuln/detail/CVE-2026-111497)
+- [Node.js October 2026 security releases — Brotli decoder OOB write](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases#nodejs-brotli-decoder-out-of-bounds-write-permits-remote-code-execution-cve-2026-111497---high)
+- [Imperva — Node2Shell: From Brotli Data to Remote Code Execution](https://www.imperva.com/blog/node2shell-from-brotli-data-to-remote-code-execution/)
+- [Aikido — Python packages vulnerable to Node2Shell / Brotli](https://www.aikido.dev/blog/python-packages-vulnerable-node2shell-brotli-cve-2026-111497)
+- [dimasma0305/CVE-2026-111497-POC — source PoC](https://github.com/dimasma0305/CVE-2026-111497-POC)
+- [Rabbitbong/node2shell — independent lab](https://github.com/Rabbitbong/node2shell)
+- [veritas1209/Node2shell — independent reproduction](https://github.com/veritas1209/Node2shell)
+- [syrex1013/CVE-2026-111497-node2shell — C-level PoC](https://github.com/syrex1013/CVE-2026-111497-node2shell)
+- [CISA KEV catalogue](https://www.cisa.gov/known-exploited-vulnerabilities-catalog)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/dimasma0305/CVE-2026-111497-POC on 2026-11-25 (MIT). The upstream lab's `package-lock.json` is not vendored because this archive does not copy lock files; the included Dockerfile was adjusted from `npm ci` to `npm install`. The full upstream lab tree (including other profiles and evidence recordings) is available at the source repository.
+
+Review of candidates: `dimasma0305/CVE-2026-111497-POC` was selected because it is licensed, network-only, and ships a profile registry with explicit **RCE verified** / **DoS verified** statuses plus recorded evidence. `Ghost-Bx1/Node2Shell-CVE-2026-111497` (MIT) is a large exploit/PoC but its RCE chain was not corroborated by a lab record; `Rabbitbong/node2shell`, `veritas1209/Node2shell` and `syrex1013/CVE-2026-111497-node2shell` are credible independent PoCs but are either unlicensed or less directly reproducible. `CaterMaoZi/CVE-2026-111497-POC` is explicitly a probe/fuzzer with no public exploit and was excluded as a detector/research tool, not a PoC.
+
+The RCE is probabilistic and exact-profile; do not generalize the lab result to every Express deployment. The PoC only targets loopback hosts by construction. Run only against systems you own or have written authorization to test.

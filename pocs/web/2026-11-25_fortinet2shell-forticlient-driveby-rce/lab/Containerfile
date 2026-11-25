@@ -1,0 +1,37 @@
+# CVE-2026-121529 -- containerised model of the FortiClient local API.
+#
+# The image carries ONE implementation of the local API; the behaviour is selected by
+# FCT_MODE so that the vulnerable and the patched builds differ *only* in the target
+# component, exactly like the Git lab does with GIT_BIN / GIT_ASAN.
+#
+#   FCT_MODE=vuln          FortiClient 7.4.7 model  -- origin validation error (the CVE)
+#   FCT_MODE=fixed-cors    CORS-header-only remediation model
+#   FCT_MODE=fixed-strict  server-side origin validation model
+#
+# The same image also runs the attacker's web site (entrypoint override), so the lab
+# needs a single image for the endpoint and for the attacker site.
+FROM docker.io/library/python:3.12-slim
+
+LABEL org.opencontainers.image.title="CVE-2026-121529 FortiClient local API model" \
+      org.opencontainers.image.description="Containerised model of the FortiClient local API with the origin validation error of CVE-2026-121529 (Fortinet FG-IR-26-194)" \
+      org.opencontainers.image.licenses="MIT"
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    FCT_MODE=vuln \
+    FCT_PORT=9191 \
+    FCT_BIND=127.0.0.1 \
+    FCT_RESULTS=/results \
+    ATTACKER_RESULTS=/results \
+    ATTACKER_PORT=8080 \
+    ATTACKER_PORT2=9191
+
+WORKDIR /opt/lab
+
+COPY lab/forticlient_api.py lab/attacker_server.py /opt/lab/
+
+RUN mkdir -p /results/poc /results/marker
+
+EXPOSE 9191 8080
+
+ENTRYPOINT ["python3", "-u", "/opt/lab/forticlient_api.py"]

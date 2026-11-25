@@ -1,0 +1,28 @@
+# CVE-2026-121529 -- PoC runner image.
+#
+# The official Playwright image is used because the PoC needs a *real* browser: the whole
+# point of the CVE is that a browser is the thing that enforces (or fails to enforce) the
+# origin policy, so a scripted HTTP client cannot prove the flaw.
+FROM mcr.microsoft.com/playwright/python:v1.56.0-noble
+
+LABEL org.opencontainers.image.title="CVE-2026-121529 PoC runner" \
+      org.opencontainers.image.description="Browser-driven proof of concept for CVE-2026-121529 (FortiClient local API origin validation error)" \
+      org.opencontainers.image.licenses="MIT"
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    POC_RESULTS=/results \
+    FCT_TARGET=http://127.0.0.1:9191 \
+    ATTACKER_URL=http://attacker-site:8080
+
+WORKDIR /opt/poc
+
+# The image ships the matching browser builds under /ms-playwright; the Python driver
+# package is installed here so the runner stays reproducible and pinned.
+RUN pip install --no-cache-dir "playwright==1.56.0"
+
+COPY poc.py /opt/poc/poc.py
+
+RUN mkdir -p /results/poc /results/marker
+
+ENTRYPOINT ["python3", "/opt/poc/poc.py"]
