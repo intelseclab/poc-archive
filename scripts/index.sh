@@ -23,7 +23,8 @@ extract_field() {
     echo ""
     return 0
   fi
-  echo "$line" | sed 's/.*| \*\*[^*]*\*\* | //' | sed 's/ |.*//' | sed 's/<!--.*-->//g' | xargs
+  echo "$line" | sed 's/.*| \*\*[^*]*\*\* | //' | sed 's/ |.*//' | sed 's/<!--.*-->//g' \
+    | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
 }
 
 extract_summary() {
