@@ -1,0 +1,25 @@
+name: PAT diagnose
+on:
+  push:
+    paths:
+      - .github/workflows/pat-diagnose.yml
+  workflow_dispatch:
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspect PAT_TOKEN (never prints the token)
+        env:
+          PAT: ${{ secrets.PAT_TOKEN }}
+        run: |
+          set +x
+          echo "length=${#PAT}"
+          printf '%s' "$PAT" | tail -c 1 | od -An -t x1 | sed 's/^/last_byte:/'
+          code=$(curl -s -o /tmp/u.json -w '%{http_code}' -H "Authorization: Bearer $PAT" https://api.github.com/user)
+          echo "api_user_http=$code"
+          python3 -c "import json;print('login='+str(json.load(open('/tmp/u.json')).get('login')))" 2>/dev/null || true
+          code2=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $PAT" https://api.github.com/repos/intelseclab/poc-archive)
+          echo "api_repo_http=$code2"
+          git ls-remote "https://x-access-token:${PAT}@github.com/intelseclab/poc-archive.git" HEAD >/tmp/ls.out 2>/tmp/ls.err
+          echo "ls_remote_exit=$? bytes=$(wc -c </tmp/ls.out)"
+          sed "s/${PAT}/REDACTED/g" /tmp/ls.err | head -5
