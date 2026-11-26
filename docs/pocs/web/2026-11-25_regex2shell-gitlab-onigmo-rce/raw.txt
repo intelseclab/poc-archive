@@ -1,0 +1,171 @@
+
+<!--
+  File: 2026-11-25_regex2shell-gitlab-onigmo-rce.md
+  Location: pocs/web/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-11-25 |
+| **Last Updated** | 2026-11-19 |
+| **Author / Researcher** | googlesky (PoC); joaxcar via GitLab HackerOne (discovery) |
+| **CVE / Advisory** | CVE-2026-110264 |
+| **Category** | web |
+| **Severity** | Critical |
+| **CVSS Score** | 10.0 (CVSSv3.1) |
+| **Status** | PoC (unauthenticated render oracle; full heap-groomed RCE not public) |
+| **Tags** | GitLab, Onigmo, regex, integer-overflow, OOB-write, org-mode, render-oracle, crash, unauthenticated, RCE-potential |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | GitLab CE/EE (Org-mode rendering via `org-ruby` and Ruby's Onigmo regex engine) |
+| **Versions Affected** | GitLab CE/EE 7.0.0–18.11.13, 19.0.0–19.0.10, 19.1.0–19.1.9, 19.2.0–19.2.9, 19.3.0–19.3.6, 19.4.0–19.4.3, 19.5.0 (NVD ranges) |
+| **Language / Platform** | Ruby / C (Onigmo); Linux (Omnibus and CNG) |
+| **Authentication Required** | No |
+| **Network Access Required** | Yes |
+
+---
+
+## Summary
+
+CVE-2026-110264 is an unauthenticated vulnerability in GitLab's Org-mode rendering path. The org-ruby renderer takes the first word of a TODO directive line and interpolates it raw into a regular expression; a keyword containing more than 32,767 bounded repeats overflows Onigmo's 16-bit repeat ID, producing an out-of-bounds read in the match-cache walk and an out-of-bounds write at match time. A public GitLab project containing a crafted .org file can be rendered by an unauthenticated visitor; heap grooming through the request body is the intended path to code execution as the git user. The included PoC validates the bug end-to-end and provides an unauthenticated render oracle (multi-second render, a server-side Timeout error, Workhorse 502, Puma BUG output); the full heap-groomed code-execution chain remains per-build weaponization research, matching the upstream status as of 2026-10-31.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+In `org-ruby` 0.9.12, `headline.rb#parse_keywords` re-compiles a regex from the raw keyword:
+
+```ruby
+@headline_text.sub!(Regexp.new("^#{@keyword}\\s*"), "")
+```
+
+The parser escapes the keyword once when validating the `#+TODO:` line, but this second interpolation uses the raw string (CWE-94). A keyword with more than 32,767 bounded repeats passes Onigmo's signed 16-bit repeat-ID field, wrapping it negative. The negative ID is then used in the match-cache count walk (OOB read) and at match time (OOB write). GitLab renders Org-mode content for public projects through `Banzai`/`org-ruby`, so an unauthenticated visitor can reach the engine.
+
+### Attack Vector
+
+An attacker commits a crafted `.org` file to a **public** GitLab project (or uses the blob preview endpoint with a `file_path` ending in `.org`). The file contains a `#+TODO:` line with a keyword built from more than 32,767 `[[:word:]]*` repeats and a headline that forces the match. A request to the rich-viewer sink (`GET /:namespace/:project/-/blob/:ref/:path.org?format=json&viewer=rich`) renders the file in the GitLab Rails/Puma worker. The request body can be used for heap grooming; the PoC's loud, stealth, single-directive and burst variants exercise the same sink.
+
+### Impact
+
+On a successfully weaponized build: unauthenticated RCE as the `git` OS user, with access to repositories, CI variables, runner tokens, `gitlab-secrets.json`, and the GitLab database — i.e., full instance compromise. The included PoC demonstrates the crash/oracle stage (render timeout, 502/hang, `[BUG]` in Puma stderr) and local root-cause reproduction; it does **not** ship a full shell. The sister CVE-2026-97229 (same GitLab/Onigmo regex family) is in CISA KEV and was weaponized by Rapid7, which is why this class is treated as critical even before a public full chain.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Linux x86_64 (Docker for the full GitLab lab)
+Target:      GitLab CE 19.3.1 / 19.4.2 (vulnerable), or a lightweight Ruby
+             org-ruby 0.9.12 reproduction for root-cause work
+Attacker:    Python 3.8+ (stdlib only), Ruby 3.x + org-ruby 0.9.12 for the light lab
+Tools:       Docker, Python 3, Ruby, curl
+```
+
+### Setup Steps
+
+```bash
+python3 poc.py selftest
+ruby lab/repro.rb --generate 35000 p0.org
+ruby lab/repro.rb p0.org --budget 8        # vulnerable: Timeout::Error
+
+docker compose -f lab/docker-compose.gitlab.yml up -d
+python3 poc.py check http://127.0.0.1:8929
+python3 poc.py exploit http://127.0.0.1:8929 victim/pub --ref main --path p0.org --verify
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Generate the payload** — `python3 poc.py payload --repeats 35000 -o p0.org` (loud) or `--stealth` / `--single`.
+2. **Commit it to a public project** — upload `p0.org` to the `main` branch of a public GitLab project (the full lab provisions this).
+3. **Render it unauthenticated** — request the rich-viewer sink for the `.org` blob (`?format=json&viewer=rich`), or use the preview endpoint without committing.
+4. **Observe the oracle** — a vulnerable instance shows a multi-second render, `Timeout::Error`/`OtherMarkup` on the server, a Workhorse 502/hang, and `[BUG]` in `puma_stderr.log`. The PoC's `--verify` sends a benign control and compares deltas; `--burst` mimics the detection threshold.
+5. **Confirm the engine bug locally** — `lab/repro.rb` compiles the same Onigmo/Ruby path and demonstrates the timeout without a GitLab install.
+
+### Exploit Code
+
+> See [`poc.py`](./poc.py), [exploit/exploit.py](https://github.com/googlesky/CVE-2026-110264/blob/main/exploit/exploit.py), and the light lab [lab/repro.rb](https://github.com/googlesky/CVE-2026-110264/blob/main/lab/repro.rb). The upstream report is [reports/CVE-2026-110264.md](https://github.com/googlesky/CVE-2026-110264/blob/main/reports/CVE-2026-110264.md).
+
+The full-chain script is an oracle/crash chain, not a shell. Its exit code is **1 when the vulnerable render behaviour is observed** and **0 when the target behaves safely**.
+
+### Expected Output
+
+```text
+[VULN] render oracle fired (slow render and/or 502). Instance behaves
+       like unpatched Onigmo + org-ruby. Corroborate server-side:
+       exceptions_json.log Timeout::Error/OtherMarkup/.org burst (>=5/30m),
+       Workhorse 502 on the .org blob route, puma_stderr.log [BUG] ...
+```
+
+Light lab:
+
+```text
+RENDER_TIMEOUT (vulnerable: exceeds markup budget)
+```
+
+---
+
+## Detection & Indicators of Compromise
+
+- GitLab Rails `exceptions_json.log`: `Timeout::Error` with `extra.class_name: OtherMarkup` and `extra.file_name: *.org`.
+- Workhorse/Puma: `502`/`badgateway: EOF` bursts on `.org` blob routes; Puma stderr `[BUG]` stack touching `org-ruby`, `headline.rb`, `regexp_helper.rb`, `match_at`, `onig_search_gpos`, `onig_compile`, `compile_tree`, `rb_str_sub_bang`.
+- Render latency: `.org` renders taking 10–19 s while benign files render in ~0.1 s.
+- Burst pattern: repeated `.org` requests from one client (the upstream detection rule uses ≥5 / 30 minutes).
+- Public projects with `.org` files containing very long `#+TODO:` / `#+SEQ_TODO:` / `#+TYP_TODO:` keywords.
+
+**SIEM / IDS rule (example):**
+
+```text
+alert http any any -> any any (msg:"GitLab .org render oracle burst"; \
+  content:".org"; http_uri; content:"viewer=rich"; http_uri; sid:9002612;)
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Upgrade GitLab CE/EE to 18.11.13, 19.0.10, 19.1.9, 19.2.9, 19.3.6, 19.4.3 or 19.5.1 (or later). The fix includes the Ruby/Onigmo repeat-ID patch and `gitlab-markup` 2.2.0. |
+| **Workaround** | Disable Org-mode rendering or restrict it to trusted projects/users; block or rate-limit `.org` rich-viewer requests; do not rely on WAF version rules alone. |
+| **Config Hardening** | Keep public-project creation restricted, monitor render timeouts and 502 bursts, and patch Ruby 3.3.13 / 3.4.12 / 4.0.9 (or vendor equivalents) where the engine is bundled. |
+
+---
+
+## References
+
+- [CVE-2026-110264 — NVD](https://nvd.nist.gov/vuln/detail/CVE-2026-110264)
+- [GitLab patch release 19.5.1](https://docs.gitlab.com/releases/patches/patch-release-gitlab-19-5-1-released/)
+- [GitLab HackerOne report #4019059 (sister CVE)](https://hackerone.com/reports/4019059)
+- [Ruby regexp fixes for GitLab CVEs](https://www.ruby-lang.org/en/news/2026/10/23/regexp-fixes-for-gitlab-cves/)
+- [Rapid7 — CVE-2026-97229 technical analysis](https://www.rapid7.com/blog/post/ra-gitlab-ci-cd-regex-integer-overflow-technical-analysis-cve-2026-97229/)
+- [googlesky/CVE-2026-110264 — source PoC](https://github.com/googlesky/CVE-2026-110264)
+- [FranklinF25/regex2shell — independent research](https://github.com/FranklinF25/regex2shell)
+- [lesterlam/onigmo-cve-2026-110264 — engine reproduction lab](https://github.com/lesterlam/onigmo-cve-2026-110264)
+- [CISA KEV catalogue](https://www.cisa.gov/known-exploited-vulnerabilities-catalog)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/googlesky/CVE-2026-110264 on 2026-11-25 (MIT). The upstream report's own status is "PoC COMPLETE v2.1, VALIDATED LIVE" with the render oracle, and explicitly says "Full heap-groomed `system()` remains per-build weaponization follow-up." This entry follows that status: it is a crash/oracle PoC demonstrating the vulnerable engine path, not a shipped shell. The earlier aggregate report's shorthand "Regex2Shell RCE" refers to the vulnerability class; the PoC capability is narrower.
+
+Review of candidates: `googlesky/CVE-2026-110264` was selected because it is licensed, includes a full write-up, payload generator, live-lab evidence, and a light root-cause reproduction. `FranklinF25/regex2shell` is a research/detector harness whose own README says the full RCE chain remains open and was excluded as a detector/research artifact, not a PoC. `lesterlam/onigmo-cve-2026-110264` reproduces the engine bug with a C harness but is a lab, not a GitLab exploit. `al4n4n/CVE-2026-110264` now only redirects to a moved repository and shipped no code.
+
+Related same-family CVEs: CVE-2026-89078 (double free, authenticated), CVE-2026-93577 (compiled-size overflow, authenticated), and CVE-2026-97229 (CI/CD regex integer overflow, in CISA KEV). Only CVE-2026-110264 is the unauthenticated Org-mode path covered here. Run only against systems you own or have written authorization to test.
+

