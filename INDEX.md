@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-11-26 17:57:07
+> Last updated: 2026-11-27 11:51:17
 
 ---
 
@@ -310,6 +310,8 @@
 | 2026-11-25 | 2026-09-21 | [cve-2026-94095-poc](./pocs/network/2026-11-25_cve-2026-94095-poc/) | `network` | CVE-2026-94095 | Critical | command-injection, OS-command-injection, RCE, Netcore, NBR200V2, router, firmware, ubus, JSON-RPC, traceroute, embedded, network | PoC |
 | 2026-11-25 | 2026-11-06 | [cve-2026-98432-linux-kernel](./pocs/network/2026-11-25_cve-2026-98432-linux-kernel/) | `network` | CVE-2026-98432 | Critical | UAF, CWE-416, use-after-free, Linux-kernel, TCP, IPv4, SYN, race-condition, MPTCP, request-migration | PoC |
 | 2026-11-25 | 2026-11-07 | [cve-2026-99999-poc](./pocs/network/2026-11-25_cve-2026-99999-poc/) | `network` | CVE-2026-99999 | Critical | Linux-kernel, IPv4, virtio-net, TAP, checksum-offload, header-corruption, CWE-20, KVM, QEMU, simulation-only | PoC |
+| 2026-11-27 | 2026-11-24 | [cve-2026-123903-vcenter-vmdir-auth-bypass](./pocs/network/2026-11-27_cve-2026-123903-vcenter-vmdir-auth-bypass/) | `network` | CVE-2026-123903 | Critical | authentication-bypass, LDAP, SASL, vmdir, VMware, vCenter, unauthenticated, CWE-287 | PoC (read-only proof; write action gated) |
+| 2026-11-27 | 2026-11-25 | [cve-2026-136404-n2n-supernode-oob](./pocs/network/2026-11-27_cve-2026-136404-n2n-supernode-oob/) | `network` | CVE-2026-136404 | Critical | stack-buffer-overflow, n2n, supernode, UDP, unauthenticated, CWE-121, CWE-787, ASan | PoC (lab-validated differential; standalone exploit chain) |
 | 2026-07-05 | 2026-05 | [cve-2026-21510-lnk-stomping-generator](./pocs/social-engineering/2026-07-05_cve-2026-21510-lnk-stomping-generator/) | `social-engineering` | CVE-2026-21510 | High | lnk-stomping, shelllink, cve-2026-21510, windows, initial-access, phishing, anti-forensics, red-team | Weaponized |
 | 2026-07-05 | 2026-05 | [cve-2026-21514-cve-2026-21510-rtf-lnk-builder](./pocs/social-engineering/2026-07-05_cve-2026-21514-cve-2026-21510-rtf-lnk-builder/) | `social-engineering` | CVE-2026-21514, CVE-2026-21510 | High | rtf, lnk, ole-object, protected-view-bypass, cve-2026-21514, cve-2026-21510, phishing, initial-access | PoC |
 | 2026-07-27 | N/A | [clickfix-cloudflare-turnstile-lure](./pocs/social-engineering/2026-07-27_clickfix-cloudflare-turnstile-lure/) | `social-engineering` | N/A (social-engineering technique, not a software vulnerability) | High | clickfix, fake-captcha, cloudflare-turnstile-lure, clipboard-injection, social-engineering, phishing, run-dialog, multilingual-lure | PoC (benign placeholder payload) |
@@ -720,10 +722,11 @@
 | 2026-11-25 | 2026-09-22 | [metabox-aio-unauth-admin-privesc](./pocs/web/2026-11-25_metabox-aio-unauth-admin-privesc/) | `web` | CVE-2026-13355 | Critical | WordPress, privilege-escalation, unauthenticated, shortcode-injection, Meta Box AIO, MB Frontend Submission, MB User Profile, CMS, content-injection, admin-account | PoC |
 | 2026-11-25 | 2026-10-24 | [php2shell-php-core-preauth-rce](./pocs/web/2026-11-25_php2shell-php-core-preauth-rce/) | `web` | CVE-2026-109618, CVE-2026-109619 | Critical | RCE, unauthenticated, PHP, memory-corruption, longjmp, OOM, stale-state, Apache, mod_php, PHP-FPM, heap-grooming, ASLR-bypass | Weaponized |
 | 2026-11-25 | 2026-11-19 | [regex2shell-gitlab-onigmo-rce](./pocs/web/2026-11-25_regex2shell-gitlab-onigmo-rce/) | `web` | CVE-2026-110264 | Critical | GitLab, Onigmo, regex, integer-overflow, OOB-write, org-mode, render-oracle, crash, unauthenticated, RCE-potential | PoC (unauthenticated render oracle; full heap-groomed RCE not public) |
+| 2026-11-27 | 2026-11-26 | [cve-2026-125812-wp-rocket-path-traversal-rce](./pocs/web/2026-11-27_cve-2026-125812-wp-rocket-path-traversal-rce/) | `web` | CVE-2026-125812 | Critical | path-traversal, WP Rocket, WordPress, unauthenticated, file-write, RCE, CWE-22 | Weaponized (lab-validated) |
 
 ---
 
-*Total POCs: 856*
+*Total POCs: 859*
 
 ## By Category
 
@@ -732,9 +735,9 @@
 - **`crypto`** — 3 entries
 - **`hardware`** — 9 entries
 - **`misc`** — 35 entries
-- **`network`** — 151 entries
+- **`network`** — 153 entries
 - **`social-engineering`** — 6 entries
-- **`web`** — 498 entries
+- **`web`** — 500 entries
 
 ## Archives
 
