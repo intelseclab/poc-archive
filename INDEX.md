@@ -1,6 +1,6 @@
 # POC Archive — Index
 
-> Last updated: 2026-11-27 16:35:32
+> Last updated: 2026-11-28 09:14:12
 
 ---
 
@@ -765,10 +765,11 @@
 | 2026-11-27 | 2026-07-09 | [cve-2026-8037-loadmaster](./pocs/web/2026-11-27_cve-2026-8037-loadmaster/) | `web` | CVE-2026-8037 | Critical | RCE, command-injection, unauthenticated, LoadMaster, Progress, Kemp, appliance, reverse-shell, heap-spray, CWE-77 | Weaponized |
 | 2026-11-27 | 2026-09-01 | [cve-2026-82329-jfrog-artifactory](./pocs/web/2026-11-27_cve-2026-82329-jfrog-artifactory/) | `web` | CVE-2026-82329 | Critical | jfrog, artifactory, jfrog-access, auth-bypass, CWE-287, jwt, unauthenticated, admin-token, docker-lab, cisa-kev | Weaponized (forges a join JWT, mints an admin token, and reads admin-only endpoints in a live lab) |
 | 2026-11-27 | 2026-07-10 (upstream commit 4e113407f8c51e76632327665f7ae4d8a24e84a2, "feat: initial commit"; the repository was last pushed 2026-07-12) | [cve-2026-9558-mautic-ssti](./pocs/web/2026-11-27_cve-2026-9558-mautic-ssti/) | `web` | CVE-2026-9558 / GHSA-9fx4-7cmj-47vg / CWE-1336 | Critical | mautic, twig, ssti, cwe-1336, php, theme-upload, email-builder, rce, privilege-escalation | Weaponized (a working malicious theme package plus a documented end-to-end run; exploitation is driven manually through the Mautic UI) |
+| 2026-11-28 | 2026-11-23 | [cve-2026-129243-geoserver-preauth-chain](./pocs/web/2026-11-28_cve-2026-129243-geoserver-preauth-chain/) | `web` | CVE-2026-129243, CVE-2026-120705, CVE-2026-129245, CVE-2026-129242, CVE-2026-129244 | Critical | geoserver, pre-auth, rce, wfs, xinclude, hsqldb, deserialization, java, kev, cwe-306, cwe-611 | Weaponized |
 
 ---
 
-*Total POCs: 927*
+*Total POCs: 928*
 
 ## By Category
 
@@ -779,7 +780,7 @@
 - **`misc`** — 35 entries
 - **`network`** — 165 entries
 - **`social-engineering`** — 6 entries
-- **`web`** — 549 entries
+- **`web`** — 551 entries
 
 ## Archives
 
